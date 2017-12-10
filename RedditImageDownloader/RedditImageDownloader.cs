@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace RedditImageDownloader
 {
@@ -127,11 +128,16 @@ namespace RedditImageDownloader
 		{
 			switch (url)
 			{
-				//Don't try downloading videos from youtube
-				case string u when false
-				|| url.Contains("youtu.be") || url.Contains("youtube")
+				//If it already has an extention then use that
+				case string u when Path.GetExtension(url) is string ext:
+				{
+					return ext == ".gifv" || ext == ".gif" || ext == ".html" ? null : u;
+				}
+				//Site blacklist
+				case string u when url.Contains("youtu.be") || url.Contains("youtube")
 				|| url.Contains("gfycat")
-				|| url.Contains(".gifv") || url.Contains(".gif"):
+				|| url.Contains("streamable")
+				|| url.Contains("twitter"):
 				{
 					return null;
 				}
@@ -141,13 +147,9 @@ namespace RedditImageDownloader
 					//and if that's left in it makes the image really small, so that's why both get removed.
 					return u.Substring(0, u.IndexOf("?")).Replace("_d", "");
 				}
-				case string u when String.IsNullOrWhiteSpace(Path.GetExtension(url)):
-				{
-					return u + ".png";
-				}
 				default:
 				{
-					return url;
+					return url + ".png";
 				}
 			}
 		}
@@ -161,6 +163,7 @@ namespace RedditImageDownloader
 			var element = 0;
 			foreach (var post in posts)
 			{
+				Thread.Sleep(25);
 				Console.WriteLine($"[#{++element}|\u2191{post.Score}] {post.Url}");
 				//Some links might have more than one image
 				foreach (var url in GetImageUrls(post.Url))
@@ -171,14 +174,15 @@ namespace RedditImageDownloader
 						continue;
 					}
 
-					DownloadImage(correctUrl);
+					DownloadImage(correctUrl, post.Shortlink);
 				}
 			}
 		}
-		public void DownloadImage(string url)
+		public void DownloadImage(string url, string shortLink)
 		{
 			//Don't bother redownloading files
-			var savePath = Path.Combine(this.Folder, url.Split('/').Last());
+			var fileName = $"{shortLink.Split('/').Last()}_{url.Split('/').Last()}";
+			var savePath = Path.Combine(this.Folder, fileName);
 			if (File.Exists(savePath))
 			{
 				return;
@@ -204,6 +208,8 @@ namespace RedditImageDownloader
 							Console.WriteLine($"\t{url} is too small.");
 							return;
 						}
+
+						var format = bitmap.RawFormat;
 
 						bitmap.Save(savePath, ImageFormat.Png);
 						Console.WriteLine($"\tSuccessfully downloaded {url}.");
