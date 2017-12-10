@@ -128,7 +128,10 @@ namespace RedditImageDownloader
 			switch (url)
 			{
 				//Don't try downloading videos from youtube
-				case string u when url.Contains("youtu.be") || url.Contains("youtube"):
+				case string u when false
+				|| url.Contains("youtu.be") || url.Contains("youtube")
+				|| url.Contains("gfycat")
+				|| url.Contains(".gifv") || url.Contains(".gif"):
 				{
 					return null;
 				}
@@ -174,6 +177,13 @@ namespace RedditImageDownloader
 		}
 		public void DownloadImage(string url)
 		{
+			//Don't bother redownloading files
+			var savePath = Path.Combine(this.Folder, url.Split('/').Last());
+			if (File.Exists(savePath))
+			{
+				return;
+			}
+
 			try
 			{
 				var req = (HttpWebRequest)WebRequest.Create(url);
@@ -195,7 +205,7 @@ namespace RedditImageDownloader
 							return;
 						}
 
-						bitmap.Save(Path.Combine(this.Folder, url.Split('/').Last()), ImageFormat.Png);
+						bitmap.Save(savePath, ImageFormat.Png);
 						Console.WriteLine($"\tSuccessfully downloaded {url}.");
 					}
 				}
