@@ -2,11 +2,19 @@
 
 namespace RedditImageDownloader
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("Hello World!");
-        }
-    }
+	public class Program
+	{
+		public static void Main(string[] args)
+		{
+			var downloader = new RedditImageDownloader(args);
+			while (!downloader.IsReady)
+			{
+				downloader.AskForArguments();
+				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+			}
+			downloader.DownloadImages();
+			Console.WriteLine("Press any key to close the program.");
+			Console.ReadKey();
+		}
+	}
 }
