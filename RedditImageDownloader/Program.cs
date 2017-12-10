@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace RedditImageDownloader
 {
@@ -6,6 +7,7 @@ namespace RedditImageDownloader
 	{
 		public static void Main(string[] args)
 		{
+			Console.OutputEncoding = Encoding.UTF8;
 			var downloader = new RedditImageDownloader(args);
 			while (!downloader.IsReady)
 			{

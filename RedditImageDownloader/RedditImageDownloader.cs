@@ -134,13 +134,14 @@ namespace RedditImageDownloader
 				}
 				case string u when url.Contains(IMGUR) && url.Contains("_d") && url.Contains("maxwidth"):
 				{
+					//I don't know what the purpose of maxwidth is, but when it's in the url it always adds _d to the image id
+					//and if that's left in it makes the image really small, so that's why both get removed.
 					return u.Substring(0, u.IndexOf("?")).Replace("_d", "");
 				}
 				case string u when String.IsNullOrWhiteSpace(Path.GetExtension(url)):
 				{
 					return u + ".png";
 				}
-				//TODO: give preemptive errors for this
 				default:
 				{
 					return url;
@@ -157,7 +158,7 @@ namespace RedditImageDownloader
 			var element = 0;
 			foreach (var post in posts)
 			{
-				Console.WriteLine($"[{++element}] {post.Url}");
+				Console.WriteLine($"[#{++element}|\u2191{post.Score}] {post.Url}");
 				//Some links might have more than one image
 				foreach (var url in GetImageUrls(post.Url))
 				{
@@ -185,17 +186,17 @@ namespace RedditImageDownloader
 						var bitmap = new Bitmap(s);
 						if (bitmap == null)
 						{
-							Console.WriteLine($"{url} is not an image.");
+							Console.WriteLine($"\t{url} is not an image.");
 							return;
 						}
 						else if (bitmap.PhysicalDimension.Width < 200 || bitmap.PhysicalDimension.Height < 200)
 						{
-							Console.WriteLine($"{url} is too small.");
+							Console.WriteLine($"\t{url} is too small.");
 							return;
 						}
 
 						bitmap.Save(Path.Combine(this.Folder, url.Split('/').Last()), ImageFormat.Png);
-						Console.WriteLine($"Successfully downloaded {url}.");
+						Console.WriteLine($"\tSuccessfully downloaded {url}.");
 					}
 				}
 			}
