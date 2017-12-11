@@ -8,6 +8,7 @@ namespace ImageDL
 	{
 		public static void Main(string[] args)
 		{
+			//Test
 			Console.OutputEncoding = Encoding.UTF8;
 			var arguments = new RedditImageDownloaderArguments(args);
 			while (!arguments.IsReady)
