@@ -1,9 +1,9 @@
-﻿using MassDownloadImages.Enums;
+﻿using ImageDL.Enums;
 using System;
 using System.IO;
 using System.Linq;
 
-namespace MassDownloadImages.HelperClasses
+namespace ImageDL.HelperClasses
 {
 	/// <summary>
 	/// Methods which are used for uris.

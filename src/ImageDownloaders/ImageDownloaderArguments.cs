@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace MassDownloadImages.ImageDownloaders
+namespace ImageDL.ImageDownloaders
 {
 	/// <summary>
 	/// The arguments that <see cref="ImageDownloader{T}"/> uses.

@@ -1,4 +1,4 @@
-﻿namespace MassDownloadImages.ImageDownloaders.RedditDownloader
+﻿namespace ImageDL.ImageDownloaders.RedditDownloader
 {
 	/// <summary>
 	/// Provides the information for downloading images from reddit.

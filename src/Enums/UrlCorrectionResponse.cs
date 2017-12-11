@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MassDownloadImages.Enums
+namespace ImageDL.Enums
 {
 	/// <summary>
 	/// The response from <see cref="HelperClasses.UriHelper.CorrectUri(Uri, out Uri)"/>.

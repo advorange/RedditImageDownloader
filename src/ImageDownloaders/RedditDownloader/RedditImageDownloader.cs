@@ -1,13 +1,13 @@
-﻿using MassDownloadImages.Classes;
-using MassDownloadImages.Enums;
-using MassDownloadImages.HelperClasses;
+﻿using ImageDL.Classes;
+using ImageDL.Enums;
+using ImageDL.HelperClasses;
 using RedditSharp;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 
-namespace MassDownloadImages.ImageDownloaders.RedditDownloader
+namespace ImageDL.ImageDownloaders.RedditDownloader
 {
 	/// <summary>
 	/// Downloads images from reddit.

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MassDownloadImages.Classes
+namespace ImageDL.Classes
 {
 	/// <summary>
 	/// The uri in here links to a gif, video, webm, etc.

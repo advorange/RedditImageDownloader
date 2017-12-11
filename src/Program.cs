@@ -1,8 +1,8 @@
-﻿using MassDownloadImages.ImageDownloaders.RedditDownloader;
+﻿using ImageDL.ImageDownloaders.RedditDownloader;
 using System;
 using System.Text;
 
-namespace MassDownloadImages
+namespace ImageDL
 {
 	public class Program
 	{

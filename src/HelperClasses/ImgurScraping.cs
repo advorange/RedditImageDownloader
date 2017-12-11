@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace MassDownloadImages.HelperClasses
+namespace ImageDL.HelperClasses
 {
 	/// <summary>
 	/// Scrapes data from imgur.

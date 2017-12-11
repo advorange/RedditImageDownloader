@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MassDownloadImages
+namespace ImageDL
 {
 	/// <summary>
 	/// Methods that don't fit in any other class but are useful.

@@ -1,4 +1,4 @@
-﻿using MassDownloadImages.Classes;
+﻿using ImageDL.Classes;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 
-namespace MassDownloadImages.ImageDownloaders
+namespace ImageDL.ImageDownloaders
 {
 	/// <summary>
 	/// Downloads images from a site.
