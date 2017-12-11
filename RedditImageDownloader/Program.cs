@@ -1,20 +1,21 @@
-﻿using System;
+﻿using MassDownloadImages.ImageDownloaders.RedditDownloader;
+using System;
 using System.Text;
 
-namespace RedditImageDownloader
+namespace MassDownloadImages
 {
 	public class Program
 	{
 		public static void Main(string[] args)
 		{
 			Console.OutputEncoding = Encoding.UTF8;
-			var downloader = new RedditImageDownloader(args);
-			while (!downloader.IsReady)
+			var arguments = new RedditImageDownloaderArguments(args);
+			while (!arguments.IsReady)
 			{
-				downloader.AskForArguments();
-				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+				arguments.AskForArguments();
+				arguments.SetArguments(Console.ReadLine().SplitLikeCommandLine());
 			}
-			downloader.DownloadImages();
+			new RedditImageDownloader().Start(arguments);
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
 		}

@@ -55,11 +55,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HelperActions.cs" />
-    <Compile Include="ImgurScraper.cs" />
+    <Compile Include="Enums\UrlCorrectionResponse.cs" />
+    <Compile Include="HelperClasses\HelperActions.cs" />
+    <Compile Include="HelperClasses\ImgurScraping.cs" />
+    <Compile Include="Classes\Gif.cs" />
+    <Compile Include="ImageDownloaders\ImageDownloader.cs" />
+    <Compile Include="ImageDownloaders\ImageDownloaderArguments.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RedditImageDownloader.cs" />
+    <Compile Include="ImageDownloaders\RedditDownloader\RedditImageDownloader.cs" />
+    <Compile Include="ImageDownloaders\RedditDownloader\RedditImageDownloaderArguments.cs" />
+    <Compile Include="HelperClasses\UriHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
