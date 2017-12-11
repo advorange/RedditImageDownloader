@@ -39,6 +39,7 @@ namespace ImageDL.ImageDownloaders
 			var savePath = Path.Combine(directory.FullName, fileName);
 			if (File.Exists(savePath))
 			{
+				Console.WriteLine($"{fileName} is already saved.");
 				return;
 			}
 
@@ -92,17 +93,39 @@ namespace ImageDL.ImageDownloaders
 			{
 				return;
 			}
+			var fileInfo = new FileInfo(Path.Combine(directory.FullName, "Animated_Content.txt"));
 
-			var scoreLength = this._AnimatedContent.Max(x => x.Score).GetLengthOfNumber();
-			using (var writer = new FileInfo(Path.Combine(directory.FullName, "Animated_Content.txt")).AppendText())
+			//Only save links which are not already in the text document
+			var unsavedAnimatedContent = new List<AnimatedContent>();
+			using (var reader = new StreamReader(fileInfo.OpenRead()))
+			{
+				var text = reader.ReadToEnd();
+				foreach (var anim in this._AnimatedContent)
+				{
+					if (!text.Contains(anim.Uri.ToString()))
+					{
+						unsavedAnimatedContent.Add(anim);
+					}
+				}
+			}
+
+			if (!unsavedAnimatedContent.Any())
+			{
+				return;
+			}
+
+			//Save all the links then say how many were saved
+			var scoreLength = unsavedAnimatedContent.Max(x => x.Score).GetLengthOfNumber();
+			using (var writer = fileInfo.AppendText())
 			{
 				writer.WriteLine($"Animated Content - {HelperActions.FormatDateTimeForSaving()}");
-				foreach (var anim in this._AnimatedContent)
+				foreach (var anim in unsavedAnimatedContent)
 				{
 					writer.WriteLine($"{anim.Score.ToString().PadLeft(scoreLength, '0')} {anim.Uri}");
 				}
 				writer.WriteLine();
 			}
+			Console.WriteLine($"Added {unsavedAnimatedContent.Count()} links to {fileInfo.Name}.");
 		}
 	}
 }

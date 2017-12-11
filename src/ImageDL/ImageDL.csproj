@@ -58,7 +58,7 @@
     <Compile Include="Enums\UrlCorrectionResponse.cs" />
     <Compile Include="HelperClasses\HelperActions.cs" />
     <Compile Include="HelperClasses\ImgurScraping.cs" />
-    <Compile Include="Classes\Gif.cs" />
+    <Compile Include="Classes\AnimatedContent.cs" />
     <Compile Include="ImageDownloaders\ImageDownloader.cs" />
     <Compile Include="ImageDownloaders\ImageDownloaderArguments.cs" />
     <Compile Include="Program.cs" />
