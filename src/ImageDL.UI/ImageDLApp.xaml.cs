@@ -13,5 +13,9 @@ namespace ImageDL.UI
 	/// </summary>
 	public partial class ImageDLApp : Application
 	{
+		public ImageDLApp()
+		{
+			InitializeComponent();
+		}
 	}
 }

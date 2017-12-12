@@ -11,41 +11,69 @@
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
     <Grid x:Name="Layout">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="50*" />
-            <RowDefinition Height="5*" />
-        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="10*" />
             <ColumnDefinition Width="5*" />
         </Grid.ColumnDefinitions>
 
-        <Grid x:Name="ArgumentDisplayer">
+        <Border Grid.Column="0"
+                Grid.ColumnSpan="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Background="LightSlateGray">
+            <Grid x:Name="SiteSelector">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="15*" />
+                </Grid.RowDefinitions>
 
-        </Grid>
+                <Button Grid.Row="0">
+                    <Viewbox>
+                        <TextBlock>Reddit</TextBlock>
+                    </Viewbox>
+                </Button>
+                <Button Grid.Row="1">
+                    <Viewbox>
+                        <TextBlock>Placeholder</TextBlock>
+                    </Viewbox>
+                </Button>
+                <Button Grid.Row="2">
+                    <Viewbox>
+                        <TextBlock>Placeholder 2</TextBlock>
+                    </Viewbox>
+                </Button>
+            </Grid>
+        </Border>
 
-        <Grid x:Name="Buttons"
-              Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="4*" />
-                <ColumnDefinition Width="1*" />
-            </Grid.ColumnDefinitions>
+        <Border Grid.Column="1"
+                Grid.ColumnSpan="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Background="LightGray">
+            <Grid x:Name="ArgumentDisplayer"
+                  Grid.Column="1"
+                  Grid.ColumnSpan="1">
 
-            <Button>
-                Reddit
-            </Button>
-            <Button Grid.Column="1">
-                Tumblr
-            </Button>
-            <Button Grid.Column="2">
-                Placeholder
-            </Button>
-            <Button Grid.Column="4">
-                Start
-            </Button>
-        </Grid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Column="2"
+                Grid.ColumnSpan="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Background="White">
+            <Grid x:Name="OutputGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="Output"
+                           TextWrapping="Wrap">
+                        Text
+                </TextBlock>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
