@@ -56,7 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\FontResizeBehavior.cs" />
     <Compile Include="Enums\UrlCorrectionResponse.cs" />
     <Compile Include="HelperClasses\HelperActions.cs" />
     <Compile Include="HelperClasses\ImgurScraping.cs" />

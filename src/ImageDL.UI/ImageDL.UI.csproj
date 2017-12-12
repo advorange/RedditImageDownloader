@@ -58,6 +58,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="Properties.cs" />
     <Compile Include="ImageDLApp.xaml.cs">
       <DependentUpon>ImageDLApp.xaml</DependentUpon>
       <SubType>Code</SubType>
