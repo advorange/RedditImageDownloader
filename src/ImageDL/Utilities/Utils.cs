@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ImageDL
+namespace ImageDL.Utilities
 {
 	/// <summary>
 	/// Methods that don't fit in any other class but are useful.
 	/// </summary>
-	public static class HelperActions
+	public static class Utils
 	{
 		/// <summary>
 		/// Checks if two strings are equal case insensitively.
@@ -50,13 +50,13 @@ namespace ImageDL
 		/// <param name="input">The objects to order.</param>
 		/// <param name="keySelector">The property to order by.</param>
 		/// <returns>An ordered enumerable.</returns>
-		public static IEnumerable<T> OrderBy<T, TKey>(this IEnumerable<T> input, Func<T, TKey> keySelector)
+		public static IEnumerable<T> OrderByNonComparable<T, TKey>(this IEnumerable<T> input, Func<T, TKey> keySelector)
 			=> input.GroupBy(keySelector).SelectMany(x => x);
 		/// <summary>
 		/// Writes an exception to the console in <see cref="ConsoleColor.Red"/>.
 		/// </summary>
 		/// <param name="e">The passed in exception.</param>
-		public static void WriteException(Exception e)
+		public static void WriteException(this Exception e)
 		{
 			var currColor = Console.ForegroundColor;
 			Console.ForegroundColor = ConsoleColor.Red;

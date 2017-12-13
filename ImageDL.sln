@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL", "src\ImageDL\ImageDL.csproj", "{264231A5-7E95-4A4B-A668-157BD0C9F9D3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.UI", "src\ImageDL.UI\ImageDL.UI.csproj", "{4E70E3DB-F6F4-4146-8359-FBC1B694B68A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{264231A5-7E95-4A4B-A668-157BD0C9F9D3} = {264231A5-7E95-4A4B-A668-157BD0C9F9D3}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

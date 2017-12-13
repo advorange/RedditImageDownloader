@@ -3,7 +3,7 @@
 namespace ImageDL.Enums
 {
 	/// <summary>
-	/// The response from <see cref="HelperClasses.UriHelper.CorrectUri(Uri, out Uri)"/>.
+	/// The response from <see cref="HelperClasses.UriUtils.CorrectUri(Uri, out Uri)"/>.
 	/// </summary>
 	[Flags]
 	public enum UriCorrectionResponse : uint

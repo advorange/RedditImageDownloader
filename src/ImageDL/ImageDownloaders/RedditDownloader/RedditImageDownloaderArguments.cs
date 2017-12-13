@@ -10,19 +10,19 @@
 
 		public string Subreddit
 		{
-			get => this._Subreddit;
+			get => _Subreddit;
 			set
 			{
-				this._Subreddit = value;
+				_Subreddit = value;
 				AddArgumentToSetArguments();
 			}
 		}
 		public int ScoreThreshold
 		{
-			get => this._ScoreThreshold;
+			get => _ScoreThreshold;
 			set
 			{
-				this._ScoreThreshold = value;
+				_ScoreThreshold = value;
 				AddArgumentToSetArguments();
 			}
 		}

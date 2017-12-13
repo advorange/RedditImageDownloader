@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ImageDL.UI.Classes.Writers;
+using System;
+using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace ImageDL.UI
 {
@@ -23,6 +15,15 @@ namespace ImageDL.UI
 		public ImageDLWindow()
 		{
 			InitializeComponent();
+		}
+
+		private void Output_Loaded(object sender, RoutedEventArgs e)
+		{
+			Output.Document.Blocks.Clear();
+			Console.SetOut(new RichTextBoxStreamWriter(Output));
+			Console.WriteLine("https://www.google.com");
+			Console.WriteLine("test");
+			Console.WriteLine("test2");
 		}
 	}
 }

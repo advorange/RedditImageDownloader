@@ -1,6 +1,6 @@
 ﻿using ImageDL.Classes;
 using ImageDL.Enums;
-using ImageDL.HelperClasses;
+using ImageDL.Utilities;
 using RedditSharp;
 using System;
 using System.IO;
@@ -22,7 +22,7 @@ namespace ImageDL.ImageDownloaders.RedditDownloader
 		/// <param name="args">The supplied information about what to download.</param>
 		protected override void DownloadImages(RedditImageDownloaderArguments args)
 		{
-			var subreddit = this._Reddit.GetSubreddit(args.Subreddit);
+			var subreddit = _Reddit.GetSubreddit(args.Subreddit);
 			var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= args.ScoreThreshold);
 			var posts = validPosts.Take(args.AmountToDownload);
 
@@ -33,9 +33,9 @@ namespace ImageDL.ImageDownloaders.RedditDownloader
 				Thread.Sleep(25);
 				Console.WriteLine($"[#{++element}|\u2191{post.Score}] {post.Url}");
 				//Some links might have more than one image
-				foreach (var uri in UriHelper.GetImageUris(post.Url))
+				foreach (var uri in UriUtils.GetImageUris(post.Url))
 				{
-					switch (UriHelper.CorrectUri(uri, out var correctedUri))
+					switch (UriUtils.CorrectUri(uri, out var correctedUri))
 					{
 						case UriCorrectionResponse.Valid:
 						case UriCorrectionResponse.Unknown:
@@ -46,7 +46,7 @@ namespace ImageDL.ImageDownloaders.RedditDownloader
 						}
 						case UriCorrectionResponse.Animated:
 						{
-							this._AnimatedContent.Add(new AnimatedContent(correctedUri, post.Score));
+							_AnimatedContent.Add(new AnimatedContent(correctedUri, post.Score));
 							continue;
 						}
 						case UriCorrectionResponse.Invalid:

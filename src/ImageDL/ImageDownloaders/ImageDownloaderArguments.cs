@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageDL.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -26,9 +27,9 @@ namespace ImageDL.ImageDownloaders
 		};
 
 		protected PropertyInfo[] _Arguments = new PropertyInfo[0];
-		protected PropertyInfo[] _UnsetArguments => this._Arguments.Where(x => !this._SetArguments.Contains(x.Name)).ToArray();
+		protected PropertyInfo[] _UnsetArguments => _Arguments.Where(x => !_SetArguments.Contains(x.Name)).ToArray();
 		protected List<string> _SetArguments = new List<string>();
-		public bool IsReady => !this._UnsetArguments.Any();
+		public bool IsReady => !_UnsetArguments.Any();
 
 		private string _Folder;
 		private int _AmountToDownload;
@@ -40,28 +41,28 @@ namespace ImageDL.ImageDownloaders
 				throw new ArgumentException($"{nameof(type)} must be derived from {nameof(ImageDownloaderArguments)}.");
 			}
 
-			this._Arguments = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+			_Arguments = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
 				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
-				.OrderBy(x => x.PropertyType)
+				.OrderByNonComparable(x => x.PropertyType)
 				.ToArray();
 			SetArguments(args);
 		}
 
 		public string Folder
 		{
-			get => this._Folder;
+			get => _Folder;
 			set
 			{
-				this._Folder = value;
+				_Folder = value;
 				AddArgumentToSetArguments();
 			}
 		}
 		public int AmountToDownload
 		{
-			get => this._AmountToDownload;
+			get => _AmountToDownload;
 			set
 			{
-				this._AmountToDownload = value;
+				_AmountToDownload = value;
 				AddArgumentToSetArguments();
 			}
 		}
@@ -83,7 +84,7 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				//See if any arguments have the supplied name
-				var property = this._Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
+				var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
 				if (property == null)
 				{
 					Console.WriteLine($"{split[0]} is not a valid argument name.");
@@ -115,7 +116,7 @@ namespace ImageDL.ImageDownloaders
 		public void AskForArguments()
 		{
 			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var argument in this._UnsetArguments)
+			foreach (var argument in _UnsetArguments)
 			{
 				sb.AppendLine($"\t{argument.Name} ({argument.PropertyType.Name})");
 			}
@@ -123,9 +124,9 @@ namespace ImageDL.ImageDownloaders
 		}
 		protected void AddArgumentToSetArguments([CallerMemberName] string name = "")
 		{
-			if (!this._SetArguments.Contains(name))
+			if (!_SetArguments.Contains(name))
 			{
-				this._SetArguments.Add(name);
+				_SetArguments.Add(name);
 			}
 		}
 	}

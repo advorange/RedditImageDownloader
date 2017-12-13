@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace ImageDL.HelperClasses
+namespace ImageDL.Utilities
 {
 	/// <summary>
 	/// Scrapes data from imgur.
@@ -30,7 +30,7 @@ namespace ImageDL.HelperClasses
 			}
 			catch (Exception e)
 			{
-				HelperActions.WriteException(e);
+				e.WriteException();
 				return new Uri[0];
 			}
 		}

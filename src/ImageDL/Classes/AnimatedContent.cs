@@ -18,10 +18,10 @@ namespace ImageDL.Classes
 
 		public AnimatedContent(Uri uri, int score)
 		{
-			this.Uri = uri;
-			this.Score = score;
+			Uri = uri;
+			Score = score;
 		}
 		
-		public override string ToString() => $"{this.Score} {this.Uri}";
+		public override string ToString() => $"{Score} {Uri}";
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using ImageDL.ImageDownloaders.RedditDownloader;
+using ImageDL.Utilities;
 using System;
 using System.Text;
 
@@ -18,6 +19,7 @@ namespace ImageDL
 			new RedditImageDownloader().Start(arguments);
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
+			//TODO: image comparison by hashes then similarity?
 		}
 	}
 }

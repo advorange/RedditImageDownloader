@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes;
+using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -76,7 +77,7 @@ namespace ImageDL.ImageDownloaders
 			}
 			catch (Exception e)
 			{
-				HelperActions.WriteException(e);
+				e.WriteException();
 				using (var writer = new FileInfo(Path.Combine(directory.FullName, "FailedDownloads.txt")).AppendText())
 				{
 					writer.WriteLine(uri);
@@ -89,7 +90,7 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="directory">The folder to save to.</param>
 		protected void SaveFoundAnimatedContentUris(DirectoryInfo directory)
 		{
-			if (!this._AnimatedContent.Any())
+			if (!_AnimatedContent.Any())
 			{
 				return;
 			}
@@ -100,7 +101,7 @@ namespace ImageDL.ImageDownloaders
 			using (var reader = new StreamReader(fileInfo.OpenRead()))
 			{
 				var text = reader.ReadToEnd();
-				foreach (var anim in this._AnimatedContent)
+				foreach (var anim in _AnimatedContent)
 				{
 					if (!text.Contains(anim.Uri.ToString()))
 					{
@@ -118,7 +119,7 @@ namespace ImageDL.ImageDownloaders
 			var scoreLength = unsavedAnimatedContent.Max(x => x.Score).GetLengthOfNumber();
 			using (var writer = fileInfo.AppendText())
 			{
-				writer.WriteLine($"Animated Content - {HelperActions.FormatDateTimeForSaving()}");
+				writer.WriteLine($"Animated Content - {Utils.FormatDateTimeForSaving()}");
 				foreach (var anim in unsavedAnimatedContent)
 				{
 					writer.WriteLine($"{anim.Score.ToString().PadLeft(scoreLength, '0')} {anim.Uri}");

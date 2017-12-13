@@ -3,12 +3,12 @@ using System;
 using System.IO;
 using System.Linq;
 
-namespace ImageDL.HelperClasses
+namespace ImageDL.Utilities
 {
 	/// <summary>
 	/// Methods which are used for uris.
 	/// </summary>
-	public static class UriHelper
+	public static class UriUtils
 	{
 		private static string[] _AnimatedExtensions = new[]
 		{
@@ -26,6 +26,7 @@ namespace ImageDL.HelperClasses
 		{
 			".html",
 		};
+		//TODO: url correction for twitter
 		private static string[] _InvalidSites = new[]
 		{
 			"twitter",
