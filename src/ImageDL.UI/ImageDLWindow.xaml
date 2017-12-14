@@ -67,7 +67,7 @@
                     Grid.ColumnSpan="1"
                     BorderBrush="Black"
                     BorderThickness="1"
-                    Background="Black">
+                    Background="White">
                 <Grid x:Name="OutputGrid">
                     <controls:ImageDLRichTextBox x:Name="Output"
                                                  IsReadOnly="True"
@@ -76,8 +76,8 @@
                                                  FontResizeValue=".025"
                                                  VerticalScrollBarVisibility="Visible"
                                                  Loaded="Output_Loaded"
-                                                 Background="Black"
-                                                 Foreground="White">
+                                                 Background="White"
+                                                 Foreground="Black">
                         <RichTextBox.Resources>
                             <Style TargetType="{x:Type Paragraph}">
                                 <Setter Property="Margin"

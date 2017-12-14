@@ -62,17 +62,24 @@ namespace ImageDL.Utilities
 		/// <returns>A <see cref="UriCorrectionResponse"/> indicating the status of <paramref name="uri"/>.</returns>
 		public static UriCorrectionResponse CorrectUri(Uri uri, out Uri correctedUri)
 		{
-			switch (uri.ToString())
+			var str = uri.ToString();
+			//Anything after the question mark isn't necessary because it's optional arguments used by the website
+			if (str.CaseInsContains("?"))
+			{
+				str = str.Substring(0, str.IndexOf("?"));
+			}
+
+			switch (str)
 			{
 				//If it already has an extention then use that
 				case string u when Path.GetExtension(u) is string ext && !String.IsNullOrWhiteSpace(ext):
 				{
-					if (_AnimatedExtensions.Contains(ext))
+					if (_AnimatedExtensions.CaseInsContains(ext))
 					{
 						correctedUri = new Uri(u);
 						return UriCorrectionResponse.Animated;
 					}
-					else if (_InvalidExtensions.Contains(ext))
+					else if (_InvalidExtensions.CaseInsContains(ext))
 					{
 						correctedUri = null;
 						return UriCorrectionResponse.Invalid;
@@ -83,29 +90,77 @@ namespace ImageDL.Utilities
 						return UriCorrectionResponse.Valid;
 					}
 				}
-				case string u when _AnimatedSites.Any(x => u.Contains(x)):
+				case string u when _AnimatedSites.Any(x => u.CaseInsContains(x)):
 				{
 					correctedUri = new Uri(u);
 					return UriCorrectionResponse.Animated;
 				}
-				case string u when _InvalidSites.Any(x => u.Contains(x)):
+				case string u when _InvalidSites.Any(x => u.CaseInsContains(x)):
 				{
 					correctedUri = null;
 					return UriCorrectionResponse.Invalid;
 				}
-				case string u when u.Contains("imgur") && u.Contains("_d") && u.Contains("maxwidth"):
+				case string u when u.CaseInsContains("imgur.com"):
 				{
-					//I don't know what the purpose of maxwidth is, but when it's in the uri it always adds _d to the image id
-					//and if that's left in it makes the image really small, so that's why both get removed.
-					correctedUri = new Uri(u.Substring(0, u.IndexOf("?")).Replace("_d", ""));
-					return UriCorrectionResponse.Valid;
+					return CorrectImgurUri(uri, out correctedUri);
+				}
+				case string u when u.CaseInsContains("reddit.com") || u.CaseInsContains("redd.it"):
+				{
+					return CorrectRedditUri(uri, out correctedUri);
 				}
 				default:
 				{
-					correctedUri = new Uri(uri.ToString() + ".png");
+					correctedUri = uri;
 					return UriCorrectionResponse.Unknown;
 				}
 			}
 		}
+		/// <summary>
+		/// Decides whether or not an Imgur <see cref="Uri"/> is a valid image.
+		/// </summary>
+		/// <param name="uri">The passed in Imgur <see cref="Uri"/> to check.</param>
+		/// <param name="correctedUri">The corrected <see cref="Uri"/>.</param>
+		/// <returns>A <see cref="UriCorrectionResponse"/> indicating the status of <paramref name="uri"/>.</returns>
+		public static UriCorrectionResponse CorrectImgurUri(Uri uri, out Uri correctedUri)
+		{
+			var u = uri.ToString();
+
+			//Example: https://i.imgur.com/PxAqScg_d.jpg
+			//_d seems to make the image a thumbnail?
+			if (u.CaseInsContains("_d."))
+			{
+				u = u.Replace("_d.", ".");
+			}
+
+			correctedUri = new Uri(u);
+			return UriCorrectionResponse.Valid;
+		}
+		/// <summary>
+		/// Decides whether or not a reddit <see cref="Uri"/> is a valid image.
+		/// </summary>
+		/// <param name="uri">The passed in reddit <see cref="Uri"/> to check.</param>
+		/// <param name="correctedUri">The corrected <see cref="Uri"/>.</param>
+		/// <returns>A <see cref="UriCorrectionResponse"/> indicating the status of <paramref name="uri"/>.</returns>
+		public static UriCorrectionResponse CorrectRedditUri(Uri uri, out Uri correctedUri)
+		{
+			var u = uri.ToString();
+
+			if (u.CaseInsContains("v.redd.it"))
+			{
+				correctedUri = new Uri(u);
+				return UriCorrectionResponse.Animated;
+			}
+
+			correctedUri = new Uri(u);
+			return UriCorrectionResponse.Valid;
+		}
+		/// <summary>
+		/// Returns true if the passed in string is a valid Url.
+		/// </summary>
+		/// <param name="input">The uri to evaluate.</param>
+		/// <returns>A boolean indicating whether or not the string is a url.</returns>
+		public static bool GetIfStringIsValidUrl(string input) => !String.IsNullOrWhiteSpace(input)
+			&& Uri.TryCreate(input, UriKind.Absolute, out Uri uriResult)
+			&& (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 	}
 }

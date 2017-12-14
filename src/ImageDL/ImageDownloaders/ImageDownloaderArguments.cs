@@ -1,6 +1,7 @@
 ﻿using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -31,8 +32,26 @@ namespace ImageDL.ImageDownloaders
 		protected List<string> _SetArguments = new List<string>();
 		public bool IsReady => !_UnsetArguments.Any();
 
-		private string _Folder;
+		private string _Directory;
+		public string Directory
+		{
+			get => _Directory;
+			set
+			{
+				_Directory = value;
+				AddArgumentToSetArguments();
+			}
+		}
 		private int _AmountToDownload;
+		public int AmountToDownload
+		{
+			get => _AmountToDownload;
+			set
+			{
+				_AmountToDownload = value;
+				AddArgumentToSetArguments();
+			}
+		}
 
 		public ImageDownloaderArguments(string[] args, Type type)
 		{
@@ -46,25 +65,6 @@ namespace ImageDL.ImageDownloaders
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToArray();
 			SetArguments(args);
-		}
-
-		public string Folder
-		{
-			get => _Folder;
-			set
-			{
-				_Folder = value;
-				AddArgumentToSetArguments();
-			}
-		}
-		public int AmountToDownload
-		{
-			get => _AmountToDownload;
-			set
-			{
-				_AmountToDownload = value;
-				AddArgumentToSetArguments();
-			}
 		}
 
 		/// <summary>

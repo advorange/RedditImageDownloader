@@ -1,11 +1,11 @@
-﻿using System;
+﻿using ImageDL.UI.Utilities;
+using ImageDL.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -13,13 +13,30 @@ using System.Windows.Threading;
 
 namespace ImageDL.UI.Classes.Writers
 {
-    internal class RichTextBoxStreamWriter : TextWriter
+	internal class RichTextBoxStreamWriter : TextWriter
     {
+		private static readonly string[] _LinkStarters = new[]
+		{
+			"https://", "http://", "www."
+		};
+		private static readonly char[] _InvalidChars = new[]
+		{
+			'<',
+			'>',
+			':',
+			'"',
+			'/',
+			'\\',
+			'|',
+			'?',
+			'*',
+		};
+		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
+
 		private RichTextBox _RTB;
 		private string _CurrentLineText;
 
-		private const string HTTPS = "https://";
-		private static readonly SolidColorBrush _Clicked = (SolidColorBrush)(new BrushConverter().ConvertFrom("#551A8B"));
+		public override Encoding Encoding => Encoding.UTF32;
 
 		public RichTextBoxStreamWriter(RichTextBox rtb)
 		{
@@ -34,49 +51,175 @@ namespace ImageDL.UI.Classes.Writers
 			{
 				return;
 			}
-			else if (value.Equals('\n'))
+
+			_CurrentLineText += value;
+			if (value == '\n')
 			{
 				Write(_CurrentLineText);
 				_CurrentLineText = null;
 			}
-
-			_CurrentLineText += value;
 		}
 		public override void Write(string value)
 		{
 			//Rich text boxes have too much space if empty lines are allowed to be printed
-			value = value.Replace("\r", "");
-			if (value == null || value.Equals('\n'))
+			if (value == "\n")
 			{
 				return;
 			}
-			//Link
-			else if (value.Contains(HTTPS))
-			{
-				//var parts = new List<string>();
-				//var urls = new List<>
-				//var split = value.Split(new[] { HTTPS }, StringSplitOptions.None);
 
-				var hyperlink = new Hyperlink(new Run(value))
-				{
-					IsEnabled = true,
-					NavigateUri = new Uri(value),
-				};
-				hyperlink.RequestNavigate += (sender, e) =>
-				{
-					((Hyperlink)sender).Foreground = _Clicked;
-					Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
-					e.Handled = true;
-				};
-				var paragraph = new Paragraph(hyperlink);
-				_RTB.Dispatcher.InvokeAsync(() => _RTB.Document.Blocks.Add(paragraph), DispatcherPriority.ContextIdle);
-			}
-			//Plain text
-			else
+			foreach (var s in StitchFilePathsBackTogether(SplitStringByWhiteSpace(value)))
 			{
-				_RTB.Dispatcher.InvokeAsync(() => _RTB.AppendText(value), DispatcherPriority.ContextIdle);
+				//Link
+				if (_LinkStarters.Any(x => s.CaseInsStartsWith(x)) && UriUtils.GetIfStringIsValidUrl(s))
+				{
+					WriteHyperlink(CreateHyperlink(s));
+				}
+				//File
+				else if (File.Exists(s))
+				{
+					WriteHyperlink(CreateHyperlink(s));
+				}
+				//Plain text
+				else
+				{
+					WriteText(s);
+				}
 			}
 		}
-		public override Encoding Encoding => Encoding.UTF32;
+		private string[] SplitStringByWhiteSpace(string value)
+		{
+			var parts = new List<string>();
+			var sb = new StringBuilder();
+			foreach (var c in value)
+			{
+				if (Char.IsWhiteSpace(c))
+				{
+					parts.Add(sb.ToString());
+					sb.Clear();
+				}
+				sb.Append(c);
+			}
+			if (sb.Length != 0)
+			{
+				parts.Add(sb.ToString());
+			}
+			return parts.ToArray();
+		}
+		private string[] StitchFilePathsBackTogether(string[] parts)
+		{
+			//Example arguments:
+			//"c:\\dog" " pic.jpg" " lol" 
+			var paths = new List<(string Path, int Start, int End)>();
+			for (int i = 0; i < parts.Length; ++i)
+			{
+				//Will start with "c:\\dog"
+				var totalPath = parts[i];
+				//Gets the dir "c:\\"
+				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
+
+				//"c:\\dog" doesn't exist so this won't go in here.
+				//File.Exists cares if there is an extension of not. So "c:\\dog.jpg" wouldn't have been found either
+				if (File.Exists(totalPath))
+				{
+					paths.Add((totalPath, i, i));
+					continue;
+				}
+				//"c:\\" exists so keeps going
+				else if (!Directory.Exists(currDir))
+				{
+					continue;
+				}
+
+				//Starts searching for files or folders which have their names start with "dog"
+				var searchFor = totalPath.Substring(currDir.Length + 1);
+				for (int j = i + 1; j < parts.Length; ++j)
+				{
+					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
+					searchFor += parts[j];
+
+					//See if any files match the current string
+					//Ends up finding "c:\\dog pic.jpg"
+					var fileMatches = Directory.EnumerateFiles(currDir, $"{searchFor.TrimEnd()}*", SearchOption.TopDirectoryOnly);
+					if (!fileMatches.Any())
+					{
+						continue;
+					}
+
+					//If there are any file matches, only look at those. If they all fail then get out of this iteration
+					//Combines "c:\\" with "dog pic.jpg" to get the path of "c:\\dog pic.jpg"
+					var fileTotalPath = Path.Combine(currDir, searchFor);
+					for (int k = j + 1; k < parts.Length; ++k)
+					{
+						//First iteration checks if "c:\\dog pic.jpg" exists. It does, so returns
+						if (File.Exists(fileTotalPath.TrimEnd()))
+						{
+							paths.Add((fileTotalPath.TrimEnd(), i, k - 1));
+							i = j;
+							break;
+						}
+						//If we were searching for "c:\\dog pic 400.jpg" it would loop around once more in the j loop and in the k loop
+						fileTotalPath += parts[k];
+					}
+					break;
+				}
+			}
+
+			//No paths were found so just return the starting array
+			if (!paths.Any())
+			{
+				return parts;
+			}
+
+			var returnValue = new List<string>();
+			for (int i = 0; i < parts.Length; ++i)
+			{
+				var path = paths.SingleOrDefault(x => x.Start == i);
+				if (String.IsNullOrWhiteSpace(path.Path))
+				{
+					returnValue.Add(parts[i]);
+					continue;
+				}
+
+				//Add the path in to the return values
+				returnValue.Add(path.Path);
+				//Remove it from the front so the next path can be gotten easily
+				paths.RemoveAt(0);
+				//Set the end value because all the stuff before that should be skipped since it was added to the path
+				i = path.End;
+			}
+			return returnValue.ToArray();
+		}
+		private Hyperlink CreateHyperlink(string value)
+		{
+			var hyperlink = new Hyperlink(new Run(value))
+			{
+				IsEnabled = true,
+				NavigateUri = new Uri(value),
+			};
+			hyperlink.RequestNavigate += (sender, e) =>
+			{
+				((Hyperlink)sender).Foreground = _Clicked;
+				Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+				e.Handled = true;
+			};
+			return hyperlink;
+		}
+		private void WriteHyperlink(Hyperlink link)
+			=> _RTB.Dispatcher.InvokeAsync(() =>
+			{
+				if (_RTB.Document.Blocks.LastBlock is Paragraph para)
+				{
+					para.Inlines.Add(link);
+				}
+				else
+				{
+					_RTB.Document.Blocks.Add(new Paragraph(link) {  });
+				}
+			}, DispatcherPriority.ContextIdle);
+		private void WriteText(string text)
+			=> _RTB.Dispatcher.InvokeAsync(() =>
+			{
+				_RTB.AppendText(text);
+			}, DispatcherPriority.ContextIdle);
 	}
 }

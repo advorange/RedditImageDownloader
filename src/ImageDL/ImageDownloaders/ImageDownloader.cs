@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes;
+using ImageDL.Enums;
 using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
@@ -7,27 +8,58 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 
 namespace ImageDL.ImageDownloaders
 {
 	/// <summary>
 	/// Downloads images from a site.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public abstract class ImageDownloader<T> where T : ImageDownloaderArguments
+	/// <typeparam name="TArgs"></typeparam>
+	public abstract class ImageDownloader<TArgs, TPost> where TArgs : ImageDownloaderArguments
 	{
-		protected List<AnimatedContent> _AnimatedContent = new List<AnimatedContent>();
+		private List<AnimatedContent> _AnimatedContent = new List<AnimatedContent>();
 
 		/// <summary>
 		/// Downloads all the images that match <paramref name="args"/> then saves all the found animated content.
 		/// </summary>
 		/// <param name="args">The arguments to use when searching for images.</param>
-		public void Start(T args)
+		public void Start(TArgs args)
 		{
-			DownloadImages(args);
-			SaveFoundAnimatedContentUris(new DirectoryInfo(args.Folder));
+			var count = 1;
+			foreach (var post in GatherPosts(args))
+			{
+				Thread.Sleep(25);
+				WritePostToConsole(post, ++count);
+				foreach (var imageUri in GatherImages(post))
+				{
+					switch (UriUtils.CorrectUri(imageUri, out var correctedUri))
+					{
+						case UriCorrectionResponse.Valid:
+						case UriCorrectionResponse.Unknown:
+						{
+							DownloadImage(correctedUri, new DirectoryInfo(args.Directory), GenerateFileName(post, correctedUri));
+							continue;
+						}
+						case UriCorrectionResponse.Animated:
+						{
+							_AnimatedContent.Add(StoreAnimatedContentLink(post, correctedUri));
+							continue;
+						}
+						case UriCorrectionResponse.Invalid:
+						{
+							continue;
+						}
+					}
+				}
+			}
+			SaveFoundAnimatedContentUris(new DirectoryInfo(args.Directory));
 		}
-		protected abstract void DownloadImages(T args);
+		protected abstract IEnumerable<TPost> GatherPosts(TArgs args);
+		protected abstract IEnumerable<Uri> GatherImages(TPost post);
+		protected abstract void WritePostToConsole(TPost post, int count);
+		protected abstract string GenerateFileName(TPost post, Uri uri);
+		protected abstract AnimatedContent StoreAnimatedContentLink(TPost post, Uri uri);
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it.
 		/// </summary>
@@ -40,7 +72,7 @@ namespace ImageDL.ImageDownloaders
 			var savePath = Path.Combine(directory.FullName, fileName);
 			if (File.Exists(savePath))
 			{
-				Console.WriteLine($"{fileName} is already saved.");
+				Console.WriteLine($"\t{fileName} is already saved.");
 				return;
 			}
 
@@ -72,7 +104,7 @@ namespace ImageDL.ImageDownloaders
 					}
 
 					bitmap.Save(savePath, ImageFormat.Png);
-					Console.WriteLine($"\tSuccessfully downloaded {uri}.");
+					Console.WriteLine($"\tSaved {uri} to {savePath}.");
 				}
 			}
 			catch (Exception e)
@@ -98,16 +130,25 @@ namespace ImageDL.ImageDownloaders
 
 			//Only save links which are not already in the text document
 			var unsavedAnimatedContent = new List<AnimatedContent>();
-			using (var reader = new StreamReader(fileInfo.OpenRead()))
+			if (fileInfo.Exists)
 			{
-				var text = reader.ReadToEnd();
-				foreach (var anim in _AnimatedContent)
+				using (var reader = new StreamReader(fileInfo.OpenRead()))
 				{
-					if (!text.Contains(anim.Uri.ToString()))
+					var text = reader.ReadToEnd();
+					foreach (var anim in _AnimatedContent)
 					{
+						if (text.Contains(anim.Uri.ToString()))
+						{
+							continue;
+						}
+
 						unsavedAnimatedContent.Add(anim);
 					}
 				}
+			}
+			else
+			{
+				unsavedAnimatedContent = _AnimatedContent;
 			}
 
 			if (!unsavedAnimatedContent.Any())

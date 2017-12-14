@@ -1,61 +1,33 @@
 ﻿using ImageDL.Classes;
-using ImageDL.Enums;
 using ImageDL.Utilities;
 using RedditSharp;
+using RedditSharp.Things;
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace ImageDL.ImageDownloaders.RedditDownloader
 {
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public class RedditImageDownloader : ImageDownloader<RedditImageDownloaderArguments>
+	public sealed class RedditImageDownloader : ImageDownloader<RedditImageDownloaderArguments, Post>
 	{
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
-		/// <summary>
-		/// Download images with the supplied arguments.
-		/// </summary>
-		/// <param name="args">The supplied information about what to download.</param>
-		protected override void DownloadImages(RedditImageDownloaderArguments args)
+		protected override IEnumerable<Post> GatherPosts(RedditImageDownloaderArguments args)
 		{
 			var subreddit = _Reddit.GetSubreddit(args.Subreddit);
 			var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= args.ScoreThreshold);
-			var posts = validPosts.Take(args.AmountToDownload);
-
-			//Look through each post
-			var element = 0;
-			foreach (var post in posts)
-			{
-				Thread.Sleep(25);
-				Console.WriteLine($"[#{++element}|\u2191{post.Score}] {post.Url}");
-				//Some links might have more than one image
-				foreach (var uri in UriUtils.GetImageUris(post.Url))
-				{
-					switch (UriUtils.CorrectUri(uri, out var correctedUri))
-					{
-						case UriCorrectionResponse.Valid:
-						case UriCorrectionResponse.Unknown:
-						{
-							var fileName = $"{post.Shortlink.Split('/').Last()}_{correctedUri.ToString().Split('/').Last()}";
-							DownloadImage(correctedUri, new DirectoryInfo(args.Folder), fileName);
-							continue;
-						}
-						case UriCorrectionResponse.Animated:
-						{
-							_AnimatedContent.Add(new AnimatedContent(correctedUri, post.Score));
-							continue;
-						}
-						case UriCorrectionResponse.Invalid:
-						{
-							continue;
-						}
-					}
-				}
-			}
+			return validPosts.Take(args.AmountToDownload);
 		}
+		protected override IEnumerable<Uri> GatherImages(Post post)
+			=> UriUtils.GetImageUris(post.Url);
+		protected override void WritePostToConsole(Post post, int count)
+			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
+		protected override string GenerateFileName(Post post, Uri uri)
+			=> $"{post.Shortlink.Split('/').Last()}_{uri.ToString().Split('/').Last()}";
+		protected override AnimatedContent StoreAnimatedContentLink(Post post, Uri uri)
+			=> new AnimatedContent(uri, post.Score);
 	}
 }
