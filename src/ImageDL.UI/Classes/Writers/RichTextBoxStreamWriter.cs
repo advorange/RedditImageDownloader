@@ -15,22 +15,6 @@ namespace ImageDL.UI.Classes.Writers
 {
 	internal class RichTextBoxStreamWriter : TextWriter
     {
-		private static readonly string[] _LinkStarters = new[]
-		{
-			"https://", "http://", "www."
-		};
-		private static readonly char[] _InvalidChars = new[]
-		{
-			'<',
-			'>',
-			':',
-			'"',
-			'/',
-			'\\',
-			'|',
-			'?',
-			'*',
-		};
 		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
 
 		private RichTextBox _RTB;
@@ -61,16 +45,15 @@ namespace ImageDL.UI.Classes.Writers
 		}
 		public override void Write(string value)
 		{
-			//Rich text boxes have too much space if empty lines are allowed to be printed
-			if (value == "\n")
-			{
-				return;
-			}
-
 			foreach (var s in StitchFilePathsBackTogether(SplitStringByWhiteSpace(value)))
 			{
+				//Rich text boxes have too much space if empty lines are allowed to be printed
+				if (s == "\n")
+				{
+					return;
+				}
 				//Link
-				if (_LinkStarters.Any(x => s.CaseInsStartsWith(x)) && UriUtils.GetIfStringIsValidUrl(s))
+				else if (UriUtils.GetIfStringIsValidUrl(s))
 				{
 					WriteHyperlink(CreateHyperlink(s));
 				}
@@ -112,30 +95,38 @@ namespace ImageDL.UI.Classes.Writers
 			var paths = new List<(string Path, int Start, int End)>();
 			for (int i = 0; i < parts.Length; ++i)
 			{
-				//Will start with "c:\\dog"
-				var totalPath = parts[i];
-				//Gets the dir "c:\\"
-				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
-
-				//"c:\\dog" doesn't exist so this won't go in here.
-				//File.Exists cares if there is an extension of not. So "c:\\dog.jpg" wouldn't have been found either
-				if (File.Exists(totalPath))
+				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
+				if (!parts[i].Contains(":\\"))
 				{
-					paths.Add((totalPath, i, i));
 					continue;
 				}
-				//"c:\\" exists so keeps going
-				else if (!Directory.Exists(currDir))
+				//"c:\\dog" doesn't exist so this won't go in here.
+				//File.Exists cares if there is an extension, so "c:\\dog.jpg" wouldn't have been found either
+				else if (File.Exists(parts[i]))
+				{
+					paths.Add((parts[i], i, i));
+					continue;
+				}
+
+				//Will start with "c:\\dog", then gets the dir "c:\\"
+				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
+				//"c:\\" exists so keeps going. If the first directory doesn't exist then there's no point in showing any more
+				if (!Directory.Exists(currDir))
 				{
 					continue;
 				}
 
 				//Starts searching for files or folders which have their names start with "dog"
-				var searchFor = totalPath.Substring(currDir.Length + 1);
+				var searchFor = parts[i].Substring(currDir.Length + 1);
 				for (int j = i + 1; j < parts.Length; ++j)
 				{
 					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
-					searchFor += parts[j];
+					var add = parts[j];
+					if (add.Contains(":"))
+					{
+						add = add.Substring(0, add.IndexOf(':'));
+					}
+					searchFor += add;
 
 					//See if any files match the current string
 					//Ends up finding "c:\\dog pic.jpg"
@@ -170,24 +161,57 @@ namespace ImageDL.UI.Classes.Writers
 				return parts;
 			}
 
-			var returnValue = new List<string>();
+			var returnValues = new List<string>();
 			for (int i = 0; i < parts.Length; ++i)
 			{
 				var path = paths.SingleOrDefault(x => x.Start == i);
 				if (String.IsNullOrWhiteSpace(path.Path))
 				{
-					returnValue.Add(parts[i]);
+					returnValues.Add(parts[i]);
 					continue;
 				}
+				returnValues.AddRange(SeparateWhiteSpaceFromPath(path.Path));
 
-				//Add the path in to the return values
-				returnValue.Add(path.Path);
-				//Remove it from the front so the next path can be gotten easily
-				paths.RemoveAt(0);
 				//Set the end value because all the stuff before that should be skipped since it was added to the path
 				i = path.End;
 			}
-			return returnValue.ToArray();
+			return returnValues.ToArray();
+		}
+		private string[] SeparateWhiteSpaceFromPath(string path)
+		{
+			string beforeWhiteSpace = null;
+			for (int j = 0; j < path.Length; ++j)
+			{
+				var c = path[j];
+				if (!Char.IsWhiteSpace(c))
+				{
+					break;
+				}
+				beforeWhiteSpace += c;
+			}
+			string afterWhiteSpace = null;
+			for (int j = path.Length - 1; j > 0; --j)
+			{
+				var c = path[j];
+				if (!Char.IsWhiteSpace(c))
+				{
+					break;
+				}
+				afterWhiteSpace = c + afterWhiteSpace;
+			}
+
+			var returnValues = new List<string>();
+			if (beforeWhiteSpace != null)
+			{
+				returnValues.Add(beforeWhiteSpace);
+			}
+			//Add the path in to the return values
+			returnValues.Add(path.Trim());
+			if (afterWhiteSpace != null)
+			{
+				returnValues.Add(afterWhiteSpace);
+			}
+			return returnValues.ToArray();
 		}
 		private Hyperlink CreateHyperlink(string value)
 		{
@@ -199,7 +223,14 @@ namespace ImageDL.UI.Classes.Writers
 			hyperlink.RequestNavigate += (sender, e) =>
 			{
 				((Hyperlink)sender).Foreground = _Clicked;
-				Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+				try
+				{
+					Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
+				}
+				catch (Exception exc)
+				{
+					exc.WriteException();
+				}
 				e.Handled = true;
 			};
 			return hyperlink;

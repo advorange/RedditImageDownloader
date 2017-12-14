@@ -73,7 +73,7 @@
                                                  IsReadOnly="True"
                                                  IsDocumentEnabled="True"
                                                  BorderThickness="0"
-                                                 FontResizeValue=".025"
+                                                 FontResizeValue=".020"
                                                  VerticalScrollBarVisibility="Visible"
                                                  Loaded="Output_Loaded"
                                                  Background="White"
