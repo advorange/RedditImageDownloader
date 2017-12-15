@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
 {
@@ -21,16 +22,17 @@ namespace ImageDL.ImageDownloaders
 		private List<AnimatedContent> _AnimatedContent = new List<AnimatedContent>();
 
 		/// <summary>
-		/// Downloads all the images that match <paramref name="args"/> then saves all the found animated content.
+		/// Downloads all the images that match <paramref name="args"/> then saves all the found animated content links.
 		/// </summary>
 		/// <param name="args">The arguments to use when searching for images.</param>
-		public void Start(TArgs args)
+		public async Task StartAsync(TArgs args)
 		{
-			var count = 1;
+			var count = 0;
 			foreach (var post in GatherPosts(args))
 			{
 				Thread.Sleep(25);
 				WritePostToConsole(post, ++count);
+				var dir = new DirectoryInfo(args.Directory);
 				foreach (var imageUri in GatherImages(post))
 				{
 					switch (UriUtils.CorrectUri(imageUri, out var correctedUri))
@@ -38,7 +40,8 @@ namespace ImageDL.ImageDownloaders
 						case UriCorrectionResponse.Valid:
 						case UriCorrectionResponse.Unknown:
 						{
-							DownloadImage(correctedUri, new DirectoryInfo(args.Directory), GenerateFileName(post, correctedUri));
+							var name = GenerateFileName(post, correctedUri);
+							await DownloadImageAsync(args, correctedUri, dir, name);
 							continue;
 						}
 						case UriCorrectionResponse.Animated:
@@ -66,7 +69,7 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="uri">The image location.</param>
 		/// <param name="directory">The directory to save to.</param>
 		/// <param name="fileName">The name to give it.</param>
-		protected void DownloadImage(Uri uri, DirectoryInfo directory, string fileName)
+		protected async Task DownloadImageAsync(TArgs args, Uri uri, DirectoryInfo directory, string fileName)
 		{
 			//Don't bother redownloading files
 			var savePath = Path.Combine(directory.FullName, fileName);
@@ -81,29 +84,28 @@ namespace ImageDL.ImageDownloaders
 				var req = (HttpWebRequest)WebRequest.Create(uri);
 				req.Timeout = 5000;
 				req.ReadWriteTimeout = 5000;
-				using (var resp = req.GetResponse())
+				using (var resp = await req.GetResponseAsync())
 				using (var s = resp.GetResponseStream())
+				using (var bm = new Bitmap(s))
 				{
 					if (!resp.ContentType.Contains("image"))
 					{
 						Console.WriteLine($"\t{uri} is not an image.");
 						return;
 					}
-
-					var bitmap = new Bitmap(s);
-					if (bitmap == null)
+					else if (bm == default(Bitmap))
 					{
 						Console.WriteLine($"\t{uri} is unable to be created as a Bitmap and cannot be saved.");
 						return;
 					}
-					//TODO: supply these as arguments
-					else if (bitmap.PhysicalDimension.Width < 200 || bitmap.PhysicalDimension.Height < 200)
+					else if (bm.PhysicalDimension.Width < args.MinWidth || bm.PhysicalDimension.Height < args.MinHeight)
 					{
 						Console.WriteLine($"\t{uri} is too small.");
 						return;
 					}
 
-					bitmap.Save(savePath, ImageFormat.Png);
+					//TODO: async save?
+					bm.Save(savePath, ImageFormat.Png);
 					Console.WriteLine($"\tSaved {uri} to {savePath}.");
 				}
 			}
@@ -112,7 +114,7 @@ namespace ImageDL.ImageDownloaders
 				e.WriteException();
 				using (var writer = new FileInfo(Path.Combine(directory.FullName, "FailedDownloads.txt")).AppendText())
 				{
-					writer.WriteLine(uri);
+					await writer.WriteLineAsync(uri.ToString());
 				}
 			}
 		}

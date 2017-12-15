@@ -29,6 +29,12 @@ namespace ImageDL.UI
 			Console.WriteLine(@"C:\Users\Nate\Downloads\New folder (2)\7jk5uh_fvepwxiwop3011.jpg (Nonexistent, very similar file name but longer)");
 			Console.WriteLine(@"C:\Users\Nate\Downloads\New folder (2)\7jn0ts_4llj7otxnr301.jpg C:\Users\Nate\Downloads\New folder (2)\7jjbnn_wyde7f0p2p301.jpg (Two in one)");
 			Console.WriteLine(@"C:\test\7jk5uh fvepwxiwop301.jpg C:\test\7jk5uh.jpg (Names that are way too close)");
+
+			/*
+			for (int i = 0; i < 1000; ++i)
+			{
+				Console.WriteLine(i);
+			}*/
 		}
 	}
 }

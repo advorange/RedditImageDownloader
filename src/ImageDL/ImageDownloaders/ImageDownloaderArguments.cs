@@ -30,7 +30,18 @@ namespace ImageDL.ImageDownloaders
 		protected PropertyInfo[] _Arguments = new PropertyInfo[0];
 		protected PropertyInfo[] _UnsetArguments => _Arguments.Where(x => !_SetArguments.Contains(x.Name)).ToArray();
 		protected List<string> _SetArguments = new List<string>();
-		public bool IsReady => !_UnsetArguments.Any();
+		public bool IsReady
+		{
+			get
+			{
+				if (!System.IO.Directory.Exists(Directory))
+				{
+					Console.WriteLine($"{Directory} does not exist as a directory.");
+					return false;
+				}
+				return !_UnsetArguments.Any();
+			}
+		}
 
 		private string _Directory;
 		public string Directory
@@ -45,10 +56,30 @@ namespace ImageDL.ImageDownloaders
 		private int _AmountToDownload;
 		public int AmountToDownload
 		{
-			get => _AmountToDownload;
+			get => Math.Max(1, _AmountToDownload);
 			set
 			{
 				_AmountToDownload = value;
+				AddArgumentToSetArguments();
+			}
+		}
+		private int _MinWidth;
+		public int MinWidth
+		{
+			get => _MinWidth;
+			set
+			{
+				_MinWidth = value;
+				AddArgumentToSetArguments();
+			}
+		}
+		private int _MinHeight;
+		public int MinHeight
+		{
+			get => _MinHeight;
+			set
+			{
+				_MinHeight = value;
 				AddArgumentToSetArguments();
 			}
 		}
@@ -115,6 +146,11 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		public void AskForArguments()
 		{
+			if (!_UnsetArguments.Any())
+			{
+				return;
+			}
+
 			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
 			foreach (var argument in _UnsetArguments)
 			{

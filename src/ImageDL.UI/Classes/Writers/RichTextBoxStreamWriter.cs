@@ -1,24 +1,20 @@
-﻿using ImageDL.UI.Utilities;
-using ImageDL.Utilities;
+﻿using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace ImageDL.UI.Classes.Writers
 {
 	internal class RichTextBoxStreamWriter : TextWriter
-    {
-		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
-
+	{
 		private RichTextBox _RTB;
 		private string _CurrentLineText;
+		private DispatcherPriority _Priority = DispatcherPriority.Background;
 
 		public override Encoding Encoding => Encoding.UTF32;
 
@@ -45,27 +41,22 @@ namespace ImageDL.UI.Classes.Writers
 		}
 		public override void Write(string value)
 		{
-			foreach (var s in StitchFilePathsBackTogether(SplitStringByWhiteSpace(value)))
+			foreach (var t in JoinEverythingBackTogether(StitchFilePathsBackTogether(SplitStringByWhiteSpace(value))))
 			{
 				//Rich text boxes have too much space if empty lines are allowed to be printed
-				if (s == "\n")
+				if (t.Text == "\n")
 				{
 					return;
 				}
-				//Link
-				else if (UriUtils.GetIfStringIsValidUrl(s))
+				//File or link
+				else if (t.IsUri)
 				{
-					WriteHyperlink(CreateHyperlink(s));
-				}
-				//File
-				else if (File.Exists(s))
-				{
-					WriteHyperlink(CreateHyperlink(s));
+					WriteHyperlink(new HyperlinkWrapper(t.Text));
 				}
 				//Plain text
 				else
 				{
-					WriteText(s);
+					WriteText(t.Text);
 				}
 			}
 		}
@@ -92,7 +83,7 @@ namespace ImageDL.UI.Classes.Writers
 		{
 			//Example arguments:
 			//"c:\\dog" " pic.jpg" " lol" 
-			var paths = new List<(string Path, int Start, int End)>();
+			var paths = new List<FilePath>();
 			for (int i = 0; i < parts.Length; ++i)
 			{
 				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
@@ -102,12 +93,12 @@ namespace ImageDL.UI.Classes.Writers
 				}
 				//"c:\\dog" doesn't exist so this won't go in here.
 				//File.Exists cares if there is an extension, so "c:\\dog.jpg" wouldn't have been found either
-				else if (File.Exists(parts[i]))
+				var firstFileCheck = new FileInfo(parts[i]);
+				if (firstFileCheck.Exists)
 				{
-					paths.Add((parts[i], i, i));
+					paths.Add(new FilePath(firstFileCheck, i, i));
 					continue;
 				}
-
 				//Will start with "c:\\dog", then gets the dir "c:\\"
 				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
 				//"c:\\" exists so keeps going. If the first directory doesn't exist then there's no point in showing any more
@@ -121,12 +112,7 @@ namespace ImageDL.UI.Classes.Writers
 				for (int j = i + 1; j < parts.Length; ++j)
 				{
 					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
-					var add = parts[j];
-					if (add.Contains(":"))
-					{
-						add = add.Substring(0, add.IndexOf(':'));
-					}
-					searchFor += add;
+					searchFor += parts[j].Contains(':') ? parts[j].Substring(0, parts[j].IndexOf(':')) : parts[j];
 
 					//See if any files match the current string
 					//Ends up finding "c:\\dog pic.jpg"
@@ -142,9 +128,10 @@ namespace ImageDL.UI.Classes.Writers
 					for (int k = j + 1; k < parts.Length; ++k)
 					{
 						//First iteration checks if "c:\\dog pic.jpg" exists. It does, so returns
-						if (File.Exists(fileTotalPath.TrimEnd()))
+						var secondFileCheck = new FileInfo(fileTotalPath.TrimEnd());
+						if (secondFileCheck.Exists)
 						{
-							paths.Add((fileTotalPath.TrimEnd(), i, k - 1));
+							paths.Add(new FilePath(secondFileCheck, i, k - 1));
 							i = j;
 							break;
 						}
@@ -170,70 +157,53 @@ namespace ImageDL.UI.Classes.Writers
 					returnValues.Add(parts[i]);
 					continue;
 				}
-				returnValues.AddRange(SeparateWhiteSpaceFromPath(path.Path));
+				returnValues.AddRange(SeparateExtraTextFromPath(path.FullText, path.Path));
 
 				//Set the end value because all the stuff before that should be skipped since it was added to the path
 				i = path.End;
 			}
 			return returnValues.ToArray();
 		}
-		private string[] SeparateWhiteSpaceFromPath(string path)
+		private string[] SeparateExtraTextFromPath(string text, string path)
 		{
-			string beforeWhiteSpace = null;
-			for (int j = 0; j < path.Length; ++j)
-			{
-				var c = path[j];
-				if (!Char.IsWhiteSpace(c))
-				{
-					break;
-				}
-				beforeWhiteSpace += c;
-			}
-			string afterWhiteSpace = null;
-			for (int j = path.Length - 1; j > 0; --j)
-			{
-				var c = path[j];
-				if (!Char.IsWhiteSpace(c))
-				{
-					break;
-				}
-				afterWhiteSpace = c + afterWhiteSpace;
-			}
-
+			var splitByPath = text.Split(new[] { path }, StringSplitOptions.None);
 			var returnValues = new List<string>();
-			if (beforeWhiteSpace != null)
+			if (splitByPath.Length > 0)
 			{
-				returnValues.Add(beforeWhiteSpace);
+				returnValues.Add(splitByPath[0]);
 			}
 			//Add the path in to the return values
 			returnValues.Add(path.Trim());
-			if (afterWhiteSpace != null)
+			if (splitByPath.Length > 1)
 			{
-				returnValues.Add(afterWhiteSpace);
+				returnValues.Add(splitByPath[1]);
 			}
 			return returnValues.ToArray();
 		}
-		private Hyperlink CreateHyperlink(string value)
+		private OutputText[] JoinEverythingBackTogether(string[] parts)
 		{
-			var hyperlink = new Hyperlink(new Run(value))
+			var returnValues = new List<OutputText>();
+			var currentPart = new StringBuilder();
+			foreach (var part in parts)
 			{
-				IsEnabled = true,
-				NavigateUri = new Uri(value),
-			};
-			hyperlink.RequestNavigate += (sender, e) =>
+				if (!File.Exists(part) && !UriUtils.GetIfStringIsValidUrl(part))
+				{
+					currentPart.Append(part);
+					continue;
+				}
+
+				if (currentPart.Length != 0)
+				{
+					returnValues.Add(new OutputText(currentPart.ToString(), false));
+					currentPart.Clear();
+				}
+				returnValues.Add(new OutputText(part, true));
+			}
+			if (currentPart.Length != 0)
 			{
-				((Hyperlink)sender).Foreground = _Clicked;
-				try
-				{
-					Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
-				}
-				catch (Exception exc)
-				{
-					exc.WriteException();
-				}
-				e.Handled = true;
-			};
-			return hyperlink;
+				returnValues.Add(new OutputText(currentPart.ToString(), false));
+			}
+			return returnValues.ToArray();
 		}
 		private void WriteHyperlink(Hyperlink link)
 			=> _RTB.Dispatcher.InvokeAsync(() =>
@@ -244,13 +214,40 @@ namespace ImageDL.UI.Classes.Writers
 				}
 				else
 				{
-					_RTB.Document.Blocks.Add(new Paragraph(link) {  });
+					_RTB.Document.Blocks.Add(new Paragraph(link));
 				}
-			}, DispatcherPriority.ContextIdle);
+			}, _Priority);
 		private void WriteText(string text)
 			=> _RTB.Dispatcher.InvokeAsync(() =>
 			{
 				_RTB.AppendText(text);
-			}, DispatcherPriority.ContextIdle);
+			}, _Priority);
+
+		private struct FilePath
+		{
+			public readonly string FullText;
+			public readonly string Path;
+			public readonly int Start;
+			public readonly int End;
+
+			public FilePath(FileInfo fileInfo, int start, int end)
+			{
+				FullText = fileInfo.ToString();
+				Path = fileInfo.FullName;
+				Start = start;
+				End = end;
+			}
+		}
+		private struct OutputText
+		{
+			public readonly string Text;
+			public readonly bool IsUri;
+
+			public OutputText(string text, bool isUri)
+			{
+				Text = text;
+				IsUri = isUri;
+			}
+		}
 	}
 }
