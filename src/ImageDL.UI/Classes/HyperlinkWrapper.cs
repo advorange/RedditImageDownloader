@@ -75,20 +75,13 @@ namespace ImageDL.UI.Classes
 					Console.WriteLine($"Unable to generate a thumbnail for {name}.");
 				}
 
-				Dispatcher.Invoke(() => SetImageToolTip(bmi));
+				Dispatcher.Invoke(() => ToolTip = new System.Windows.Controls.Image() { Source = bmi, });
 			}
 
 			if (!_Thumbnails.TryAdd(name, bmi))
 			{
 				Console.WriteLine($"Unable to cache the thumbnail for {name}.");
 			}
-		}
-		private void SetImageToolTip(BitmapImage bmi)
-		{
-			var grid = new Grid();
-			grid.Children.Add(new System.Windows.Controls.Image() { Source = bmi, });
-
-			ToolTip = grid;
 		}
 
 		private void OnRequestNavigate(object sender, RequestNavigateEventArgs e)
