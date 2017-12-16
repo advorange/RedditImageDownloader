@@ -82,12 +82,17 @@ namespace ImageDL.UI.Classes.Writers
 		private string[] StitchFilePathsBackTogether(string[] parts)
 		{
 			//Example arguments:
-			//"c:\\dog" " pic.jpg" " lol" 
+			//"c:\\dog" " pic.jpg" " lol"
 			var paths = new List<FilePath>();
 			for (int i = 0; i < parts.Length; ++i)
 			{
 				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
-				if (!parts[i].Contains(":\\"))
+				if (!Environment.GetLogicalDrives().Any(x => parts[i].Contains(x)))
+				{
+					continue;
+				}
+				//Don't bother checking the string if it already has an invalid name
+				else if (Path.GetInvalidPathChars().Any(x => parts[i].Contains(x)))
 				{
 					continue;
 				}
@@ -112,7 +117,16 @@ namespace ImageDL.UI.Classes.Writers
 				for (int j = i + 1; j < parts.Length; ++j)
 				{
 					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
-					searchFor += parts[j].Contains(':') ? parts[j].Substring(0, parts[j].IndexOf(':')) : parts[j];
+					var add = new StringBuilder();
+					foreach (var c in parts[j])
+					{
+						if (Path.GetInvalidPathChars().Contains(c))
+						{
+							break;
+						}
+						add.Append(c);
+					}
+					searchFor += add.ToString();
 
 					//See if any files match the current string
 					//Ends up finding "c:\\dog pic.jpg"

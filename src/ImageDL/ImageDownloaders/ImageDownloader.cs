@@ -32,7 +32,6 @@ namespace ImageDL.ImageDownloaders
 			{
 				Thread.Sleep(25);
 				WritePostToConsole(post, ++count);
-				var dir = new DirectoryInfo(args.Directory);
 				foreach (var imageUri in GatherImages(post))
 				{
 					switch (UriUtils.CorrectUri(imageUri, out var correctedUri))
@@ -40,8 +39,7 @@ namespace ImageDL.ImageDownloaders
 						case UriCorrectionResponse.Valid:
 						case UriCorrectionResponse.Unknown:
 						{
-							var name = GenerateFileName(post, correctedUri);
-							await DownloadImageAsync(args, correctedUri, dir, name);
+							await DownloadImageAsync(post, args, correctedUri);
 							continue;
 						}
 						case UriCorrectionResponse.Animated:
@@ -61,24 +59,16 @@ namespace ImageDL.ImageDownloaders
 		protected abstract IEnumerable<TPost> GatherPosts(TArgs args);
 		protected abstract IEnumerable<Uri> GatherImages(TPost post);
 		protected abstract void WritePostToConsole(TPost post, int count);
-		protected abstract string GenerateFileName(TPost post, Uri uri);
 		protected abstract AnimatedContent StoreAnimatedContentLink(TPost post, Uri uri);
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it.
 		/// </summary>
-		/// <param name="uri">The image location.</param>
-		/// <param name="directory">The directory to save to.</param>
-		/// <param name="fileName">The name to give it.</param>
-		protected async Task DownloadImageAsync(TArgs args, Uri uri, DirectoryInfo directory, string fileName)
+		/// <param name="post">The post to save from.</param>
+		/// <param name="args">The arguments to check against saving.</param>
+		/// <param name="uri">The location to the file to save.</param>
+		/// <returns></returns>
+		protected async Task DownloadImageAsync(TPost post, TArgs args, Uri uri)
 		{
-			//Don't bother redownloading files
-			var savePath = Path.Combine(directory.FullName, fileName);
-			if (File.Exists(savePath))
-			{
-				Console.WriteLine($"\t{fileName} is already saved.");
-				return;
-			}
-
 			try
 			{
 				var req = (HttpWebRequest)WebRequest.Create(uri);
@@ -88,9 +78,16 @@ namespace ImageDL.ImageDownloaders
 				using (var s = resp.GetResponseStream())
 				using (var bm = new Bitmap(s))
 				{
+					var fileName = (resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString().Split('/').Last()).Trim('/');
+					var savePath = Path.Combine(args.Directory, fileName);
 					if (!resp.ContentType.Contains("image"))
 					{
 						Console.WriteLine($"\t{uri} is not an image.");
+						return;
+					}
+					else if (File.Exists(savePath))
+					{
+						Console.WriteLine($"\t{fileName} is already saved.");
 						return;
 					}
 					else if (bm == default(Bitmap))
@@ -112,7 +109,7 @@ namespace ImageDL.ImageDownloaders
 			catch (Exception e)
 			{
 				e.WriteException();
-				using (var writer = new FileInfo(Path.Combine(directory.FullName, "FailedDownloads.txt")).AppendText())
+				using (var writer = new FileInfo(Path.Combine(args.Directory, "FailedDownloads.txt")).AppendText())
 				{
 					await writer.WriteLineAsync(uri.ToString());
 				}

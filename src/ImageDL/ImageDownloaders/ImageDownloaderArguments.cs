@@ -34,7 +34,7 @@ namespace ImageDL.ImageDownloaders
 		{
 			get
 			{
-				if (!System.IO.Directory.Exists(Directory))
+				if (!String.IsNullOrWhiteSpace(Directory) && !System.IO.Directory.Exists(Directory))
 				{
 					Console.WriteLine($"{Directory} does not exist as a directory.");
 					return false;

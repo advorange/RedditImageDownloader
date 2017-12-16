@@ -25,8 +25,6 @@ namespace ImageDL.ImageDownloaders.RedditDownloader
 			=> UriUtils.GetImageUris(post.Url);
 		protected override void WritePostToConsole(Post post, int count)
 			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
-		protected override string GenerateFileName(Post post, Uri uri)
-			=> $"{post.Shortlink.Split('/').Last()}_{uri.ToString().Split('/').Last()}";
 		protected override AnimatedContent StoreAnimatedContentLink(Post post, Uri uri)
 			=> new AnimatedContent(uri, post.Score);
 	}
