@@ -5,6 +5,8 @@ using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders.RedditDownloader
 {
@@ -15,11 +17,19 @@ namespace ImageDL.ImageDownloaders.RedditDownloader
 	{
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
-		protected override IEnumerable<Post> GatherPosts(RedditImageDownloaderArguments args)
+		protected override async Task<IEnumerable<Post>> GatherPostsAsync(RedditImageDownloaderArguments args)
 		{
-			var subreddit = _Reddit.GetSubreddit(args.Subreddit);
-			var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= args.ScoreThreshold);
-			return validPosts.Take(args.AmountToDownload);
+			try
+			{
+				var subreddit = await _Reddit.GetSubredditAsync(args.Subreddit);
+				var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= args.ScoreThreshold);
+				return validPosts.Take(args.AmountToDownload);
+			}
+			catch (WebException e)
+			{
+				Console.WriteLine(e.Message);
+			}
+			return Enumerable.Empty<Post>();
 		}
 		protected override IEnumerable<Uri> GatherImages(Post post)
 			=> UriUtils.GetImageUris(post.Url);

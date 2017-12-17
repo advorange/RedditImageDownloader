@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ImageDL.Utilities
 {
@@ -155,12 +156,21 @@ namespace ImageDL.Utilities
 			return UriCorrectionResponse.Valid;
 		}
 		/// <summary>
-		/// Returns true if the passed in string is a valid Url.
+		/// Returns true if the passed in string is a valid url.
 		/// </summary>
 		/// <param name="input">The uri to evaluate.</param>
 		/// <returns>A boolean indicating whether or not the string is a url.</returns>
-		public static bool GetIfStringIsValidUrl(string input) => !String.IsNullOrWhiteSpace(input)
+		public static bool GetIfStringIsValidUrl(string input) => true
+			&& !String.IsNullOrWhiteSpace(input)
 			&& Uri.TryCreate(input, UriKind.Absolute, out Uri uriResult)
 			&& (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+		/// <summary>
+		/// Returns true if the passed in uri is a valid url.
+		/// </summary>
+		/// <param name="uri">The uri to evaluate.</param>
+		/// <returns>A boolean indicating whether or not the uri is a url.</returns>
+		public static bool GetIfUriIsValidUrl(Uri uri) => true
+			&& uri.IsAbsoluteUri
+			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 	}
 }

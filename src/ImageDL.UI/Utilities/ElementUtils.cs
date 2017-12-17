@@ -31,11 +31,11 @@ namespace ImageDL.UI.Utilities
 		/// <param name="size"></param>
 		/// <exception cref="ArgumentException">If <paramref name="control"/> is not inside a grid.</exception>
 		/// <exception cref="ArgumentException">If <paramref name="size"/> is less than zero.</exception>
-		public static void SetFontResizeProperty(Control control, double size)
+		public static void SetFontResizeProperty(FrameworkElement element, double size)
 		{
-			if (!TryGetTopMostParent(control, out Grid parent, out int ancestorLevel))
+			if (!TryGetTopMostParent(element, out Grid parent, out int ancestorLevel))
 			{
-				throw new ArgumentException($"{control.Name} must be inside a grid if {nameof(IFontResizeValue.FontResizeValue)} is set.");
+				throw new ArgumentException($"{element.Name} must be inside a grid if {nameof(IFontResizeValue.FontResizeValue)} is set.");
 			}
 			else if (size < 0)
 			{
@@ -43,11 +43,11 @@ namespace ImageDL.UI.Utilities
 			}
 			else if (size == 0)
 			{
-				BindingOperations.ClearBinding(control, Control.FontSizeProperty);
+				BindingOperations.ClearBinding(element, Control.FontSizeProperty);
 				return;
 			}
 
-			control.SetBinding(Control.FontSizeProperty, new Binding
+			element.SetBinding(Control.FontSizeProperty, new Binding
 			{
 				Path = new PropertyPath("ActualHeight"),
 				RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Grid), ancestorLevel),

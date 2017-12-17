@@ -66,6 +66,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Classes\BindingListener.cs" />
+    <Compile Include="Classes\Controls\ImageDLNumberBox.xaml.cs">
+      <DependentUpon>ImageDLNumberBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Classes\Controls\ImageDLTextBlock.cs" />
     <Compile Include="Classes\HyperlinkWrapper.cs" />
     <Compile Include="Utilities\BrushUtils.cs" />
     <Compile Include="Classes\Controls\ImageDLRichTextBox.cs" />
@@ -75,6 +79,10 @@
     <Compile Include="Interfaces\IFontResizeValue.cs" />
     <Compile Include="Interfaces\IUnescapedText.cs" />
     <Compile Include="Utilities\ElementUtils.cs" />
+    <Page Include="Classes\Controls\ImageDLNumberBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ImageDLWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -82,7 +90,6 @@
     <Compile Include="Classes\Controls\ImageDLButton.cs" />
     <Compile Include="Classes\Controls\ImageDLComboBox.cs" />
     <Compile Include="Classes\Controls\ImageDLGrid.cs" />
-    <Compile Include="Classes\Controls\ImageDLNumberBox.cs" />
     <Compile Include="Classes\Controls\ImageDLRun.cs" />
     <Compile Include="Classes\Controls\ImageDLTextBox.cs" />
     <Compile Include="Classes\DpiDecorator.cs" />

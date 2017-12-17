@@ -16,7 +16,8 @@ namespace ImageDL.ImageDownloaders
 	/// <summary>
 	/// Downloads images from a site.
 	/// </summary>
-	/// <typeparam name="TArgs"></typeparam>
+	/// <typeparam name="TArgs">The type of arguments supplied.</typeparam>
+	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
 	public abstract class ImageDownloader<TArgs, TPost> where TArgs : ImageDownloaderArguments
 	{
 		private List<AnimatedContent> _AnimatedContent = new List<AnimatedContent>();
@@ -28,7 +29,7 @@ namespace ImageDL.ImageDownloaders
 		public async Task StartAsync(TArgs args)
 		{
 			var count = 0;
-			foreach (var post in GatherPosts(args))
+			foreach (var post in await GatherPostsAsync(args))
 			{
 				Thread.Sleep(25);
 				WritePostToConsole(post, ++count);
@@ -56,10 +57,11 @@ namespace ImageDL.ImageDownloaders
 			}
 			SaveFoundAnimatedContentUris(new DirectoryInfo(args.Directory));
 		}
-		protected abstract IEnumerable<TPost> GatherPosts(TArgs args);
+		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync(TArgs args);
 		protected abstract IEnumerable<Uri> GatherImages(TPost post);
 		protected abstract void WritePostToConsole(TPost post, int count);
 		protected abstract AnimatedContent StoreAnimatedContentLink(TPost post, Uri uri);
+
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it.
 		/// </summary>

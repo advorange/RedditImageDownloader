@@ -1,7 +1,6 @@
 ﻿using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -125,8 +124,7 @@ namespace ImageDL.ImageDownloaders
 				//If number then use the tryparses, if string just set, if neither then nothing
 				if (_TryParses.TryGetValue(property.PropertyType, out var f))
 				{
-					var value = f(split[1]);
-					property.SetValue(this, value);
+					property.SetValue(this, f(split[1]));
 				}
 				else if (property.PropertyType == typeof(string))
 				{

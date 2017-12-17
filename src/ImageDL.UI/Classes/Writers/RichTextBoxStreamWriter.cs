@@ -105,6 +105,7 @@ namespace ImageDL.UI.Classes.Writers
 					continue;
 				}
 				//Will start with "c:\\dog", then gets the dir "c:\\"
+				//Can't just use Path.GetDirectoryName because that leaves out the whitespace
 				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
 				//"c:\\" exists so keeps going. If the first directory doesn't exist then there's no point in showing any more
 				if (!Directory.Exists(currDir))
@@ -122,6 +123,7 @@ namespace ImageDL.UI.Classes.Writers
 					{
 						if (Path.GetInvalidPathChars().Contains(c))
 						{
+							//Breaks out of j loop
 							break;
 						}
 						add.Append(c);
@@ -147,11 +149,13 @@ namespace ImageDL.UI.Classes.Writers
 						{
 							paths.Add(new FilePath(secondFileCheck, i, k - 1));
 							i = j;
+							//Breaks out of k loop
 							break;
 						}
 						//If we were searching for "c:\\dog pic 400.jpg" it would loop around once more in the j loop and in the k loop
 						fileTotalPath += parts[k];
 					}
+					//Breaks out of j loop
 					break;
 				}
 			}

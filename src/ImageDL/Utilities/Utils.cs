@@ -127,7 +127,7 @@ namespace ImageDL.Utilities
 		/// <param name="num">The number to get the length of.</param>
 		/// <returns>The amount of characters in a number.</returns>
 		public static int GetLengthOfNumber(this int num)
-			=> num == 0 ? 1 : (int)Math.Log10(Math.Abs(num)) + 1;
+			=> num.ToString().Length;
 		/// <summary>
 		/// Orders an <see cref="IEnumerable{T}"/> by something that does not implement <see cref="IComparable"/>.
 		/// </summary>
