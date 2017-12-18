@@ -69,8 +69,10 @@
     <Compile Include="Classes\Controls\ImageDLNumberBox.xaml.cs">
       <DependentUpon>ImageDLNumberBox.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Classes\Controls\ImageDLRepeatButton.cs" />
     <Compile Include="Classes\Controls\ImageDLTextBlock.cs" />
     <Compile Include="Classes\HyperlinkWrapper.cs" />
+    <Compile Include="Classes\NameOfExtension.cs" />
     <Compile Include="Utilities\BrushUtils.cs" />
     <Compile Include="Classes\Controls\ImageDLRichTextBox.cs" />
     <Compile Include="Classes\FontResizeConverter.cs" />

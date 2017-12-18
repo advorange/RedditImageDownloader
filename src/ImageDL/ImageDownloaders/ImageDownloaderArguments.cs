@@ -94,7 +94,10 @@ namespace ImageDL.ImageDownloaders
 				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToArray();
-			SetArguments(args);
+			if (args.Any())
+			{
+				SetArguments(args);
+			}
 		}
 
 		/// <summary>
@@ -122,7 +125,12 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				//If number then use the tryparses, if string just set, if neither then nothing
-				if (_TryParses.TryGetValue(property.PropertyType, out var f))
+				if (String.IsNullOrWhiteSpace(split[1]))
+				{
+					Console.WriteLine($"{property.Name} may not have an empty value.");
+					continue;
+				}
+				else if (_TryParses.TryGetValue(property.PropertyType, out var f))
 				{
 					property.SetValue(this, f(split[1]));
 				}
@@ -138,6 +146,7 @@ namespace ImageDL.ImageDownloaders
 
 				Console.WriteLine($"Successfully set {property.Name} to {property.GetValue(this)}.");
 			}
+			Console.WriteLine();
 		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.

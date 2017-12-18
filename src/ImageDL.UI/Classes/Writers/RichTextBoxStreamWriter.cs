@@ -33,7 +33,7 @@ namespace ImageDL.UI.Classes.Writers
 			}
 
 			_CurrentLineText += value;
-			if (value == '\n')
+			if (_CurrentLineText.EndsWith(Environment.NewLine))
 			{
 				Write(_CurrentLineText);
 				_CurrentLineText = null;
@@ -44,12 +44,8 @@ namespace ImageDL.UI.Classes.Writers
 			foreach (var t in JoinEverythingBackTogether(StitchFilePathsBackTogether(SplitStringByWhiteSpace(value))))
 			{
 				//Rich text boxes have too much space if empty lines are allowed to be printed
-				if (t.Text == "\n")
-				{
-					return;
-				}
 				//File or link
-				else if (t.IsUri)
+				if (t.IsUri)
 				{
 					WriteHyperlink(new HyperlinkWrapper(t.Text));
 				}

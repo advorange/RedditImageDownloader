@@ -7,15 +7,37 @@ namespace ImageDL.UI.Classes
 	internal class FontResizeConverter : IValueConverter
 	{
 		private double _ConvertFactor;
+		public double ConvertFactor
+		{
+			get => _ConvertFactor;
+			set
+			{
+				if (_ConvertFactor < 0)
+				{
+					throw new ArgumentException($"{nameof(ConvertFactor)} must be greater than or equal to 0.");
+				}
+				_ConvertFactor = value;
+			}
+		}
 
+		public FontResizeConverter()
+		{
+			ConvertFactor = .02;
+		}
 		public FontResizeConverter(double convertFactor)
 		{
-			_ConvertFactor = convertFactor;
+			ConvertFactor = convertFactor;
 		}
 
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-			=> Math.Max((int)(System.Convert.ToInt16(value) * _ConvertFactor), 1);
+		{
+			var converted = System.Convert.ToInt32(value);
+			return ConvertFactor == 0 ? converted : converted * ConvertFactor;
+		}
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-			=> throw new NotImplementedException();
+		{
+			var converted = System.Convert.ToInt32(value);
+			return ConvertFactor == 0 ? converted : converted / ConvertFactor;
+		}
 	}
 }

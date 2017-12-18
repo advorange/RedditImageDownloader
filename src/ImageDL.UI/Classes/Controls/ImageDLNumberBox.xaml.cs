@@ -23,7 +23,7 @@ namespace ImageDL.UI.Classes.Controls
 			set
 			{
 				_MaximumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber() + 1, _MaximumValue.GetLengthOfNumber() + 1);
+				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
 			}
 		}
 		private int _MinimumValue = int.MinValue;
@@ -33,7 +33,7 @@ namespace ImageDL.UI.Classes.Controls
 			set
 			{
 				_MinimumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber() + 1, _MaximumValue.GetLengthOfNumber() + 1);
+				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
 			}
 		}
 		private int _StoredNum;
@@ -44,11 +44,11 @@ namespace ImageDL.UI.Classes.Controls
 			{
 				//TODO: figure why going from default value to default value changes no text
 				//Seems to be it's from going from same value to same value doesn't set text back
-				if (value >= MaximumValue)
+				if (value > MaximumValue)
 				{
 					_StoredNum = MaximumValue;
 				}
-				else if (value <= MinimumValue)
+				else if (value < MinimumValue)
 				{
 					_StoredNum = MinimumValue;
 				}
@@ -67,35 +67,30 @@ namespace ImageDL.UI.Classes.Controls
 			MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
 
 			TextChanged += OnTextChanged;
-			PreviewTextInput += Validate;
-			DataObject.AddPastingHandler(this, Validate);
+			PreviewTextInput += OnPreviewTextInput;
+			DataObject.AddPastingHandler(this, OnPaste);
 		}
 
 		private void OnTextChanged(object sender, TextChangedEventArgs e)
 		{
 			//Update the stored value
-			if (!(e.OriginalSource is TextBox tb))
+			if (!(e.OriginalSource is TextBox tb) || String.IsNullOrWhiteSpace(tb.Text))
 			{
 				return;
 			}
-			else if (String.IsNullOrWhiteSpace(tb.Text))
-			{
-				StoredNum = DefaultValue;
-			}
 			else if (!int.TryParse(tb.Text, out var result))
 			{
-				StoredNum = MinimumValue;
+				StoredNum = DefaultValue;
 			}
 			else
 			{
 				StoredNum = result;
 			}
-			e.Handled = true;
 		}
-		private void Validate(object sender, TextCompositionEventArgs e)
+		private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
 			//If char is null or not a number then don't let it go through
 			=> e.Handled = !String.IsNullOrWhiteSpace(e.Text) && _NumberRegex.IsMatch(e.Text);
-		private void Validate(object sender, DataObjectPastingEventArgs e)
+		private void OnPaste(object sender, DataObjectPastingEventArgs e)
 		{
 			if (!e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true) || !(e.Source is TextBox tb))
 			{

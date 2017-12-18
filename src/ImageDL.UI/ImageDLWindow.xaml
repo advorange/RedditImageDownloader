@@ -7,6 +7,9 @@
         xmlns:local="clr-namespace:ImageDL.UI"
         xmlns:classes="clr-namespace:ImageDL.UI.Classes"
         xmlns:controls="clr-namespace:ImageDL.UI.Classes.Controls"
+        xmlns:enums="clr-namespace:ImageDL.Enums;assembly=RedditImageDownloader"
+        xmlns:args="clr-namespace:ImageDL.ImageDownloaders;assembly=RedditImageDownloader"
+        xmlns:rargs="clr-namespace:ImageDL.ImageDownloaders.RedditDownloader;assembly=RedditImageDownloader"
         mc:Ignorable="d"
         Title="Image DL"
         FontFamily="Courier New"
@@ -29,22 +32,39 @@
                         <RowDefinition Height="1*" />
                         <RowDefinition Height="1*" />
                         <RowDefinition Height="1*" />
-                        <RowDefinition Height="15*" />
+                        <RowDefinition Height="14*" />
+                        <RowDefinition Height="1*" />
                     </Grid.RowDefinitions>
 
-                    <Button Grid.Row="0">
+                    <!-- Site selectors -->
+                    <Button x:Name="RedditButton"
+                            Grid.Row="0"
+                            Tag="{x:Static enums:Site.Reddit}"
+                            Click="OnSiteButtonClick">
                         <Viewbox>
                             <TextBlock>Reddit</TextBlock>
                         </Viewbox>
                     </Button>
-                    <Button Grid.Row="1">
+                    <Button Grid.Row="1"
+                            Click="OnSiteButtonClick">
                         <Viewbox>
                             <TextBlock>Placeholder</TextBlock>
                         </Viewbox>
                     </Button>
-                    <Button Grid.Row="2">
+                    <Button Grid.Row="2"
+                            Click="OnSiteButtonClick">
                         <Viewbox>
                             <TextBlock>Placeholder 2</TextBlock>
+                        </Viewbox>
+                    </Button>
+
+                    <!-- Search -->
+                    <Button x:Name="SetArgumentsButton"
+                            Grid.Row="4"
+                            Click="OnSetArgumentsButtonClick"
+                            IsEnabled="False">
+                        <Viewbox>
+                            <TextBlock>Set Arguments</TextBlock>
                         </Viewbox>
                     </Button>
                 </Grid>
@@ -70,80 +90,160 @@
                                           Grid.Column="1"
                                           Grid.Row="1"
                                           FontResizeValue=".02">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*" />
-                            <RowDefinition Height="2*" />
-                            <RowDefinition Height="3*" />
-                            <RowDefinition Height="1*" />
-                            <RowDefinition Height="2*" />
-                            <RowDefinition Height="20*" />
+                            <RowDefinition Height="7*" />
                         </Grid.RowDefinitions>
 
-                        <!-- Headers -->
-                        <controls:ImageDLLabel Grid.Column="0"
-                                               Grid.Row="0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Bottom"
-                                               Content="Directory" />
-                        <controls:ImageDLLabel Grid.Column="1"
-                                               Grid.Row="0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Bottom"
-                                               Content="Amount to Download" />
-                        <controls:ImageDLLabel Grid.Column="2"
-                                               Grid.Row="0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Bottom"
-                                               Content="Minimum Width" />
-                        <controls:ImageDLLabel Grid.Column="3"
-                                               Grid.Row="0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Bottom"
-                                               Content="Minimum Height"/>
+                        <!-- Arguments that all image downloaders use -->
+                        <controls:ImageDLGrid x:Name="GenericArguments"
+                                              Grid.Column="0"
+                                              Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*" />
+                                <RowDefinition Height="2*" />
+                            </Grid.RowDefinitions>
 
-                        <!-- Input -->
-                        <controls:ImageDLTextBox x:Name="ArgDirectory"
-                                                 Grid.Column="0"
-                                                 Grid.Row="1"
-                                                 HorizontalContentAlignment="Left"
-                                                 VerticalContentAlignment="Center"
-                                                 BorderBrush="Black"
-                                                 BorderThickness="2"
-                                                 Margin="2,0,2,0" />
-                        <controls:ImageDLNumberBox x:Name="ArgAmountToDownload"
-                                                   Grid.Column="1"
-                                                   Grid.Row="1"
-                                                   HorizontalContentAlignment="Left"
-                                                   VerticalContentAlignment="Center"
-                                                   BorderBrush="Black"
-                                                   BorderThickness="2"
-                                                   Margin="2,0,2,0"
-                                                   MinimumValue="0"
-                                                   MaximumValue="1000" />
-                        <controls:ImageDLNumberBox x:Name="ArgMinWidth"
-                                                   Grid.Column="2"
-                                                   Grid.Row="1"
-                                                   HorizontalContentAlignment="Left"
-                                                   VerticalContentAlignment="Center"
-                                                   BorderBrush="Black"
-                                                   BorderThickness="2"
-                                                   Margin="2,0,2,0"
-                                                   MinimumValue="0" />
-                        <controls:ImageDLNumberBox x:Name="ArgMinHeight"
-                                                   Grid.Column="3"
-                                                   Grid.Row="1"
-                                                   HorizontalContentAlignment="Left"
-                                                   VerticalContentAlignment="Center"
-                                                   BorderBrush="Black"
-                                                   BorderThickness="2"
-                                                   Margin="2,0,2,0"
-                                                   MinimumValue="0" />
+                            <!-- Headers -->
+                            <controls:ImageDLLabel Grid.Column="0"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Directory" />
+                            <controls:ImageDLLabel Grid.Column="1"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Amount to Download" />
+                            <controls:ImageDLLabel Grid.Column="2"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Minimum Width" />
+                            <controls:ImageDLLabel Grid.Column="3"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Minimum Height" />
+
+                            <!-- Input -->
+                            <controls:ImageDLTextBox x:Name="ArgDirectory"
+                                                     Grid.Column="0"
+                                                     Grid.Row="1"
+                                                     HorizontalContentAlignment="Left"
+                                                     VerticalContentAlignment="Center"
+                                                     BorderBrush="Black"
+                                                     BorderThickness="2"
+                                                     Margin="2,0,2,0"
+                                                     HorizontalScrollBarVisibility="Auto"
+                                                     Tag="{classes:NameOf Member=Directory, Type=args:ImageDownloaderArguments}">
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius"
+                                                Value="8" />
+                                    </Style>
+                                </TextBox.Resources>
+                            </controls:ImageDLTextBox>
+                            <controls:ImageDLNumberBox x:Name="ArgAmountToDownload"
+                                                       Grid.Column="1"
+                                                       Grid.Row="1"
+                                                       HorizontalContentAlignment="Left"
+                                                       VerticalContentAlignment="Center"
+                                                       BorderBrush="Black"
+                                                       BorderThickness="2"
+                                                       Margin="2,0,2,0"
+                                                       MinimumValue="0"
+                                                       MaximumValue="1000"
+                                                       Tag="{classes:NameOf Member=AmountToDownload, Type=args:ImageDownloaderArguments}" />
+                            <controls:ImageDLNumberBox x:Name="ArgMinWidth"
+                                                       Grid.Column="2"
+                                                       Grid.Row="1"
+                                                       HorizontalContentAlignment="Left"
+                                                       VerticalContentAlignment="Center"
+                                                       BorderBrush="Black"
+                                                       BorderThickness="2"
+                                                       Margin="2,0,2,0"
+                                                       MinimumValue="0"
+                                                       Tag="{classes:NameOf Member=MinWidth, Type=args:ImageDownloaderArguments}" />
+                            <controls:ImageDLNumberBox x:Name="ArgMinHeight"
+                                                       Grid.Column="3"
+                                                       Grid.Row="1"
+                                                       HorizontalContentAlignment="Left"
+                                                       VerticalContentAlignment="Center"
+                                                       BorderBrush="Black"
+                                                       BorderThickness="2"
+                                                       Margin="2,0,2,0"
+                                                       MinimumValue="0"
+                                                       Tag="{classes:NameOf Member=MinHeight, Type=args:ImageDownloaderArguments}" />
+                        </controls:ImageDLGrid>
+
+                        <!-- Specific arguments -->
+
+                        <!-- Reddit -->
+                        <controls:ImageDLGrid x:Name="RedditArguments"
+                                              Grid.Column="0"
+                                              Grid.Row="1"
+                                              Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*" />
+                                <RowDefinition Height="2*" />
+                                <RowDefinition Height="18*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Headers -->
+                            <controls:ImageDLLabel Grid.Column="0"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Subreddit" />
+                            <controls:ImageDLLabel Grid.Column="1"
+                                                   Grid.Row="0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Bottom"
+                                                   Content="Score Threshold" />
+
+                            <!-- Input -->
+                            <controls:ImageDLTextBox x:Name="Subreddit"
+                                                     Grid.Column="0"
+                                                     Grid.Row="1"
+                                                     HorizontalContentAlignment="Left"
+                                                     VerticalContentAlignment="Center"
+                                                     BorderBrush="Black"
+                                                     BorderThickness="2"
+                                                     Margin="2,0,2,0"
+                                                     HorizontalScrollBarVisibility="Auto"
+                                                     Tag="{classes:NameOf Member=Subreddit, Type=rargs:RedditImageDownloaderArguments}" >
+                                <TextBox.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius"
+                                                Value="8" />
+                                    </Style>
+                                </TextBox.Resources>
+                            </controls:ImageDLTextBox>
+                            <controls:ImageDLNumberBox x:Name="ScoreThreshold"
+                                                       Grid.Column="1"
+                                                       Grid.Row="1"
+                                                       HorizontalContentAlignment="Left"
+                                                       VerticalContentAlignment="Center"
+                                                       BorderBrush="Black"
+                                                       BorderThickness="2"
+                                                       Margin="2,0,2,0"
+                                                       MinimumValue="0"
+                                                       MaximumValue="500000"
+                                                       Tag="{classes:NameOf Member=ScoreThreshold, Type=rargs:RedditImageDownloaderArguments}" />
+                        </controls:ImageDLGrid>
                     </controls:ImageDLGrid>
                 </Grid>
             </Border>
@@ -159,7 +259,7 @@
                                                  BorderThickness="0"
                                                  FontResizeValue=".019"
                                                  VerticalScrollBarVisibility="Visible"
-                                                 Loaded="Output_Loaded"
+                                                 Loaded="OnOutputLoaded"
                                                  Background="White"
                                                  Foreground="Black">
                         <RichTextBox.Resources>
