@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{264231A5-7E95-4A4B-A668-157BD0C9F9D3}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>RedditImageDownloader</RootNamespace>
-    <AssemblyName>RedditImageDownloader</AssemblyName>
+    <RootNamespace>ImageDL</RootNamespace>
+    <AssemblyName>ImageDL</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
