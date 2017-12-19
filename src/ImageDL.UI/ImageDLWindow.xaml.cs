@@ -1,6 +1,5 @@
 ﻿using ImageDL.Enums;
 using ImageDL.ImageDownloaders;
-using ImageDL.ImageDownloaders.RedditDownloader;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;
 using System;
@@ -16,8 +15,7 @@ namespace ImageDL.UI
 	public partial class ImageDLWindow : Window
 	{
 		private Site _CurrentSite;
-		private ImageDownloaderArguments _Arguments;
-		private object _Downloader;
+		private IImageDownloader _Downloader;
 
 		public ImageDLWindow()
 		{
@@ -59,7 +57,7 @@ namespace ImageDL.UI
 			if (_CurrentSite != s)
 			{
 				_CurrentSite = s;
-				_Arguments = CreateArguments();
+				_Downloader = CreateDownloader();
 			}
 			SetArgumentsButton.IsEnabled = true;
 		}
@@ -73,8 +71,8 @@ namespace ImageDL.UI
 			var specificArgsTbs = GetCurrentlyUpGrid().GetChildren().OfType<TextBox>().Where(x => !String.IsNullOrWhiteSpace(x.Tag.ToString()));
 			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text ?? ""}").ToArray();
 
-			_Arguments.SetArguments(args);
-			if (_Arguments.IsReady)
+			_Downloader.SetArguments(args);
+			if (_Downloader.IsReady)
 			{
 				_Downloader = CreateDownloader();
 				SetArgumentsButton.Content = "Start Downloading";
@@ -95,21 +93,7 @@ namespace ImageDL.UI
 				}
 			}
 		}
-		private ImageDownloaderArguments CreateArguments()
-		{
-			switch (_CurrentSite)
-			{
-				case Site.Reddit:
-				{
-					return new RedditImageDownloaderArguments(Array.Empty<string>());
-				}
-				default:
-				{
-					throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
-				}
-			}
-		}
-		private object CreateDownloader()
+		private IImageDownloader CreateDownloader()
 		{
 			switch (_CurrentSite)
 			{

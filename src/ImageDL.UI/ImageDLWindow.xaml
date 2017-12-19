@@ -8,8 +8,7 @@
         xmlns:classes="clr-namespace:ImageDL.UI.Classes"
         xmlns:controls="clr-namespace:ImageDL.UI.Classes.Controls"
         xmlns:enums="clr-namespace:ImageDL.Enums;assembly=RedditImageDownloader"
-        xmlns:args="clr-namespace:ImageDL.ImageDownloaders;assembly=RedditImageDownloader"
-        xmlns:rargs="clr-namespace:ImageDL.ImageDownloaders.RedditDownloader;assembly=RedditImageDownloader"
+        xmlns:downloaders="clr-namespace:ImageDL.ImageDownloaders;assembly=RedditImageDownloader"
         mc:Ignorable="d"
         Title="Image DL"
         FontFamily="Courier New"
@@ -142,7 +141,7 @@
                                                      BorderThickness="2"
                                                      Margin="2,0,2,0"
                                                      HorizontalScrollBarVisibility="Auto"
-                                                     Tag="{classes:NameOf Member=Directory, Type=args:ImageDownloaderArguments}">
+                                                     Tag="{classes:NameOf Member=Directory, Type=downloaders:RedditImageDownloader}">
                                 <TextBox.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius"
@@ -160,7 +159,7 @@
                                                        Margin="2,0,2,0"
                                                        MinimumValue="0"
                                                        MaximumValue="1000"
-                                                       Tag="{classes:NameOf Member=AmountToDownload, Type=args:ImageDownloaderArguments}" />
+                                                       Tag="{classes:NameOf Member=AmountToDownload, Type=downloaders:RedditImageDownloader}" />
                             <controls:ImageDLNumberBox x:Name="ArgMinWidth"
                                                        Grid.Column="2"
                                                        Grid.Row="1"
@@ -170,7 +169,7 @@
                                                        BorderThickness="2"
                                                        Margin="2,0,2,0"
                                                        MinimumValue="0"
-                                                       Tag="{classes:NameOf Member=MinWidth, Type=args:ImageDownloaderArguments}" />
+                                                       Tag="{classes:NameOf Member=MinWidth, Type=downloaders:RedditImageDownloader}" />
                             <controls:ImageDLNumberBox x:Name="ArgMinHeight"
                                                        Grid.Column="3"
                                                        Grid.Row="1"
@@ -180,7 +179,7 @@
                                                        BorderThickness="2"
                                                        Margin="2,0,2,0"
                                                        MinimumValue="0"
-                                                       Tag="{classes:NameOf Member=MinHeight, Type=args:ImageDownloaderArguments}" />
+                                                       Tag="{classes:NameOf Member=MinHeight, Type=downloaders:RedditImageDownloader}" />
                         </controls:ImageDLGrid>
 
                         <!-- Specific arguments -->
@@ -224,7 +223,7 @@
                                                      BorderThickness="2"
                                                      Margin="2,0,2,0"
                                                      HorizontalScrollBarVisibility="Auto"
-                                                     Tag="{classes:NameOf Member=Subreddit, Type=rargs:RedditImageDownloaderArguments}" >
+                                                     Tag="{classes:NameOf Member=Subreddit, Type=downloaders:RedditImageDownloader}" >
                                 <TextBox.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius"
@@ -242,7 +241,7 @@
                                                        Margin="2,0,2,0"
                                                        MinimumValue="0"
                                                        MaximumValue="500000"
-                                                       Tag="{classes:NameOf Member=ScoreThreshold, Type=rargs:RedditImageDownloaderArguments}" />
+                                                       Tag="{classes:NameOf Member=ScoreThreshold, Type=downloaders:RedditImageDownloader}" />
                         </controls:ImageDLGrid>
                     </controls:ImageDLGrid>
                 </Grid>

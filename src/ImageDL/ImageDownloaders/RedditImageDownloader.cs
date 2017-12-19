@@ -8,22 +8,45 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace ImageDL.ImageDownloaders.RedditDownloader
+namespace ImageDL.ImageDownloaders
 {
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public sealed class RedditImageDownloader : ImageDownloader<RedditImageDownloaderArguments, Post>
+	public sealed class RedditImageDownloader : ImageDownloader<Post>
 	{
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
-		protected override async Task<IEnumerable<Post>> GatherPostsAsync(RedditImageDownloaderArguments args)
+		private string _Subreddit;
+		public string Subreddit
+		{
+			get => _Subreddit;
+			set
+			{
+				_Subreddit = value;
+				AddArgumentToSetArguments();
+			}
+		}
+		private int _ScoreThreshold;
+		public int ScoreThreshold
+		{
+			get => _ScoreThreshold;
+			set
+			{
+				_ScoreThreshold = value;
+				AddArgumentToSetArguments();
+			}
+		}
+
+		public RedditImageDownloader(params string[] args) : base(args) { }
+
+		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
 		{
 			try
 			{
-				var subreddit = await _Reddit.GetSubredditAsync(args.Subreddit);
-				var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= args.ScoreThreshold);
-				return validPosts.Take(args.AmountToDownload);
+				var subreddit = await _Reddit.GetSubredditAsync(Subreddit);
+				var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= ScoreThreshold);
+				return validPosts.Take(AmountToDownload);
 			}
 			catch (WebException e)
 			{

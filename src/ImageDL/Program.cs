@@ -1,4 +1,4 @@
-﻿using ImageDL.ImageDownloaders.RedditDownloader;
+﻿using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
 using System;
 using System.Text;
@@ -11,13 +11,13 @@ namespace ImageDL
 		public static async Task Main(string[] args)
 		{
 			Console.OutputEncoding = Encoding.UTF8;
-			var arguments = new RedditImageDownloaderArguments(args);
-			while (!arguments.IsReady)
+			var downloader = new RedditImageDownloader(args);
+			while (!downloader.IsReady)
 			{
-				arguments.AskForArguments();
-				arguments.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+				downloader.AskForArguments();
+				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
 			}
-			await new RedditImageDownloader().StartAsync(arguments);
+			await downloader.StartAsync();
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
 			//TODO: image comparison by hashes then similarity?
