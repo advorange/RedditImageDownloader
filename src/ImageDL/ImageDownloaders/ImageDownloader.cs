@@ -35,9 +35,12 @@ namespace ImageDL.ImageDownloaders
 			{ typeof(ulong?), (value) => ulong.TryParse(value, out var result) ? result as ulong? : null },
 		};
 
+		protected List<ContentLink> _AnimatedContent = new List<ContentLink>();
+		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
 		protected PropertyInfo[] _Arguments = new PropertyInfo[0];
-		protected PropertyInfo[] _UnsetArguments => _Arguments.Where(x => !_SetArguments.Contains(x.Name)).ToArray();
-		protected List<string> _SetArguments = new List<string>();
+		protected PropertyInfo[] _UnsetArguments => _Arguments.Where(x => !_SetArguments.Contains(x)).ToArray();
+		protected List<PropertyInfo> _SetArguments = new List<PropertyInfo>();
+
 		public bool IsReady
 		{
 			get
@@ -50,7 +53,6 @@ namespace ImageDL.ImageDownloaders
 				return !_UnsetArguments.Any();
 			}
 		}
-
 		private string _Directory;
 		public string Directory
 		{
@@ -92,17 +94,15 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 
-		protected List<AnimatedContent> _AnimatedContent = new List<AnimatedContent>();
+		public event EventHandler AllArgumentsSet;
+		public event EventHandler DownloadsFinished;
 
 		public ImageDownloader(params string[] args)
 		{
-			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
-				.OrderByNonComparable(x => x.PropertyType)
-				.ToArray();
+			_Arguments = GetSettings(GetType());
 			if (args.Any())
 			{
-				SetArguments(args);
+				AddArguments(args);
 			}
 		}
 
@@ -114,7 +114,8 @@ namespace ImageDL.ImageDownloaders
 			var count = 0;
 			foreach (var post in await GatherPostsAsync())
 			{
-				Thread.Sleep(25);
+				//TODO: should this be left in?
+				await Task.Delay(25);
 				WritePostToConsole(post, ++count);
 				foreach (var imageUri in GatherImages(post))
 				{
@@ -123,12 +124,12 @@ namespace ImageDL.ImageDownloaders
 						case UriCorrectionResponse.Valid:
 						case UriCorrectionResponse.Unknown:
 						{
-							await DownloadImageAsync(correctedUri);
+							await DownloadImageAsync(post, correctedUri);
 							continue;
 						}
 						case UriCorrectionResponse.Animated:
 						{
-							_AnimatedContent.Add(StoreAnimatedContentLink(post, correctedUri));
+							_AnimatedContent.Add(CreateContentLink(post, correctedUri));
 							continue;
 						}
 						case UriCorrectionResponse.Invalid:
@@ -138,12 +139,14 @@ namespace ImageDL.ImageDownloaders
 					}
 				}
 			}
-			SaveFoundAnimatedContentUris(new DirectoryInfo(Directory));
+			SaveAnimatedContent(new DirectoryInfo(Directory));
+			SaveFailedDownloads(new DirectoryInfo(Directory));
+			DownloadsFinished?.Invoke(this, new EventArgs());
 		}
 		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
 		protected abstract IEnumerable<Uri> GatherImages(TPost post);
 		protected abstract void WritePostToConsole(TPost post, int count);
-		protected abstract AnimatedContent StoreAnimatedContentLink(TPost post, Uri uri);
+		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
 
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it.
@@ -151,19 +154,21 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns></returns>
-		protected async Task DownloadImageAsync(Uri uri)
+		public async Task DownloadImageAsync(TPost post, Uri uri)
 		{
 			try
 			{
 				var req = (HttpWebRequest)WebRequest.Create(uri);
+				req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 				req.Timeout = 5000;
 				req.ReadWriteTimeout = 5000;
 				using (var resp = await req.GetResponseAsync())
-				using (var s = resp.GetResponseStream())
-				using (var bm = new Bitmap(s))
 				{
-					var fileName = (resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString().Split('/').Last()).Trim('/');
-					var savePath = Path.Combine(Directory, fileName);
+					var gottenName = (resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString().Split('/').Last());
+					var cutName = gottenName.Substring(gottenName.LastIndexOf('/') + 1);
+					var cleanedName = new string(cutName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+
+					var savePath = Path.Combine(Directory, cleanedName);
 					if (!resp.ContentType.Contains("image"))
 					{
 						Console.WriteLine($"\t{uri} is not an image.");
@@ -171,51 +176,71 @@ namespace ImageDL.ImageDownloaders
 					}
 					else if (File.Exists(savePath))
 					{
-						Console.WriteLine($"\t{fileName} is already saved.");
-						return;
-					}
-					else if (bm == default(Bitmap))
-					{
-						Console.WriteLine($"\t{uri} is unable to be created as a Bitmap and cannot be saved.");
-						return;
-					}
-					else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
-					{
-						Console.WriteLine($"\t{uri} is too small.");
+						Console.WriteLine($"\t{savePath} is already saved.");
 						return;
 					}
 
-					//TODO: async save?
-					bm.Save(savePath, ImageFormat.Png);
-					Console.WriteLine($"\tSaved {uri} to {savePath}.");
+					using (var s = resp.GetResponseStream())
+					using (var bm = new Bitmap(s))
+					{
+						//TODO: compare hashes?
+						if (bm == default(Bitmap))
+						{
+							Console.WriteLine($"\t{uri} is unable to be created as a Bitmap and cannot be saved.");
+							return;
+						}
+						else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
+						{
+							Console.WriteLine($"\t{uri} is too small.");
+							return;
+						}
+
+						//TODO: async save?
+						bm.Save(savePath, ImageFormat.Png);
+						Console.WriteLine($"\tSaved {uri} to {savePath}.");
+					}
 				}
 			}
 			catch (Exception e)
 			{
 				e.WriteException();
-				using (var writer = new FileInfo(Path.Combine(Directory, "FailedDownloads.txt")).AppendText())
-				{
-					await writer.WriteLineAsync(uri.ToString());
-				}
+				_FailedDownloads.Add(CreateContentLink(post, uri));
 			}
 		}
 		/// <summary>
 		/// Saves all the links gotten to animated content.
 		/// </summary>
 		/// <param name="directory">The folder to save to.</param>
-		protected void SaveFoundAnimatedContentUris(DirectoryInfo directory)
+		protected void SaveAnimatedContent(DirectoryInfo directory)
 		{
-			if (!_AnimatedContent.Any())
+			if (_AnimatedContent.Any())
 			{
-				return;
+				SaveContentLinks(_AnimatedContent, new FileInfo(Path.Combine(directory.FullName, "Animated_Content.txt")));
 			}
-			var fileInfo = new FileInfo(Path.Combine(directory.FullName, "Animated_Content.txt"));
-
-			//Only save links which are not already in the text document
-			var unsavedAnimatedContent = new List<AnimatedContent>();
-			if (fileInfo.Exists)
+		}
+		/// <summary>
+		/// Saves all the links that failed to download.
+		/// </summary>
+		/// <param name="directory">The folder to save to.</param>
+		protected void SaveFailedDownloads(DirectoryInfo directory)
+		{
+			if (_FailedDownloads.Any())
 			{
-				using (var reader = new StreamReader(fileInfo.OpenRead()))
+				SaveContentLinks(_AnimatedContent, new FileInfo(Path.Combine(directory.FullName, "Failed_Downloads.txt")));
+			}
+		}
+		/// <summary>
+		/// Saves links to a file.
+		/// </summary>
+		/// <param name="contentLinks">The links to save.</param>
+		/// <param name="file">The file to save to.</param>
+		protected void SaveContentLinks(List<ContentLink> contentLinks, FileInfo file)
+		{
+			//Only save links which are not already in the text document
+			var unsavedContent = new List<ContentLink>();
+			if (file.Exists)
+			{
+				using (var reader = new StreamReader(file.OpenRead()))
 				{
 					var text = reader.ReadToEnd();
 					foreach (var anim in _AnimatedContent)
@@ -225,39 +250,38 @@ namespace ImageDL.ImageDownloaders
 							continue;
 						}
 
-						unsavedAnimatedContent.Add(anim);
+						unsavedContent.Add(anim);
 					}
 				}
 			}
 			else
 			{
-				unsavedAnimatedContent = _AnimatedContent;
+				unsavedContent = _AnimatedContent;
 			}
 
-			if (!unsavedAnimatedContent.Any())
+			if (!unsavedContent.Any())
 			{
 				return;
 			}
 
 			//Save all the links then say how many were saved
-			var scoreLength = unsavedAnimatedContent.Max(x => x.Score).GetLengthOfNumber();
-			using (var writer = fileInfo.AppendText())
+			var title = Path.GetFileName(file.FullName).Replace("_", " ").FormatTitle();
+			var scoreLength = unsavedContent.Max(x => x.Score).GetLengthOfNumber();
+			var whatToWrite = String.Join(Environment.NewLine, unsavedContent.Select(x => $"{x.Score.ToString().PadLeft(scoreLength, '0')} {x.Uri}"));
+			using (var writer = file.AppendText())
 			{
-				writer.WriteLine($"Animated Content - {Utils.FormatDateTimeForSaving()}");
-				foreach (var anim in unsavedAnimatedContent)
-				{
-					writer.WriteLine($"{anim.Score.ToString().PadLeft(scoreLength, '0')} {anim.Uri}");
-				}
+				writer.WriteLine($"{title} - {Utils.FormatDateTimeForSaving()}");
+				writer.WriteLine(whatToWrite);
 				writer.WriteLine();
 			}
-			Console.WriteLine($"Added {unsavedAnimatedContent.Count()} links to {fileInfo.Name}.");
+			Console.WriteLine($"Added {unsavedContent.Count()} links to {file.Name}.");
 		}
 
 		/// <summary>
 		/// Sets the arguments that can be gathered from <paramref name="args"/>.
 		/// </summary>
 		/// <param name="args">The supplied arguments.</param>
-		public void SetArguments(string[] args)
+		public void AddArguments(params string[] args)
 		{
 			foreach (var argument in args)
 			{
@@ -300,6 +324,15 @@ namespace ImageDL.ImageDownloaders
 				Console.WriteLine($"Successfully set {property.Name} to {property.GetValue(this)}.");
 			}
 			Console.WriteLine();
+
+			if (!String.IsNullOrWhiteSpace(Directory) && !System.IO.Directory.Exists(Directory))
+			{
+				Console.WriteLine($"{Directory} does not exist as a directory.");
+			}
+			else if (!_UnsetArguments.Any())
+			{
+				AllArgumentsSet?.Invoke(this, new EventArgs());
+			}
 		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.
@@ -320,10 +353,21 @@ namespace ImageDL.ImageDownloaders
 		}
 		protected void AddArgumentToSetArguments([CallerMemberName] string name = "")
 		{
-			if (!_SetArguments.Contains(name))
+			if (!_SetArguments.Any(x => x.Name == name))
 			{
-				_SetArguments.Add(name);
+				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
 			}
 		}
+		/// <summary>
+		/// Returns an array containing settings from the supplied type.
+		/// A setting is a public instance property that is either primitive or string with a set method.
+		/// </summary>
+		/// <param name="type">The type to gather settings from.</param>
+		/// <returns>An array containing settings.</returns>
+		public static PropertyInfo[] GetSettings(Type type)
+			=> type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
+				.OrderByNonComparable(x => x.PropertyType)
+				.ToArray();
 	}
 }

@@ -35,7 +35,8 @@
                                                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                                   BorderThickness="{TemplateBinding BorderThickness}"
-                                                  BorderBrush="{TemplateBinding BorderBrush}">
+                                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                                  IsEnabled="{TemplateBinding IsEnabled}">
                                 <TextBox.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius"
@@ -52,7 +53,8 @@
                                                        ClickMode="Press"
                                                        Click="OnUpButtonClick"
                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                       BorderBrush="{TemplateBinding BorderBrush}">
+                                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                                       IsEnabled="{TemplateBinding IsEnabled}">
                                 <RepeatButton.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius"
@@ -69,7 +71,8 @@
                                                        ClickMode="Press"
                                                        Click="OnDownButtonClick"
                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                       BorderBrush="{TemplateBinding BorderBrush}">
+                                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                                       IsEnabled="{TemplateBinding IsEnabled}">
                                 <RepeatButton.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius"

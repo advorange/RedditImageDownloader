@@ -3,9 +3,9 @@
 namespace ImageDL.Classes
 {
 	/// <summary>
-	/// The uri in here links to a gif, video, webm, etc.
+	/// The uri in here links to a file that failed to download.
 	/// </summary>
-	public struct AnimatedContent
+	public struct ContentLink
 	{
 		/// <summary>
 		/// The uri to the content.
@@ -16,12 +16,12 @@ namespace ImageDL.Classes
 		/// </summary>
 		public readonly int Score;
 
-		public AnimatedContent(Uri uri, int score)
+		public ContentLink(Uri uri, int score)
 		{
 			Uri = uri;
 			Score = score;
 		}
-		
+
 		public override string ToString() => $"{Score} {Uri}";
 	}
 }

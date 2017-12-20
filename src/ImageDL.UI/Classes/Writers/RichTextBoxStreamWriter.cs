@@ -14,7 +14,7 @@ namespace ImageDL.UI.Classes.Writers
 	{
 		private RichTextBox _RTB;
 		private string _CurrentLineText;
-		private DispatcherPriority _Priority = DispatcherPriority.Background;
+		private DispatcherPriority _Priority = DispatcherPriority.ContextIdle;
 
 		public override Encoding Encoding => Encoding.UTF32;
 
@@ -44,8 +44,12 @@ namespace ImageDL.UI.Classes.Writers
 			foreach (var t in JoinEverythingBackTogether(StitchFilePathsBackTogether(SplitStringByWhiteSpace(value))))
 			{
 				//Rich text boxes have too much space if empty lines are allowed to be printed
+				if (t.Text == "\n")
+				{
+					return;
+				}
 				//File or link
-				if (t.IsUri)
+				else if (t.IsUri)
 				{
 					WriteHyperlink(new HyperlinkWrapper(t.Text));
 				}
@@ -62,12 +66,12 @@ namespace ImageDL.UI.Classes.Writers
 			var sb = new StringBuilder();
 			foreach (var c in value)
 			{
+				sb.Append(c);
 				if (Char.IsWhiteSpace(c))
 				{
 					parts.Add(sb.ToString());
 					sb.Clear();
 				}
-				sb.Append(c);
 			}
 			if (sb.Length != 0)
 			{

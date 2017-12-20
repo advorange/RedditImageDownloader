@@ -22,7 +22,7 @@ namespace ImageDL.UI.Classes
 		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
 		private static readonly ConcurrentDictionary<string, CachedImage> _Thumbnails = new ConcurrentDictionary<string, CachedImage>();
 		private const int SQUARE_SIZE = 100;
-		private const int MAX_CACHED_IMAGES = 3 * 100 * 100 / (SQUARE_SIZE * SQUARE_SIZE);
+		private const int MAX_CACHED_IMAGES = 250 * 100 * 100 / (SQUARE_SIZE * SQUARE_SIZE);
 		private const string NOT_CACHED = "No thumbnail is currently available.";
 
 		public HyperlinkWrapper(string path) : base(new Run(path))

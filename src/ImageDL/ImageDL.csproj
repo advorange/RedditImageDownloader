@@ -57,12 +57,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\Content.cs" />
     <Compile Include="Enums\Site.cs" />
     <Compile Include="Enums\UrlCorrectionResponse.cs" />
     <Compile Include="ImageDownloaders\IImageDownloader.cs" />
+    <Compile Include="Utilities\Scraping\DeviantArtScraping.cs" />
+    <Compile Include="Utilities\Scraping\InstagramScraping.cs" />
     <Compile Include="Utilities\Utils.cs" />
-    <Compile Include="Utilities\ImgurScraping.cs" />
-    <Compile Include="Classes\AnimatedContent.cs" />
+    <Compile Include="Utilities\Scraping\ImgurScraping.cs" />
     <Compile Include="ImageDownloaders\ImageDownloader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

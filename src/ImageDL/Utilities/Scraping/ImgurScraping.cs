@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace ImageDL.Utilities
+namespace ImageDL.Utilities.Scraping
 {
 	/// <summary>
 	/// Scrapes data from imgur.

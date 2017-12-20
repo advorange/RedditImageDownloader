@@ -1,9 +1,12 @@
 ﻿using ImageDL.Enums;
 using ImageDL.ImageDownloaders;
+using ImageDL.UI.Classes;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;
 using System;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -12,31 +15,46 @@ namespace ImageDL.UI
 	/// <summary>
 	/// Interaction logic for ImageDLWindow.xaml
 	/// </summary>
-	public partial class ImageDLWindow : Window
+	public partial class ImageDLWindow : Window, INotifyPropertyChanged
 	{
 		private Site _CurrentSite;
-		private IImageDownloader _Downloader;
+		public Site CurrentSite
+		{
+			get => _CurrentSite;
+			private set
+			{
+				_CurrentSite = value;
+				NotifyPropertyChanged();
+			}
+		}
+		public Holder<IImageDownloader> Downloader { get; private set; } = new Holder<IImageDownloader>();
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		public ImageDLWindow()
 		{
 			InitializeComponent();
 		}
 
+		private void NotifyPropertyChanged([CallerMemberName] string name = "")
+			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		private void OnOutputLoaded(object sender, RoutedEventArgs e)
 		{
-			Output.Document.Blocks.Clear();
-			Console.SetOut(new RichTextBoxStreamWriter(Output));
+			if (!(sender is RichTextBox rtb))
+			{
+				return;
+			}
 
+			Console.SetOut(new RichTextBoxStreamWriter(rtb));
+		}
+		private void OnOutputTextChanged(object sender, TextChangedEventArgs e)
+		{
+			if (!(sender is RichTextBox rtb))
+			{
+				return;
+			}
 
-#if false   //Tests for displaying files
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\7jyouq_ZUMJiT6.jpg (Standard file)");
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\D\E\E\P\7jwvr4_l238w9dw20401.jpg (Deep file)");
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\Nonexistent File.jpg (Nonexistent file)");
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\7jyouq_ZUMJiT.jpg (Nonexistent, very similar file name but shorter)");
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\7jyouq_ZUMJiT66.jpg (Nonexistent, very similar file name but longer)");
-			Console.WriteLine(@"C:\Users\User\Downloads\New folder (2)\7jz23y_9v54sn0qj2401.jpg C:\Users\User\Downloads\New folder (2)\7jzv94_e6eogbqse3401.jpg (Two in one)");
-			Console.WriteLine(@"C:\test\7k0zcr gztc0njna4401.jpg C:\test\7k0zcr.jpg (Names that are way too close)");
-#endif
+			rtb.ScrollToEnd();
 		}
 		private void OnSiteButtonClick(object sender, RoutedEventArgs e)
 		{
@@ -44,44 +62,54 @@ namespace ImageDL.UI
 			{
 				return;
 			}
-
-			switch (s)
+			else if (CurrentSite != s)
 			{
-				case Site.Reddit:
-				{
-					RedditArguments.Visibility = Visibility.Visible;
-					break;
-				}
+				CurrentSite = s;
+				Downloader.HeldObject = CreateDownloader();
+				Downloader.HeldObject.AllArgumentsSet += OnAllArgumentsSet;
+				Downloader.HeldObject.DownloadsFinished += OnDownloadsFinished;
 			}
-
-			if (_CurrentSite != s)
-			{
-				_CurrentSite = s;
-				_Downloader = CreateDownloader();
-			}
-			SetArgumentsButton.IsEnabled = true;
 		}
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (_Downloader != null)
-			{
-				var a = 1;
-			}
-			var generalArgsTbs = GenericArguments.GetChildren().OfType<TextBox>().Where(x => !String.IsNullOrWhiteSpace(x.Tag.ToString()));
-			var specificArgsTbs = GetCurrentlyUpGrid().GetChildren().OfType<TextBox>().Where(x => !String.IsNullOrWhiteSpace(x.Tag.ToString()));
-			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text ?? ""}").ToArray();
+			var generalArgsTbs = GenericArguments.GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
+			var specificArgsTbs = GetCurrentlyUpGrid().GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
+			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text}").ToArray();
+			Downloader.HeldObject.AddArguments(args);
+		}
+		private void OnAllArgumentsSet(object sender, EventArgs e)
+		{
+			SetArgumentsButton.Visibility = Visibility.Collapsed;
+			StartDownloadsButton.Visibility = Visibility.Visible;
+		}
+		private async void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
+		{
+			SiteSelector.IsEnabled = false;
+			ArgumentLayout.IsEnabled = false;
+			await Downloader.HeldObject.StartAsync();
+		}
+		private void OnDownloadsFinished(object sender, EventArgs e)
+		{
+			SiteSelector.IsEnabled = true;
+			ArgumentLayout.IsEnabled = true;
+			StartDownloadsButton.Visibility = Visibility.Collapsed;
+			SetArgumentsButton.Visibility = Visibility.Visible;
 
-			_Downloader.SetArguments(args);
-			if (_Downloader.IsReady)
+			foreach (var tb in GenericArguments.GetChildren().OfType<TextBox>())
 			{
-				_Downloader = CreateDownloader();
-				SetArgumentsButton.Content = "Start Downloading";
+				tb.Clear();
 			}
+			foreach (var tb in GetCurrentlyUpGrid().GetChildren().OfType<TextBox>())
+			{
+				tb.Clear();
+			}
+			Downloader.HeldObject = null;
+			CurrentSite = default;
 		}
 
 		private Grid GetCurrentlyUpGrid()
 		{
-			switch (_CurrentSite)
+			switch (CurrentSite)
 			{
 				case Site.Reddit:
 				{
@@ -95,7 +123,7 @@ namespace ImageDL.UI
 		}
 		private IImageDownloader CreateDownloader()
 		{
-			switch (_CurrentSite)
+			switch (CurrentSite)
 			{
 				case Site.Reddit:
 				{

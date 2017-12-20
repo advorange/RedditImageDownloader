@@ -1,5 +1,6 @@
 ﻿using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
+using ImageDL.Utilities.Scraping;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace ImageDL
 			while (!downloader.IsReady)
 			{
 				downloader.AskForArguments();
-				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+				downloader.AddArguments(Console.ReadLine().SplitLikeCommandLine());
 			}
 			await downloader.StartAsync();
 			Console.WriteLine("Press any key to close the program.");

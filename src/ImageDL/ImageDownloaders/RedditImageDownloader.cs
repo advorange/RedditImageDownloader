@@ -58,7 +58,7 @@ namespace ImageDL.ImageDownloaders
 			=> UriUtils.GetImageUris(post.Url);
 		protected override void WritePostToConsole(Post post, int count)
 			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
-		protected override AnimatedContent StoreAnimatedContentLink(Post post, Uri uri)
-			=> new AnimatedContent(uri, post.Score);
+		protected override ContentLink CreateContentLink(Post post, Uri uri)
+			=> new ContentLink(uri, post.Score);
 	}
 }

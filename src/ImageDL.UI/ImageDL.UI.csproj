@@ -44,6 +44,7 @@
     <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\WindowsAPICodePack-Shell.1.1.1\lib\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
     </Reference>
+    <Reference Include="RedditSharp, Version=1.1.14.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -71,6 +72,7 @@
     </Compile>
     <Compile Include="Classes\Controls\ImageDLRepeatButton.cs" />
     <Compile Include="Classes\Controls\ImageDLTextBlock.cs" />
+    <Compile Include="Classes\Holder.cs" />
     <Compile Include="Classes\HyperlinkWrapper.cs" />
     <Compile Include="Classes\NameOfExtension.cs" />
     <Compile Include="Utilities\BrushUtils.cs" />

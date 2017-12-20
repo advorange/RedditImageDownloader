@@ -129,6 +129,25 @@ namespace ImageDL.Utilities
 		public static int GetLengthOfNumber(this int num)
 			=> num.ToString().Length;
 		/// <summary>
+		/// Adds in spaces between each capital letter.
+		/// </summary>
+		/// <param name="title">The title to format.</param>
+		/// <returns>The passed in title with </returns>
+		public static string FormatTitle(this string title)
+		{
+			var sb = new StringBuilder();
+			for (int i = 0; i < title.Length; ++i)
+			{
+				var c = title[i];
+				if (Char.IsUpper(c) && (i > 0 && !Char.IsWhiteSpace(title[i - 1])))
+				{
+					sb.Append(' ');
+				}
+				sb.Append(c);
+			}
+			return sb.ToString();
+		}
+		/// <summary>
 		/// Orders an <see cref="IEnumerable{T}"/> by something that does not implement <see cref="IComparable"/>.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>

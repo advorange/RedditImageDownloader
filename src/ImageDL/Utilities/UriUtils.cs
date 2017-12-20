@@ -1,8 +1,8 @@
 ﻿using ImageDL.Enums;
+using ImageDL.Utilities.Scraping;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ImageDL.Utilities
 {
@@ -27,11 +27,6 @@ namespace ImageDL.Utilities
 		{
 			".html",
 		};
-		//TODO: url correction for twitter
-		private static string[] _InvalidSites = new[]
-		{
-			"twitter",
-		};
 
 		/// <summary>
 		/// Returns an array of <see cref="Uri"/> which link to images.
@@ -42,12 +37,18 @@ namespace ImageDL.Utilities
 		{
 			switch (uri.ToString())
 			{
-				#region Imgur
 				case string u when u.Contains("imgur") && (u.Contains("/a/") || u.Contains("/gallery/")):
 				{
 					return ImgurScraping.ScrapeImages(uri);
 				}
-				#endregion
+				case string u when u.Contains("deviantart") && u.Contains("/art/"):
+				{
+					return DeviantArtScraping.ScrapeImages(uri);
+				}
+				case string u when u.Contains("instagram") && u.Contains("/p/"):
+				{
+					return InstagramScraping.ScrapeImages(uri);
+				}
 				default:
 				{
 					return new[] { uri };
@@ -96,11 +97,6 @@ namespace ImageDL.Utilities
 					correctedUri = new Uri(u);
 					return UriCorrectionResponse.Animated;
 				}
-				case string u when _InvalidSites.Any(x => u.CaseInsContains(x)):
-				{
-					correctedUri = null;
-					return UriCorrectionResponse.Invalid;
-				}
 				case string u when u.CaseInsContains("imgur.com"):
 				{
 					return CorrectImgurUri(uri, out correctedUri);
@@ -108,6 +104,18 @@ namespace ImageDL.Utilities
 				case string u when u.CaseInsContains("reddit.com") || u.CaseInsContains("redd.it"):
 				{
 					return CorrectRedditUri(uri, out correctedUri);
+				}
+				case string u when u.CaseInsContains("twitter.com"):
+				{
+					return CorrectTwitterUri(uri, out correctedUri);
+				}
+				case string u when u.CaseInsContains("instagram.com"):
+				{
+					return CorrectInstagramUri(uri, out correctedUri);
+				}
+				case string u when u.CaseInsContains("deviantart.com"):
+				{
+					return CorrectDeviantArtUri(uri, out correctedUri);
 				}
 				default:
 				{
@@ -132,6 +140,10 @@ namespace ImageDL.Utilities
 			{
 				u = u.Replace("_d.", ".");
 			}
+			if (String.IsNullOrWhiteSpace(Path.GetExtension(u)))
+			{
+				u += ".png";
+			}
 
 			correctedUri = new Uri(u);
 			return UriCorrectionResponse.Valid;
@@ -154,6 +166,22 @@ namespace ImageDL.Utilities
 
 			correctedUri = new Uri(u);
 			return UriCorrectionResponse.Valid;
+		}
+		//TODO
+		public static UriCorrectionResponse CorrectTwitterUri(Uri uri, out Uri correctedUri)
+		{
+			correctedUri = null;
+			return UriCorrectionResponse.Invalid;
+		}
+		public static UriCorrectionResponse CorrectInstagramUri(Uri uri, out Uri correctedUri)
+		{
+			correctedUri = null;
+			return UriCorrectionResponse.Invalid;
+		}
+		public static UriCorrectionResponse CorrectDeviantArtUri(Uri uri, out Uri correctedUri)
+		{
+			correctedUri = null;
+			return UriCorrectionResponse.Invalid;
 		}
 		/// <summary>
 		/// Returns true if the passed in string is a valid url.

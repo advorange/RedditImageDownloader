@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
 {
@@ -13,6 +14,9 @@ namespace ImageDL.ImageDownloaders
 		int MinWidth { get; set; }
 		int MinHeight { get; set; }
 
+		event EventHandler AllArgumentsSet;
+		event EventHandler DownloadsFinished;
+
 		/// <summary>
 		/// Start downloading images.
 		/// </summary>
@@ -22,7 +26,7 @@ namespace ImageDL.ImageDownloaders
 		/// Sets arguments with only text/user input.
 		/// </summary>
 		/// <param name="args">The text to set.</param>
-		void SetArguments(string[] args);
+		void AddArguments(string[] args);
 		/// <summary>
 		/// Prints to the console what arguments are still needed.
 		/// </summary>
