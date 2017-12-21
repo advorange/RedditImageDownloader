@@ -57,7 +57,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\Content.cs" />
+    <Compile Include="Classes\ContentLink.cs" />
+    <Compile Include="Classes\ImageComparer.cs" />
+    <Compile Include="Classes\ImageDetails.cs" />
     <Compile Include="Enums\Site.cs" />
     <Compile Include="Enums\UrlCorrectionResponse.cs" />
     <Compile Include="ImageDownloaders\IImageDownloader.cs" />

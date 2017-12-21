@@ -26,8 +26,13 @@ namespace ImageDL.UI
 			//Display to the user what happened and also log it
 			MessageBox.Show($"UNHANDLED EXCEPTION:\n\n{e.Exception}", "UNHANDLED EXCEPTION", MessageBoxButton.OK, MessageBoxImage.Error);
 			var appdata = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-			var path = Path.Combine(appdata, "ImageDL", "Exceptions.txt");
-			using (var writer = new FileInfo(path).AppendText())
+			var path = Path.Combine(appdata, "ImageDL", "Exceptions.log");
+			if (!File.Exists(path))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(path));
+				File.Create(path).Close();
+			}
+			using (var writer = File.AppendText(path))
 			{
 				writer.WriteLine(e.Exception.ToString() + Environment.NewLine);
 			}

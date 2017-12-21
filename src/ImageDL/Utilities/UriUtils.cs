@@ -26,6 +26,7 @@ namespace ImageDL.Utilities
 		private static string[] _InvalidExtensions = new[]
 		{
 			".html",
+			".exe",
 		};
 
 		/// <summary>

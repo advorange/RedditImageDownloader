@@ -2,6 +2,7 @@
 using ImageDL.Enums;
 using ImageDL.Utilities;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,11 +37,13 @@ namespace ImageDL.ImageDownloaders
 			{ typeof(ulong?), (value) => ulong.TryParse(value, out var result) ? result as ulong? : null },
 		};
 
-		protected List<ContentLink> _AnimatedContent = new List<ContentLink>();
-		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
 		protected PropertyInfo[] _Arguments = new PropertyInfo[0];
 		protected PropertyInfo[] _UnsetArguments => _Arguments.Where(x => !_SetArguments.Contains(x)).ToArray();
 		protected List<PropertyInfo> _SetArguments = new List<PropertyInfo>();
+
+		protected List<ContentLink> _AnimatedContent = new List<ContentLink>();
+		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
+		protected ImageComparer _ImageComparer;
 
 		public bool IsReady
 		{
@@ -99,12 +103,110 @@ namespace ImageDL.ImageDownloaders
 
 		public ImageDownloader(params string[] args)
 		{
+			_ImageComparer = new ImageComparer(this);
 			_Arguments = GetSettings(GetType());
 			if (args.Any())
 			{
 				AddArguments(args);
 			}
 		}
+
+		/// <summary>
+		/// Sets the arguments that can be gathered from <paramref name="args"/>.
+		/// </summary>
+		/// <param name="args">The supplied arguments.</param>
+		public void AddArguments(params string[] args)
+		{
+			foreach (var argument in args)
+			{
+				//Split, left side is the arg name, right is value
+				var split = argument.Split(new[] { ':' }, 2);
+				if (split.Length != 2)
+				{
+					Console.WriteLine($"Unable to split \"{argument}\" to the correct length.");
+					continue;
+				}
+
+				//See if any arguments have the supplied name
+				var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
+				if (property == null)
+				{
+					Console.WriteLine($"{split[0]} is not a valid argument name.");
+					continue;
+				}
+
+				//If number then use the tryparses, if string just set, if neither then nothing
+				if (String.IsNullOrWhiteSpace(split[1]))
+				{
+					Console.WriteLine($"{property.Name} may not have an empty value.");
+					continue;
+				}
+				else if (_TryParses.TryGetValue(property.PropertyType, out var f))
+				{
+					property.SetValue(this, f(split[1]));
+				}
+				else if (property.PropertyType == typeof(string))
+				{
+					property.SetValue(this, split[1]);
+				}
+				else
+				{
+					Console.WriteLine($"Unable to set the value for {property.Name}.");
+					continue;
+				}
+
+				Console.WriteLine($"Successfully set {property.Name} to {property.GetValue(this)}.");
+			}
+			Console.WriteLine();
+
+			if (!String.IsNullOrWhiteSpace(Directory) && !System.IO.Directory.Exists(Directory))
+			{
+				Console.WriteLine($"{Directory} does not exist as a directory.");
+			}
+			else if (!_UnsetArguments.Any())
+			{
+				AllArgumentsSet?.Invoke(this, new EventArgs());
+			}
+		}
+		/// <summary>
+		/// Prints out to the console what arguments are still needed.
+		/// </summary>
+		public void AskForArguments()
+		{
+			if (!_UnsetArguments.Any())
+			{
+				return;
+			}
+
+			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
+			foreach (var argument in _UnsetArguments)
+			{
+				sb.AppendLine($"\t{argument.Name} ({argument.PropertyType.Name})");
+			}
+			Console.WriteLine(sb.ToString().Trim());
+		}
+		/// <summary>
+		/// Adds a <see cref="PropertyInfo"/> with the supplied name to <see cref="_SetArguments"/>.
+		/// </summary>
+		/// <param name="name">The property to find.</param>
+		protected void AddArgumentToSetArguments([CallerMemberName] string name = "")
+		{
+			if (!_SetArguments.Any(x => x.Name == name))
+			{
+				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
+			}
+		}
+		/// <summary>
+		/// Returns an array containing settings from the supplied type.
+		/// A setting is a public instance property that is either primitive or string with a set method.
+		/// </summary>
+		/// <param name="type">The type to gather settings from.</param>
+		/// <returns>An array containing settings.</returns>
+		protected PropertyInfo[] GetSettings(Type type)
+			=> type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
+				.OrderByNonComparable(x => x.PropertyType)
+				.ToArray();
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
@@ -114,11 +216,10 @@ namespace ImageDL.ImageDownloaders
 			var count = 0;
 			foreach (var post in await GatherPostsAsync())
 			{
-				//TODO: should this be left in?
-				await Task.Delay(25);
 				WritePostToConsole(post, ++count);
 				foreach (var imageUri in GatherImages(post))
 				{
+					await Task.Delay(50);
 					switch (UriUtils.CorrectUri(imageUri, out var correctedUri))
 					{
 						case UriCorrectionResponse.Valid:
@@ -156,48 +257,63 @@ namespace ImageDL.ImageDownloaders
 		/// <returns></returns>
 		public async Task DownloadImageAsync(TPost post, Uri uri)
 		{
+			var req = (HttpWebRequest)WebRequest.Create(uri);
+			req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+			req.Timeout = 5000;
+			req.ReadWriteTimeout = 5000;
+
 			try
 			{
-				var req = (HttpWebRequest)WebRequest.Create(uri);
-				req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
-				req.Timeout = 5000;
-				req.ReadWriteTimeout = 5000;
 				using (var resp = await req.GetResponseAsync())
 				{
-					var gottenName = (resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString().Split('/').Last());
+					var gottenName = resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString();
 					var cutName = gottenName.Substring(gottenName.LastIndexOf('/') + 1);
 					var cleanedName = new string(cutName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 
-					var savePath = Path.Combine(Directory, cleanedName);
+					var file = new FileInfo(Path.Combine(Directory, cleanedName));
 					if (!resp.ContentType.Contains("image"))
 					{
 						Console.WriteLine($"\t{uri} is not an image.");
 						return;
 					}
-					else if (File.Exists(savePath))
+					else if (file.Exists)
 					{
-						Console.WriteLine($"\t{savePath} is already saved.");
+						Console.WriteLine($"\t{file} is already saved.");
 						return;
 					}
 
 					using (var s = resp.GetResponseStream())
-					using (var bm = new Bitmap(s))
 					{
-						//TODO: compare hashes?
-						if (bm == default(Bitmap))
+						var hash = CalculateMD5(s);
+						//A match for the hash has been found, meaning this is a duplicate image
+						if (_ImageDownloader.TryGetValue(hash, out var alreadyDownloaded))
 						{
-							Console.WriteLine($"\t{uri} is unable to be created as a Bitmap and cannot be saved.");
-							return;
-						}
-						else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
-						{
-							Console.WriteLine($"\t{uri} is too small.");
+							Console.WriteLine($"\t{uri} had a matching hash with {alreadyDownloaded} meaning they have the same content.");
 							return;
 						}
 
-						//TODO: async save?
-						bm.Save(savePath, ImageFormat.Png);
-						Console.WriteLine($"\tSaved {uri} to {savePath}.");
+						using (var bm = new Bitmap(s))
+						{
+							if (bm == default(Bitmap))
+							{
+								Console.WriteLine($"\t{uri} is unable to be created as a Bitmap and cannot be saved.");
+								return;
+							}
+							else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
+							{
+								Console.WriteLine($"\t{uri} is too small.");
+								return;
+							}
+
+							bm.Save(file.FullName, ImageFormat.Png);
+							Console.WriteLine($"\tSaved {uri} to {file}.");
+						}
+
+						//Add to list if the download succeeds
+						if (!_DownloadedImages.TryAdd(hash, file))
+						{
+							return;
+						}
 					}
 				}
 			}
@@ -276,98 +392,5 @@ namespace ImageDL.ImageDownloaders
 			}
 			Console.WriteLine($"Added {unsavedContent.Count()} links to {file.Name}.");
 		}
-
-		/// <summary>
-		/// Sets the arguments that can be gathered from <paramref name="args"/>.
-		/// </summary>
-		/// <param name="args">The supplied arguments.</param>
-		public void AddArguments(params string[] args)
-		{
-			foreach (var argument in args)
-			{
-				//Split, left side is the arg name, right is value
-				var split = argument.Split(new[] { ':' }, 2);
-				if (split.Length != 2)
-				{
-					Console.WriteLine($"Unable to split \"{argument}\" to the correct length.");
-					continue;
-				}
-
-				//See if any arguments have the supplied name
-				var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
-				if (property == null)
-				{
-					Console.WriteLine($"{split[0]} is not a valid argument name.");
-					continue;
-				}
-
-				//If number then use the tryparses, if string just set, if neither then nothing
-				if (String.IsNullOrWhiteSpace(split[1]))
-				{
-					Console.WriteLine($"{property.Name} may not have an empty value.");
-					continue;
-				}
-				else if (_TryParses.TryGetValue(property.PropertyType, out var f))
-				{
-					property.SetValue(this, f(split[1]));
-				}
-				else if (property.PropertyType == typeof(string))
-				{
-					property.SetValue(this, split[1]);
-				}
-				else
-				{
-					Console.WriteLine($"Unable to set the value for {property.Name}.");
-					continue;
-				}
-
-				Console.WriteLine($"Successfully set {property.Name} to {property.GetValue(this)}.");
-			}
-			Console.WriteLine();
-
-			if (!String.IsNullOrWhiteSpace(Directory) && !System.IO.Directory.Exists(Directory))
-			{
-				Console.WriteLine($"{Directory} does not exist as a directory.");
-			}
-			else if (!_UnsetArguments.Any())
-			{
-				AllArgumentsSet?.Invoke(this, new EventArgs());
-			}
-		}
-		/// <summary>
-		/// Prints out to the console what arguments are still needed.
-		/// </summary>
-		public void AskForArguments()
-		{
-			if (!_UnsetArguments.Any())
-			{
-				return;
-			}
-
-			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var argument in _UnsetArguments)
-			{
-				sb.AppendLine($"\t{argument.Name} ({argument.PropertyType.Name})");
-			}
-			Console.WriteLine(sb.ToString().Trim());
-		}
-		protected void AddArgumentToSetArguments([CallerMemberName] string name = "")
-		{
-			if (!_SetArguments.Any(x => x.Name == name))
-			{
-				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
-			}
-		}
-		/// <summary>
-		/// Returns an array containing settings from the supplied type.
-		/// A setting is a public instance property that is either primitive or string with a set method.
-		/// </summary>
-		/// <param name="type">The type to gather settings from.</param>
-		/// <returns>An array containing settings.</returns>
-		public static PropertyInfo[] GetSettings(Type type)
-			=> type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-				.Where(x => (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string)) && x.SetMethod != null)
-				.OrderByNonComparable(x => x.PropertyType)
-				.ToArray();
 	}
 }

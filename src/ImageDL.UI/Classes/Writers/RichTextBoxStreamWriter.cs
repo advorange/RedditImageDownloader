@@ -51,12 +51,12 @@ namespace ImageDL.UI.Classes.Writers
 				//File or link
 				else if (t.IsUri)
 				{
-					WriteHyperlink(new HyperlinkWrapper(t.Text));
+					WriteHyperlinkAsync(new HyperlinkWrapper(t.Text));
 				}
 				//Plain text
 				else
 				{
-					WriteText(t.Text);
+					WriteTextAsync(t.Text);
 				}
 			}
 		}
@@ -223,8 +223,8 @@ namespace ImageDL.UI.Classes.Writers
 			}
 			return returnValues.ToArray();
 		}
-		private void WriteHyperlink(Hyperlink link)
-			=> _RTB.Dispatcher.InvokeAsync(() =>
+		private async void WriteHyperlinkAsync(Hyperlink link)
+			=> await _RTB.Dispatcher.InvokeAsync(() =>
 			{
 				if (_RTB.Document.Blocks.LastBlock is Paragraph para)
 				{
@@ -235,8 +235,8 @@ namespace ImageDL.UI.Classes.Writers
 					_RTB.Document.Blocks.Add(new Paragraph(link));
 				}
 			}, _Priority);
-		private void WriteText(string text)
-			=> _RTB.Dispatcher.InvokeAsync(() =>
+		private async void WriteTextAsync(string text)
+			=> await _RTB.Dispatcher.InvokeAsync(() =>
 			{
 				_RTB.AppendText(text);
 			}, _Priority);

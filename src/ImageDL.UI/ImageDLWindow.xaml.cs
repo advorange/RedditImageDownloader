@@ -73,7 +73,7 @@ namespace ImageDL.UI
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)
 		{
 			var generalArgsTbs = GenericArguments.GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
-			var specificArgsTbs = GetCurrentlyUpGrid().GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
+			var specificArgsTbs = GetArgumentGrid(CurrentSite).GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
 			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text}").ToArray();
 			Downloader.HeldObject.AddArguments(args);
 		}
@@ -99,17 +99,20 @@ namespace ImageDL.UI
 			{
 				tb.Clear();
 			}
-			foreach (var tb in GetCurrentlyUpGrid().GetChildren().OfType<TextBox>())
+			foreach (Site s in Enum.GetValues(typeof(Site)))
 			{
-				tb.Clear();
+				foreach (var tb in GetArgumentGrid(s).GetChildren().OfType<TextBox>())
+				{
+					tb.Clear();
+				}
 			}
 			Downloader.HeldObject = null;
 			CurrentSite = default;
 		}
 
-		private Grid GetCurrentlyUpGrid()
+		private Grid GetArgumentGrid(Site site)
 		{
-			switch (CurrentSite)
+			switch (site)
 			{
 				case Site.Reddit:
 				{
