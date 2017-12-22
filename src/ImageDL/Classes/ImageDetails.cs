@@ -1,17 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ImageDL.Classes
 {
 	public struct ImageDetails
 	{
-		public FileInfo File;
-		public BitArray Bits;
+		public readonly Uri Uri;
+		public readonly FileInfo File;
+		public readonly IReadOnlyList<bool> BoolHash;
 
-		public ImageDetails(FileInfo file, BitArray bits)
+		public ImageDetails(Uri uri, FileInfo file, IEnumerable<bool> boolHash)
 		{
+			Uri = uri;
 			File = file;
-			Bits = bits;
+			BoolHash = boolHash.ToList().AsReadOnly();
 		}
 	}
 }

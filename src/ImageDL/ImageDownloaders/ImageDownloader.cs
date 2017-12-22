@@ -284,11 +284,11 @@ namespace ImageDL.ImageDownloaders
 
 					using (var s = resp.GetResponseStream())
 					{
-						var hash = CalculateMD5(s);
+						var hash = ImageComparer.CalculateMD5(s);
 						//A match for the hash has been found, meaning this is a duplicate image
-						if (_ImageDownloader.TryGetValue(hash, out var alreadyDownloaded))
+						if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
 						{
-							Console.WriteLine($"\t{uri} had a matching hash with {alreadyDownloaded} meaning they have the same content.");
+							Console.WriteLine($"\t{uri} had a matching hash with {alreadyDownloaded.File} meaning they have the same content.");
 							return;
 						}
 
@@ -307,12 +307,12 @@ namespace ImageDL.ImageDownloaders
 
 							bm.Save(file.FullName, ImageFormat.Png);
 							Console.WriteLine($"\tSaved {uri} to {file}.");
-						}
 
-						//Add to list if the download succeeds
-						if (!_DownloadedImages.TryAdd(hash, file))
-						{
-							return;
+							//Add to list if the download succeeds
+							if (!_ImageComparer.TryStore(hash, bm, uri, file))
+							{
+								return;
+							}
 						}
 					}
 				}
