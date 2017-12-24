@@ -16,10 +16,12 @@ namespace ImageDL.Classes
 	public class ImageComparer
 	{
 		private ConcurrentDictionary<string, ImageDetails> _Images = new ConcurrentDictionary<string, ImageDetails>();
+		public double PercentForMatch;
 
-		public ImageComparer(IImageDownloader dl)
+		public ImageComparer(IImageDownloader dl, double percentForMatch)
 		{
 			dl.DownloadsFinished += OnDownloadsFinished;
+			PercentForMatch = percentForMatch;
 		}
 
 		/// <summary>
@@ -37,24 +39,72 @@ namespace ImageDL.Classes
 				return false;
 			}
 
-			var boolHash = CalculateBoolHash(bm);
-			return _Images.TryAdd(hash, new ImageDetails(uri, file, boolHash));
+			return _Images.TryAdd(hash, new ImageDetails(uri, file, CalculateBoolHash(bm), bm.Width, bm.Height));
 		}
+		/// <summary>
+		/// Returns true if successfully able to get a value with <paramref name="hash"/>;
+		/// </summary>
+		/// <param name="hash">The hash to search for.</param>
+		/// <param name="details">The returned value.</param>
+		/// <returns>Returns a boolean indicating whether or not the hash is linked to a value.</returns>
 		public bool TryGetImage(string hash, out ImageDetails details)
 			=> _Images.TryGetValue(hash, out details);
+		/// <summary>
+		/// Returns true if the amount of matching bools divided by 256 is greater than or equal to <see cref="PercentForMatch"/>.
+		/// </summary>
+		/// <param name="i1">The first bool hash.</param>
+		/// <param name="i2">The second bool hash.</param>
+		/// <returns>Returns a boolean indicating whether or not the images are too similar.</returns>
+		public static bool CompareImages(ImageDetails i1, ImageDetails i2, double percentForMatch)
+			=> (i1.BoolHash.Zip(i2.BoolHash, (i, j) => i == j).Count() / 256.0) >= percentForMatch;
 
-		private bool CompareImages(ImageDetails i1, ImageDetails i2)
-		{
-			return true;
-			//return i1.BoolHash.Zip(i2.BoolHash, (i, j) => i == j).Count();
-		}
-
+		/// <summary>
+		/// When the images have finished downloading run through each of them again to see if any are duplicates.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void OnDownloadsFinished(object sender, EventArgs e)
 		{
-
+			//Put the kvp values in a separate list so they can be iterated through
+			var kvps = _Images.ToList();
+			//Start at the top and work the way down
+			for (int i = kvps.Count - 1; i > 0; --i)
+			{
+				var iVal = kvps[i].Value;
+				for (int j = i - 1; j >= 0; --j)
+				{
+					var jVal = kvps[j].Value;
+					if (CompareImages(iVal, jVal, PercentForMatch))
+					{
+						try
+						{
+							//Delete/remove whatever is the smaller image
+							var iTotalPixels = iVal.Width * iVal.Height;
+							var jTotalPixels = jVal.Width * jVal.Height;
+							//If j is less then delete j
+							if (iTotalPixels > jTotalPixels)
+							{
+								jVal.File.Delete();
+								kvps.RemoveAt(j);
+							}
+							//If less obviously delete, but if equal then delete i since it was downloaded later
+							else
+							{
+								iVal.File.Delete();
+								kvps.RemoveAt(i);
+							}
+							break;
+						}
+						catch (Exception)
+						{
+							Console.WriteLine($"Unable to delete the duplicate image {jVal.File}.");
+						}
+					}
+				}
+			}
 		}
 
-		public static string CalculateMD5(Stream s)
+		public static string CalculateMD5Hash(Stream s)
 		{
 			using (var md5 = MD5.Create())
 			{

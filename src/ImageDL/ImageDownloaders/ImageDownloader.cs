@@ -103,7 +103,7 @@ namespace ImageDL.ImageDownloaders
 
 		public ImageDownloader(params string[] args)
 		{
-			_ImageComparer = new ImageComparer(this);
+			_ImageComparer = new ImageComparer(this, .95);
 			_Arguments = GetSettings(GetType());
 			if (args.Any())
 			{
@@ -284,7 +284,7 @@ namespace ImageDL.ImageDownloaders
 
 					using (var s = resp.GetResponseStream())
 					{
-						var hash = ImageComparer.CalculateMD5(s);
+						var hash = ImageComparer.CalculateMD5Hash(s);
 						//A match for the hash has been found, meaning this is a duplicate image
 						if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
 						{
