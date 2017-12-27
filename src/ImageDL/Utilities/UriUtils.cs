@@ -184,6 +184,17 @@ namespace ImageDL.Utilities
 			correctedUri = null;
 			return UriCorrectionResponse.Invalid;
 		}
+
+		public static Uri MakeUri(string input)
+		{
+			if (!(input.CaseInsStartsWith("http:") || input.CaseInsStartsWith("https:")))
+			{
+				input = "https:" + input;
+			}
+
+			Uri.TryCreate(input, UriKind.Absolute, out var uri);
+			return uri;
+		}
 		/// <summary>
 		/// Returns true if the passed in string is a valid url.
 		/// </summary>

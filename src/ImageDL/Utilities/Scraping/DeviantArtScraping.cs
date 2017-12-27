@@ -24,8 +24,7 @@ namespace ImageDL.Utilities.Scraping
 				});
 				var src = deviations.Select(x => x.GetAttributeValue("src", null));
 				return src.Where(x => !String.IsNullOrWhiteSpace(x))
-					.Select(x => x.StartsWith("https:") ? x : "https:" + x)
-					.Select(x => new Uri(x))
+					.Select(x => UriUtils.MakeUri(x))
 					.ToArray();
 			}
 			catch (Exception e)

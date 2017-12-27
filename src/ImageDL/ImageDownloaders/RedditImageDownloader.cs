@@ -18,6 +18,7 @@ namespace ImageDL.ImageDownloaders
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
 		private string _Subreddit;
+		[Setting("The subreddit to download images from.")]
 		public string Subreddit
 		{
 			get => _Subreddit;
@@ -28,6 +29,7 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 		private int _ScoreThreshold;
+		[Setting("The minimum score allowed for an image to be downloaded.")]
 		public int ScoreThreshold
 		{
 			get => _ScoreThreshold;
@@ -45,7 +47,25 @@ namespace ImageDL.ImageDownloaders
 			try
 			{
 				var subreddit = await _Reddit.GetSubredditAsync(Subreddit);
-				var validPosts = subreddit.Hot.Where(x => !x.IsStickied && !x.IsSelfPost && x.Score >= ScoreThreshold);
+				var validPosts = subreddit.Hot.Where(x =>
+				{
+					//Don't allow if it's not going to be an image
+					if (x.IsStickied || x.IsSelfPost)
+					{
+						return false;
+					}
+					//Don't allow if scored too low
+					else if (x.Score < ScoreThreshold)
+					{
+						return false;
+					}
+					//Don't allow if too old
+					else if (x.CreatedUTC < DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld)))
+					{
+						return false;
+					}
+					return true;
+				});
 				return validPosts.Take(AmountToDownload);
 			}
 			catch (WebException e)

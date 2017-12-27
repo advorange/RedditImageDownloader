@@ -15,8 +15,7 @@ namespace ImageDL.Utilities.Scraping
 				var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
 				var content = images.Select(x => x.GetAttributeValue("content", null));
 				return content.Where(x => !String.IsNullOrWhiteSpace(x))
-					.Select(x => x.StartsWith("https:") ? x : "https:" + x)
-					.Select(x => new Uri(x))
+					.Select(x => UriUtils.MakeUri(x))
 					.ToArray();
 			}
 			catch (Exception e)

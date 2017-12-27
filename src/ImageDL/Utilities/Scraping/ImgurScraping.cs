@@ -21,11 +21,10 @@ namespace ImageDL.Utilities.Scraping
 				var doc = new HtmlWeb().Load(uri);
 				var images = doc.DocumentNode.Descendants("img");
 				//Not sure if this is a foolproof way to only get the wanted images
-				var mainImages = images.Where(x => x.Attributes["itemprop"] != null);
+				var mainImages = images.Where(x => x.GetAttributeValue("itemprop", null) != null);
 				var src = mainImages.Select(x => x.GetAttributeValue("src", null));
 				return src.Where(x => !String.IsNullOrWhiteSpace(x))
-					.Select(x => x.StartsWith("https:") ? x : "https:" + x)
-					.Select(x => new Uri(x))
+					.Select(x => UriUtils.MakeUri(x))
 					.ToArray();
 			}
 			catch (Exception e)

@@ -6,8 +6,11 @@ using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
 using ImageDL.Utilities.Scraping;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,30 +22,56 @@ namespace ImageDL
 		{
 			Console.OutputEncoding = Encoding.UTF8;
 #if DOWNLOADER
+			Console.WriteLine("If you need any help, type 'help:argument name' where argument name is the name of an argument.");
 			var downloader = new RedditImageDownloader(args);
-			while (!downloader.IsReady)
+			var stillNeedsArgs = true;
+			downloader.AllArgumentsSet += () =>
 			{
-				downloader.AskForArguments();
-				downloader.AddArguments(Console.ReadLine().SplitLikeCommandLine());
+				stillNeedsArgs = false;
+				return Task.FromResult(0);
+			};
+
+			downloader.AskForArguments();
+			while (stillNeedsArgs)
+			{
+				var input = Console.ReadLine();
+				if (input.CaseInsStartsWith("help"))
+				{
+					downloader.GiveHelp(input.Substring(input.IndexOfAny(new[] { ':', ' ' })).SplitLikeCommandLine());
+				}
+				else
+				{
+					downloader.AddArguments(input.SplitLikeCommandLine());
+					downloader.AskForArguments();
+				}
 			}
+
 			await downloader.StartAsync();
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
 #endif
 #if IMAGECOMPARISON
-			var files = new[] { @"C:\Users\Nate\Downloads\New folder (2)\imageA.png", @"C:\Users\Nate\Downloads\New folder (2)\imageB.png" };
-			var details = new ImageDetails[files.Length];
-			for (int i = 0; i < files.Length; ++i)
+			var sw = new Stopwatch();
+			sw.Start();
+			for (int i = 0; i < 250; ++i)
 			{
-				var uri = new Uri(files[i]);
-				var fileInfo = new FileInfo(files[i]);
-				using (var s = File.Open(files[i], FileMode.Open))
-				using (var bm = new Bitmap(s))
+				var files = new[]
 				{
-					details[i] = new ImageDetails(uri, fileInfo, ImageComparer.CalculateBoolHash(bm));
-				}
+					@"C:\Users\User\Downloads\New folder (2)\image (1).jpg",
+					@"C:\Users\User\Downloads\New folder (2)\image (2).jpg"
+				}.Select(x =>
+				{
+					using (var s = File.Open(x, FileMode.Open))
+					using (var bm = new Bitmap(s))
+					{
+						var md5hash = ImageComparer.CalculateMD5Hash(s);
+						return new ImageDetails(new Uri(x), new FileInfo(x), bm);
+					}
+				}).ToList();
+				var sim = ImageComparer.CompareImages(details[0], details[1], 1);
 			}
-			var sim = ImageComparer.CompareImages(details[0], details[1], 1);
+			sw.Stop();
+			Console.WriteLine($"MS: {sw.ElapsedMilliseconds}");
 			Console.ReadKey();
 #endif
 		}

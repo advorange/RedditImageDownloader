@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ImageDL.Utilities
@@ -146,6 +148,22 @@ namespace ImageDL.Utilities
 				sb.Append(c);
 			}
 			return sb.ToString();
+		}
+		/// <summary>
+		/// Returns a hashed stream for file validation.
+		/// </summary>
+		/// <param name="s">The stream to hash.</param>
+		/// <returns>A string representing a hashed image.</returns>
+		public static string MD5Hash(Stream s)
+		{
+			s.Position = 0;
+			string hash;
+			using (var md5 = MD5.Create())
+			{
+				hash = BitConverter.ToString(md5.ComputeHash(s)).Replace("-", "").ToLower();
+			}
+			s.Position = 0;
+			return hash;
 		}
 		/// <summary>
 		/// Orders an <see cref="IEnumerable{T}"/> by something that does not implement <see cref="IComparable"/>.
