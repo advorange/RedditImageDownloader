@@ -7,83 +7,79 @@
                       xmlns:local="clr-namespace:ImageDL.UI.Classes.Controls"
                       mc:Ignorable="d"
                       d:DesignHeight="50"
-                      d:DesignWidth="150">
+                      d:DesignWidth="150"
+                      TextChanged="OnTextChanged"
+                      PreviewTextInput="OnPreviewTextInput">
 
-    <TextBox.Style>
-        <Style TargetType="local:ImageDLTextBox">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="local:ImageDLTextBox">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="4*" />
-                                <ColumnDefinition Width="1*" />
-                            </Grid.ColumnDefinitions>
+    <local:ImageDLTextBox.Template>
+        <ControlTemplate TargetType="local:ImageDLTextBox">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
-                            <local:ImageDLTextBox x:Name="TextDisplayer"
-                                                  Grid.Row="0"
-                                                  Grid.Column="0"
-                                                  Grid.RowSpan="2"
-                                                  FontResizeValue=".05"
-                                                  HorizontalScrollBarVisibility="Auto"
-                                                  Text="{TemplateBinding Text}"
-                                                  MaxLength="{TemplateBinding MaxLength}"
-                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                  BorderThickness="{TemplateBinding BorderThickness}"
-                                                  BorderBrush="{TemplateBinding BorderBrush}"
-                                                  IsEnabled="{TemplateBinding IsEnabled}">
-                                <TextBox.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius"
-                                                Value="8,0,0,8" />
-                                    </Style>
-                                </TextBox.Resources>
-                            </local:ImageDLTextBox>
-                            <local:ImageDLRepeatButton x:Name="UpButton"
-                                                       Grid.Row="0"
-                                                       Grid.Column="1"
-                                                       FontFamily="Segoe UI Symbol"
-                                                       FontResizeValue=".02"
-                                                       Content="&#xE110;"
-                                                       ClickMode="Press"
-                                                       Click="OnUpButtonClick"
-                                                       BorderThickness="{TemplateBinding BorderThickness}"
-                                                       BorderBrush="{TemplateBinding BorderBrush}"
-                                                       IsEnabled="{TemplateBinding IsEnabled}">
-                                <RepeatButton.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius"
-                                                Value="0,8,0,0" />
-                                    </Style>
-                                </RepeatButton.Resources>
-                            </local:ImageDLRepeatButton>
-                            <local:ImageDLRepeatButton x:Name="DownButton"
-                                                       Grid.Row="1"
-                                                       Grid.Column="1"
-                                                       FontFamily="Segoe UI Symbol"
-                                                       FontResizeValue=".02"
-                                                       Content="&#xE1FD;"
-                                                       ClickMode="Press"
-                                                       Click="OnDownButtonClick"
-                                                       BorderThickness="{TemplateBinding BorderThickness}"
-                                                       BorderBrush="{TemplateBinding BorderBrush}"
-                                                       IsEnabled="{TemplateBinding IsEnabled}">
-                                <RepeatButton.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius"
-                                                Value="0,0,8,0" />
-                                    </Style>
-                                </RepeatButton.Resources>
-                            </local:ImageDLRepeatButton>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </TextBox.Style>
+                <local:ImageDLTextBox x:Name="TextDisplayer"
+                                      Grid.Row="0"
+                                      Grid.Column="0"
+                                      Grid.RowSpan="2"
+                                      FontResizeValue=".05"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      Text="{TemplateBinding Text}"
+                                      MaxLength="{TemplateBinding MaxLength}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      BorderThickness="{TemplateBinding BorderThickness}"
+                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                      IsEnabled="{TemplateBinding IsEnabled}">
+                    <TextBox.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius"
+                                    Value="8,0,0,8" />
+                        </Style>
+                    </TextBox.Resources>
+                </local:ImageDLTextBox>
+                <local:ImageDLRepeatButton x:Name="UpButton"
+                                           Grid.Row="0"
+                                           Grid.Column="1"
+                                           FontFamily="Segoe UI Symbol"
+                                           FontResizeValue=".02"
+                                           Content="&#xE110;"
+                                           ClickMode="Press"
+                                           Click="OnUpButtonClick"
+                                           BorderThickness="{TemplateBinding BorderThickness}"
+                                           BorderBrush="{TemplateBinding BorderBrush}"
+                                           IsEnabled="{TemplateBinding IsEnabled}">
+                    <RepeatButton.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius"
+                                    Value="0,8,0,0" />
+                        </Style>
+                    </RepeatButton.Resources>
+                </local:ImageDLRepeatButton>
+                <local:ImageDLRepeatButton x:Name="DownButton"
+                                           Grid.Row="1"
+                                           Grid.Column="1"
+                                           FontFamily="Segoe UI Symbol"
+                                           FontResizeValue=".02"
+                                           Content="&#xE1FD;"
+                                           ClickMode="Press"
+                                           Click="OnDownButtonClick"
+                                           BorderThickness="{TemplateBinding BorderThickness}"
+                                           BorderBrush="{TemplateBinding BorderBrush}"
+                                           IsEnabled="{TemplateBinding IsEnabled}">
+                    <RepeatButton.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius"
+                                    Value="0,0,8,0" />
+                        </Style>
+                    </RepeatButton.Resources>
+                </local:ImageDLRepeatButton>
+            </Grid>
+        </ControlTemplate>
+    </local:ImageDLTextBox.Template>
 </local:ImageDLTextBox>

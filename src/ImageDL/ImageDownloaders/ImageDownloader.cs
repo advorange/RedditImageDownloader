@@ -10,7 +10,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -100,25 +99,25 @@ namespace ImageDL.ImageDownloaders
 				AddArgumentToSetArguments();
 			}
 		}
-		private float _MaxAcceptableImageSimilarity;
-		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. Ranges from .01 to 1.")]
-		public float MaxAcceptableImageSimilarity
+		private int _MaxImageSimilarity;
+		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. Ranges from 1 to 100.")]
+		public int MaxImageSimilarity
 		{
-			get => _MaxAcceptableImageSimilarity;
+			get => _MaxImageSimilarity;
 			set
 			{
-				_MaxAcceptableImageSimilarity = Math.Min(1f, Math.Max(.01f, value));
+				_MaxImageSimilarity = Math.Min(100, Math.Max(1, value));
 				AddArgumentToSetArguments();
 			}
 		}
-		private bool _CompareWithAlreadySavedImages;
+		private bool _CompareSavedImages;
 		[Setting("Whether or not to include already saved images in comparison for duplicates.")]
-		public bool CompareWithAlreadySavedImages
+		public bool CompareSavedImages
 		{
-			get => _CompareWithAlreadySavedImages;
+			get => _CompareSavedImages;
 			set
 			{
-				_CompareWithAlreadySavedImages = value;
+				_CompareSavedImages = value;
 				AddArgumentToSetArguments();
 			}
 		}
@@ -137,7 +136,7 @@ namespace ImageDL.ImageDownloaders
 				AddArguments(args);
 			}
 
-			CompareWithAlreadySavedImages = false;
+			CompareSavedImages = false;
 		}
 
 		/// <summary>
@@ -260,9 +259,9 @@ namespace ImageDL.ImageDownloaders
 		{
 			_ImageComparer = new ImageComparer
 			{
-				MaxAcceptableImageSimilarity = MaxAcceptableImageSimilarity,
+				ThumbnailSize = 64,
 			};
-			if (CompareWithAlreadySavedImages)
+			if (CompareSavedImages)
 			{
 				_ImageComparer.CacheAlreadySavedFiles(new DirectoryInfo(Directory));
 			}
@@ -303,7 +302,7 @@ namespace ImageDL.ImageDownloaders
 			{
 				SaveContentLinks(_AnimatedContent, new FileInfo(Path.Combine(Directory, "Failed_Downloads.txt")));
 			}
-			_ImageComparer.DeleteDuplicates(MaxAcceptableImageSimilarity);
+			_ImageComparer.DeleteDuplicates(MaxImageSimilarity / 100f);
 			DownloadsFinished?.Invoke();
 		}
 		/// <summary>

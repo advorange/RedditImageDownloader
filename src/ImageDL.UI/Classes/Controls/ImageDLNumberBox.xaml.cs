@@ -15,7 +15,12 @@ namespace ImageDL.UI.Classes.Controls
 	{
 		private static Regex _NumberRegex = new Regex(@"[^\d-]", RegexOptions.Compiled);
 
-		public int DefaultValue = 0;
+		private int _DefaultValue = 0;
+		public int DefaultValue
+		{
+			get => _DefaultValue;
+			set => _DefaultValue = value;
+		}
 		private int _MaximumValue = int.MaxValue;
 		public int MaximumValue
 		{
@@ -63,12 +68,14 @@ namespace ImageDL.UI.Classes.Controls
 		public ImageDLNumberBox()
 		{
 			InitializeComponent();
+			DataObject.AddPastingHandler(this, OnPaste);
+		}
+
+		public override void EndInit()
+		{
+			base.EndInit();
 			StoredNum = DefaultValue;
 			MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
-
-			TextChanged += OnTextChanged;
-			PreviewTextInput += OnPreviewTextInput;
-			DataObject.AddPastingHandler(this, OnPaste);
 		}
 
 		private void OnTextChanged(object sender, TextChangedEventArgs e)

@@ -13,8 +13,8 @@ namespace ImageDL.ImageDownloaders
 		int MinWidth { get; set; }
 		int MinHeight { get; set; }
 		int MaxDaysOld { get; set; }
-		float MaxAcceptableImageSimilarity { get; set; }
-		bool CompareWithAlreadySavedImages { get; set; }
+		int MaxImageSimilarity { get; set; }
+		bool CompareSavedImages { get; set; }
 
 		event Func<Task> AllArgumentsSet;
 		event Func<Task> DownloadsFinished;

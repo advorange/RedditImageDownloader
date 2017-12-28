@@ -5,7 +5,7 @@ using System.Windows.Controls.Primitives;
 namespace ImageDL.UI.Classes.Controls
 {
 	/// <summary>
-	/// A <see cref="Button"/> which implements some other useful properties.
+	/// A <see cref="RepeatButton"/> which implements some other useful properties.
 	/// </summary>
 	internal class ImageDLRepeatButton : RepeatButton, IFontResizeValue
 	{

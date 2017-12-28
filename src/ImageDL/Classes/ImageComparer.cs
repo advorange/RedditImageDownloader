@@ -26,12 +26,6 @@ namespace ImageDL.Classes
 				NotifyPropertyChanged();
 			}
 		}
-		private float _MaxAcceptableImageSimilarity;
-		public float MaxAcceptableImageSimilarity
-		{
-			get => _MaxAcceptableImageSimilarity;
-			set => _MaxAcceptableImageSimilarity = value;
-		}
 		private int _ThumbnailSize;
 		public int ThumbnailSize
 		{
@@ -74,7 +68,7 @@ namespace ImageDL.Classes
 				{
 					if (!ImageDetails.TryCreateFromFile(images[i], ThumbnailSize, out var md5hash, out var details) || !TryStore(md5hash, details))
 					{
-						Console.WriteLine($"Failed to cache the already saved file '{images[i]}'");
+						Console.WriteLine($"Failed to cache the already saved file {images[i]}.");
 					}
 				}
 				catch (Exception e)
@@ -88,6 +82,7 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// When the images have finished downloading run through each of them again to see if any are duplicates.
 		/// </summary>
+		/// <param name="percentForMatch">The percentage of similarity for an image to be considered a match. Ranges from 1 to 100.</param>
 		public void DeleteDuplicates(float percentForMatch)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
@@ -131,7 +126,7 @@ namespace ImageDL.Classes
 						}
 						catch
 						{
-							Console.WriteLine($"Unable to delete the duplicate image '{fileToDelete}'.");
+							Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
 						}
 					}
 					break;

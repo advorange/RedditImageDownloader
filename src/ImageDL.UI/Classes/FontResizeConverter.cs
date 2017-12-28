@@ -32,6 +32,10 @@ namespace ImageDL.UI.Classes
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
 			var converted = System.Convert.ToInt32(value);
+			if (converted == 0)
+			{
+				converted = 1;
+			}
 			return ConvertFactor == 0 ? converted : converted * ConvertFactor;
 		}
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

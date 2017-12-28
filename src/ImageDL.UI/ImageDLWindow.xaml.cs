@@ -7,6 +7,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -77,10 +78,11 @@ namespace ImageDL.UI
 			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text}").ToArray();
 			Downloader.HeldObject.AddArguments(args);
 		}
-		private void OnAllArgumentsSet(object sender, EventArgs e)
+		private Task OnAllArgumentsSet()
 		{
 			SetArgumentsButton.Visibility = Visibility.Collapsed;
 			StartDownloadsButton.Visibility = Visibility.Visible;
+			return Task.FromResult(0);
 		}
 		private async void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
 		{
@@ -88,7 +90,7 @@ namespace ImageDL.UI
 			ArgumentLayout.IsEnabled = false;
 			await Downloader.HeldObject.StartAsync();
 		}
-		private void OnDownloadsFinished(object sender, EventArgs e)
+		private Task OnDownloadsFinished()
 		{
 			SiteSelector.IsEnabled = true;
 			ArgumentLayout.IsEnabled = true;
@@ -108,6 +110,7 @@ namespace ImageDL.UI
 			}
 			Downloader.HeldObject = null;
 			CurrentSite = default;
+			return Task.FromResult(0);
 		}
 
 		private Grid GetArgumentGrid(Site site)
