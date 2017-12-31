@@ -1,5 +1,4 @@
 ﻿using ImageDL.Classes;
-using ImageDL.Utilities;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -40,13 +39,14 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 
+		public RedditImageDownloader() : base() { }
 		public RedditImageDownloader(params string[] args) : base(args) { }
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
 		{
 			try
 			{
-				var subreddit = await _Reddit.GetSubredditAsync(Subreddit);
+				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
 				var validPosts = subreddit.Hot.Where(x =>
 				{
 					//Don't allow if it's not going to be an image
@@ -74,10 +74,10 @@ namespace ImageDL.ImageDownloaders
 			}
 			return Enumerable.Empty<Post>();
 		}
-		protected override IEnumerable<Uri> GatherImages(Post post)
-			=> UriUtils.GetImageUris(post.Url);
 		protected override void WritePostToConsole(Post post, int count)
 			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
+		protected override async Task<UriImageGatherer> CreateGatherer(Post post)
+			=> await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
 		protected override ContentLink CreateContentLink(Post post, Uri uri)
 			=> new ContentLink(uri, post.Score);
 	}

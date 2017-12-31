@@ -2,9 +2,6 @@
 
 namespace ImageDL.Classes
 {
-	/// <summary>
-	/// The uri in here links to a file that failed to download.
-	/// </summary>
 	public struct ContentLink
 	{
 		/// <summary>

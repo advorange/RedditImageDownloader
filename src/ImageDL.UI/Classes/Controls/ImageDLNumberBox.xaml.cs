@@ -28,7 +28,7 @@ namespace ImageDL.UI.Classes.Controls
 			set
 			{
 				_MaximumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
+				MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
 			}
 		}
 		private int _MinimumValue = int.MinValue;
@@ -38,7 +38,7 @@ namespace ImageDL.UI.Classes.Controls
 			set
 			{
 				_MinimumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
+				MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
 			}
 		}
 		private int _StoredNum;
@@ -47,8 +47,7 @@ namespace ImageDL.UI.Classes.Controls
 			get => _StoredNum;
 			private set
 			{
-				//TODO: figure why going from default value to default value changes no text
-				//Seems to be it's from going from same value to same value doesn't set text back
+				//For some reason setting this value to the same value it already has doesn't update the text correctly
 				if (value > MaximumValue)
 				{
 					_StoredNum = MaximumValue;
@@ -75,7 +74,7 @@ namespace ImageDL.UI.Classes.Controls
 		{
 			base.EndInit();
 			StoredNum = DefaultValue;
-			MaxLength = Math.Max(_MinimumValue.GetLengthOfNumber(), _MaximumValue.GetLengthOfNumber());
+			MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
 		}
 
 		private void OnTextChanged(object sender, TextChangedEventArgs e)
@@ -85,14 +84,7 @@ namespace ImageDL.UI.Classes.Controls
 			{
 				return;
 			}
-			else if (!int.TryParse(tb.Text, out var result))
-			{
-				StoredNum = DefaultValue;
-			}
-			else
-			{
-				StoredNum = result;
-			}
+			StoredNum = int.TryParse(tb.Text, out var result) ? result : DefaultValue;
 		}
 		private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
 			//If char is null or not a number then don't let it go through
@@ -132,19 +124,17 @@ namespace ImageDL.UI.Classes.Controls
 
 		private void OnUpButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (StoredNum >= MaximumValue)
+			if (StoredNum < MaximumValue)
 			{
-				return;
+				++StoredNum;
 			}
-			++StoredNum;
 		}
 		private void OnDownButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (StoredNum <= MinimumValue)
+			if (StoredNum > MinimumValue)
 			{
-				return;
+				--StoredNum;
 			}
-			--StoredNum;
 		}
 	}
 }

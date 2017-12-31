@@ -124,7 +124,7 @@ namespace ImageDL.UI.Classes
 		}
 		private void OnMouseEnter(object sender, MouseEventArgs e)
 		{
-			IsEnabled = (NavigateUri.IsFile && File.Exists(NavigateUri.LocalPath)) || UriUtils.GetIfUriIsValidUrl(NavigateUri);
+			IsEnabled = (NavigateUri.IsFile && File.Exists(NavigateUri.LocalPath)) || Utils.GetIfUriIsValidUrl(NavigateUri);
 			if (!IsEnabled)
 			{
 				return;

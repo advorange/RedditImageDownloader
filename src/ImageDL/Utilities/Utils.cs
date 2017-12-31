@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -124,13 +125,6 @@ namespace ImageDL.Utilities
 		public static string FormatDateTimeForSaving()
 			=> DateTime.UtcNow.ToString("yyyyMMdd_hhmmss");
 		/// <summary>
-		/// Returns the amount of characters in a number.
-		/// </summary>
-		/// <param name="num">The number to get the length of.</param>
-		/// <returns>The amount of characters in a number.</returns>
-		public static int GetLengthOfNumber(this int num)
-			=> num.ToString().Length;
-		/// <summary>
 		/// Adds in spaces between each capital letter.
 		/// </summary>
 		/// <param name="title">The title to format.</param>
@@ -150,17 +144,17 @@ namespace ImageDL.Utilities
 			return sb.ToString();
 		}
 		/// <summary>
-		/// Returns a hashed stream for file validation.
+		/// Returns a hashed stream for file duplication checking.
 		/// </summary>
 		/// <param name="s">The stream to hash.</param>
-		/// <returns>A string representing a hashed image.</returns>
-		public static string MD5Hash(Stream s)
+		/// <returns>A string representing a hashed stream.</returns>
+		public static string Hash<T>(this Stream s) where T : HashAlgorithm
 		{
 			s.Position = 0;
 			string hash;
-			using (var md5 = MD5.Create())
+			using (var algorithm = (T)HashAlgorithm.Create(typeof(T).Name))
 			{
-				hash = BitConverter.ToString(md5.ComputeHash(s)).Replace("-", "").ToLower();
+				hash = BitConverter.ToString(algorithm.ComputeHash(s)).Replace("-", "").ToLower();
 			}
 			s.Position = 0;
 			return hash;
@@ -175,7 +169,30 @@ namespace ImageDL.Utilities
 		/// <returns>An ordered enumerable.</returns>
 		public static IEnumerable<T> OrderByNonComparable<T, TKey>(this IEnumerable<T> input, Func<T, TKey> keySelector)
 			=> input.GroupBy(keySelector).SelectMany(x => x);
-
+		/// <summary>
+		/// Returns the amount of characters in a number.
+		/// </summary>
+		/// <param name="num">The number to get the length of.</param>
+		/// <returns>The amount of characters in a number.</returns>
+		public static int GetLength(this int num)
+			=> num.ToString().Length;
+		/// <summary>
+		/// Returns true if the passed in string is a valid url.
+		/// </summary>
+		/// <param name="input">The uri to evaluate.</param>
+		/// <returns>A boolean indicating whether or not the string is a url.</returns>
+		public static bool GetIfStringIsValidUrl(string input) => true
+			&& !String.IsNullOrWhiteSpace(input)
+			&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
+			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		/// <summary>
+		/// Returns true if the passed in uri is a valid url.
+		/// </summary>
+		/// <param name="uri">The uri to evaluate.</param>
+		/// <returns>A boolean indicating whether or not the uri is a url.</returns>
+		public static bool GetIfUriIsValidUrl(Uri uri) => true
+			&& uri.IsAbsoluteUri
+			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 		/// <summary>
 		/// Writes an exception to the console in <see cref="ConsoleColor.Red"/>.
 		/// </summary>
@@ -186,6 +203,18 @@ namespace ImageDL.Utilities
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine(e);
 			Console.ForegroundColor = currColor;
+		}
+
+		public static HttpWebRequest CreateWebRequest(Uri uri)
+		{
+			var req = (HttpWebRequest)WebRequest.Create(uri);
+			req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+			req.Credentials = CredentialCache.DefaultCredentials;
+			req.Timeout = 5000;
+			req.ReadWriteTimeout = 5000;
+			req.AllowAutoRedirect = true; //True so imgur can redirect to correct webpages
+			req.CookieContainer = new CookieContainer();
+			return req;
 		}
 	}
 }

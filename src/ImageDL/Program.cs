@@ -1,16 +1,17 @@
 ﻿#define DOWNLOADER
 //#define IMAGECOMPARISON
+//#define URLRESPONSETEST
 
 using ImageDL.Classes;
 using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
-using ImageDL.Utilities.Scraping;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -46,7 +47,7 @@ namespace ImageDL
 				}
 			}
 
-			await downloader.StartAsync();
+			await downloader.StartAsync().ConfigureAwait(false);
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
 #endif
@@ -55,7 +56,7 @@ namespace ImageDL
 			sw.Start();
 			for (int i = 0; i < 250; ++i)
 			{
-				var files = new[]
+				var details = new[]
 				{
 					@"C:\Users\User\Downloads\New folder (2)\image (1).jpg",
 					@"C:\Users\User\Downloads\New folder (2)\image (2).jpg"
@@ -64,15 +65,20 @@ namespace ImageDL
 					using (var s = File.Open(x, FileMode.Open))
 					using (var bm = new Bitmap(s))
 					{
-						var md5hash = ImageComparer.CalculateMD5Hash(s);
-						return new ImageDetails(new Uri(x), new FileInfo(x), bm);
+						var md5hash = s.Hash<MD5>();
+						return new ImageDetails(new Uri(x), new FileInfo(x), bm, 64);
 					}
 				}).ToList();
-				var sim = ImageComparer.CompareImages(details[0], details[1], 1);
+				var sim = details[0].Equals(details[1], 1);
 			}
 			sw.Stop();
 			Console.WriteLine($"MS: {sw.ElapsedMilliseconds}");
 			Console.ReadKey();
+#endif
+#if URLRESPONSETEST
+			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
+			var downloader = new RedditImageDownloader();
+			await downloader.DownloadImageAsync(null, new Uri("https://www.imgur.com/fbyLWfU.jpg")).ConfigureAwait(false);
 #endif
 		}
 	}

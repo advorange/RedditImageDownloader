@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Web;
 
 namespace ImageDL.Classes
@@ -130,7 +131,7 @@ namespace ImageDL.Classes
 				using (var s = file.OpenRead())
 				using (var bm = new Bitmap(s))
 				{
-					md5Hash = Utils.MD5Hash(s);
+					md5Hash = s.Hash<MD5>();
 					details = new ImageDetails(new Uri(file.FullName), file, bm, thumbnailSize);
 					return true;
 				}

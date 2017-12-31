@@ -204,7 +204,7 @@ namespace ImageDL.UI.Classes.Writers
 			var currentPart = new StringBuilder();
 			foreach (var part in parts)
 			{
-				if (!File.Exists(part) && !UriUtils.GetIfStringIsValidUrl(part))
+				if (!File.Exists(part) && !Utils.GetIfStringIsValidUrl(part))
 				{
 					currentPart.Append(part);
 					continue;

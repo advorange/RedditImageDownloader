@@ -1,6 +1,6 @@
-﻿using ImageDL.Enums;
-using ImageDL.ImageDownloaders;
+﻿using ImageDL.ImageDownloaders;
 using ImageDL.UI.Classes;
+using ImageDL.UI.Classes.Controls;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;
 using System;
@@ -18,13 +18,13 @@ namespace ImageDL.UI
 	/// </summary>
 	public partial class ImageDLWindow : Window, INotifyPropertyChanged
 	{
-		private Site _CurrentSite;
-		public Site CurrentSite
+		private Type _CurrentDownloaderType = typeof(IImageDownloader);
+		public Type CurrentDownloaderType
 		{
-			get => _CurrentSite;
+			get => _CurrentDownloaderType;
 			private set
 			{
-				_CurrentSite = value;
+				_CurrentDownloaderType = value;
 				NotifyPropertyChanged();
 			}
 		}
@@ -59,14 +59,14 @@ namespace ImageDL.UI
 		}
 		private void OnSiteButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (!(sender is Button b) || !(b.Tag is Site s))
+			if (!(sender is Button b) || !(b.Tag is Type t))
 			{
 				return;
 			}
-			else if (CurrentSite != s)
+			else if (CurrentDownloaderType != t)
 			{
-				CurrentSite = s;
-				Downloader.HeldObject = CreateDownloader();
+				CurrentDownloaderType = t;
+				Downloader.HeldObject = CreateDownloader(t);
 				Downloader.HeldObject.AllArgumentsSet += OnAllArgumentsSet;
 				Downloader.HeldObject.DownloadsFinished += OnDownloadsFinished;
 			}
@@ -74,7 +74,7 @@ namespace ImageDL.UI
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)
 		{
 			var generalArgsTbs = GenericArguments.GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
-			var specificArgsTbs = GetArgumentGrid(CurrentSite).GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
+			var specificArgsTbs = GetArgumentGrid(CurrentDownloaderType).GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
 			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text}").ToArray();
 			Downloader.HeldObject.AddArguments(args);
 		}
@@ -97,49 +97,27 @@ namespace ImageDL.UI
 			StartDownloadsButton.Visibility = Visibility.Collapsed;
 			SetArgumentsButton.Visibility = Visibility.Visible;
 
-			foreach (var tb in GenericArguments.GetChildren().OfType<TextBox>())
+			foreach (var tb in ArgumentLayout.GetChildren().OfType<ImageDLTextBox>())
 			{
 				tb.Clear();
 			}
-			foreach (Site s in Enum.GetValues(typeof(Site)))
-			{
-				foreach (var tb in GetArgumentGrid(s).GetChildren().OfType<TextBox>())
-				{
-					tb.Clear();
-				}
-			}
 			Downloader.HeldObject = null;
-			CurrentSite = default;
+			CurrentDownloaderType = default;
 			return Task.FromResult(0);
 		}
 
-		private Grid GetArgumentGrid(Site site)
+		private Grid GetArgumentGrid(Type type)
 		{
-			switch (site)
+			if (type == typeof(RedditImageDownloader))
 			{
-				case Site.Reddit:
-				{
-					return RedditArguments;
-				}
-				default:
-				{
-					throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
-				}
+				return RedditArguments;
+			}
+			else
+			{
+				throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
 			}
 		}
-		private IImageDownloader CreateDownloader()
-		{
-			switch (CurrentSite)
-			{
-				case Site.Reddit:
-				{
-					return new RedditImageDownloader();
-				}
-				default:
-				{
-					throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
-				}
-			}
-		}
+		private IImageDownloader CreateDownloader(Type type)
+			=> (IImageDownloader)Activator.CreateInstance(type);
 	}
 }

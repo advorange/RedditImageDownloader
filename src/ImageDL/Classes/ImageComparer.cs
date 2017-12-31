@@ -1,10 +1,14 @@
 ﻿using ImageDL.Utilities;
+using Shell32;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Web;
 
 namespace ImageDL.Classes
 {
@@ -33,6 +37,7 @@ namespace ImageDL.Classes
 			set => _ThumbnailSize = value;
 		}
 
+		private static Folder _RecyclingBin = GetRecyclingBin();
 		private ConcurrentDictionary<string, ImageDetails> _Images = new ConcurrentDictionary<string, ImageDetails>();
 
 		/// <summary>
@@ -56,19 +61,28 @@ namespace ImageDL.Classes
 		/// <param name="directory"></param>
 		public void CacheAlreadySavedFiles(DirectoryInfo directory)
 		{
-			var images = directory.GetFiles();
+#if DEBUG
+			var sw = new Stopwatch();
+			sw.Start();
+#endif
+			var images = directory.GetFiles().Where(x => MimeMapping.GetMimeMapping(x.FullName).CaseInsContains("image/")).OrderBy(x => x.CreationTimeUtc).ToArray();
 			for (int i = 0; i < images.Count(); ++i)
 			{
-				if (i % 25 == 0 || i == images.Count())
+				if (i % 25 == 0)
 				{
 					Console.WriteLine($"{i}/{images.Count()} images cached.");
 				}
 
 				try
 				{
-					if (!ImageDetails.TryCreateFromFile(images[i], ThumbnailSize, out var md5hash, out var details) || !TryStore(md5hash, details))
+					if (!ImageDetails.TryCreateFromFile(images[i], ThumbnailSize, out var md5hash, out var details))
 					{
 						Console.WriteLine($"Failed to cache the already saved file {images[i]}.");
+					}
+					else if (!TryStore(md5hash, details))
+					{
+						Console.WriteLine($"Found a duplicate file based on hash {images[i]}. Deleting it.");
+						_RecyclingBin.MoveHere(images[i].FullName);
 					}
 				}
 				catch (Exception e)
@@ -77,6 +91,14 @@ namespace ImageDL.Classes
 					continue;
 				}
 			}
+			if (images.Count() % 25 != 0)
+			{
+				Console.WriteLine($"{images.Count()}/{images.Count()} images cached.");
+			}
+#if DEBUG
+			sw.Stop();
+			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
+#endif
 			Console.WriteLine();
 		}
 		/// <summary>
@@ -85,11 +107,23 @@ namespace ImageDL.Classes
 		/// <param name="percentForMatch">The percentage of similarity for an image to be considered a match. Ranges from 1 to 100.</param>
 		public void DeleteDuplicates(float percentForMatch)
 		{
+#if DEBUG
+			var sw = new Stopwatch();
+			sw.Start();
+#endif
+			Console.WriteLine();
 			//Put the kvp values in a separate list so they can be iterated through
 			var kvps = _Images.ToList();
+			Console.WriteLine($"{kvps.Count()} image(s) left to check for duplicates.");
 			//Start at the top and work the way down
+			var matchCount = 0;
 			for (int i = kvps.Count - 1; i > 0; --i)
 			{
+				if (i % 25 == 0)
+				{
+					Console.WriteLine($"{i} image(s) left to check.");
+				}
+
 				var iVal = kvps[i].Value;
 				for (int j = i - 1; j >= 0; --j)
 				{
@@ -99,6 +133,8 @@ namespace ImageDL.Classes
 						continue;
 					}
 
+					Console.WriteLine($"Possible match between {iVal.File} and {jVal.File}.");
+
 					//Check once again but with a higher resolution
 					ImageDetails.TryCreateFromFile(iVal.File, 512, out var md5Hashi, out var newIVal);
 					ImageDetails.TryCreateFromFile(jVal.File, 512, out var md5Hashj, out var newJVal);
@@ -106,6 +142,7 @@ namespace ImageDL.Classes
 					{
 						continue;
 					}
+
 
 					//Delete/remove whatever is the smaller image
 					var iPixCount = iVal.Width * iVal.Height;
@@ -117,12 +154,15 @@ namespace ImageDL.Classes
 						: iPixCount > jPixCount;
 					var fileToDelete = removeJ ? jVal.File : iVal.File;
 
+					Console.WriteLine($"Certain match between {iVal.File} and {jVal.File}.{Environment.NewLine}Deleting {fileToDelete}.");
+					++matchCount;
+
 					kvps.RemoveAt(removeJ ? j : i);
 					if (fileToDelete.Exists)
 					{
 						try
 						{
-							fileToDelete.Delete();
+							_RecyclingBin.MoveHere(fileToDelete.FullName);
 						}
 						catch
 						{
@@ -133,11 +173,24 @@ namespace ImageDL.Classes
 				}
 				++CurrentImagesSearched;
 			}
+			Console.WriteLine($"{matchCount} match(es) found.");
+#if DEBUG
+			sw.Stop();
+			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
+#endif
+			Console.WriteLine();
 			//Clear the lists and dictionary so after all this is done the program uses less memory
 			kvps.Clear();
 			_Images.Clear();
 		}
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
 			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		private static Folder GetRecyclingBin()
+		{
+			//This is bad.
+			var shellAppType = Type.GetTypeFromProgID("Shell.Application");
+			var shell = Activator.CreateInstance(shellAppType);
+			return (Folder)shellAppType.InvokeMember("NameSpace", BindingFlags.InvokeMethod, null, shell, new object[] { ShellSpecialFolderConstants.ssfBITBUCKET });
+		}
 	}
 }
