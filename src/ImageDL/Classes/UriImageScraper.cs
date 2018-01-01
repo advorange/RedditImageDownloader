@@ -21,32 +21,46 @@ namespace ImageDL.Classes
 		};
 
 		public Uri OriginalUri { get; private set; }
+		public Uri EditedUri { get; private set; }
 		public ImmutableList<Uri> ImageUris { get; private set; }
 		public string Error { get; private set; }
+		private Site _Site;
+		private bool _RequiresScraping;
 
 		private UriImageGatherer(Uri uri)
 		{
+			var u = uri.ToString();
 			OriginalUri = uri;
+			_Site = Enum.GetNames(typeof(Site))
+				.Where(x => u.CaseInsContains(x))
+				.Select(x => (Site)Enum.Parse(typeof(Site), x))
+				.SingleOrDefault();
+			EditedUri = EditUri(_Site, u);
+			_RequiresScraping = false
+				|| (_Site == Site.Imgur && (u.Contains("/a/") || u.Contains("/gallery/")))
+				|| (_Site == Site.Tumblr && !u.Contains("media.tumblr"))
+				|| (_Site == Site.DeviantArt && u.Contains("/art/"))
+				|| (_Site == Site.Instagram && u.Contains("/p/"));
 		}
 
 		public static async Task<UriImageGatherer> CreateGatherer(Uri uri)
 		{
-			var gatherer = new UriImageGatherer(uri);
-			if (GetRequiresScraping(gatherer.OriginalUri.ToString()))
+			var g = new UriImageGatherer(uri);
+			if (g._RequiresScraping)
 			{
-				var urls = await gatherer.ScrapeImages().ConfigureAwait(false);
-				var notNull = urls.Where(x => !String.IsNullOrWhiteSpace(x));
-				gatherer.ImageUris = notNull.Select(x => GetFixedUri(x)).Where(x => x != null).ToImmutableList();
+				var response = await ScrapeImages(g._Site, g.EditedUri).ConfigureAwait(false);
+				g.ImageUris = response.Uris.Select(x => EditUri(g._Site, x)).Where(x => x != null).ToImmutableList();
+				g.Error = response.Error;
 			}
 			else
 			{
-				gatherer.ImageUris = new[] { GetFixedUri(gatherer.OriginalUri.ToString()) }.ToImmutableList();
+				g.ImageUris = new[] { g.EditedUri }.ToImmutableList();
 			}
-			return gatherer;
+			return g;
 		}
 
-		//TODO: specify for tumblr and reddit image hosting
-		private static Uri GetFixedUri(string uri)
+		//TODO: specify reddit image hosting
+		private static Uri EditUri(Site s, string uri)
 		{
 			var hasExtension = !String.IsNullOrWhiteSpace(Path.GetExtension(uri));
 
@@ -56,37 +70,32 @@ namespace ImageDL.Classes
 				uri = uri.Substring(0, uri.IndexOf('?'));
 			}
 			//Imgur
-			if (uri.CaseInsContains("imgur.com"))
+			if (s == Site.Imgur)
 			{
 				uri = uri.Replace("_d", ""); //Some thumbnail thing
-				if (!hasExtension)
-				{
-					uri = "https://i.imgur.com/" + uri.Substring(uri.LastIndexOf('/') + 1) + ".png";
-				}
+				uri = hasExtension ? uri : "https://i.imgur.com/" + uri.Substring(uri.LastIndexOf('/') + 1) + ".png";
+			}
+			//Tumblr
+			if (s == Site.Tumblr)
+			{
+				//Only want to download images so replace with this. If blog post will throw exception but whatever
+				uri = uri.Replace("/post/", "/image/");
 			}
 			//Http/Https
-			if (!(uri.CaseInsStartsWith("http://") || uri.CaseInsStartsWith("https://")))
+			if (!uri.CaseInsStartsWith("http://") && !uri.CaseInsStartsWith("https://"))
 			{
-				if (uri.Contains("//"))
-				{
-					uri = uri.Substring(uri.IndexOf("//") + 2);
-				}
+				uri = uri.Contains("//") ? uri.Substring(uri.IndexOf("//") + 2) : uri;
 				uri = "https://" + uri;
 			}
 
 			return Uri.TryCreate(uri, UriKind.Absolute, out var result) ? result : null;
 		}
-		private static bool GetRequiresScraping(string uri) => false
-			|| (uri.Contains("imgur") && (uri.Contains("/a/") || uri.Contains("/gallery/")))
-			|| (uri.Contains("tumblr") && uri.Contains("/post/"))
-			|| (uri.Contains("deviantart") && uri.Contains("/art/"))
-			|| (uri.Contains("instagram") && uri.Contains("/p/"));
 
-		private async Task<IEnumerable<string>> ScrapeImages()
+		private static async Task<ScrapeResponse> ScrapeImages(Site site, Uri uri)
 		{
 			try
 			{
-				var req = Utils.CreateWebRequest(OriginalUri);
+				var req = Utils.CreateWebRequest(uri);
 				//DeviantArt 18+ filter
 				req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com"));
 
@@ -96,62 +105,63 @@ namespace ImageDL.Classes
 					var doc = new HtmlDocument();
 					doc.Load(s);
 
-					var uri = OriginalUri.ToString();
-					if (uri.Contains("imgur"))
+					switch (site)
 					{
-						return ScrapeImgurImages(doc);
-					}
-					else if (uri.Contains("tumblr"))
-					{
-						return ScrapeTumblrImages(doc);
-					}
-					else if (uri.Contains("deviantart"))
-					{
-						return ScrapeDeviantArtImages(doc);
-					}
-					else if (uri.Contains("instagram"))
-					{
-						return ScrapeInstagramImages(doc);
-					}
-					else
-					{
-						throw new ArgumentException($"The supplied uri {uri} is invalid for this method.");
+						case Site.Imgur:
+						{
+							return ScrapeImgurImages(doc);
+						}
+						case Site.Tumblr:
+						{
+							return ScrapeTumblrImages(doc);
+						}
+						case Site.DeviantArt:
+						{
+							return ScrapeDeviantArtImages(doc);
+						}
+						case Site.Instagram:
+						{
+							return ScrapeInstagramImages(doc);
+						}
+						default:
+						{
+							throw new ArgumentException($"The supplied uri {uri} is invalid for this method.");
+						}
 					}
 				}
 			}
-			catch (Exception e)
+			catch (WebException e)
 			{
 				e.WriteException();
-				Error = e.Message;
-				return new string[0];
+				return new ScrapeResponse(new string[0], e.Message);
 			}
 		}
-		private IEnumerable<string> ScrapeImgurImages(HtmlDocument doc)
+		private static ScrapeResponse ScrapeImgurImages(HtmlDocument doc)
 		{
 			//Not sure if this is a foolproof way to only get the wanted images
 			var images = doc.DocumentNode.Descendants("img");
 			var itemprop = images.Where(x => x.GetAttributeValue("itemprop", null) != null);
-			return itemprop.Select(x => x.GetAttributeValue("src", null)).Where(x => !String.IsNullOrWhiteSpace(x));
+			return new ScrapeResponse(itemprop.Select(x => x.GetAttributeValue("src", null)));
 		}
-		private IEnumerable<string> ScrapeTumblrImages(HtmlDocument doc)
+		private static ScrapeResponse ScrapeTumblrImages(HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants().Any(x => x.GetAttributeValue("id", null) == "safemode_actions_display"))
 			{
-				Error = "this tumblr post is locked behind safemode";
-				return new string[0];
+				return new ScrapeResponse(new string[0], "this tumblr post is locked behind safemode");
 			}
 
-			var images = doc.DocumentNode.Descendants("img");
-			var media = images.Where(x => x.HasClass("media"));
-			return media.Select(x => x.GetAttributeValue("src", null)).Where(x => !String.IsNullOrWhiteSpace(x));
+			var meta = doc.DocumentNode.Descendants("meta");
+			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
+			return new ScrapeResponse(images.Select(x => x.GetAttributeValue("content", null)));
 		}
-		private IEnumerable<string> ScrapeDeviantArtImages(HtmlDocument doc)
+		private static ScrapeResponse ScrapeDeviantArtImages(HtmlDocument doc)
 		{
 			//18+ filter (shouldn't be reached since the cookies are set)
 			if (doc.DocumentNode.Descendants("div").Any(x => x.HasClass("dev-content-mature")))
 			{
-				var img = doc.DocumentNode.Descendants("img").Where(x =>
+				var img = doc.DocumentNode.Descendants("img")
+				.Where(x =>
 				{
 					var attrs = x.Attributes;
 					return attrs["width"] != null && attrs["height"] != null && attrs["alt"] != null && attrs["src"] != null && attrs["srcset"] != null && attrs["sizes"] != null;
@@ -159,27 +169,44 @@ namespace ImageDL.Classes
 				.Select(x => x.GetAttributeValue("srcset", null))
 				.Select(x =>
 				{
-					var i = x.LastIndexOf("w,");
-					return x.Substring(i + 2, x.LastIndexOf(' ') - i - 2);
+					var w = x.LastIndexOf("w,") + 2; //W for w,
+					var s = x.LastIndexOf(' '); //S for space
+					return w > -1 && s > -1 ? null : x.Substring(w, s - w);
 				});
 
-				if (img.Any())
-				{
-
-				}
-				Error = "this deviantart post is locked behind mature content";
-				return new string[0];
+				return img.Any()
+					? new ScrapeResponse(img)
+					: new ScrapeResponse(new string[0], "this deviantart post is locked behind mature content");
 			}
 
 			var images = doc.DocumentNode.Descendants("img");
 			var deviations = images.Where(x => x.GetAttributeValue("data-embed-type", null) == "deviation");
-			return deviations.Select(x => x.GetAttributeValue("src", null)).Where(x => !String.IsNullOrWhiteSpace(x));
+			return new ScrapeResponse(deviations.Select(x => x.GetAttributeValue("src", null)));
 		}
-		private IEnumerable<string> ScrapeInstagramImages(HtmlDocument doc)
+		private static ScrapeResponse ScrapeInstagramImages(HtmlDocument doc)
 		{
 			var meta = doc.DocumentNode.Descendants("meta");
 			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return images.Select(x => x.GetAttributeValue("content", null)).Where(x => !String.IsNullOrWhiteSpace(x));
+			return new ScrapeResponse(images.Select(x => x.GetAttributeValue("content", null)));
+		}
+
+		private struct ScrapeResponse
+		{
+			public readonly IEnumerable<string> Uris;
+			public readonly string Error;
+
+			public ScrapeResponse(IEnumerable<string> uris, string error = null)
+			{
+				Uris = uris.Where(x => !String.IsNullOrWhiteSpace(x));
+				Error = error;
+			}
+		}
+		private enum Site
+		{
+			Imgur,
+			Tumblr,
+			DeviantArt,
+			Instagram,
 		}
 	}
 }

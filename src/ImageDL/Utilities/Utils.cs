@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 
 namespace ImageDL.Utilities
 {
@@ -193,6 +194,16 @@ namespace ImageDL.Utilities
 		public static bool GetIfUriIsValidUrl(Uri uri) => true
 			&& uri.IsAbsoluteUri
 			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		/// <summary>
+		/// Returns true for most image mime types (png, jpg, tiff, etc) but false for gif and anything else.
+		/// </summary>
+		/// <param name="path">The path or extension to check.</param>
+		/// <returns>A boolean inicating whether or not the path leads to an image.</returns>
+		public static bool PathLeadsToImage(string path)
+		{
+			var mimeType = MimeMapping.GetMimeMapping(path);
+			return mimeType != "image/gif" && mimeType.CaseInsContains("image/");
+		}
 		/// <summary>
 		/// Writes an exception to the console in <see cref="ConsoleColor.Red"/>.
 		/// </summary>

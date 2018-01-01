@@ -1,6 +1,6 @@
-﻿#define DOWNLOADER
+﻿//#define DOWNLOADER
 //#define IMAGECOMPARISON
-//#define URLRESPONSETEST
+#define URLRESPONSETEST
 
 using ImageDL.Classes;
 using ImageDL.ImageDownloaders;
@@ -76,9 +76,9 @@ namespace ImageDL
 			Console.ReadKey();
 #endif
 #if URLRESPONSETEST
-			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
-			var downloader = new RedditImageDownloader();
-			await downloader.DownloadImageAsync(null, new Uri("https://www.imgur.com/fbyLWfU.jpg")).ConfigureAwait(false);
+			var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
+			//var downloader = new RedditImageDownloader();
+			//await downloader.DownloadImageAsync(null, new Uri("")).ConfigureAwait(false);
 #endif
 		}
 	}

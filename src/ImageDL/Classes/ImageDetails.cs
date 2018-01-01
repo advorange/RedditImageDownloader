@@ -119,7 +119,7 @@ namespace ImageDL.Classes
 		/// <returns></returns>
 		public static bool TryCreateFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
-			if (!MimeMapping.GetMimeMapping(file.FullName).StartsWith("image/"))
+			if (!Utils.PathLeadsToImage(file.FullName))
 			{
 				md5Hash = null;
 				details = default;
