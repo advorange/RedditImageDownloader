@@ -73,10 +73,13 @@ namespace ImageDL.UI
 		}
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)
 		{
-			var generalArgsTbs = GenericArguments.GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
-			var specificArgsTbs = GetArgumentGrid(CurrentDownloaderType).GetChildren().OfType<TextBox>().Where(x => x.Tag != null);
-			var args = generalArgsTbs.Concat(specificArgsTbs).Select(x => $"{x.Tag.ToString()}:{x.Text}").ToArray();
-			Downloader.HeldObject.AddArguments(args);
+			//First get all the next level down arguments (most textboxes and numberboxes)
+			var children = GenericArguments.GetChildren().Concat(GetArgumentGrid(CurrentDownloaderType).GetChildren());
+			//Then get the arguments in viewboxes (checkboxes)
+			var argChildren = children.Concat(children.OfType<Viewbox>().Select(x => x.Child));
+			var tbs = argChildren.OfType<TextBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.Text}");
+			var cbs = argChildren.OfType<CheckBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.IsChecked}");
+			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
 		}
 		private Task OnAllArgumentsSet()
 		{

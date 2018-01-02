@@ -39,6 +39,7 @@ namespace ImageDL.ImageDownloaders
 
 		public event Func<Task> AllArgumentsSet;
 		public event Func<Task> DownloadsFinished;
+		public bool IsReady => !_Arguments.Where(x => !_SetArguments.Contains(x)).Any();
 
 		private string _Directory;
 		[Setting("The location to save files to.")]
@@ -47,6 +48,12 @@ namespace ImageDL.ImageDownloaders
 			get => _Directory;
 			set
 			{
+				if (!String.IsNullOrWhiteSpace(value) && !System.IO.Directory.Exists(value))
+				{
+					Console.WriteLine($"{Directory} does not exist as a directory.");
+					_SetArguments.RemoveAll(x => x.Name == nameof(Directory));
+				}
+
 				_Directory = value;
 				AddArgumentToSetArguments();
 			}
@@ -95,8 +102,8 @@ namespace ImageDL.ImageDownloaders
 				AddArgumentToSetArguments();
 			}
 		}
-		private int _MaxImageSimilarity;
-		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. Ranges from 1 to 100.")]
+		private int _MaxImageSimilarity = 100;
+		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. Ranges from 1 to 100.", true)]
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
@@ -106,8 +113,8 @@ namespace ImageDL.ImageDownloaders
 				AddArgumentToSetArguments();
 			}
 		}
-		private bool _CompareSavedImages;
-		[Setting("Whether or not to include already saved images in comparison for duplicates.")]
+		private bool _CompareSavedImages = false;
+		[Setting("Whether or not to include already saved images in comparison for duplicates.", true)]
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
@@ -127,12 +134,12 @@ namespace ImageDL.ImageDownloaders
 		public ImageDownloader(params string[] args)
 		{
 			_Arguments = GetSettings();
+			_SetArguments = _Arguments.Where(x => x.GetCustomAttribute<SettingAttribute>().HasDefaultValue).ToList();
+
 			if (args.Any())
 			{
-				AddArguments(args);
+				SetArguments(args);
 			}
-
-			CompareSavedImages = false;
 		}
 
 		/// <summary>
@@ -154,56 +161,56 @@ namespace ImageDL.ImageDownloaders
 		/// Sets the arguments that can be gathered from <paramref name="args"/>.
 		/// </summary>
 		/// <param name="args">The supplied arguments.</param>
-		public void AddArguments(params string[] args)
+		public void SetArguments(params string[] args)
 		{
 			foreach (var argument in args)
 			{
-				//Split, left side is the arg name, right is value
-				var split = argument.Split(new[] { ':' }, 2);
-				if (split.Length != 2)
-				{
-					Console.WriteLine($"Unable to split \"{argument}\" to the correct length.");
-					continue;
-				}
-
-				//See if any arguments have the supplied name
-				var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
-				if (property == null)
-				{
-					Console.WriteLine($"{split[0]} is not a valid argument name.");
-					continue;
-				}
-				else if (String.IsNullOrWhiteSpace(split[1]))
-				{
-					Console.WriteLine($"{property.Name} may not have an empty value.");
-					continue;
-				}
-				else if (_TryParses.TryGetValue(property.PropertyType, out var f))
-				{
-					property.SetValue(this, f(split[1]));
-				}
-				else if (property.PropertyType == typeof(string))
-				{
-					property.SetValue(this, split[1]);
-				}
-				else
-				{
-					Console.WriteLine($"Unable to set the value for {property.Name}.");
-					continue;
-				}
-
-				Console.WriteLine($"Successfully set {property.Name} to {property.GetValue(this)}.");
+				Console.WriteLine(SetArgument(argument));
 			}
 			Console.WriteLine();
-
-			if (!String.IsNullOrWhiteSpace(Directory) && !System.IO.Directory.Exists(Directory))
+		}
+		/// <summary>
+		/// Sets the argument. <paramref name="argument"/> should be formatted as name:value. Returns a string indicating a response.
+		/// </summary>
+		/// <param name="argument">The passed in value. Format is name:value.</param>
+		/// <returns>A string indicating the response.</returns>
+		public string SetArgument(string argument)
+		{
+			//Split, left side is the arg name, right is value
+			var split = argument.Split(new[] { ':' }, 2);
+			if (split.Length != 2)
 			{
-				Console.WriteLine($"{Directory} does not exist as a directory.");
+				return $"Unable to split \"{argument}\" to the correct length.";
 			}
-			else if (!_Arguments.Where(x => !_SetArguments.Contains(x)).Any())
+
+			//See if any arguments have the supplied name
+			var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
+			if (property == null)
+			{
+				return $"{split[0]} is not a valid argument name.";
+			}
+			else if (String.IsNullOrWhiteSpace(split[1]))
+			{
+				return $"{property.Name} may not have an empty value.";
+			}
+			else if (_TryParses.TryGetValue(property.PropertyType, out var f))
+			{
+				property.SetValue(this, f(split[1]));
+			}
+			else if (property.PropertyType == typeof(string))
+			{
+				property.SetValue(this, split[1]);
+			}
+			else
+			{
+				return $"Unable to set the value for {property.Name}.";
+			}
+
+			if (IsReady)
 			{
 				AllArgumentsSet?.Invoke();
 			}
+			return $"Successfully set {property.Name} to {property.GetValue(this)}.";
 		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.

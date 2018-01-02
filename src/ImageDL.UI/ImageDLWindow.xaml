@@ -93,7 +93,7 @@
                     BorderThickness="1"
                     Background="Gray">
                 <controls:ImageDLGrid x:Name="ArgumentLayout"
-                                      FontResizeValue=".015"
+                                      FontResizeValue=".018"
                                       Margin="25">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="2*" />
@@ -146,6 +146,20 @@
                                     Value="2" />
                             <Setter Property="Margin"
                                     Value="2,0,2,0" />
+                        </Style>
+                        <Style TargetType="CheckBox">
+                            <Setter Property="BorderBrush"
+                                    Value="Black" />
+                            <Setter Property="BorderThickness"
+                                    Value=".5" />
+                            <Setter Property="Margin"
+                                    Value="2,0,2,0" />
+                            <Style.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius"
+                                            Value="4" />
+                                </Style>
+                            </Style.Resources>
                         </Style>
                     </Grid.Resources>
 
@@ -220,6 +234,12 @@
                                                    MinimumValue="50"
                                                    MaximumValue="100"
                                                    Tag="{classes:NameOf Member=MaxImageSimilarity, Type=downloaders:RedditImageDownloader}" />
+                        <Viewbox Grid.Column="2"
+                                 Grid.Row="3" >
+                            <CheckBox x:Name="CompareSavedImages"
+                                      IsChecked="False"
+                                      Tag="{classes:NameOf Member=CompareSavedImages, Type=downloaders:RedditImageDownloader}" />
+                        </Viewbox>
                     </controls:ImageDLGrid>
 
                     <!-- Specific arguments -->

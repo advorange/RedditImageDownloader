@@ -8,6 +8,10 @@ namespace ImageDL.ImageDownloaders
 	/// </summary>
 	public interface IImageDownloader
 	{
+		event Func<Task> AllArgumentsSet;
+		event Func<Task> DownloadsFinished;
+		bool IsReady { get; }
+
 		string Directory { get; set; }
 		int AmountToDownload { get; set; }
 		int MinWidth { get; set; }
@@ -15,9 +19,6 @@ namespace ImageDL.ImageDownloaders
 		int MaxDaysOld { get; set; }
 		int MaxImageSimilarity { get; set; }
 		bool CompareSavedImages { get; set; }
-
-		event Func<Task> AllArgumentsSet;
-		event Func<Task> DownloadsFinished;
 
 		/// <summary>
 		/// Start downloading images.
@@ -33,7 +34,7 @@ namespace ImageDL.ImageDownloaders
 		/// Sets arguments with only text/user input.
 		/// </summary>
 		/// <param name="args">The text to set.</param>
-		void AddArguments(params string[] args);
+		void SetArguments(params string[] args);
 		/// <summary>
 		/// Prints to the console what arguments are still needed.
 		/// </summary>
