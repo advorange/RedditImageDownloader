@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Web;
 
 namespace ImageDL.Classes
 {
@@ -49,12 +48,12 @@ namespace ImageDL.Classes
 			Width = bm.Width;
 			Height = bm.Height;
 
-			//Source: https://stackoverflow.com/a/19586876
 			var brightnesses = new List<float>();
 			var totalBrightness = 0f;
 			//Create a square thumbnail
 			using (var thumb = new Bitmap(bm, thumbnailSize, thumbnailSize))
 			{
+				//Source: https://stackoverflow.com/a/19586876
 				//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
 				var data = thumb.LockBits(new Rectangle(Point.Empty, new Size(thumb.Width, thumb.Height)), ImageLockMode.ReadOnly, thumb.PixelFormat);
 				var pixelSize = data.PixelFormat == PixelFormat.Format32bppArgb ? 4 : 3;
@@ -112,11 +111,11 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// Attempts to create <see cref="ImageDetails"/> from a file.
 		/// </summary>
-		/// <param name="file"></param>
-		/// <param name="thumbnailSize"></param>
-		/// <param name="md5Hash"></param>
-		/// <param name="details"></param>
-		/// <returns></returns>
+		/// <param name="file">The file to read.</param>
+		/// <param name="thumbnailSize">The size to make the thumbnail.</param>
+		/// <param name="md5Hash">The image's data hash.</param>
+		/// <param name="details">The image's pixel hash.</param>
+		/// <returns>A boolean indicating whether or not <paramref name="details"/> were created successfully.</returns>
 		public static bool TryCreateFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
 			if (!Utils.PathLeadsToImage(file.FullName))

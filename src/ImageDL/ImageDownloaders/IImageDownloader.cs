@@ -1,4 +1,7 @@
-﻿using System;
+﻿using ImageDL.Classes;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
@@ -8,9 +11,22 @@ namespace ImageDL.ImageDownloaders
 	/// </summary>
 	public interface IImageDownloader
 	{
+		/// <summary>
+		/// Fires when all arguments have been set.
+		/// </summary>
 		event Func<Task> AllArgumentsSet;
+		/// <summary>
+		/// Fires after all images have been downloaded.
+		/// </summary>
 		event Func<Task> DownloadsFinished;
+		/// <summary>
+		/// Returns true between when all arguments have been set and images start downloading.
+		/// </summary>
 		bool IsReady { get; }
+		/// <summary>
+		/// Returns true after all images have been downloaded.
+		/// </summary>
+		bool IsDone { get; }
 
 		string Directory { get; set; }
 		int AmountToDownload { get; set; }
@@ -39,5 +55,11 @@ namespace ImageDL.ImageDownloaders
 		/// Prints to the console what arguments are still needed.
 		/// </summary>
 		void AskForArguments();
+		/// <summary>
+		/// Saves links to a file.
+		/// </summary>
+		/// <param name="contentLinks">The links to save.</param>
+		/// <param name="file">The file to save to.</param>
+		void SaveContentLinks(IEnumerable<ContentLink> contentLinks, FileInfo file);
 	}
 }

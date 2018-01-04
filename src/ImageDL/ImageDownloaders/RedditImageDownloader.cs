@@ -76,7 +76,7 @@ namespace ImageDL.ImageDownloaders
 		}
 		protected override void WritePostToConsole(Post post, int count)
 			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
-		protected override async Task<UriImageGatherer> CreateGatherer(Post post)
+		protected override async Task<UriImageGatherer> CreateGathererAsync(Post post)
 			=> await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
 		protected override ContentLink CreateContentLink(Post post, Uri uri)
 			=> new ContentLink(uri, post.Score);

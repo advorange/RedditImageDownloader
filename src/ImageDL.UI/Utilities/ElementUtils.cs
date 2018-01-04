@@ -31,8 +31,13 @@ namespace ImageDL.UI.Utilities
 		/// <param name="size"></param>
 		/// <exception cref="ArgumentException">If <paramref name="control"/> is not inside a grid.</exception>
 		/// <exception cref="ArgumentException">If <paramref name="size"/> is less than zero.</exception>
-		public static void SetFontResizeProperty(FrameworkElement element, double size)
+		public static void SetFontResizeProperty(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
+			if (!(d is FrameworkElement element) || !(e.NewValue is double size))
+			{
+				throw new ArgumentException($"Invalid arguments. {nameof(d)} is not a FrameworkElement or {nameof(e.NewValue)} is not a double.");
+			}
+
 			if (!TryGetTopMostParent(element, out Grid parent, out int ancestorLevel))
 			{
 				throw new ArgumentException($"{element.Name} must be inside a grid if {nameof(IFontResizeValue.FontResizeValue)} is set.");

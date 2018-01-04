@@ -15,53 +15,30 @@ namespace ImageDL.UI.Classes.Controls
 	{
 		private static Regex _NumberRegex = new Regex(@"[^\d-]", RegexOptions.Compiled);
 
-		private int _DefaultValue = 0;
+		public static readonly DependencyProperty DefaultValueProperty = DependencyProperty.Register("DefaultValue", typeof(int), typeof(ImageDLNumberBox), new PropertyMetadata(0));
 		public int DefaultValue
 		{
-			get => _DefaultValue;
-			set => _DefaultValue = value;
+			get => (int)GetValue(DefaultValueProperty);
+			set => SetValue(DefaultValueProperty, value);
 		}
-		private int _MaximumValue = int.MaxValue;
-		public int MaximumValue
+		public static readonly DependencyProperty MaxValueProperty = DependencyProperty.Register("MaxValue", typeof(int), typeof(ImageDLNumberBox), new PropertyMetadata(int.MaxValue, UpdateMaxLength));
+		public int MaxValue
 		{
-			get => _MaximumValue;
-			set
-			{
-				_MaximumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
-			}
+			get => (int)GetValue(MaxValueProperty);
+			set => SetValue(MaxValueProperty, value);
 		}
-		private int _MinimumValue = int.MinValue;
-		public int MinimumValue
+		public static readonly DependencyProperty MinValueProperty = DependencyProperty.Register("MinValue", typeof(int), typeof(ImageDLNumberBox), new PropertyMetadata(int.MinValue, UpdateMaxLength));
+		public int MinValue
 		{
-			get => _MinimumValue;
-			set
-			{
-				_MinimumValue = value;
-				MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
-			}
+			get => (int)GetValue(MinValueProperty);
+			set => SetValue(MinValueProperty, value);
 		}
-		private int _StoredNum;
-		public int StoredNum
+		private static readonly DependencyPropertyKey StoredValuePropertyKey = DependencyProperty.RegisterReadOnly("StoredValue", typeof(int), typeof(ImageDLNumberBox), new PropertyMetadata(0, UpdateText));
+		public static readonly DependencyProperty StoredValueProperty = StoredValuePropertyKey.DependencyProperty;
+		public int StoredValue
 		{
-			get => _StoredNum;
-			private set
-			{
-				//For some reason setting this value to the same value it already has doesn't update the text correctly
-				if (value > MaximumValue)
-				{
-					_StoredNum = MaximumValue;
-				}
-				else if (value < MinimumValue)
-				{
-					_StoredNum = MinimumValue;
-				}
-				else
-				{
-					_StoredNum = value;
-				}
-				Text = _StoredNum.ToString();
-			}
+			get => (int)GetValue(StoredValueProperty);
+			private set => SetValue(StoredValuePropertyKey, value);
 		}
 
 		public ImageDLNumberBox()
@@ -73,8 +50,7 @@ namespace ImageDL.UI.Classes.Controls
 		public override void EndInit()
 		{
 			base.EndInit();
-			StoredNum = DefaultValue;
-			MaxLength = Math.Max(_MinimumValue.GetLength(), _MaximumValue.GetLength());
+			Text = StoredValue.ToString();
 		}
 
 		private void OnTextChanged(object sender, TextChangedEventArgs e)
@@ -84,7 +60,7 @@ namespace ImageDL.UI.Classes.Controls
 			{
 				return;
 			}
-			StoredNum = int.TryParse(tb.Text, out var result) ? result : DefaultValue;
+			UpdateStoredValue(int.TryParse(tb.Text, out var result) ? result : DefaultValue);
 		}
 		private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
 			//If char is null or not a number then don't let it go through
@@ -121,20 +97,50 @@ namespace ImageDL.UI.Classes.Controls
 
 			e.CancelCommand();
 		}
-
 		private void OnUpButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (StoredNum < MaximumValue)
+			if (StoredValue < MaxValue)
 			{
-				++StoredNum;
+				UpdateStoredValue(StoredValue + 1);
 			}
 		}
 		private void OnDownButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (StoredNum > MinimumValue)
+			if (StoredValue > MinValue)
 			{
-				--StoredNum;
+				UpdateStoredValue(StoredValue - 1);
 			}
+		}
+		private void UpdateStoredValue(int value)
+		{
+			if (value > MaxValue)
+			{
+				value = MaxValue;
+			}
+			else if (value < MinValue)
+			{
+				value = MinValue;
+			}
+
+			if (StoredValue == value)
+			{
+				return;
+			}
+			else
+			{
+				StoredValue = value;
+			}
+		}
+
+		private static void UpdateMaxLength(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var nb = d as ImageDLNumberBox;
+			nb.MaxLength = Math.Max(nb.MinValue.GetLength(), nb.MaxValue.GetLength());
+		}
+		private static void UpdateText(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var nb = d as ImageDLNumberBox;
+			nb.Text = e.NewValue.ToString();
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using ImageDL.UI.Interfaces;
 using ImageDL.UI.Utilities;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace ImageDL.UI.Classes.Controls
@@ -9,15 +10,11 @@ namespace ImageDL.UI.Classes.Controls
 	/// </summary>
 	internal class ImageDLTextBox : TextBox, IFontResizeValue
 	{
-		private double _FRV;
+		public static readonly DependencyProperty FontResizeValueProperty = DependencyProperty.Register("FontResizeValue", typeof(double), typeof(ImageDLTextBox), new PropertyMetadata(ElementUtils.SetFontResizeProperty));
 		public double FontResizeValue
 		{
-			get => _FRV;
-			set
-			{
-				_FRV = value;
-				ElementUtils.SetFontResizeProperty(this, _FRV);
-			}
+			get => (double)GetValue(FontResizeValueProperty);
+			set => SetValue(FontResizeValueProperty, value);
 		}
 	}
 }

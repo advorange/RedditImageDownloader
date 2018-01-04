@@ -13,19 +13,117 @@
         FontFamily="Courier New"
         DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
+    <Window.Resources>
+        <Style x:Key="TopLevelBorder"
+               TargetType="Border">
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+        </Style>
+        <Style x:Key="DisabledWhenDownloaderDoesntExist"
+               TargetType="Button">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Downloader.HeldObject}"
+                             Value="{x:Null}">
+                    <Setter Property="IsEnabled"
+                            Value="False" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="InputTitle"
+               TargetType="controls:ImageDLTextBlock">
+            <Setter Property="HorizontalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEnabled, ElementName=ArgumentLayout}"
+                             Value="False">
+                    <Setter Property="Foreground"
+                            Value="Black" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TBInput"
+               TargetType="controls:ImageDLTextBox">
+            <Setter Property="HorizontalScrollBarVisibility"
+                    Value="Auto" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+            <Setter Property="BorderThickness"
+                    Value="2" />
+            <Setter Property="Margin"
+                    Value="2,0,2,0" />
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius"
+                            Value="8" />
+                </Style>
+            </Style.Resources>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEnabled, ElementName=ArgumentLayout}"
+                             Value="False">
+                    <Setter Property="BorderBrush"
+                            Value="LightGray" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NBInput"
+               TargetType="controls:ImageDLNumberBox">
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+            <Setter Property="BorderThickness"
+                    Value="2" />
+            <Setter Property="Margin"
+                    Value="2,0,2,0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEnabled, ElementName=ArgumentLayout}"
+                             Value="False">
+                    <Setter Property="BorderBrush"
+                            Value="LightGray" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CBInput"
+               TargetType="CheckBox">
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+            <Setter Property="BorderThickness"
+                    Value=".5" />
+            <Setter Property="Margin"
+                    Value="2,0,2,0" />
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius"
+                            Value="4" />
+                </Style>
+            </Style.Resources>
+        </Style>
+    </Window.Resources>
+
     <classes:DpiDecorator x:Name="DpiDecorator">
         <Grid x:Name="Layout">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="10*" />
-                <ColumnDefinition Width="7*" />
+                <ColumnDefinition Width="20*" />
+                <ColumnDefinition Width="9*" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0"
-                    BorderBrush="Black"
-                    BorderThickness="1"
-                    Background="DimGray">
-                <Grid x:Name="SiteSelector">
+                    Background="DimGray"
+                    BorderThickness="0,0,2,0"
+                    Style="{StaticResource TopLevelBorder}">
+                <Grid x:Name="SiteSelector"
+                      Background="DimGray">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="1*" />
                         <RowDefinition Height="1*" />
@@ -60,22 +158,10 @@
                     <Button x:Name="SetArgumentsButton"
                             Grid.Row="4"
                             Click="OnSetArgumentsButtonClick"
-                            ToolTipService.ShowOnDisabled="True">
+                            Style="{StaticResource DisabledWhenDownloaderDoesntExist}">
                         <Viewbox>
                             <TextBlock>Set Arguments</TextBlock>
                         </Viewbox>
-
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Downloader.HeldObject}"
-                                                 Value="{x:Null}">
-                                        <Setter Property="IsEnabled"
-                                                Value="False" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
                     </Button>
                     <Button x:Name="StartDownloadsButton"
                             Grid.Row="4"
@@ -89,115 +175,65 @@
             </Border>
 
             <Border Grid.Column="1"
-                    BorderBrush="Black"
-                    BorderThickness="1"
-                    Background="Gray">
+                    Background="Gray"
+                    BorderThickness="2,1,2,1"
+                    Style="{StaticResource TopLevelBorder}">
                 <controls:ImageDLGrid x:Name="ArgumentLayout"
-                                      FontResizeValue=".018"
-                                      Margin="25">
+                                      FontResizeValue=".015"
+                                      Margin="10">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
-                        <RowDefinition Height="2*" />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
                     </Grid.RowDefinitions>
 
                     <Grid.Resources>
-                        <Style TargetType="controls:ImageDLLabel">
-                            <Setter Property="HorizontalAlignment"
-                                    Value="Center" />
-                            <Setter Property="VerticalAlignment"
-                                    Value="Bottom" />
-                        </Style>
-                        <!-- This one needs a key otherwise is affects the textboxes inside the numberboxes -->
-                        <Style x:Key="TBInput"
-                               TargetType="controls:ImageDLTextBox">
-                            <Setter Property="HorizontalScrollBarVisibility"
-                                    Value="Auto" />
-                            <Setter Property="HorizontalContentAlignment"
-                                    Value="Left" />
-                            <Setter Property="VerticalContentAlignment"
-                                    Value="Center" />
-                            <Setter Property="BorderBrush"
-                                    Value="Black" />
-                            <Setter Property="BorderThickness"
-                                    Value="2" />
-                            <Setter Property="Margin"
-                                    Value="2,0,2,0" />
-                            <Style.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius"
-                                            Value="8" />
-                                </Style>
-                            </Style.Resources>
-                        </Style>
-                        <Style TargetType="controls:ImageDLNumberBox">
-                            <Setter Property="HorizontalContentAlignment"
-                                    Value="Left" />
-                            <Setter Property="VerticalContentAlignment"
-                                    Value="Center" />
-                            <Setter Property="BorderBrush"
-                                    Value="Black" />
-                            <Setter Property="BorderThickness"
-                                    Value="2" />
-                            <Setter Property="Margin"
-                                    Value="2,0,2,0" />
-                        </Style>
-                        <Style TargetType="CheckBox">
-                            <Setter Property="BorderBrush"
-                                    Value="Black" />
-                            <Setter Property="BorderThickness"
-                                    Value=".5" />
-                            <Setter Property="Margin"
-                                    Value="2,0,2,0" />
-                            <Style.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius"
-                                            Value="4" />
-                                </Style>
-                            </Style.Resources>
-                        </Style>
+                        <Style TargetType="controls:ImageDLTextBlock"
+                               BasedOn="{StaticResource InputTitle}" />
+                        <Style TargetType="controls:ImageDLNumberBox"
+                               BasedOn="{StaticResource NBInput}" />
+                        <Style TargetType="CheckBox"
+                               BasedOn="{StaticResource CBInput}" />
                     </Grid.Resources>
 
                     <!-- Arguments that all image downloaders use -->
                     <controls:ImageDLGrid x:Name="GenericArguments"
                                           Grid.Column="1"
-                                          Grid.RowSpan="2">
+                                          Grid.RowSpan="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
+                            <ColumnDefinition Width="5*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="2*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="1*" />
-                            <RowDefinition Height="2*" />
                             <RowDefinition Height="1*" />
                             <RowDefinition Height="2*" />
                         </Grid.RowDefinitions>
 
                         <!-- Headers -->
-                        <controls:ImageDLLabel Grid.Column="0"
-                                               Content="Directory" />
-                        <controls:ImageDLLabel Grid.Column="1"
-                                               Content="Amount to Download" />
-                        <controls:ImageDLLabel Grid.Column="2"
-                                               Content="Minimum Width" />
-                        <controls:ImageDLLabel Grid.Column="3"
-                                               Content="Minimum Height" />
-                        <controls:ImageDLLabel Grid.Column="0"
-                                               Grid.Row="2"
-                                               Content="Max Days Old" />
-                        <controls:ImageDLLabel Grid.Column="1"
-                                               Grid.Row="2"
-                                               Content="Max Image Similarity" />
-                        <controls:ImageDLLabel Grid.Column="2"
-                                               Grid.Row="2"
-                                               Content="Compare Saved Images" />
+                        <controls:ImageDLTextBlock Grid.Column="0"
+                                                   Text="Directory" />
+                        <controls:ImageDLTextBlock Grid.Column="1"
+                                                   Text="Amount to Download" />
+                        <controls:ImageDLTextBlock Grid.Column="2"
+                                                   Text="Minimum Width" />
+                        <controls:ImageDLTextBlock Grid.Column="3"
+                                                   Text="Minimum Height" />
+                        <controls:ImageDLTextBlock Grid.Column="4"
+                                                   Text="Max Days Old" />
+                        <controls:ImageDLTextBlock Grid.Column="5"
+                                                   Text="Max Image Similarity" />
+                        <controls:ImageDLTextBlock Grid.Column="6"
+                                                   Text="Compare Saved Images" />
 
                         <!-- Input -->
                         <controls:ImageDLTextBox x:Name="ArgDirectory"
@@ -208,34 +244,34 @@
                         <controls:ImageDLNumberBox x:Name="ArgAmountToDownload"
                                                    Grid.Column="1"
                                                    Grid.Row="1"
-                                                   MinimumValue="0"
-                                                   MaximumValue="1000"
+                                                   MinValue="0"
+                                                   MaxValue="1000"
                                                    Tag="{classes:NameOf Member=AmountToDownload, Type=downloaders:RedditImageDownloader}" />
                         <controls:ImageDLNumberBox x:Name="ArgMinWidth"
                                                    Grid.Column="2"
                                                    Grid.Row="1"
-                                                   MinimumValue="0"
+                                                   MinValue="0"
                                                    Tag="{classes:NameOf Member=MinWidth, Type=downloaders:RedditImageDownloader}" />
                         <controls:ImageDLNumberBox x:Name="ArgMinHeight"
                                                    Grid.Column="3"
                                                    Grid.Row="1"
-                                                   MinimumValue="0"
+                                                   MinValue="0"
                                                    Tag="{classes:NameOf Member=MinHeight, Type=downloaders:RedditImageDownloader}" />
                         <controls:ImageDLNumberBox x:Name="ArgMaxDaysOld"
-                                                   Grid.Column="0"
-                                                   Grid.Row="3"
+                                                   Grid.Column="4"
+                                                   Grid.Row="1"
                                                    DefaultValue="10"
-                                                   MinimumValue="0"
+                                                   MinValue="0"
                                                    Tag="{classes:NameOf Member=MaxDaysOld, Type=downloaders:RedditImageDownloader}" />
                         <controls:ImageDLNumberBox x:Name="ArgMaxImageSimilarity"
-                                                   Grid.Column="1"
-                                                   Grid.Row="3"
+                                                   Grid.Column="5"
+                                                   Grid.Row="1"
                                                    DefaultValue="100"
-                                                   MinimumValue="50"
-                                                   MaximumValue="100"
+                                                   MinValue="50"
+                                                   MaxValue="100"
                                                    Tag="{classes:NameOf Member=MaxImageSimilarity, Type=downloaders:RedditImageDownloader}" />
-                        <Viewbox Grid.Column="2"
-                                 Grid.Row="3" >
+                        <Viewbox Grid.Column="6"
+                                 Grid.Row="1">
                             <CheckBox x:Name="CompareSavedImages"
                                       IsChecked="False"
                                       Tag="{classes:NameOf Member=CompareSavedImages, Type=downloaders:RedditImageDownloader}" />
@@ -246,12 +282,11 @@
                     <!-- Reddit -->
                     <controls:ImageDLGrid x:Name="RedditArguments"
                                           Grid.Column="1"
-                                          Grid.Row="2">
+                                          Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
-                            <ColumnDefinition />
+                            <ColumnDefinition Width="5*" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="14*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*" />
@@ -259,10 +294,10 @@
                         </Grid.RowDefinitions>
 
                         <!-- Headers -->
-                        <controls:ImageDLLabel Grid.Column="0"
-                                               Content="Subreddit" />
-                        <controls:ImageDLLabel Grid.Column="1"
-                                               Content="Score Threshold" />
+                        <controls:ImageDLTextBlock Grid.Column="0"
+                                                   Text="Subreddit" />
+                        <controls:ImageDLTextBlock Grid.Column="1"
+                                                   Text="Score Threshold" />
 
                         <!-- Input -->
                         <controls:ImageDLTextBox x:Name="Subreddit"
@@ -273,10 +308,10 @@
                         <controls:ImageDLNumberBox x:Name="ScoreThreshold"
                                                    Grid.Column="1"
                                                    Grid.Row="1"
-                                                   MinimumValue="0"
-                                                   MaximumValue="500000"
+                                                   MinValue="0"
+                                                   MaxValue="500000"
                                                    Tag="{classes:NameOf Member=ScoreThreshold, Type=downloaders:RedditImageDownloader}" />
-                        
+
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility"
@@ -307,53 +342,51 @@
             </Border>
 
             <Border Grid.Column="2"
-                    BorderBrush="Black"
-                    BorderThickness="1"
-                    Background="White">
-                <Grid x:Name="OutputGrid">
-                    <controls:ImageDLRichTextBox x:Name="Output"
-                                                 IsReadOnly="True"
-                                                 IsDocumentEnabled="True"
-                                                 BorderThickness="0"
-                                                 FontResizeValue=".019"
-                                                 VerticalScrollBarVisibility="Visible"
-                                                 Background="White"
-                                                 Foreground="Black"
-                                                 Loaded="OnOutputLoaded"
-                                                 TextChanged="OnOutputTextChanged">
-                        <RichTextBox.Resources>
-                            <Style TargetType="Paragraph">
-                                <Setter Property="Margin"
-                                        Value="0" />
-                            </Style>
-                            <Style TargetType="Hyperlink">
-                                <Setter Property="Cursor"
-                                        Value="Hand" />
-                                <Setter Property="Foreground"
-                                        Value="Blue" />
-                                <Setter Property="TextDecorations"
-                                        Value="Underline" />
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver"
-                                             Value="True">
-                                        <Setter Property="Foreground"
-                                                Value="Red" />
-                                    </Trigger>
-                                    <Trigger Property="IsEnabled"
-                                             Value="False">
-                                        <Setter Property="Foreground"
-                                                Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-                                    </Trigger>
-                                    <Trigger Property="IsEnabled"
-                                             Value="True">
-                                        <Setter Property="Cursor"
-                                                Value="Hand" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </RichTextBox.Resources>
-                    </controls:ImageDLRichTextBox>
-                </Grid>
+                    Background="White"
+                    BorderThickness="2,2,0,2"
+                    Style="{StaticResource TopLevelBorder}">
+                <controls:ImageDLRichTextBox x:Name="Output"
+                                             IsReadOnly="True"
+                                             IsDocumentEnabled="True"
+                                             BorderThickness="0"
+                                             FontResizeValue=".019"
+                                             VerticalScrollBarVisibility="Visible"
+                                             Background="White"
+                                             Foreground="Black"
+                                             Loaded="OnOutputLoaded"
+                                             TextChanged="OnOutputTextChanged">
+                    <RichTextBox.Resources>
+                        <Style TargetType="Paragraph">
+                            <Setter Property="Margin"
+                                    Value="0" />
+                        </Style>
+                        <Style TargetType="Hyperlink">
+                            <Setter Property="Cursor"
+                                    Value="Hand" />
+                            <Setter Property="Foreground"
+                                    Value="Blue" />
+                            <Setter Property="TextDecorations"
+                                    Value="Underline" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver"
+                                         Value="True">
+                                    <Setter Property="Foreground"
+                                            Value="Red" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled"
+                                         Value="False">
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled"
+                                         Value="True">
+                                    <Setter Property="Cursor"
+                                            Value="Hand" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RichTextBox.Resources>
+                </controls:ImageDLRichTextBox>
             </Border>
         </Grid>
     </classes:DpiDecorator>

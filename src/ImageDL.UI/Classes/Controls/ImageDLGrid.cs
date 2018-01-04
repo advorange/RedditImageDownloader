@@ -10,21 +10,17 @@ namespace ImageDL.UI.Classes.Controls
 	/// </summary>
 	internal class ImageDLGrid : Grid, IFontResizeValue
 	{
-		private double _FRV;
+		public static readonly DependencyProperty FontResizeValueProperty = DependencyProperty.Register("FontResizeValue", typeof(double), typeof(ImageDLGrid), new PropertyMetadata(ElementUtils.SetFontResizeProperty));
 		public double FontResizeValue
 		{
-			get => _FRV;
-			set
-			{
-				SetAllChildrenToFontSizeProperty(this);
-				_FRV = value;
-			}
+			get => (double)GetValue(FontResizeValueProperty);
+			set => SetValue(FontResizeValueProperty, value);
 		}
 
 		public override void EndInit()
 		{
 			base.EndInit();
-			if (_FRV > 0)
+			if (FontResizeValue > 0)
 			{
 				SetAllChildrenToFontSizeProperty(this);
 			}
@@ -37,7 +33,7 @@ namespace ImageDL.UI.Classes.Controls
 				//Don't set it on controls with it already set
 				if (child is IFontResizeValue frv && frv.FontResizeValue == default)
 				{
-					frv.FontResizeValue = _FRV;
+					frv.FontResizeValue = FontResizeValue;
 				}
 				SetAllChildrenToFontSizeProperty(child);
 			}

@@ -74,7 +74,7 @@
       <DependentUpon>ImageDLNumberBox.xaml</DependentUpon>
     </Compile>
     <Compile Include="Classes\Controls\ImageDLRepeatButton.cs" />
-    <Compile Include="Classes\Controls\ImageDLLabel.cs" />
+    <Compile Include="Classes\Controls\ImageDLTextBlock.cs" />
     <Compile Include="Classes\Holder.cs" />
     <Compile Include="Classes\HyperlinkWrapper.cs" />
     <Compile Include="Classes\NameOfExtension.cs" />

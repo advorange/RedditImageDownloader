@@ -47,6 +47,9 @@ namespace ImageDL.UI
 			}
 
 			Console.SetOut(new RichTextBoxStreamWriter(rtb));
+#if DEBUG
+			Console.WriteLine("test");
+#endif
 		}
 		private void OnOutputTextChanged(object sender, TextChangedEventArgs e)
 		{
@@ -66,7 +69,7 @@ namespace ImageDL.UI
 			else if (CurrentDownloaderType != t)
 			{
 				CurrentDownloaderType = t;
-				Downloader.HeldObject = CreateDownloader(t);
+				Downloader.HeldObject = (IImageDownloader)Activator.CreateInstance(t);
 				Downloader.HeldObject.AllArgumentsSet += OnAllArgumentsSet;
 				Downloader.HeldObject.DownloadsFinished += OnDownloadsFinished;
 			}
@@ -81,17 +84,17 @@ namespace ImageDL.UI
 			var cbs = argChildren.OfType<CheckBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.IsChecked}");
 			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
 		}
-		private Task OnAllArgumentsSet()
-		{
-			SetArgumentsButton.Visibility = Visibility.Collapsed;
-			StartDownloadsButton.Visibility = Visibility.Visible;
-			return Task.FromResult(0);
-		}
 		private async void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
 		{
 			SiteSelector.IsEnabled = false;
 			ArgumentLayout.IsEnabled = false;
 			await Downloader.HeldObject.StartAsync();
+		}
+		private Task OnAllArgumentsSet()
+		{
+			SetArgumentsButton.Visibility = Visibility.Collapsed;
+			StartDownloadsButton.Visibility = Visibility.Visible;
+			return Task.FromResult(0);
 		}
 		private Task OnDownloadsFinished()
 		{
@@ -120,7 +123,5 @@ namespace ImageDL.UI
 				throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
 			}
 		}
-		private IImageDownloader CreateDownloader(Type type)
-			=> (IImageDownloader)Activator.CreateInstance(type);
 	}
 }
