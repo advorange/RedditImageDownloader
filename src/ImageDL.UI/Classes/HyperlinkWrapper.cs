@@ -4,6 +4,7 @@ using ImageResizer;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -21,8 +22,8 @@ namespace ImageDL.UI.Classes
 	{
 		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
 		private static readonly ConcurrentDictionary<string, CachedImage> _Thumbnails = new ConcurrentDictionary<string, CachedImage>();
-		private const int SQUARE_SIZE = 64;
-		private const int MAX_CACHED_IMAGES = 250 * 100 * 100 / (SQUARE_SIZE * SQUARE_SIZE);
+		private const int SIZE = 64;
+		private const int MAX_CACHED_IMAGES = 250 * 64 * 64 / (SIZE * SIZE);
 		private const string NOT_CACHED = "No thumbnail is currently available.";
 
 		public HyperlinkWrapper(string path) : base(new Run(path))
@@ -42,22 +43,45 @@ namespace ImageDL.UI.Classes
 
 		private void AddImageToThumbnails(string path)
 		{
-			var ticks = DateTime.UtcNow.Ticks;
 			var name = Path.GetFileName(path);
 			if (_Thumbnails.TryGetValue(name, out var cached))
 			{
-				Dispatcher.Invoke(() => ToolTip = new Image { Source = cached.BitmapImage, Tag = name, });
 				cached.UpdateLastAccessed();
-				return;
+			}
+			else
+			{
+				cached = GenerateThumbnail(path, name);
+				if (cached == null)
+				{
+					return;
+				}
+
+				_Thumbnails.TryAdd(name, cached);
 			}
 
+			//Set the thumbnail
+			Dispatcher.Invoke(() => ToolTip = new Image { Source = cached.BitmapImage, Tag = name, });
+			cached.AddUsingWrapper(this);
+			//If too many thumbnails are cached (default 250 thumbnails) clean the cache
+			if (_Thumbnails.Keys.Count >= MAX_CACHED_IMAGES)
+			{
+				CleanCache();
+			}
+		}
+		private CachedImage GenerateThumbnail(string path, string name)
+		{
 			using (var s = new MemoryStream())
-			using (var bm = new System.Drawing.Bitmap(path))
 			{
 				try
 				{
 					//Create a thumbnail
-					ImageBuilder.Current.Build(bm, s, new ResizeSettings(SQUARE_SIZE, SQUARE_SIZE, FitMode.Stretch, null));
+					ImageBuilder.Current.Build(path, s, new Instructions
+					{
+						Width = SIZE,
+						Height = SIZE,
+						OutputFormat = OutputFormat.Png,
+						Mode = FitMode.Crop,
+					});
 
 					//Convert the thumbnail stream to an actual image
 					var bmi = new BitmapImage();
@@ -68,7 +92,8 @@ namespace ImageDL.UI.Classes
 					bmi.UriSource = null;
 					bmi.EndInit();
 					bmi.Freeze();
-					cached = new CachedImage(this, bmi, ticks);
+
+					return new CachedImage(bmi);
 				}
 				catch (UnauthorizedAccessException)
 				{
@@ -82,19 +107,7 @@ namespace ImageDL.UI.Classes
 				{
 					Console.WriteLine($"Unable to generate a thumbnail for {name}.");
 				}
-			}
-
-			//Set the thumbnail
-			Dispatcher.Invoke(() => ToolTip = new Image { Source = cached.BitmapImage, Tag = name, });
-			//Cache the thumbnail
-			if (!_Thumbnails.TryAdd(name, cached))
-			{
-				Console.WriteLine($"Unable to cache the thumbnail for {name}.");
-			}
-			//If too many thumbnails are cached (default 250 thumbnails) clean the cache
-			else if (_Thumbnails.Keys.Count >= MAX_CACHED_IMAGES)
-			{
-				CleanCache();
+				return null;
 			}
 		}
 		private void CleanCache()
@@ -116,9 +129,13 @@ namespace ImageDL.UI.Classes
 			{
 				Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri));
 			}
-			catch (Exception exc)
+			catch (InvalidOperationException)
 			{
-				exc.Write();
+				Console.WriteLine($"This hyperlink does not have an absolute uri.");
+			}
+			catch (FileNotFoundException)
+			{
+				Console.WriteLine($"Unable to find {e.Uri.AbsoluteUri}.");
 			}
 			e.Handled = true;
 		}
@@ -144,25 +161,25 @@ namespace ImageDL.UI.Classes
 
 		private class CachedImage
 		{
-			private readonly HyperlinkWrapper _Wrapper;
+			private readonly List<HyperlinkWrapper> _UsingWrappers = new List<HyperlinkWrapper>();
 			public readonly BitmapImage BitmapImage;
 			public long LastAccessedTicks { get; private set; }
 
-			public CachedImage(HyperlinkWrapper wrapper, BitmapImage bmi, long ticks)
+			public CachedImage(BitmapImage bmi)
 			{
-				_Wrapper = wrapper;
-				BitmapImage = bmi;
-				LastAccessedTicks = ticks;
-			}
-			public CachedImage(HyperlinkWrapper wrapper, BitmapImage bmi)
-			{
-				_Wrapper = wrapper;
 				BitmapImage = bmi;
 				UpdateLastAccessed();
 			}
 
+			public void AddUsingWrapper(HyperlinkWrapper wrapper) => _UsingWrappers.Add(wrapper);
 			public void UpdateLastAccessed() => LastAccessedTicks = DateTime.UtcNow.Ticks;
-			public void Clear() => _Wrapper.Dispatcher.Invoke(() => { _Wrapper.ToolTip = new TextBlock { Text = NOT_CACHED, }; });
+			public void Clear()
+			{
+				foreach (var wrapper in _UsingWrappers)
+				{
+					wrapper.Dispatcher.Invoke(() => { wrapper.ToolTip = new TextBlock { Text = NOT_CACHED, }; });
+				}
+			}
 		}
 	}
 }

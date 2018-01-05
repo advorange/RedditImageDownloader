@@ -1,6 +1,6 @@
-﻿//#define DOWNLOADER
+﻿#define DOWNLOADER
 //#define IMAGECOMPARISON
-#define URLRESPONSETEST
+//#define URLRESPONSETEST
 
 using ImageDL.Classes;
 using ImageDL.ImageDownloaders;
@@ -42,7 +42,7 @@ namespace ImageDL
 				}
 				else
 				{
-					downloader.AddArguments(input.SplitLikeCommandLine());
+					downloader.SetArguments(input.SplitLikeCommandLine());
 					downloader.AskForArguments();
 				}
 			}

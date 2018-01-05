@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -177,6 +178,7 @@ namespace ImageDL.ImageDownloaders
 				else if (gatherer.IsVideo)
 				{
 					_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
+					Console.WriteLine($"{gatherer.OriginalUri} is animated content (gif/video).");
 					continue;
 				}
 
@@ -187,7 +189,7 @@ namespace ImageDL.ImageDownloaders
 					{
 						Console.WriteLine($"\t{await DownloadImageAsync(post, imageUri).ConfigureAwait(false)}");
 					}
-					catch (Exception e)
+					catch (WebException e)
 					{
 						e.Write();
 						_FailedDownloads.Add(CreateContentLink(post, imageUri));

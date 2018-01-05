@@ -72,9 +72,9 @@ namespace ImageDL.Classes
 					Console.WriteLine($"{i + 1}/{count} images cached.");
 				}
 
+				var img = images[i];
 				try
 				{
-					var img = images[i];
 					if (!ImageDetails.TryCreateFromFile(img, ThumbnailSize, out var md5hash, out var details))
 					{
 						Console.WriteLine($"Failed to cache the already saved file {img}.");
@@ -85,9 +85,9 @@ namespace ImageDL.Classes
 						FileSystem.DeleteFile(img.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 					}
 				}
-				catch (Exception e)
+				catch (ArgumentException)
 				{
-					e.Write();
+					Console.WriteLine($"{img} is not a valid image.");
 				}
 			}
 #if DEBUG
