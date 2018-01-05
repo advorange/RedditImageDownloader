@@ -50,7 +50,7 @@ namespace ImageDL.UI.Classes.Controls
 		public override void EndInit()
 		{
 			base.EndInit();
-			Text = StoredValue.ToString();
+			Text = DefaultValue.ToString();
 		}
 
 		private void OnTextChanged(object sender, TextChangedEventArgs e)

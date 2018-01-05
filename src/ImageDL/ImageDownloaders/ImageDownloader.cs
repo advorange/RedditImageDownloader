@@ -168,7 +168,19 @@ namespace ImageDL.ImageDownloaders
 			foreach (var post in await GatherPostsAsync().ConfigureAwait(false))
 			{
 				WritePostToConsole(post, ++count);
-				foreach (var imageUri in (await CreateGathererAsync(post).ConfigureAwait(false)).ImageUris)
+				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
+				if (!String.IsNullOrWhiteSpace(gatherer.Error))
+				{
+					Console.WriteLine(gatherer.Error);
+					continue;
+				}
+				else if (gatherer.IsVideo)
+				{
+					_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
+					continue;
+				}
+
+				foreach (var imageUri in gatherer.ImageUris)
 				{
 					await Task.Delay(100).ConfigureAwait(false);
 					try
@@ -177,7 +189,7 @@ namespace ImageDL.ImageDownloaders
 					}
 					catch (Exception e)
 					{
-						e.WriteException();
+						e.Write();
 						_FailedDownloads.Add(CreateContentLink(post, imageUri));
 					}
 				}
@@ -197,7 +209,7 @@ namespace ImageDL.ImageDownloaders
 		/// <returns>A text response indicating what happened to the uri.</returns>
 		public async Task<string> DownloadImageAsync(TPost post, Uri uri)
 		{
-			using (var resp = await Utils.CreateWebRequest(uri).GetResponseAsync().ConfigureAwait(false))
+			using (var resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false))
 			{
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
 				{

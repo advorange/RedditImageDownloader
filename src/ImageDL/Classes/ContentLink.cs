@@ -2,6 +2,9 @@
 
 namespace ImageDL.Classes
 {
+	/// <summary>
+	/// Holds the location and score of content.
+	/// </summary>
 	public struct ContentLink
 	{
 		/// <summary>

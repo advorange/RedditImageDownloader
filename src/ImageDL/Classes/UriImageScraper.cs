@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes
 {
-	public class UriImageGatherer
+	/// <summary>
+	/// Gathers images from the passed in <see cref="Uri"/>. Attempts to scrape images if the link is not a direct image link.
+	/// </summary>
+	public sealed class UriImageGatherer
 	{
 		private static string[] _AnimatedSites = new[]
 		{
@@ -18,31 +21,55 @@ namespace ImageDL.Classes
 			"gfycat",
 			"streamable",
 			"v.redd.it",
+			"vimeo",
+			"dailymotion",
+			"twitch",
+			"liveleak",
 		};
 
-		public Uri OriginalUri { get; private set; }
-		public Uri EditedUri { get; private set; }
+		/// <summary>
+		/// The original <see cref="Uri"/> that was passed into the constructor.
+		/// </summary>
+		public readonly Uri OriginalUri;
+		/// <summary>
+		/// Similar to <see cref="OriginalUri"/> except removes optional arguments and fixes some weird things sites do with their urls.
+		/// </summary>
+		public readonly Uri EditedUri;
+		/// <summary>
+		/// The images to download.
+		/// </summary>
 		public ImmutableList<Uri> ImageUris { get; private set; }
+		/// <summary>
+		/// Any errors which have occurred during getting <see cref="ImageUris"/>.
+		/// </summary>
 		public string Error { get; private set; }
-		private Site _Site;
-		private bool _RequiresScraping;
+		/// <summary>
+		/// Indicates whether or not the link leads to a video site.
+		/// </summary>
+		public bool IsVideo { get; private set; }
+		private readonly Site _Site;
+		private readonly bool _RequiresScraping;
 
 		private UriImageGatherer(Uri uri)
 		{
 			var u = uri.ToString();
 			OriginalUri = uri;
-			_Site = Enum.GetNames(typeof(Site))
-				.Where(x => u.CaseInsContains(x))
-				.Select(x => (Site)Enum.Parse(typeof(Site), x))
-				.SingleOrDefault();
-			EditedUri = EditUri(_Site, u);
-			_RequiresScraping = false
+			IsVideo = _AnimatedSites.Any(x => u.CaseInsContains(x));
+			//TODO: more comprehensive way of getting the site
+			_Site = Enum.GetValues(typeof(Site)).Cast<Site>().SingleOrDefault(x => u.CaseInsContains(x.ToString()));
+			_RequiresScraping = !IsVideo && (false
 				|| (_Site == Site.Imgur && (u.Contains("/a/") || u.Contains("/gallery/")))
 				|| (_Site == Site.Tumblr && !u.Contains("media.tumblr"))
 				|| (_Site == Site.DeviantArt && u.Contains("/art/"))
-				|| (_Site == Site.Instagram && u.Contains("/p/"));
+				|| (_Site == Site.Instagram && u.Contains("/p/")));
+			EditedUri = EditUri(_Site, u);
 		}
 
+		/// <summary>
+		/// Gathers images from <paramref name="uri"/>.
+		/// </summary>
+		/// <param name="uri">The location to get images from.</param>
+		/// <returns>A <see cref="UriImageGatherer"/> which contains any images gathered and any errors which occurred.</returns>
 		public static async Task<UriImageGatherer> CreateGatherer(Uri uri)
 		{
 			var g = new UriImageGatherer(uri);
@@ -90,12 +117,11 @@ namespace ImageDL.Classes
 
 			return Uri.TryCreate(uri, UriKind.Absolute, out var result) ? result : null;
 		}
-
 		private static async Task<ScrapeResponse> ScrapeImages(Site site, Uri uri)
 		{
 			try
 			{
-				var req = Utils.CreateWebRequest(uri);
+				var req = uri.CreateWebRequest();
 				//DeviantArt 18+ filter
 				req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com"));
 
@@ -132,7 +158,7 @@ namespace ImageDL.Classes
 			}
 			catch (WebException e)
 			{
-				e.WriteException();
+				e.Write();
 				return new ScrapeResponse(new string[0], e.Message);
 			}
 		}
@@ -160,6 +186,7 @@ namespace ImageDL.Classes
 			//18+ filter (shouldn't be reached since the cookies are set)
 			if (doc.DocumentNode.Descendants("div").Any(x => x.HasClass("dev-content-mature")))
 			{
+				//Scuffed way to get the images even when the 18+ filter is on
 				var img = doc.DocumentNode.Descendants("img")
 				.Where(x =>
 				{
@@ -203,6 +230,7 @@ namespace ImageDL.Classes
 		}
 		private enum Site
 		{
+			None = 0,
 			Imgur,
 			Tumblr,
 			DeviantArt,

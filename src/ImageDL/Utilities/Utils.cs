@@ -182,7 +182,7 @@ namespace ImageDL.Utilities
 		/// </summary>
 		/// <param name="input">The uri to evaluate.</param>
 		/// <returns>A boolean indicating whether or not the string is a url.</returns>
-		public static bool GetIfStringIsValidUrl(string input) => true
+		public static bool IsValidUrl(this string input) => true
 			&& !String.IsNullOrWhiteSpace(input)
 			&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
 			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -191,7 +191,7 @@ namespace ImageDL.Utilities
 		/// </summary>
 		/// <param name="uri">The uri to evaluate.</param>
 		/// <returns>A boolean indicating whether or not the uri is a url.</returns>
-		public static bool GetIfUriIsValidUrl(Uri uri) => true
+		public static bool IsValidUrl(this Uri uri) => true
 			&& uri.IsAbsoluteUri
 			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 		/// <summary>
@@ -199,7 +199,7 @@ namespace ImageDL.Utilities
 		/// </summary>
 		/// <param name="path">The path or extension to check.</param>
 		/// <returns>A boolean inicating whether or not the path leads to an image.</returns>
-		public static bool PathLeadsToImage(string path)
+		public static bool IsImagePath(this string path)
 		{
 			var mimeType = MimeMapping.GetMimeMapping(path);
 			return mimeType != "image/gif" && mimeType.CaseInsContains("image/");
@@ -208,7 +208,7 @@ namespace ImageDL.Utilities
 		/// Writes an exception to the console in <see cref="ConsoleColor.Red"/>.
 		/// </summary>
 		/// <param name="e">The passed in exception.</param>
-		public static void WriteException(this Exception e)
+		public static void Write(this Exception e)
 		{
 			var currColor = Console.ForegroundColor;
 			Console.ForegroundColor = ConsoleColor.Red;
@@ -216,7 +216,12 @@ namespace ImageDL.Utilities
 			Console.ForegroundColor = currColor;
 		}
 
-		public static HttpWebRequest CreateWebRequest(Uri uri)
+		/// <summary>
+		/// Creates a web request and sets some properties to make it look more human.
+		/// </summary>
+		/// <param name="uri">The site to navigate to.</param>
+		/// <returns>A webrequest to <paramref name="uri"/>.</returns>
+		public static HttpWebRequest CreateWebRequest(this Uri uri)
 		{
 			var req = (HttpWebRequest)WebRequest.Create(uri);
 			req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";

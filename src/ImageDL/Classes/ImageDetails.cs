@@ -17,7 +17,7 @@ namespace ImageDL.Classes
 	public struct ImageDetails
 	{
 		/// <summary>
-		/// The location the image was downloaded from.
+		/// The location of the source of the image.
 		/// </summary>
 		public readonly Uri Uri;
 		/// <summary>
@@ -41,6 +41,13 @@ namespace ImageDL.Classes
 		/// </summary>
 		public readonly int ThumbnailSize;
 
+		/// <summary>
+		/// Creates the boolean hash for <see cref="HashedThumbnail"/> and sets all the variables.
+		/// </summary>
+		/// <param name="uri">The source of the image.</param>
+		/// <param name="file">The location the image was saved to.</param>
+		/// <param name="bm">The image.</param>
+		/// <param name="thumbnailSize">The size to make the thumbnail.</param>
 		public ImageDetails(Uri uri, FileInfo file, Bitmap bm, int thumbnailSize)
 		{
 			Uri = uri;
@@ -118,7 +125,7 @@ namespace ImageDL.Classes
 		/// <returns>A boolean indicating whether or not <paramref name="details"/> were created successfully.</returns>
 		public static bool TryCreateFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
-			if (!Utils.PathLeadsToImage(file.FullName))
+			if (!file.FullName.IsImagePath())
 			{
 				md5Hash = null;
 				details = default;
@@ -149,8 +156,14 @@ namespace ImageDL.Classes
 		/// <param name="other">The details to compare to.</param>
 		/// <param name="percentageForSimilarity">The valid percentage for matching.</param>
 		/// <returns>Returns a boolean indicating whether or not the hashes match.</returns>
+		/// <exception cref="InvalidOperationException">Occurs when the thumbnail sizes do not match.</exception>
 		public bool Equals(ImageDetails other, float percentageForSimilarity)
 		{
+			if (ThumbnailSize != other.ThumbnailSize)
+			{
+				throw new InvalidOperationException("The thumbnails must be the same size when checking equality.");
+			}
+
 			//If the aspect ratio is too different then don't bother checking the hash
 			var margin = 1 - percentageForSimilarity;
 			var otherAR = other.Width / (float)other.Height;

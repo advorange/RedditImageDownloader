@@ -54,7 +54,7 @@ namespace ImageDL.UI.Utilities
 
 			element.SetBinding(Control.FontSizeProperty, new Binding
 			{
-				Path = new PropertyPath("ActualHeight"),
+				Path = new PropertyPath(nameof(FrameworkElement.ActualHeight)),
 				RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Grid), ancestorLevel),
 				Converter = new FontResizeConverter(size),
 			});
@@ -74,18 +74,13 @@ namespace ImageDL.UI.Utilities
 			ancestorLevel = 0;
 
 			var currElement = element;
-			var currLevel = 0;
-			while (true)
+			while (currElement != null)
 			{
 				currElement = VisualTreeHelper.GetParent(currElement);
 				if (currElement is T tParent)
 				{
 					parent = tParent;
-					ancestorLevel = ++currLevel;
-				}
-				else if (currElement == null)
-				{
-					break;
+					++ancestorLevel;
 				}
 			}
 			return ancestorLevel > 0;

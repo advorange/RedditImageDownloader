@@ -21,7 +21,7 @@ namespace ImageDL.UI.Classes
 	{
 		private static readonly SolidColorBrush _Clicked = BrushUtils.CreateBrush("#551A8B");
 		private static readonly ConcurrentDictionary<string, CachedImage> _Thumbnails = new ConcurrentDictionary<string, CachedImage>();
-		private const int SQUARE_SIZE = 100;
+		private const int SQUARE_SIZE = 64;
 		private const int MAX_CACHED_IMAGES = 250 * 100 * 100 / (SQUARE_SIZE * SQUARE_SIZE);
 		private const string NOT_CACHED = "No thumbnail is currently available.";
 
@@ -46,7 +46,7 @@ namespace ImageDL.UI.Classes
 			var name = Path.GetFileName(path);
 			if (_Thumbnails.TryGetValue(name, out var cached))
 			{
-				Dispatcher.Invoke(() => ToolTip = new Image() { Source = cached.BitmapImage, Tag = name, });
+				Dispatcher.Invoke(() => ToolTip = new Image { Source = cached.BitmapImage, Tag = name, });
 				cached.UpdateLastAccessed();
 				return;
 			}
@@ -85,7 +85,7 @@ namespace ImageDL.UI.Classes
 			}
 
 			//Set the thumbnail
-			Dispatcher.Invoke(() => ToolTip = new Image() { Source = cached.BitmapImage, Tag = name, });
+			Dispatcher.Invoke(() => ToolTip = new Image { Source = cached.BitmapImage, Tag = name, });
 			//Cache the thumbnail
 			if (!_Thumbnails.TryAdd(name, cached))
 			{
@@ -118,13 +118,13 @@ namespace ImageDL.UI.Classes
 			}
 			catch (Exception exc)
 			{
-				exc.WriteException();
+				exc.Write();
 			}
 			e.Handled = true;
 		}
 		private void OnMouseEnter(object sender, MouseEventArgs e)
 		{
-			IsEnabled = (NavigateUri.IsFile && File.Exists(NavigateUri.LocalPath)) || Utils.GetIfUriIsValidUrl(NavigateUri);
+			IsEnabled = (NavigateUri.IsFile && File.Exists(NavigateUri.LocalPath)) || NavigateUri.IsValidUrl();
 			if (!IsEnabled)
 			{
 				return;
@@ -150,7 +150,6 @@ namespace ImageDL.UI.Classes
 
 			public CachedImage(HyperlinkWrapper wrapper, BitmapImage bmi, long ticks)
 			{
-				var test = Math.Max(bmi.PixelWidth, bmi.PixelHeight);
 				_Wrapper = wrapper;
 				BitmapImage = bmi;
 				LastAccessedTicks = ticks;
@@ -163,13 +162,7 @@ namespace ImageDL.UI.Classes
 			}
 
 			public void UpdateLastAccessed() => LastAccessedTicks = DateTime.UtcNow.Ticks;
-			public void Clear() => _Wrapper.Dispatcher.Invoke(() =>
-			{
-				_Wrapper.ToolTip = new TextBlock
-				{
-					Text = NOT_CACHED,
-				};
-			});
+			public void Clear() => _Wrapper.Dispatcher.Invoke(() => { _Wrapper.ToolTip = new TextBlock { Text = NOT_CACHED, }; });
 		}
 	}
 }

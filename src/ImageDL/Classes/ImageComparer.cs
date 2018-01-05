@@ -2,6 +2,7 @@
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -62,34 +63,32 @@ namespace ImageDL.Classes
 			var sw = new Stopwatch();
 			sw.Start();
 #endif
-			var images = directory.GetFiles().Where(x => Utils.PathLeadsToImage(x.FullName)).OrderBy(x => x.CreationTimeUtc).ToArray();
-			for (int i = 0; i < images.Count(); ++i)
+			var images = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
+			var count = images.Count();
+			for (int i = 0; i < count; ++i)
 			{
-				if (i % 25 == 0)
+				if (i % 25 == 0 || i == count - 1)
 				{
-					Console.WriteLine($"{i}/{images.Count()} images cached.");
+					Console.WriteLine($"{i + 1}/{count} images cached.");
 				}
 
 				try
 				{
-					if (!ImageDetails.TryCreateFromFile(images[i], ThumbnailSize, out var md5hash, out var details))
+					var img = images[i];
+					if (!ImageDetails.TryCreateFromFile(img, ThumbnailSize, out var md5hash, out var details))
 					{
-						Console.WriteLine($"Failed to cache the already saved file {images[i]}.");
+						Console.WriteLine($"Failed to cache the already saved file {img}.");
 					}
 					else if (!TryStore(md5hash, details))
 					{
-						Console.WriteLine($"Found a duplicate file based on hash {images[i]}. Deleting it.");
-						FileSystem.DeleteFile(images[i].FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+						Console.WriteLine($"Found a duplicate file based on hash {img}. Deleting it.");
+						FileSystem.DeleteFile(img.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 					}
 				}
 				catch (Exception e)
 				{
-					e.WriteException();
+					e.Write();
 				}
-			}
-			if (images.Count() % 25 != 0)
-			{
-				Console.WriteLine($"{images.Count()}/{images.Count()} images cached.");
 			}
 #if DEBUG
 			sw.Stop();
@@ -109,21 +108,20 @@ namespace ImageDL.Classes
 #endif
 			Console.WriteLine();
 			//Put the kvp values in a separate list so they can be iterated through
-			var kvps = _Images.ToList();
-			Console.WriteLine($"{kvps.Count()} image(s) left to check for duplicates.");
 			//Start at the top and work the way down
+			var kvps = new List<ImageDetails>(_Images.Values);
 			var matchCount = 0;
 			for (int i = kvps.Count - 1; i > 0; --i)
 			{
-				if (i % 25 == 0)
+				if (i % 25 == 0 || i == kvps.Count - 1)
 				{
-					Console.WriteLine($"{i} image(s) left to check.");
+					Console.WriteLine($"{i} image(s) left to check for duplicates.");
 				}
 
-				var iVal = kvps[i].Value;
+				var iVal = kvps[i];
 				for (int j = i - 1; j >= 0; --j)
 				{
-					var jVal = kvps[j].Value;
+					var jVal = kvps[j];
 					if (!iVal.Equals(jVal, percentForMatch))
 					{
 						continue;
@@ -132,12 +130,13 @@ namespace ImageDL.Classes
 					Console.WriteLine($"Possible match between {iVal.File} and {jVal.File}.");
 
 					//Check once again but with a higher resolution
-					ImageDetails.TryCreateFromFile(iVal.File, 512, out var md5Hashi, out var newIVal);
-					ImageDetails.TryCreateFromFile(jVal.File, 512, out var md5Hashj, out var newJVal);
-					if (!newIVal.Equals(newJVal, percentForMatch))
+					if (!ImageDetails.TryCreateFromFile(iVal.File, 512, out var md5Hashi, out var newIVal) ||
+						!ImageDetails.TryCreateFromFile(jVal.File, 512, out var md5Hashj, out var newJVal) ||
+						!newIVal.Equals(newJVal, percentForMatch))
 					{
 						continue;
 					}
+					++matchCount;
 
 					//Delete/remove whatever is the smaller image
 					var iPixCount = iVal.Width * iVal.Height;
@@ -149,14 +148,12 @@ namespace ImageDL.Classes
 						: iPixCount > jPixCount;
 					var fileToDelete = removeJ ? jVal.File : iVal.File;
 
-					Console.WriteLine($"Certain match between {iVal.File} and {jVal.File}.{Environment.NewLine}Deleting {fileToDelete}.");
-					++matchCount;
-
 					kvps.RemoveAt(removeJ ? j : i);
 					if (fileToDelete.Exists)
 					{
 						try
 						{
+							Console.WriteLine($"Certain match between {iVal.File} and {jVal.File}. Deleting {fileToDelete}.");
 							FileSystem.DeleteFile(fileToDelete.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 						}
 						catch
@@ -164,7 +161,6 @@ namespace ImageDL.Classes
 							Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
 						}
 					}
-					break;
 				}
 				++CurrentImagesSearched;
 			}

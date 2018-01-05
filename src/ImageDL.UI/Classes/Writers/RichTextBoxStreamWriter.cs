@@ -16,6 +16,9 @@ namespace ImageDL.UI.Classes.Writers
 		private string _CurrentLineText;
 		private DispatcherPriority _Priority = DispatcherPriority.ContextIdle;
 
+		private static string[] _Drives = Environment.GetLogicalDrives();
+		private static char[] _InvalidChars = Path.GetInvalidPathChars();
+
 		public override Encoding Encoding => Encoding.UTF32;
 
 		public RichTextBoxStreamWriter(RichTextBox rtb)
@@ -41,7 +44,8 @@ namespace ImageDL.UI.Classes.Writers
 		}
 		public override void Write(string value)
 		{
-			foreach (var t in JoinEverythingBackTogether(StitchFilePathsBackTogether(SplitStringByWhiteSpace(value))))
+			var parts = JoinEverythingBackTogether(StitchFilePathsBackTogether(SplitStringByWhiteSpace(value)));
+			foreach (var t in parts)
 			{
 				//Rich text boxes have too much space if empty lines are allowed to be printed
 				if (t.Text == "\n")
@@ -51,7 +55,7 @@ namespace ImageDL.UI.Classes.Writers
 				//File or link
 				else if (t.IsUri)
 				{
-					WriteHyperlinkAsync(new HyperlinkWrapper(t.Text));
+					WriteHyperlinkAsync(t.Text);
 				}
 				//Plain text
 				else
@@ -86,13 +90,13 @@ namespace ImageDL.UI.Classes.Writers
 			var paths = new List<FilePath>();
 			for (int i = 0; i < parts.Length; ++i)
 			{
-				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
-				if (!Environment.GetLogicalDrives().Any(x => parts[i].Contains(x)))
+				//Don't bother checking the string if it already has an invalid name
+				if (_InvalidChars.Any(x => parts[i].Contains(x)))
 				{
 					continue;
 				}
-				//Don't bother checking the string if it already has an invalid name
-				else if (Path.GetInvalidPathChars().Any(x => parts[i].Contains(x)))
+				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
+				else if (!_Drives.Any(x => parts[i].StartsWith(x)))
 				{
 					continue;
 				}
@@ -114,25 +118,23 @@ namespace ImageDL.UI.Classes.Writers
 				}
 
 				//Starts searching for files or folders which have their names start with "dog"
-				var searchFor = parts[i].Substring(currDir.Length + 1);
+				var searchFor = new StringBuilder(parts[i].Substring(currDir.Length + 1));
 				for (int j = i + 1; j < parts.Length; ++j)
 				{
 					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
-					var add = new StringBuilder();
 					foreach (var c in parts[j])
 					{
-						if (Path.GetInvalidPathChars().Contains(c))
+						if (_InvalidChars.Contains(c))
 						{
 							//Breaks out of j loop
 							break;
 						}
-						add.Append(c);
+						searchFor.Append(c);
 					}
-					searchFor += add.ToString();
 
 					//See if any files match the current string
 					//Ends up finding "c:\\dog pic.jpg"
-					var fileMatches = Directory.EnumerateFiles(currDir, $"{searchFor.TrimEnd()}*", SearchOption.TopDirectoryOnly);
+					var fileMatches = Directory.EnumerateFiles(currDir, $"{searchFor.ToString().TrimEnd()}*", SearchOption.TopDirectoryOnly);
 					if (!fileMatches.Any())
 					{
 						continue;
@@ -140,11 +142,11 @@ namespace ImageDL.UI.Classes.Writers
 
 					//If there are any file matches, only look at those. If they all fail then get out of this iteration
 					//Combines "c:\\" with "dog pic.jpg" to get the path of "c:\\dog pic.jpg"
-					var fileTotalPath = Path.Combine(currDir, searchFor);
+					var fileTotalPath = new StringBuilder(Path.Combine(currDir, searchFor.ToString()));
 					for (int k = j + 1; k < parts.Length; ++k)
 					{
 						//First iteration checks if "c:\\dog pic.jpg" exists. It does, so returns
-						var secondFileCheck = new FileInfo(fileTotalPath.TrimEnd());
+						var secondFileCheck = new FileInfo(fileTotalPath.ToString());
 						if (secondFileCheck.Exists)
 						{
 							paths.Add(new FilePath(secondFileCheck, i, k - 1));
@@ -153,7 +155,7 @@ namespace ImageDL.UI.Classes.Writers
 							break;
 						}
 						//If we were searching for "c:\\dog pic 400.jpg" it would loop around once more in the j loop and in the k loop
-						fileTotalPath += parts[k];
+						fileTotalPath.Append(parts[k]);
 					}
 					//Breaks out of j loop
 					break;
@@ -204,7 +206,7 @@ namespace ImageDL.UI.Classes.Writers
 			var currentPart = new StringBuilder();
 			foreach (var part in parts)
 			{
-				if (!File.Exists(part) && !Utils.GetIfStringIsValidUrl(part))
+				if (!File.Exists(part) && !part.IsValidUrl())
 				{
 					currentPart.Append(part);
 					continue;
@@ -223,9 +225,10 @@ namespace ImageDL.UI.Classes.Writers
 			}
 			return returnValues.ToArray();
 		}
-		private async void WriteHyperlinkAsync(Hyperlink link)
+		private async void WriteHyperlinkAsync(string text)
 			=> await _RTB.Dispatcher.InvokeAsync(() =>
 			{
+				var link = new HyperlinkWrapper(text);
 				if (_RTB.Document.Blocks.LastBlock is Paragraph para)
 				{
 					para.Inlines.Add(link);

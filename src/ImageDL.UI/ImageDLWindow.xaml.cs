@@ -47,9 +47,6 @@ namespace ImageDL.UI
 			}
 
 			Console.SetOut(new RichTextBoxStreamWriter(rtb));
-#if DEBUG
-			Console.WriteLine("test");
-#endif
 		}
 		private void OnOutputTextChanged(object sender, TextChangedEventArgs e)
 		{
@@ -84,11 +81,11 @@ namespace ImageDL.UI
 			var cbs = argChildren.OfType<CheckBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.IsChecked}");
 			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
 		}
-		private async void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
+		private void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
 		{
 			SiteSelector.IsEnabled = false;
 			ArgumentLayout.IsEnabled = false;
-			await Downloader.HeldObject.StartAsync();
+			Task.Run(async () => await Downloader.HeldObject.StartAsync());
 		}
 		private Task OnAllArgumentsSet()
 		{
