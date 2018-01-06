@@ -24,7 +24,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_Subreddit = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _ScoreThreshold;
@@ -35,7 +36,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_ScoreThreshold = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 

@@ -1,6 +1,5 @@
 ﻿using ImageDL.ImageDownloaders;
 using ImageDL.UI.Classes;
-using ImageDL.UI.Classes.Controls;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;
 using System;
@@ -35,19 +34,9 @@ namespace ImageDL.UI
 		public ImageDLWindow()
 		{
 			InitializeComponent();
+			Console.SetOut(new RichTextBoxStreamWriter(Output));
 		}
 
-		private void NotifyPropertyChanged([CallerMemberName] string name = "")
-			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		private void OnOutputLoaded(object sender, RoutedEventArgs e)
-		{
-			if (!(sender is RichTextBox rtb))
-			{
-				return;
-			}
-
-			Console.SetOut(new RichTextBoxStreamWriter(rtb));
-		}
 		private void OnOutputTextChanged(object sender, TextChangedEventArgs e)
 		{
 			if (!(sender is RichTextBox rtb))
@@ -67,8 +56,6 @@ namespace ImageDL.UI
 			{
 				CurrentDownloaderType = t;
 				Downloader.HeldObject = (IImageDownloader)Activator.CreateInstance(t);
-				Downloader.HeldObject.AllArgumentsSet += OnAllArgumentsSet;
-				Downloader.HeldObject.DownloadsFinished += OnDownloadsFinished;
 			}
 		}
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)
@@ -82,32 +69,7 @@ namespace ImageDL.UI
 			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
 		}
 		private void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
-		{
-			SiteSelector.IsEnabled = false;
-			ArgumentLayout.IsEnabled = false;
-			Task.Run(async () => await Downloader.HeldObject.StartAsync());
-		}
-		private Task OnAllArgumentsSet()
-		{
-			SetArgumentsButton.Visibility = Visibility.Collapsed;
-			StartDownloadsButton.Visibility = Visibility.Visible;
-			return Task.FromResult(0);
-		}
-		private Task OnDownloadsFinished()
-		{
-			SiteSelector.IsEnabled = true;
-			ArgumentLayout.IsEnabled = true;
-			StartDownloadsButton.Visibility = Visibility.Collapsed;
-			SetArgumentsButton.Visibility = Visibility.Visible;
-
-			foreach (var tb in ArgumentLayout.GetChildren().OfType<ImageDLTextBox>())
-			{
-				tb.Clear();
-			}
-			Downloader.HeldObject = null;
-			CurrentDownloaderType = default;
-			return Task.FromResult(0);
-		}
+			=> Task.Run(async () => await Downloader.HeldObject.StartAsync());
 
 		private Grid GetArgumentGrid(Type type)
 		{
@@ -120,5 +82,7 @@ namespace ImageDL.UI
 				throw new InvalidOperationException("This method should not be able to be reached when no settings menu is up.");
 			}
 		}
+		private void NotifyPropertyChanged([CallerMemberName] string name = "")
+			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	}
 }

@@ -63,6 +63,7 @@ namespace ImageDL.Classes
 			var sw = new Stopwatch();
 			sw.Start();
 #endif
+			Console.WriteLine();
 			var images = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
 			var count = images.Count();
 			for (int i = 0; i < count; ++i)
@@ -174,6 +175,7 @@ namespace ImageDL.Classes
 			kvps.Clear();
 			_Images.Clear();
 		}
+
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
 			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 	}

@@ -3,6 +3,7 @@ using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -37,10 +38,40 @@ namespace ImageDL.ImageDownloaders
 			{ typeof(float?), (value) => float.TryParse(value, out var result) ? result as float? : null },
 		};
 
+		public event PropertyChangedEventHandler PropertyChanged;
 		public event Func<Task> AllArgumentsSet;
 		public event Func<Task> DownloadsFinished;
-		public bool IsReady { get; private set; } = false;
-		public bool IsDone { get; private set; } = false;
+
+		private bool _IsReady;
+		public bool IsReady
+		{
+			get => _IsReady;
+			private set
+			{
+				_IsReady = value;
+				NotifyPropertyChanged();
+			}
+		}
+		private bool _IsDownloading;
+		public bool IsDownloading
+		{
+			get => _IsDownloading;
+			private set
+			{
+				_IsDownloading = value;
+				NotifyPropertyChanged();
+			}
+		}
+		private bool _IsDone;
+		public bool IsDone
+		{
+			get => _IsDone;
+			private set
+			{
+				_IsDone = value;
+				NotifyPropertyChanged();
+			}
+		}
 
 		private string _Directory;
 		[Setting("The location to save files to.")]
@@ -57,7 +88,8 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				_Directory = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _AmountToDownload;
@@ -68,7 +100,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_AmountToDownload = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _MinWidth;
@@ -79,7 +112,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MinWidth = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _MinHeight;
@@ -90,7 +124,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MinHeight = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _MaxDaysOld;
@@ -101,7 +136,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MaxDaysOld = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private int _MaxImageSimilarity = 100;
@@ -112,7 +148,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MaxImageSimilarity = Math.Min(100, Math.Max(1, value));
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 		private bool _CompareSavedImages = false;
@@ -123,7 +160,8 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_CompareSavedImages = value;
-				AddArgumentToSetArguments();
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
 			}
 		}
 
@@ -140,13 +178,12 @@ namespace ImageDL.ImageDownloaders
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToImmutableList();
 			_SetArguments = _Arguments.Where(x => x.GetCustomAttribute<SettingAttribute>().HasDefaultValue).ToList();
+			//Save on close in case program is closed while running
+			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
 		}
 		public ImageDownloader(params string[] args) : this()
 		{
-			if (args.Any())
-			{
-				SetArguments(args);
-			}
+			SetArguments(args);
 		}
 
 		/// <summary>
@@ -156,10 +193,8 @@ namespace ImageDL.ImageDownloaders
 		public async Task StartAsync()
 		{
 			IsReady = false;
-			_ImageComparer = new ImageComparer
-			{
-				ThumbnailSize = 64,
-			};
+			IsDownloading = true;
+			_ImageComparer = new ImageComparer { ThumbnailSize = 64, };
 			if (CompareSavedImages)
 			{
 				_ImageComparer.CacheAlreadySavedFiles(new DirectoryInfo(Directory));
@@ -169,25 +204,14 @@ namespace ImageDL.ImageDownloaders
 			foreach (var post in await GatherPostsAsync().ConfigureAwait(false))
 			{
 				WritePostToConsole(post, ++count);
-				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
-				if (!String.IsNullOrWhiteSpace(gatherer.Error))
-				{
-					Console.WriteLine(gatherer.Error);
-					continue;
-				}
-				else if (gatherer.IsVideo)
-				{
-					_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
-					Console.WriteLine($"{gatherer.OriginalUri} is animated content (gif/video).");
-					continue;
-				}
 
+				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
 				foreach (var imageUri in gatherer.ImageUris)
 				{
 					await Task.Delay(100).ConfigureAwait(false);
 					try
 					{
-						Console.WriteLine($"\t{await DownloadImageAsync(post, imageUri).ConfigureAwait(false)}");
+						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).ConfigureAwait(false)}");
 					}
 					catch (WebException e)
 					{
@@ -197,10 +221,10 @@ namespace ImageDL.ImageDownloaders
 				}
 			}
 			DownloadsFinished?.Invoke();
+			IsDownloading = false;
 			IsDone = true;
 
-			SaveContentLinks(_AnimatedContent, new FileInfo(Path.Combine(Directory, "Animated_Content.txt")));
-			SaveContentLinks(_FailedDownloads, new FileInfo(Path.Combine(Directory, "Failed_Downloads.txt")));
+			SaveStoredContentLinks();
 			_ImageComparer.DeleteDuplicates(MaxImageSimilarity / 100f);
 		}
 		/// <summary>
@@ -209,8 +233,18 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		public async Task<string> DownloadImageAsync(TPost post, Uri uri)
+		public async Task<string> DownloadImageAsync(UriImageGatherer gatherer, TPost post, Uri uri)
 		{
+			if (!String.IsNullOrWhiteSpace(gatherer.Error))
+			{
+				return gatherer.Error;
+			}
+			else if (gatherer.IsVideo)
+			{
+				_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
+				return $"{gatherer.OriginalUri} is animated content (gif/video).";
+			}
+
 			using (var resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false))
 			{
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
@@ -292,7 +326,10 @@ namespace ImageDL.ImageDownloaders
 			{
 				Console.WriteLine(SetArgument(argument));
 			}
-			Console.WriteLine();
+			if (args.Any())
+			{
+				Console.WriteLine();
+			}
 		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.
@@ -313,11 +350,81 @@ namespace ImageDL.ImageDownloaders
 			Console.WriteLine(sb.ToString().Trim());
 		}
 		/// <summary>
-		/// Saves links to a file.
+		/// Saves the stored content links to file.
 		/// </summary>
-		/// <param name="contentLinks">The links to save.</param>
-		/// <param name="file">The file to save to.</param>
-		public void SaveContentLinks(IEnumerable<ContentLink> contentLinks, FileInfo file)
+		public void SaveStoredContentLinks()
+		{
+			if (String.IsNullOrWhiteSpace(Directory))
+			{
+				return;
+			}
+
+			SaveContentLinks(ref _AnimatedContent, new FileInfo(Path.Combine(Directory, "Animated_Content.txt")));
+			SaveContentLinks(ref _FailedDownloads, new FileInfo(Path.Combine(Directory, "Failed_Downloads.txt")));
+		}
+
+		/// <summary>
+		/// Adds a <see cref="PropertyInfo"/> with the supplied name to <see cref="_SetArguments"/>.
+		/// </summary>
+		/// <param name="name">The property to find.</param>
+		protected void NotifyArgumentSet([CallerMemberName] string name = "")
+		{
+			if (!_SetArguments.Any(x => x.Name == name))
+			{
+				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
+			}
+		}
+		/// <summary>
+		/// Invokes <see cref="PropertyChanged"/>.
+		/// </summary>
+		/// <param name="name">The property changed.</param>
+		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
+			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
+		protected abstract void WritePostToConsole(TPost post, int count);
+		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
+		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
+
+		private string SetArgument(string argument)
+		{
+			//Split, left side is the arg name, right is value
+			var split = argument.Split(new[] { ':' }, 2);
+			if (split.Length != 2)
+			{
+				return $"Unable to split \"{argument}\" to the correct length.";
+			}
+
+			//See if any arguments have the supplied name
+			var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
+			if (property == null)
+			{
+				return $"{split[0]} is not a valid argument name.";
+			}
+			else if (String.IsNullOrWhiteSpace(split[1]))
+			{
+				return $"Failed to set {property.Name}. Reason: may not have an empty value.";
+			}
+			else if (_TryParses.TryGetValue(property.PropertyType, out var f))
+			{
+				property.SetValue(this, f(split[1]));
+			}
+			else if (property.PropertyType == typeof(string))
+			{
+				property.SetValue(this, split[1]);
+			}
+			else
+			{
+				return $"Failed to set {property.Name}. Reason: invalid type (not user error).";
+			}
+
+			if (!_Arguments.Where(x => !_SetArguments.Contains(x)).Any())
+			{
+				AllArgumentsSet?.Invoke();
+				IsReady = true;
+			}
+			return $"Successfully set {property.Name} to {property.GetValue(this)}.";
+		}
+		private void SaveContentLinks(ref List<ContentLink> contentLinks, FileInfo file)
 		{
 			//Only bother saving if any exist
 			if (!contentLinks.Any())
@@ -364,62 +471,7 @@ namespace ImageDL.ImageDownloaders
 				writer.WriteLine();
 			}
 			Console.WriteLine($"Added {unsavedContent.Count()} links to {file.Name}.");
-		}
-
-		/// <summary>
-		/// Adds a <see cref="PropertyInfo"/> with the supplied name to <see cref="_SetArguments"/>.
-		/// </summary>
-		/// <param name="name">The property to find.</param>
-		protected void AddArgumentToSetArguments([CallerMemberName] string name = "")
-		{
-			if (!_SetArguments.Any(x => x.Name == name))
-			{
-				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
-			}
-		}
-		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
-		protected abstract void WritePostToConsole(TPost post, int count);
-		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
-		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
-
-		private string SetArgument(string argument)
-		{
-			//Split, left side is the arg name, right is value
-			var split = argument.Split(new[] { ':' }, 2);
-			if (split.Length != 2)
-			{
-				return $"Unable to split \"{argument}\" to the correct length.";
-			}
-
-			//See if any arguments have the supplied name
-			var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
-			if (property == null)
-			{
-				return $"{split[0]} is not a valid argument name.";
-			}
-			else if (String.IsNullOrWhiteSpace(split[1]))
-			{
-				return $"Failed to set {property.Name}. Reason: may not have an empty value.";
-			}
-			else if (_TryParses.TryGetValue(property.PropertyType, out var f))
-			{
-				property.SetValue(this, f(split[1]));
-			}
-			else if (property.PropertyType == typeof(string))
-			{
-				property.SetValue(this, split[1]);
-			}
-			else
-			{
-				return $"Failed to set {property.Name}. Reason: invalid type (not user error).";
-			}
-
-			if (!_Arguments.Where(x => !_SetArguments.Contains(x)).Any())
-			{
-				AllArgumentsSet?.Invoke();
-				IsReady = true;
-			}
-			return $"Successfully set {property.Name} to {property.GetValue(this)}.";
+			contentLinks.Clear();
 		}
 	}
 }

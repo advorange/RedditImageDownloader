@@ -1,7 +1,5 @@
-﻿using ImageDL.Classes;
-using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
@@ -9,7 +7,7 @@ namespace ImageDL.ImageDownloaders
 	/// <summary>
 	/// Abstraction of <see cref="ImageDownloader{TPost}"/>.
 	/// </summary>
-	public interface IImageDownloader
+	public interface IImageDownloader : INotifyPropertyChanged
 	{
 		/// <summary>
 		/// Fires when all arguments have been set.
@@ -56,10 +54,8 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		void AskForArguments();
 		/// <summary>
-		/// Saves links to a file.
+		/// Saves the stored content links to file.
 		/// </summary>
-		/// <param name="contentLinks">The links to save.</param>
-		/// <param name="file">The file to save to.</param>
-		void SaveContentLinks(IEnumerable<ContentLink> contentLinks, FileInfo file);
+		void SaveStoredContentLinks();
 	}
 }
