@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -76,7 +77,7 @@ namespace ImageDL
 			Console.ReadKey();
 #endif
 #if URLRESPONSETEST
-			var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
+			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
 			//var downloader = new RedditImageDownloader();
 			//await downloader.DownloadImageAsync(null, new Uri("")).ConfigureAwait(false);
 #endif
