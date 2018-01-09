@@ -172,7 +172,7 @@ namespace ImageDL.Classes
 			{
 				try
 				{
-					Console.WriteLine($"Certain match between {i1.File} and {i2.File}. Deleting {fileToDelete}.");
+					Console.WriteLine($"Certain match between {i1.File.Name} and {i2.File.Name}. Deleting {fileToDelete.Name}.");
 					FileSystem.DeleteFile(fileToDelete.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 				}
 				catch
