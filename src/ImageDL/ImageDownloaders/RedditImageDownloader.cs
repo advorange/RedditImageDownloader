@@ -46,35 +46,37 @@ namespace ImageDL.ImageDownloaders
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
 		{
+			var validPosts = new List<Post>();
 			try
 			{
+				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
+
 				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
-				var validPosts = subreddit.Hot.Where(x =>
+				foreach (var post in subreddit.New)
 				{
-					//Don't allow if it's not going to be an image
-					if (x.IsStickied || x.IsSelfPost)
+					if (post.CreatedUTC < oldestAllowed)
 					{
-						return false;
+						break;
 					}
-					//Don't allow if scored too low
-					else if (x.Score < ScoreThreshold)
+
+					if (post.IsStickied || post.IsSelfPost || post.Score < ScoreThreshold)
 					{
-						return false;
+						continue;
 					}
-					//Don't allow if too old
-					else if (x.CreatedUTC < DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld)))
+
+					validPosts.Add(post);
+					if (validPosts.Count % 25 == 0)
 					{
-						return false;
+						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
-					return true;
-				});
-				return validPosts.Take(AmountToDownload);
+				}
 			}
 			catch (WebException e)
 			{
 				Console.WriteLine(e.Message);
 			}
-			return Enumerable.Empty<Post>();
+			Console.WriteLine();
+			return validPosts;
 		}
 		protected override void WritePostToConsole(Post post, int count)
 			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");

@@ -35,7 +35,7 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// The hash of the image's thumbnail in boolean form.
 		/// </summary>
-		public readonly IEnumerable<bool> HashedThumbnail;
+		public readonly ImmutableArray<bool> HashedThumbnail;
 		/// <summary>
 		/// The size of the image's thumbnail (the thumbnail is a square).
 		/// </summary>
@@ -111,7 +111,7 @@ namespace ImageDL.Classes
 			}
 			var avgBrightness = totalBrightness / brightnesses.Count;
 
-			HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableList();
+			HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
 			ThumbnailSize = thumbnailSize;
 		}
 
@@ -176,7 +176,7 @@ namespace ImageDL.Classes
 			var matchCount = 0;
 			for (int i = 0; i < HashedThumbnail.Count(); ++i)
 			{
-				if (HashedThumbnail.ElementAt(i) == other.HashedThumbnail.ElementAt(i))
+				if (HashedThumbnail[i] == other.HashedThumbnail[i])
 				{
 					++matchCount;
 				}

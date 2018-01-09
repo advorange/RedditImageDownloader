@@ -75,7 +75,7 @@ namespace ImageDL.Classes
 			var g = new UriImageGatherer(uri);
 			if (g._RequiresScraping)
 			{
-				var response = await ScrapeImages(g._Site, g.EditedUri).ConfigureAwait(false);
+				var response = await ScrapeImages(g._Site, g.OriginalUri).ConfigureAwait(false);
 				g.ImageUris = response.Uris.Select(x => EditUri(g._Site, x)).Where(x => x != null).ToImmutableList();
 				g.Error = response.Error;
 			}

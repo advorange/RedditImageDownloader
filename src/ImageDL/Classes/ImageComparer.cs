@@ -63,7 +63,6 @@ namespace ImageDL.Classes
 			var sw = new Stopwatch();
 			sw.Start();
 #endif
-			Console.WriteLine();
 			var images = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
 			var count = images.Count();
 			for (int i = 0; i < count; ++i)
@@ -80,10 +79,9 @@ namespace ImageDL.Classes
 					{
 						Console.WriteLine($"Failed to cache the already saved file {img}.");
 					}
-					else if (!TryStore(md5hash, details))
+					else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
 					{
-						Console.WriteLine($"Found a duplicate file based on hash {img}. Deleting it.");
-						FileSystem.DeleteFile(img.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+						Delete(details, alreadyStoredVal);
 					}
 				}
 				catch (ArgumentException)
@@ -128,40 +126,17 @@ namespace ImageDL.Classes
 						continue;
 					}
 
-					Console.WriteLine($"Possible match between {iVal.File} and {jVal.File}.");
-
 					//Check once again but with a higher resolution
-					if (!ImageDetails.TryCreateFromFile(iVal.File, 512, out var md5Hashi, out var newIVal) ||
-						!ImageDetails.TryCreateFromFile(jVal.File, 512, out var md5Hashj, out var newJVal) ||
+					var resToCheck = new[] { iVal.Width, iVal.Height, jVal.Width, jVal.Height, 512 }.Min();
+					if (!ImageDetails.TryCreateFromFile(iVal.File, resToCheck, out var md5Hashi, out var newIVal) ||
+						!ImageDetails.TryCreateFromFile(jVal.File, resToCheck, out var md5Hashj, out var newJVal) ||
 						!newIVal.Equals(newJVal, percentForMatch))
 					{
 						continue;
 					}
 					++matchCount;
 
-					//Delete/remove whatever is the smaller image
-					var iPixCount = iVal.Width * iVal.Height;
-					var jPixCount = jVal.Width * jVal.Height;
-					//If each image has the same pixel count then go by file creation time
-					//If not then just go by pixel count
-					var removeJ = iPixCount == jPixCount
-						? iVal.File?.CreationTimeUtc > jVal.File?.CreationTimeUtc
-						: iPixCount > jPixCount;
-					var fileToDelete = removeJ ? jVal.File : iVal.File;
-
-					kvps.RemoveAt(removeJ ? j : i);
-					if (fileToDelete.Exists)
-					{
-						try
-						{
-							Console.WriteLine($"Certain match between {iVal.File} and {jVal.File}. Deleting {fileToDelete}.");
-							FileSystem.DeleteFile(fileToDelete.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-						}
-						catch
-						{
-							Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
-						}
-					}
+					kvps.Remove(Delete(iVal, jVal) ? iVal : jVal);
 				}
 				++CurrentImagesSearched;
 			}
@@ -174,6 +149,37 @@ namespace ImageDL.Classes
 			//Clear the lists and dictionary so after all this is done the program uses less memory
 			kvps.Clear();
 			_Images.Clear();
+		}
+		/// <summary>
+		/// Deletes a file. Returns true if <paramref name="i1"/> is deleted, false if <paramref name="i2"/> is deleted.
+		/// </summary>
+		/// <param name="i1">The first file to potentially delete.</param>
+		/// <param name="i2">The second file to potentially delete.</param>
+		/// <returns>True if <paramref name="i1"/> is deleted, false if <paramref name="i2"/> is deleted.</returns>
+		private bool Delete(ImageDetails i1, ImageDetails i2)
+		{
+			//Delete/remove whatever is the smaller image
+			var firstPix = i1.Width * i1.Height;
+			var secondPix = i2.Width * i2.Height;
+			//If each image has the same pixel count then go by file creation time
+			//If not then just go by pixel count
+			var removeFirst = firstPix == secondPix
+				? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc
+				: firstPix < secondPix;
+			var fileToDelete = removeFirst ? i1.File : i2.File;
+			if (fileToDelete.Exists)
+			{
+				try
+				{
+					Console.WriteLine($"Certain match between {i1.File} and {i2.File}. Deleting {fileToDelete}.");
+					FileSystem.DeleteFile(fileToDelete.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+				}
+				catch
+				{
+					Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
+				}
+			}
+			return removeFirst;
 		}
 
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")

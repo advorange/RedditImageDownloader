@@ -77,7 +77,7 @@ namespace ImageDL
 			Console.ReadKey();
 #endif
 #if URLRESPONSETEST
-			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("")).ConfigureAwait(false);
+			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("https://www.imgur.com/a/7GOVV")).ConfigureAwait(false);
 			//var downloader = new RedditImageDownloader();
 			//await downloader.DownloadImageAsync(null, new Uri("")).ConfigureAwait(false);
 #endif
