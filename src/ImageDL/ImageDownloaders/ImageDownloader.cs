@@ -201,7 +201,7 @@ namespace ImageDL.ImageDownloaders
 			}
 
 			var count = 0;
-			foreach (var post in await GatherPostsAsync().ConfigureAwait(false))
+			foreach (var post in (await GatherPostsAsync().ConfigureAwait(false)).Take(AmountToDownload))
 			{
 				WritePostToConsole(post, ++count);
 

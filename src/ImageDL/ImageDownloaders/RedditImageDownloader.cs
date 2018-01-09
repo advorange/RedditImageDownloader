@@ -58,14 +58,18 @@ namespace ImageDL.ImageDownloaders
 					{
 						break;
 					}
-
-					if (post.IsStickied || post.IsSelfPost || post.Score < ScoreThreshold)
+					else if (post.IsStickied || post.IsSelfPost || post.Score < ScoreThreshold)
 					{
 						continue;
 					}
 
 					validPosts.Add(post);
-					if (validPosts.Count % 25 == 0)
+					if (validPosts.Count == AmountToDownload)
+					{
+						Console.WriteLine($"Finished gathering reddit posts.");
+						break;
+					}
+					else if (validPosts.Count % 25 == 0)
 					{
 						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}

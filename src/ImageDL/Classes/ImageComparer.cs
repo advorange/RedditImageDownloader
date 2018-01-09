@@ -109,10 +109,11 @@ namespace ImageDL.Classes
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
 			var kvps = new List<ImageDetails>(_Images.Values);
+			var kvpCount = kvps.Count;
 			var matchCount = 0;
-			for (int i = kvps.Count - 1; i > 0; --i)
+			for (int i = kvpCount - 1; i > 0; --i)
 			{
-				if (i % 25 == 0 || i == kvps.Count - 1)
+				if (i % 25 == 0 || i == kvpCount - 1)
 				{
 					Console.WriteLine($"{i} image(s) left to check for duplicates.");
 				}
