@@ -52,8 +52,7 @@ namespace ImageDL
 			await downloader.StartAsync().ConfigureAwait(false);
 			Console.WriteLine("Press any key to close the program.");
 			Console.ReadKey();
-#endif
-#if IMAGECOMPARISON
+#elif IMAGECOMPARISON
 			var sw = new Stopwatch();
 			sw.Start();
 			for (int i = 0; i < 250; ++i)
@@ -76,13 +75,11 @@ namespace ImageDL
 			sw.Stop();
 			Console.WriteLine($"MS: {sw.ElapsedMilliseconds}");
 			Console.ReadKey();
-#endif
-#if URLRESPONSETEST
+#elif URLRESPONSETEST
 			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("https://www.imgur.com/a/7GOVV")).ConfigureAwait(false);
 			//var downloader = new RedditImageDownloader();
 			//await downloader.DownloadImageAsync(null, new Uri("")).ConfigureAwait(false);
-#endif
-#if SERGEANTSTUBBY
+#elif SERGEANTSTUBBY
 			var test = ImageDetails.TryCreateFromFile(new FileInfo(@"D:\Memes\Animal Pics\Puppers\Sergeant_Stubby 2.jpg"), 32, out var hash, out var details);
 #endif
 		}

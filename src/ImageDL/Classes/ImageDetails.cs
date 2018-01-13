@@ -70,7 +70,10 @@ namespace ImageDL.Classes
 			s.Seek(0, SeekOrigin.Begin);
 
 			//Create an image with a small size
-			var bmi = new BitmapImage();
+			var bmi = new BitmapImage
+			{
+				CreateOptions = BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
+			};
 			try
 			{
 				bmi.BeginInit();
