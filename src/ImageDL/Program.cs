@@ -1,6 +1,7 @@
 ﻿#define DOWNLOADER
 //#define IMAGECOMPARISON
 //#define URLRESPONSETEST
+//#define SERGEANTSTUBBY
 
 using ImageDL.Classes;
 using ImageDL.ImageDownloaders;
@@ -80,6 +81,9 @@ namespace ImageDL
 			//var gatherer = await UriImageGatherer.CreateGatherer(new Uri("https://www.imgur.com/a/7GOVV")).ConfigureAwait(false);
 			//var downloader = new RedditImageDownloader();
 			//await downloader.DownloadImageAsync(null, new Uri("")).ConfigureAwait(false);
+#endif
+#if SERGEANTSTUBBY
+			var test = ImageDetails.TryCreateFromFile(new FileInfo(@"D:\Memes\Animal Pics\Puppers\Sergeant_Stubby 2.jpg"), 32, out var hash, out var details);
 #endif
 		}
 	}

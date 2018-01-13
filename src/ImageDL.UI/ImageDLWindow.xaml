@@ -294,9 +294,9 @@
                         <controls:ImageDLNumberBox x:Name="ArgMaxImageSimilarity"
                                                    Grid.Column="5"
                                                    Grid.Row="1"
-                                                   DefaultValue="100"
-                                                   MinValue="50"
-                                                   MaxValue="100"
+                                                   DefaultValue="1000"
+                                                   MinValue="1"
+                                                   MaxValue="1000"
                                                    Tag="{classes:NameOf Member=MaxImageSimilarity, Type=downloaders:RedditImageDownloader}" />
                         <Viewbox Grid.Column="6"
                                  Grid.Row="1">

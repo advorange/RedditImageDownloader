@@ -140,8 +140,9 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		private int _MaxImageSimilarity = 100;
-		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. Ranges from 1 to 100.", true)]
+		private int _MaxImageSimilarity = 1000;
+		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. " +
+			"Ranges from 1 to 1000 (acts as .1% similar to 100% similar).", true)]
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
@@ -194,10 +195,12 @@ namespace ImageDL.ImageDownloaders
 		{
 			IsReady = false;
 			IsDownloading = true;
-			_ImageComparer = new ImageComparer { ThumbnailSize = 64, };
+
+			_ImageComparer = new ImageComparer { ThumbnailSize = 32, };
 			if (CompareSavedImages)
 			{
-				_ImageComparer.CacheAlreadySavedFiles(new DirectoryInfo(Directory));
+				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory));
+				Console.WriteLine();
 			}
 
 			var count = 0;
@@ -222,10 +225,13 @@ namespace ImageDL.ImageDownloaders
 			}
 			DownloadsFinished?.Invoke();
 			IsDownloading = false;
+
+			Console.WriteLine();
+			_ImageComparer.DeleteDuplicates(MaxImageSimilarity / 1000f);
+			Console.WriteLine();
 			IsDone = true;
 
 			SaveStoredContentLinks();
-			_ImageComparer.DeleteDuplicates(MaxImageSimilarity / 100f);
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
@@ -294,7 +300,7 @@ namespace ImageDL.ImageDownloaders
 
 						bm.Save(file.FullName, ImageFormat.Png);
 						//Add to list if the download succeeds
-						_ImageComparer.TryStore(hash, new ImageDetails(uri, file, bm, _ImageComparer.ThumbnailSize));
+						_ImageComparer.TryStore(hash, new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize));
 						return $"Saved {uri} to {file}.";
 					}
 				}

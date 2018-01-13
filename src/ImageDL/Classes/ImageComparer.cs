@@ -1,13 +1,19 @@
-﻿using ImageDL.Utilities;
+﻿//#define SINGLE_SYNC
+//#define PARALLEL
+//#define FOREACH_ASYNC
+#define GROUPED_ASYNC
+
+using ImageDL.Utilities;
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ImageDL.Classes
 {
@@ -57,22 +63,23 @@ namespace ImageDL.Classes
 		/// Caches the hashes of each image that is already saved in the directory.
 		/// </summary>
 		/// <param name="directory"></param>
-		public void CacheAlreadySavedFiles(DirectoryInfo directory)
+		public async Task CacheSavedFiles(DirectoryInfo directory, int taskGroupLen = 50)
 		{
 #if DEBUG
-			var sw = new Stopwatch();
+			var sw = new System.Diagnostics.Stopwatch();
 			sw.Start();
 #endif
-			var images = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
-			var count = images.Count();
-			for (int i = 0; i < count; ++i)
+			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
+			var len = files.Length;
+#if SINGLE_SYNC //At least 4x slower than Grouped_Async. Very low memory usage
+			for (int i = 0; i < len; ++i)
 			{
-				if (i % 25 == 0 || i == count - 1)
+				if (i % 25 == 0 || i == len - 1)
 				{
-					Console.WriteLine($"{i + 1}/{count} images cached.");
+					Console.WriteLine($"{i + 1}/{len} images cached.");
 				}
 
-				var img = images[i];
+				var img = files[i];
 				try
 				{
 					if (!ImageDetails.TryCreateFromFile(img, ThumbnailSize, out var md5hash, out var details))
@@ -81,7 +88,7 @@ namespace ImageDL.Classes
 					}
 					else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
 					{
-						Delete(details, alreadyStoredVal);
+						Delete(details, alreadyStoredVal, out var deletedDetails);
 					}
 				}
 				catch (ArgumentException)
@@ -89,11 +96,93 @@ namespace ImageDL.Classes
 					Console.WriteLine($"{img} is not a valid image.");
 				}
 			}
+#elif PARALLEL //Extremely high CPU usage, very fast.
+			Parallel.ForEach(files, file =>
+			{
+				try
+				{
+					if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
+					{
+						Console.WriteLine($"Failed to cache the already saved file {file}.");
+					}
+					else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
+					{
+						Delete(details, alreadyStoredVal, out var deletedDetails);
+					}
+				}
+				catch (ArgumentException)
+				{
+					Console.WriteLine($"{file} is not a valid image.");
+				}
+			});
+#elif FOREACH_ASYNC //Effectively same as Parallel
+			var tasks = new List<Task>();
+			for (int i = 0; i < len; ++i)
+			{
+				if (i % 25 == 0 || i == len - 1)
+				{
+					Console.WriteLine($"{i + 1}/{len} images cached.");
+				}
+
+				var file = files[i];
+				tasks.Add(Task.Run(() =>
+				{
+					try
+					{
+						if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
+						{
+							Console.WriteLine($"Failed to cache the already saved file {file}.");
+						}
+						else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
+						{
+							Delete(details, alreadyStoredVal, out var deletedDetails);
+						}
+					}
+					catch (ArgumentException)
+					{
+						Console.WriteLine($"{file} is not a valid image.");
+					}
+				}));
+			}
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+#elif GROUPED_ASYNC //Best combination of speed and memory usage.
+			var grouped = files.Select((file, index) => new { file, index })
+				.GroupBy(x => x.index / taskGroupLen)
+				.Select(g => g.Select(obj => obj.file));
+			var count = 0;
+			var tasks = grouped.Select(group => Task.Run(() =>
+			{
+				foreach (var file in group)
+				{
+					try
+					{
+						if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
+						{
+							Console.WriteLine($"Failed to cache the already saved file {file}.");
+						}
+						else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
+						{
+							Delete(details, alreadyStoredVal, out var detailsToRemove);
+						}
+					}
+					catch (ArgumentException)
+					{
+						Console.WriteLine($"{file} is not a valid image.");
+					}
+
+					var c = Interlocked.Increment(ref count);
+					if (c % 25 == 0 || c == len)
+					{
+						Console.WriteLine($"{Math.Min(c, len)}/{len} images cached.");
+					}
+				}
+			}));
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+#endif
 #if DEBUG
 			sw.Stop();
 			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
 #endif
-			Console.WriteLine();
 		}
 		/// <summary>
 		/// When the images have finished downloading run through each of them again to see if any are duplicates.
@@ -102,10 +191,9 @@ namespace ImageDL.Classes
 		public void DeleteDuplicates(float percentForMatch)
 		{
 #if DEBUG
-			var sw = new Stopwatch();
+			var sw = new System.Diagnostics.Stopwatch();
 			sw.Start();
 #endif
-			Console.WriteLine();
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
 			var kvps = new List<ImageDetails>(_Images.Values);
@@ -119,10 +207,15 @@ namespace ImageDL.Classes
 				}
 
 				var iVal = kvps[i];
+				if (!iVal.InitializedCorrectly)
+				{
+					continue;
+				}
+
 				for (int j = i - 1; j >= 0; --j)
 				{
 					var jVal = kvps[j];
-					if (!iVal.Equals(jVal, percentForMatch))
+					if (!jVal.InitializedCorrectly || !iVal.Equals(jVal, percentForMatch))
 					{
 						continue;
 					}
@@ -137,7 +230,8 @@ namespace ImageDL.Classes
 					}
 					++matchCount;
 
-					kvps.Remove(Delete(iVal, jVal) ? iVal : jVal);
+					Delete(iVal, jVal, out var deletedDetails);
+					kvps.Remove(deletedDetails);
 				}
 				++CurrentImagesSearched;
 			}
@@ -146,18 +240,14 @@ namespace ImageDL.Classes
 			sw.Stop();
 			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
 #endif
-			Console.WriteLine();
-			//Clear the lists and dictionary so after all this is done the program uses less memory
-			kvps.Clear();
-			_Images.Clear();
 		}
 		/// <summary>
 		/// Deletes a file. Returns true if <paramref name="i1"/> is deleted, false if <paramref name="i2"/> is deleted.
 		/// </summary>
 		/// <param name="i1">The first file to potentially delete.</param>
 		/// <param name="i2">The second file to potentially delete.</param>
-		/// <returns>True if <paramref name="i1"/> is deleted, false if <paramref name="i2"/> is deleted.</returns>
-		private bool Delete(ImageDetails i1, ImageDetails i2)
+		/// <param name="deletedDetails">The details which the file associated with them has been deleted.</param>
+		private void Delete(ImageDetails i1, ImageDetails i2, out ImageDetails deletedDetails)
 		{
 			//Delete/remove whatever is the smaller image
 			var firstPix = i1.Width * i1.Height;
@@ -180,7 +270,7 @@ namespace ImageDL.Classes
 					Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
 				}
 			}
-			return removeFirst;
+			deletedDetails = removeFirst ? i1 : i2;
 		}
 
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
