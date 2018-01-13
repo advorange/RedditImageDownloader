@@ -50,7 +50,7 @@ namespace ImageDL.Classes
 		/// <param name="details">The image's details.</param>
 		/// <returns>Returns a boolean indicating whether or not the image details were successfully stored.</returns>
 		public bool TryStore(string hash, ImageDetails details)
-			=> !_Images.ContainsKey(hash) && _Images.TryAdd(hash, details);
+			=> _Images.TryAdd(hash, details);
 		/// <summary>
 		/// Returns true if successfully able to get a value with <paramref name="hash"/>;
 		/// </summary>
@@ -60,10 +60,10 @@ namespace ImageDL.Classes
 		public bool TryGetImage(string hash, out ImageDetails details)
 			=> _Images.TryGetValue(hash, out details);
 		/// <summary>
-		/// Caches the hashes of each image that is already saved in the directory.
+		/// Caches every file in the directory.
 		/// </summary>
-		/// <param name="directory"></param>
-		public async Task CacheSavedFiles(DirectoryInfo directory, int taskGroupLen = 50)
+		/// <param name="directory">The directory to cache.</param>
+		public async Task CacheSavedFiles(DirectoryInfo directory, int taskGroupLength = 50)
 		{
 #if DEBUG
 			var sw = new System.Diagnostics.Stopwatch();
@@ -79,21 +79,14 @@ namespace ImageDL.Classes
 					Console.WriteLine($"{i + 1}/{len} images cached.");
 				}
 
-				var img = files[i];
+				var file = files[i];
 				try
 				{
-					if (!ImageDetails.TryCreateFromFile(img, ThumbnailSize, out var md5hash, out var details))
-					{
-						Console.WriteLine($"Failed to cache the already saved file {img}.");
-					}
-					else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
-					{
-						Delete(details, alreadyStoredVal, out var deletedDetails);
-					}
+					CacheFile(file);
 				}
 				catch (ArgumentException)
 				{
-					Console.WriteLine($"{img} is not a valid image.");
+					Console.WriteLine($"{file} is not a valid image.");
 				}
 			}
 #elif PARALLEL //Extremely high CPU usage, very fast.
@@ -101,14 +94,7 @@ namespace ImageDL.Classes
 			{
 				try
 				{
-					if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
-					{
-						Console.WriteLine($"Failed to cache the already saved file {file}.");
-					}
-					else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
-					{
-						Delete(details, alreadyStoredVal, out var deletedDetails);
-					}
+					CacheFile(file);
 				}
 				catch (ArgumentException)
 				{
@@ -129,14 +115,7 @@ namespace ImageDL.Classes
 				{
 					try
 					{
-						if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
-						{
-							Console.WriteLine($"Failed to cache the already saved file {file}.");
-						}
-						else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
-						{
-							Delete(details, alreadyStoredVal, out var deletedDetails);
-						}
+						CacheFile(file);
 					}
 					catch (ArgumentException)
 					{
@@ -147,7 +126,7 @@ namespace ImageDL.Classes
 			await Task.WhenAll(tasks).ConfigureAwait(false);
 #elif GROUPED_ASYNC //Best combination of speed and memory usage.
 			var grouped = files.Select((file, index) => new { file, index })
-				.GroupBy(x => x.index / taskGroupLen)
+				.GroupBy(x => x.index / taskGroupLength)
 				.Select(g => g.Select(obj => obj.file));
 			var count = 0;
 			var tasks = grouped.Select(group => Task.Run(() =>
@@ -156,14 +135,7 @@ namespace ImageDL.Classes
 				{
 					try
 					{
-						if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
-						{
-							Console.WriteLine($"Failed to cache the already saved file {file}.");
-						}
-						else if (!TryStore(md5hash, details) && _Images.TryGetValue(md5hash, out var alreadyStoredVal))
-						{
-							Delete(details, alreadyStoredVal, out var detailsToRemove);
-						}
+						CacheFile(file);
 					}
 					catch (ArgumentException)
 					{
@@ -183,6 +155,26 @@ namespace ImageDL.Classes
 			sw.Stop();
 			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
 #endif
+		}
+		/// <summary>
+		/// Caches the file.
+		/// </summary>
+		/// <param name="file">The file to cache.</param>
+		public void CacheFile(FileInfo file)
+		{
+			if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
+			{
+				Console.WriteLine($"Failed to create a cached object of {file}.");
+			}
+			//If the file is already in there, delete whichever is worse
+			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
+			{
+				Delete(details, alreadyStoredVal, out var deletedDetails);
+			}
+			else if (!TryStore(md5hash, details))
+			{
+				Console.WriteLine($"Failed to cache {file}.");
+			}
 		}
 		/// <summary>
 		/// When the images have finished downloading run through each of them again to see if any are duplicates.

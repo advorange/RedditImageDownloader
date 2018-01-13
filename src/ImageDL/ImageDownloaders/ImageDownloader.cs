@@ -148,7 +148,7 @@ namespace ImageDL.ImageDownloaders
 			get => _MaxImageSimilarity;
 			set
 			{
-				_MaxImageSimilarity = Math.Min(100, Math.Max(1, value));
+				_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value));
 				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
