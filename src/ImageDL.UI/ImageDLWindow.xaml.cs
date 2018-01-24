@@ -69,7 +69,9 @@ namespace ImageDL.UI
 			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
 		}
 		private void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
-			=> Task.Run(async () => await Downloader.HeldObject.StartAsync());
+		{
+			Task.Run(async () => await Downloader.HeldObject.StartAsync());
+		}
 
 		private Grid GetArgumentGrid(Type type)
 		{
@@ -83,6 +85,8 @@ namespace ImageDL.UI
 			}
 		}
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
-			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
 	}
 }

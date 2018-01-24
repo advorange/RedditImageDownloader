@@ -3,6 +3,7 @@ using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -80,13 +81,25 @@ namespace ImageDL.ImageDownloaders
 				Console.WriteLine(e.Message);
 			}
 			Console.WriteLine();
-			return validPosts;
+			return validPosts.OrderByDescending(x => x.Score);
 		}
 		protected override void WritePostToConsole(Post post, int count)
-			=> Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
+		{
+			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
+		}
+		protected override string GenerateFileName(Post post, WebResponse response, Uri uri)
+		{
+			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
+			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
+			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+		}
 		protected override async Task<UriImageGatherer> CreateGathererAsync(Post post)
-			=> await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
+		{
+			return await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
+		}
 		protected override ContentLink CreateContentLink(Post post, Uri uri)
-			=> new ContentLink(uri, post.Score);
+		{
+			return new ContentLink(uri, post.Score);
+		}
 	}
 }

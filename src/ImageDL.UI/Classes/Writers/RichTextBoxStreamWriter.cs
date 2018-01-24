@@ -226,23 +226,28 @@ namespace ImageDL.UI.Classes.Writers
 			return returnValues.ToArray();
 		}
 		private async void WriteHyperlinkAsync(string text)
-			=> await _RTB.Dispatcher.InvokeAsync(() =>
-			{
-				var link = new HyperlinkWrapper(text);
-				if (_RTB.Document.Blocks.LastBlock is Paragraph para)
-				{
-					para.Inlines.Add(link);
-				}
-				else
-				{
-					_RTB.Document.Blocks.Add(new Paragraph(link));
-				}
-			}, _Priority);
+		{
+			await _RTB.Dispatcher.InvokeAsync(() =>
+					   {
+						   var link = new HyperlinkWrapper(text);
+						   if (_RTB.Document.Blocks.LastBlock is Paragraph para)
+						   {
+							   para.Inlines.Add(link);
+						   }
+						   else
+						   {
+							   _RTB.Document.Blocks.Add(new Paragraph(link));
+						   }
+					   }, _Priority);
+		}
+
 		private async void WriteTextAsync(string text)
-			=> await _RTB.Dispatcher.InvokeAsync(() =>
-			{
-				_RTB.AppendText(text);
-			}, _Priority);
+		{
+			await _RTB.Dispatcher.InvokeAsync(() =>
+					   {
+						   _RTB.AppendText(text);
+					   }, _Priority);
+		}
 
 		private struct FilePath
 		{

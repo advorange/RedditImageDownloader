@@ -16,13 +16,21 @@ namespace ImageDL.UI.Utilities
 		/// </summary>
 		/// <param name="item"></param>
 		/// <param name="length"></param>
-		public static void SetRowSpan(UIElement item, int length) => Grid.SetRowSpan(item, Math.Max(1, length));
+		public static void SetRowSpan(UIElement item, int length)
+		{
+			Grid.SetRowSpan(item, Math.Max(1, length));
+		}
+
 		/// <summary>
 		/// Sets the <see cref="Grid.ColumnSpanProperty"/> to either 1 or the supplied length.
 		/// </summary>
 		/// <param name="item"></param>
 		/// <param name="length"></param>
-		public static void SetColSpan(UIElement item, int length) => Grid.SetColumnSpan(item, Math.Max(1, length));
+		public static void SetColSpan(UIElement item, int length)
+		{
+			Grid.SetColumnSpan(item, Math.Max(1, length));
+		}
+
 		/// <summary>
 		/// Sets the <see cref="Control.FontSizeProperty"/> to a number that changes based off of the top most grid's height.
 		/// Zero removes any binding on the <see cref="Control.FontSizeProperty"/>.

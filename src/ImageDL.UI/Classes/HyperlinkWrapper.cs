@@ -121,7 +121,6 @@ namespace ImageDL.UI.Classes
 				kvp.Value.Clear();
 			}
 		}
-
 		private void OnRequestNavigate(object sender, RequestNavigateEventArgs e)
 		{
 			Foreground = _Clicked;
@@ -171,8 +170,16 @@ namespace ImageDL.UI.Classes
 				UpdateLastAccessed();
 			}
 
-			public void AddUsingWrapper(HyperlinkWrapper wrapper) => _UsingWrappers.Add(wrapper);
-			public void UpdateLastAccessed() => LastAccessedTicks = DateTime.UtcNow.Ticks;
+			public void AddUsingWrapper(HyperlinkWrapper wrapper)
+			{
+				_UsingWrappers.Add(wrapper);
+			}
+
+			public void UpdateLastAccessed()
+			{
+				LastAccessedTicks = DateTime.UtcNow.Ticks;
+			}
+
 			public void Clear()
 			{
 				foreach (var wrapper in _UsingWrappers)

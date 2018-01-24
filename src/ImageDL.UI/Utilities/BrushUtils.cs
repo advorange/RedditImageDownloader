@@ -92,7 +92,10 @@ namespace ImageDL.UI.Utilities
 		/// <param name="brush">The found brush.</param>
 		/// <returns>A boolean indicating whether or not a brush was successfully found.</returns>
 		public static bool TryCreateBrushFromStringName(string name, out SolidColorBrush brush)
-			=> _Brushes.TryGetValue(name, out brush);
+		{
+			return _Brushes.TryGetValue(name, out brush);
+		}
+
 		/// <summary>
 		/// Creates a brush by converting <paramref name="hex"/> to <see cref="uint"/>.
 		/// Returns true if a brush was successfully created.
@@ -162,6 +165,8 @@ namespace ImageDL.UI.Utilities
 		/// <param name="b2">The second brush to compare to.</param>
 		/// <returns>A boolean indicating whether or not the brushes are equal.</returns>
 		public static bool Equals(SolidColorBrush b1, SolidColorBrush b2)
-			=> b1?.Color == b2?.Color && b1?.Opacity == b2?.Opacity;
+		{
+			return b1?.Color == b2?.Color && b1?.Opacity == b2?.Opacity;
+		}
 	}
 }

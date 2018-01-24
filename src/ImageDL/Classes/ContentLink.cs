@@ -22,6 +22,9 @@ namespace ImageDL.Classes
 			Score = score;
 		}
 
-		public override string ToString() => $"{Score} {Uri}";
+		public override string ToString()
+		{
+			return $"{Score} {Uri}";
+		}
 	}
 }

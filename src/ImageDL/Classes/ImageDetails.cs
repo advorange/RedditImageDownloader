@@ -60,6 +60,16 @@ namespace ImageDL.Classes
 			Uri = uri;
 			File = file;
 
+			Width = -1;
+			Height = -1;
+			HashedThumbnail = new ImmutableArray<bool>();
+			ThumbnailSize = 0;
+			InitializedCorrectly = false;
+			if (s.Length < 1)
+			{
+				return;
+			}
+
 			//Make sure that the stream can be read fully
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -88,9 +98,6 @@ namespace ImageDL.Classes
 			catch (FileFormatException ffe)
 			{
 				ffe.Write();
-				HashedThumbnail = new ImmutableArray<bool>();
-				ThumbnailSize = 0;
-				InitializedCorrectly = false;
 				return;
 			}
 

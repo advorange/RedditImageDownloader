@@ -21,7 +21,10 @@ namespace ImageDL.Utilities
 		/// <param name="str2"></param>
 		/// <returns></returns>
 		public static bool CaseInsEquals(this string str1, string str2)
-			=> String.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+		{
+			return String.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+		}
+
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to check if a string contains a search string.
 		/// </summary>
@@ -29,7 +32,10 @@ namespace ImageDL.Utilities
 		/// <param name="search"></param>
 		/// <returns></returns>
 		public static bool CaseInsContains(this string source, string search)
-			=> source != null && search != null && source.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+		{
+			return source != null && search != null && source.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to return the index of a search string.
 		/// </summary>
@@ -49,7 +55,10 @@ namespace ImageDL.Utilities
 		/// <param name="search"></param>
 		/// <returns></returns>
 		public static bool CaseInsStartsWith(this string source, string search)
-			=> source != null && search != null && source.StartsWith(search, StringComparison.OrdinalIgnoreCase);
+		{
+			return source != null && search != null && source.StartsWith(search, StringComparison.OrdinalIgnoreCase);
+		}
+
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to check if a string ends with a search string.
 		/// </summary>
@@ -57,7 +66,10 @@ namespace ImageDL.Utilities
 		/// <param name="search"></param>
 		/// <returns></returns>
 		public static bool CaseInsEndsWith(this string source, string search)
-			=> source != null && search != null && source.EndsWith(search, StringComparison.OrdinalIgnoreCase);
+		{
+			return source != null && search != null && source.EndsWith(search, StringComparison.OrdinalIgnoreCase);
+		}
+
 		/// <summary>
 		/// Returns the string with the oldValue replaced with the newValue case insensitively.
 		/// </summary>
@@ -105,7 +117,9 @@ namespace ImageDL.Utilities
 		/// <param name="search"></param>
 		/// <returns></returns>
 		public static bool CaseInsContains(this IEnumerable<string> enumerable, string search)
-			=> enumerable.Contains(search, StringComparer.OrdinalIgnoreCase);
+		{
+			return enumerable.Contains(search, StringComparer.OrdinalIgnoreCase);
+		}
 
 		/// <summary>
 		/// Splits <paramref name="input"/> similar to how command prompt splits arguments.
@@ -113,18 +127,24 @@ namespace ImageDL.Utilities
 		/// <param name="input">The string to split.</param>
 		/// <returns>An array of strings representing arguments.</returns>
 		public static string[] SplitLikeCommandLine(this string input)
-			=> input.Split('"').Select((x, index) =>
-			{
-				return index % 2 == 0
-					? x.Split(new[] { ' ' })
-					: new[] { x };
-			}).SelectMany(x => x).Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
+		{
+			return input.Split('"').Select((x, index) =>
+						{
+							return index % 2 == 0
+								? x.Split(new[] { ' ' })
+								: new[] { x };
+						}).SelectMany(x => x).Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
+		}
+
 		/// <summary>
 		/// Returns <see cref="DateTime.UtcNow"/> displaying years down to seconds.
 		/// </summary>
 		/// <returns>The time formatted neatly for saving files.</returns>
 		public static string FormatDateTimeForSaving()
-			=> DateTime.UtcNow.ToString("yyyyMMdd_hhmmss");
+		{
+			return DateTime.UtcNow.ToString("yyyyMMdd_hhmmss");
+		}
+
 		/// <summary>
 		/// Adds in spaces between each capital letter.
 		/// </summary>
@@ -169,31 +189,45 @@ namespace ImageDL.Utilities
 		/// <param name="keySelector">The property to order by.</param>
 		/// <returns>An ordered enumerable.</returns>
 		public static IEnumerable<T> OrderByNonComparable<T, TKey>(this IEnumerable<T> input, Func<T, TKey> keySelector)
-			=> input.GroupBy(keySelector).SelectMany(x => x);
+		{
+			return input.GroupBy(keySelector).SelectMany(x => x);
+		}
+
 		/// <summary>
 		/// Returns the amount of characters in a number.
 		/// </summary>
 		/// <param name="num">The number to get the length of.</param>
 		/// <returns>The amount of characters in a number.</returns>
 		public static int GetLength(this int num)
-			=> num.ToString().Length;
+		{
+			return num.ToString().Length;
+		}
+
 		/// <summary>
 		/// Returns true if the passed in string is a valid url.
 		/// </summary>
 		/// <param name="input">The uri to evaluate.</param>
 		/// <returns>A boolean indicating whether or not the string is a url.</returns>
-		public static bool IsValidUrl(this string input) => true
-			&& !String.IsNullOrWhiteSpace(input)
-			&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
-			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		public static bool IsValidUrl(this string input)
+		{
+			return true
+&& !String.IsNullOrWhiteSpace(input)
+&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
+&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		}
+
 		/// <summary>
 		/// Returns true if the passed in uri is a valid url.
 		/// </summary>
 		/// <param name="uri">The uri to evaluate.</param>
 		/// <returns>A boolean indicating whether or not the uri is a url.</returns>
-		public static bool IsValidUrl(this Uri uri) => true
-			&& uri.IsAbsoluteUri
-			&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		public static bool IsValidUrl(this Uri uri)
+		{
+			return true
+&& uri.IsAbsoluteUri
+&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		}
+
 		/// <summary>
 		/// Returns true for most image mime types (png, jpg, tiff, etc) but false for gif and anything else.
 		/// </summary>

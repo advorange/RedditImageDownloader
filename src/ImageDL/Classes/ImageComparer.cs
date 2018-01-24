@@ -50,7 +50,9 @@ namespace ImageDL.Classes
 		/// <param name="details">The image's details.</param>
 		/// <returns>Returns a boolean indicating whether or not the image details were successfully stored.</returns>
 		public bool TryStore(string hash, ImageDetails details)
-			=> _Images.TryAdd(hash, details);
+		{
+			return _Images.TryAdd(hash, details);
+		}
 		/// <summary>
 		/// Returns true if successfully able to get a value with <paramref name="hash"/>;
 		/// </summary>
@@ -58,7 +60,9 @@ namespace ImageDL.Classes
 		/// <param name="details">The returned value.</param>
 		/// <returns>Returns a boolean indicating whether or not the hash is linked to a value.</returns>
 		public bool TryGetImage(string hash, out ImageDetails details)
-			=> _Images.TryGetValue(hash, out details);
+		{
+			return _Images.TryGetValue(hash, out details);
+		}
 		/// <summary>
 		/// Caches every file in the directory.
 		/// </summary>
@@ -266,6 +270,8 @@ namespace ImageDL.Classes
 		}
 
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
-			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
 	}
 }

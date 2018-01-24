@@ -263,10 +263,7 @@ namespace ImageDL.ImageDownloaders
 					return $"{uri} is not an image.";
 				}
 
-				var gottenName = resp.Headers["Content-Disposition"] ?? resp.ResponseUri.LocalPath ?? uri.ToString();
-				var cutName = gottenName.Substring(gottenName.LastIndexOf('/') + 1);
-				var cleanedName = new string(cutName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
-				var file = new FileInfo(Path.Combine(Directory, cleanedName));
+				var file = new FileInfo(Path.Combine(Directory, GenerateFileName(post, resp, uri)));
 				if (file.Exists)
 				{
 					return $"{file} is already saved.";
@@ -385,9 +382,12 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		/// <param name="name">The property changed.</param>
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
-			=> PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
 		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
 		protected abstract void WritePostToConsole(TPost post, int count);
+		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
 		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
 		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
 

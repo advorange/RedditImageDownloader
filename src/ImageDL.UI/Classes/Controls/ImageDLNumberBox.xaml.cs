@@ -63,8 +63,10 @@ namespace ImageDL.UI.Classes.Controls
 			UpdateStoredValue(int.TryParse(tb.Text, out var result) ? result : DefaultValue);
 		}
 		private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
-			//If char is null or not a number then don't let it go through
-			=> e.Handled = !String.IsNullOrWhiteSpace(e.Text) && _NumberRegex.IsMatch(e.Text);
+		{
+			e.Handled = !String.IsNullOrWhiteSpace(e.Text) && _NumberRegex.IsMatch(e.Text);
+		}
+
 		private void OnPaste(object sender, DataObjectPastingEventArgs e)
 		{
 			if (!e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true) || !(e.Source is TextBox tb))

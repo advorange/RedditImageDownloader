@@ -19,7 +19,9 @@ namespace ImageDL.UI
 		}
 
 		public void OnStartup(object sender, StartupEventArgs e)
-			=> DispatcherUnhandledException += OnDispatcherUnhandledException;
+		{
+			DispatcherUnhandledException += OnDispatcherUnhandledException;
+		}
 
 		private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
