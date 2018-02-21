@@ -1,5 +1,6 @@
 ﻿using ImageDL.Classes;
 using ImageDL.Utilities;
+using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -18,6 +19,8 @@ namespace ImageDL.ImageDownloaders
 	/// </summary>
 	public abstract class ImageDownloader : INotifyPropertyChanged
 	{
+		public OptionSet CommandLineParserOptions;
+
 		private string _Directory;
 		private int _AmountToDownload;
 		private int _MinWidth;
@@ -30,7 +33,6 @@ namespace ImageDL.ImageDownloaders
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
 
-		[Setting("The location to save files to.")]
 		public string Directory
 		{
 			get => _Directory;
@@ -47,7 +49,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The amount of files to download.")]
 		public int AmountToDownload
 		{
 			get => Math.Max(1, _AmountToDownload);
@@ -57,7 +58,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The minimum width for an image to have allowing it to be saved.")]
 		public int MinWidth
 		{
 			get => _MinWidth;
@@ -67,7 +67,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The minimum height for an image to have allowing it to be saved.")]
 		public int MinHeight
 		{
 			get => _MinHeight;
@@ -77,7 +76,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The maximum age a post can have before it is not longer allowed to be saved.")]
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
@@ -87,8 +85,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. " +
-			"Ranges from 1 to 1000 (acts as .1% similar to 100% similar).")]
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
@@ -98,7 +94,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("The amount of images to cache per thread. Lower value means faster at the cost of higher CPU usage.")]
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
@@ -108,7 +103,6 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
-		[Setting("Whether or not to include already saved images in comparison for duplicates.")]
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
@@ -163,11 +157,20 @@ namespace ImageDL.ImageDownloaders
 		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
 		protected ImageComparer _ImageComparer;
 
-		public ImageDownloader() : this(new string[0]) { }
-		public ImageDownloader(params string[] args)
+		public ImageDownloader()
 		{
+			CommandLineParserOptions = new OptionSet()
+				.Add("d|dir=", "the directory to save to.", x => Directory = x)
+				.Add("a|amt=", "the amount of images to download.", x => AmountToDownload = Convert.ToInt32(x))
+				.Add("mw|minw=", "the minimum width to save an image with.", x => MinWidth = Convert.ToInt32(x))
+				.Add("mh|minh=", "the minimum height to save an image with.", x => MinHeight = Convert.ToInt32(x))
+				.Add("da|days=", "the oldest an image can be before it won't be saved.", x => MaxDaysOld = Convert.ToInt32(x))
+				.Add("s|sim=", "the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).", x => MaxImageSimilarity = Convert.ToInt32(x))
+				.Add("c|cached=", "how many images to cache on each thread (lower = faster but more CPU).", x => ImagesCachedPerThread = Convert.ToInt32(x))
+				.Add("csi|compare=", "whether or not to compare to already saved images.", x => CompareSavedImages = Convert.ToBoolean(x));
+
 			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-				.Where(x => x.GetCustomAttribute<SettingAttribute>() != null)
+				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToImmutableDictionary(x => x.Name, x => x, StringComparer.OrdinalIgnoreCase);
 
@@ -177,8 +180,6 @@ namespace ImageDL.ImageDownloaders
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
-
-			SetArguments(args);
 		}
 
 		/// <summary>
@@ -186,35 +187,6 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		/// <returns>An asynchronous task which downloads images.</returns>
 		public abstract Task StartAsync();
-		/// <summary>
-		/// Gives help for each argument that help has been asked for.
-		/// </summary>
-		/// <param name="argNames">The argument names to search for.</param>
-		public void GiveHelp(params string[] argNames)
-		{
-			foreach (var argName in argNames)
-			{
-				var text = _Arguments.TryGetValue(argName, out var property)
-					? $"{property.Name}: {property.GetCustomAttribute<SettingAttribute>().Description}"
-					: $"{argName} is not a valid argument name.";
-				Console.WriteLine(text);
-			}
-		}
-		/// <summary>
-		/// Sets the arguments that can be gathered from <paramref name="args"/>.
-		/// </summary>
-		/// <param name="args">The supplied arguments.</param>
-		public void SetArguments(params string[] args)
-		{
-			foreach (var argument in args)
-			{
-				Console.WriteLine(SetArgument(argument));
-			}
-			if (args.Any())
-			{
-				Console.WriteLine();
-			}
-		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.
 		/// </summary>
@@ -255,6 +227,10 @@ namespace ImageDL.ImageDownloaders
 			if (!_SetArguments.Any(x => x.Name == name) && _Arguments.TryGetValue(name, out var property))
 			{
 				_SetArguments.Add(property);
+			}
+			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x.Value)))
+			{
+				AllArgumentsSet = true;
 			}
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}

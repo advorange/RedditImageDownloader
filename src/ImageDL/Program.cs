@@ -6,6 +6,7 @@
 using ImageDL.Classes;
 using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
+using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,25 +26,27 @@ namespace ImageDL
 		{
 			Console.OutputEncoding = Encoding.UTF8;
 #if DOWNLOADER
-			Console.WriteLine("If you need any help, type 'help:argument name' where argument name is the name of an argument.");
-			var downloader = new RedditImageDownloader(args);
-
-			downloader.AskForArguments();
-			while (true)
+			var downloader = new RedditImageDownloader();
+			while (!downloader.AllArgumentsSet)
 			{
-				var input = Console.ReadLine();
-				if (input.CaseInsStartsWith("help"))
-				{
-					downloader.GiveHelp(input.Substring(input.IndexOfAny(new[] { ':', ' ' })).SplitLikeCommandLine());
-					continue;
-				}
-
-				downloader.SetArguments(input.SplitLikeCommandLine());
-				if (downloader.AllArgumentsSet)
-				{
-					break;
-				}
 				downloader.AskForArguments();
+				var line = Console.ReadLine();
+				try
+				{
+					var extra = downloader.CommandLineParserOptions.Parse(line.SplitLikeCommandLine());
+					if (extra.Any())
+					{
+						Console.WriteLine($"The following parts were extra, was an argument mistyped? '{String.Join("', '", extra)}'");
+					}
+				}
+				catch (FormatException fe)
+				{
+					fe.Write();
+				}
+				catch (OptionException oe)
+				{
+					oe.Write();
+				}
 			}
 
 			await downloader.StartAsync().ConfigureAwait(false);

@@ -18,7 +18,6 @@ namespace ImageDL.ImageDownloaders
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
 		private string _Subreddit;
-		[Setting("The subreddit to download images from.")]
 		public string Subreddit
 		{
 			get => _Subreddit;
@@ -29,7 +28,6 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 		private int _ScoreThreshold;
-		[Setting("The minimum score allowed for an image to be downloaded.")]
 		public int ScoreThreshold
 		{
 			get => _ScoreThreshold;
@@ -40,8 +38,11 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 
-		public RedditImageDownloader() : this(new string[0]) { }
-		public RedditImageDownloader(params string[] args) : base(args) { }
+		public RedditImageDownloader() : base()
+		{
+			CommandLineParserOptions.Add("sr|subreddit=", "the subreddit to download images from.", x => Subreddit = x);
+			CommandLineParserOptions.Add("st|score=", "the minimum score for an image to have before being ignored.", x => ScoreThreshold = Convert.ToInt32(x));
+		}
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
 		{

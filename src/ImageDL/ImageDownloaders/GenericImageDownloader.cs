@@ -23,8 +23,7 @@ namespace ImageDL.ImageDownloaders
 	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
 	public abstract class GenericImageDownloader<TPost> : ImageDownloader
 	{
-		public GenericImageDownloader() : this(new string[0]) { }
-		public GenericImageDownloader(params string[] args) : base(args) { }
+		public GenericImageDownloader() : base() { }
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
