@@ -206,7 +206,9 @@ namespace ImageDL.UI.Classes.Writers
 			var currentPart = new StringBuilder();
 			foreach (var part in parts)
 			{
-				if (!File.Exists(part) && !part.IsValidUrl())
+				//Have to check drives otherwise file.exists throws invalid scheme or something error
+				//If not file or url then just keep adding to current part
+				if ((!_Drives.Any(x => x.CaseInsEquals(part.Split(':')[0])) || !File.Exists(part)) && !part.IsValidUrl())
 				{
 					currentPart.Append(part);
 					continue;
@@ -228,25 +230,24 @@ namespace ImageDL.UI.Classes.Writers
 		private async void WriteHyperlinkAsync(string text)
 		{
 			await _RTB.Dispatcher.InvokeAsync(() =>
-					   {
-						   var link = new HyperlinkWrapper(text);
-						   if (_RTB.Document.Blocks.LastBlock is Paragraph para)
-						   {
-							   para.Inlines.Add(link);
-						   }
-						   else
-						   {
-							   _RTB.Document.Blocks.Add(new Paragraph(link));
-						   }
-					   }, _Priority);
+			{
+				var link = new HyperlinkWrapper(text);
+				if (_RTB.Document.Blocks.LastBlock is Paragraph para)
+				{
+					para.Inlines.Add(link);
+				}
+				else
+				{
+					_RTB.Document.Blocks.Add(new Paragraph(link));
+				}
+			}, _Priority);
 		}
-
 		private async void WriteTextAsync(string text)
 		{
 			await _RTB.Dispatcher.InvokeAsync(() =>
-					   {
-						   _RTB.AppendText(text);
-					   }, _Priority);
+			{
+				_RTB.AppendText(text);
+			}, _Priority);
 		}
 
 		private struct FilePath

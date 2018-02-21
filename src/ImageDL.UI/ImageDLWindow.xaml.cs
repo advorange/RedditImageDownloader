@@ -17,7 +17,7 @@ namespace ImageDL.UI
 	/// </summary>
 	public partial class ImageDLWindow : Window, INotifyPropertyChanged
 	{
-		private Type _CurrentDownloaderType = typeof(IImageDownloader);
+		private Type _CurrentDownloaderType = typeof(ImageDownloader);
 		public Type CurrentDownloaderType
 		{
 			get => _CurrentDownloaderType;
@@ -27,7 +27,7 @@ namespace ImageDL.UI
 				NotifyPropertyChanged();
 			}
 		}
-		public Holder<IImageDownloader> Downloader { get; private set; } = new Holder<IImageDownloader>();
+		public Holder<ImageDownloader> Downloader { get; private set; } = new Holder<ImageDownloader>();
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -55,7 +55,7 @@ namespace ImageDL.UI
 			else if (CurrentDownloaderType != t)
 			{
 				CurrentDownloaderType = t;
-				Downloader.HeldObject = (IImageDownloader)Activator.CreateInstance(t);
+				Downloader.HeldObject = (ImageDownloader)Activator.CreateInstance(t);
 			}
 		}
 		private void OnSetArgumentsButtonClick(object sender, RoutedEventArgs e)

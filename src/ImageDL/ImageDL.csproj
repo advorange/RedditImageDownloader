@@ -154,9 +154,9 @@
     <Compile Include="Classes\ImageDetails.cs" />
     <Compile Include="Classes\UriImageScraper.cs" />
     <Compile Include="Classes\SettingAttribute.cs" />
-    <Compile Include="ImageDownloaders\IImageDownloader.cs" />
-    <Compile Include="Utilities\Utils.cs" />
     <Compile Include="ImageDownloaders\ImageDownloader.cs" />
+    <Compile Include="Utilities\Utils.cs" />
+    <Compile Include="ImageDownloaders\GenericImageDownloader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ImageDownloaders\RedditImageDownloader.cs" />

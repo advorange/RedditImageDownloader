@@ -13,7 +13,7 @@ namespace ImageDL.ImageDownloaders
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public sealed class RedditImageDownloader : ImageDownloader<Post>
+	public sealed class RedditImageDownloader : GenericImageDownloader<Post>
 	{
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 
@@ -25,7 +25,6 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_Subreddit = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
@@ -37,12 +36,11 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_ScoreThreshold = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
 
-		public RedditImageDownloader() : base() { }
+		public RedditImageDownloader() : this(new string[0]) { }
 		public RedditImageDownloader(params string[] args) : base(args) { }
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()

@@ -27,26 +27,23 @@ namespace ImageDL
 #if DOWNLOADER
 			Console.WriteLine("If you need any help, type 'help:argument name' where argument name is the name of an argument.");
 			var downloader = new RedditImageDownloader(args);
-			var stillNeedsArgs = true;
-			downloader.AllArgumentsSet += () =>
-			{
-				stillNeedsArgs = false;
-				return Task.FromResult(0);
-			};
 
 			downloader.AskForArguments();
-			while (stillNeedsArgs)
+			while (true)
 			{
 				var input = Console.ReadLine();
 				if (input.CaseInsStartsWith("help"))
 				{
 					downloader.GiveHelp(input.Substring(input.IndexOfAny(new[] { ':', ' ' })).SplitLikeCommandLine());
+					continue;
 				}
-				else
+
+				downloader.SetArguments(input.SplitLikeCommandLine());
+				if (downloader.AllArgumentsSet)
 				{
-					downloader.SetArguments(input.SplitLikeCommandLine());
-					downloader.AskForArguments();
+					break;
 				}
+				downloader.AskForArguments();
 			}
 
 			await downloader.StartAsync().ConfigureAwait(false);

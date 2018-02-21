@@ -4,76 +4,32 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
 {
 	/// <summary>
-	/// Downloads images from a site.
+	/// Non generic abstraction of <see cref="GenericImageDownloader{TPost}"/>.
 	/// </summary>
-	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
-	public abstract class ImageDownloader<TPost> : IImageDownloader
+	public abstract class ImageDownloader : INotifyPropertyChanged
 	{
-		private static Dictionary<Type, Func<string, object>> _TryParses = new Dictionary<Type, Func<string, object>>
-		{
-			{ typeof(bool), (value) => bool.TryParse(value, out var result) ? result : false },
-			{ typeof(int), (value) => int.TryParse(value, out var result) ? result : default },
-			{ typeof(int?), (value) => int.TryParse(value, out var result) ? result as int? : null },
-			{ typeof(uint), (value) => uint.TryParse(value, out var result) ? result : default },
-			{ typeof(uint?), (value) => uint.TryParse(value, out var result) ? result as uint? : null },
-			{ typeof(long), (value) => long.TryParse(value, out var result) ? result : default },
-			{ typeof(long?), (value) => long.TryParse(value, out var result) ? result as long? : null },
-			{ typeof(ulong), (value) => ulong.TryParse(value, out var result) ? result : default },
-			{ typeof(ulong?), (value) => ulong.TryParse(value, out var result) ? result as ulong? : null },
-			{ typeof(float), (value) => float.TryParse(value, out var result) ? result : default },
-			{ typeof(float?), (value) => float.TryParse(value, out var result) ? result as float? : null },
-		};
-
-		public event PropertyChangedEventHandler PropertyChanged;
-		public event Func<Task> AllArgumentsSet;
-		public event Func<Task> DownloadsFinished;
-
-		private bool _IsReady;
-		public bool IsReady
-		{
-			get => _IsReady;
-			private set
-			{
-				_IsReady = value;
-				NotifyPropertyChanged();
-			}
-		}
-		private bool _IsDownloading;
-		public bool IsDownloading
-		{
-			get => _IsDownloading;
-			private set
-			{
-				_IsDownloading = value;
-				NotifyPropertyChanged();
-			}
-		}
-		private bool _IsDone;
-		public bool IsDone
-		{
-			get => _IsDone;
-			private set
-			{
-				_IsDone = value;
-				NotifyPropertyChanged();
-			}
-		}
-
 		private string _Directory;
+		private int _AmountToDownload;
+		private int _MinWidth;
+		private int _MinHeight;
+		private int _MaxDaysOld;
+		private int _MaxImageSimilarity;
+		private int _ImagesCachedPerThread;
+		private bool _CompareSavedImages;
+		private bool _AllArgumentsSet;
+		private bool _BusyDownloading;
+		private bool _DownloadsFinished;
+
 		[Setting("The location to save files to.")]
 		public string Directory
 		{
@@ -88,11 +44,9 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				_Directory = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _AmountToDownload;
 		[Setting("The amount of files to download.")]
 		public int AmountToDownload
 		{
@@ -100,11 +54,9 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_AmountToDownload = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _MinWidth;
 		[Setting("The minimum width for an image to have allowing it to be saved.")]
 		public int MinWidth
 		{
@@ -112,11 +64,9 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MinWidth = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _MinHeight;
 		[Setting("The minimum height for an image to have allowing it to be saved.")]
 		public int MinHeight
 		{
@@ -124,11 +74,9 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MinHeight = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _MaxDaysOld;
 		[Setting("The maximum age a post can have before it is not longer allowed to be saved.")]
 		public int MaxDaysOld
 		{
@@ -136,186 +84,108 @@ namespace ImageDL.ImageDownloaders
 			set
 			{
 				_MaxDaysOld = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _MaxImageSimilarity = 1000;
 		[Setting("The maximum acceptable percentage for image similarity before images are detected as duplicates. " +
-			"Ranges from 1 to 1000 (acts as .1% similar to 100% similar).", true)]
+			"Ranges from 1 to 1000 (acts as .1% similar to 100% similar).")]
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
 			set
 			{
 				_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value));
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private int _ImagesCachedPerThread = 50;
-		[Setting("The amount of images to cache per thread. Lower value means faster at the cost of higher CPU usage.", true)]
+		[Setting("The amount of images to cache per thread. Lower value means faster at the cost of higher CPU usage.")]
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
 			set
 			{
 				_ImagesCachedPerThread = value;
-				NotifyArgumentSet();
 				NotifyPropertyChanged();
 			}
 		}
-		private bool _CompareSavedImages = false;
-		[Setting("Whether or not to include already saved images in comparison for duplicates.", true)]
+		[Setting("Whether or not to include already saved images in comparison for duplicates.")]
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
 			set
 			{
 				_CompareSavedImages = value;
-				NotifyArgumentSet();
+				NotifyPropertyChanged();
+			}
+		}
+		/// <summary>
+		/// Returns true if all arguments (aside from ones with default values) have been set at least once.
+		/// </summary>
+		public bool AllArgumentsSet
+		{
+			get => _AllArgumentsSet;
+			protected set
+			{
+				_AllArgumentsSet = value;
+				NotifyPropertyChanged();
+			}
+		}
+		/// <summary>
+		/// Returns true when images are being downloaded.
+		/// </summary>
+		public bool BusyDownloading
+		{
+			get => _BusyDownloading;
+			protected set
+			{
+				_BusyDownloading = value;
+				NotifyPropertyChanged();
+			}
+		}
+		/// <summary>
+		/// Returns true after all images have been downloaded.
+		/// </summary>
+		public bool DownloadsFinished
+		{
+			get => _DownloadsFinished;
+			protected set
+			{
+				_DownloadsFinished = value;
 				NotifyPropertyChanged();
 			}
 		}
 
-		private ImmutableList<PropertyInfo> _Arguments;
-		private List<PropertyInfo> _SetArguments;
-		private List<ContentLink> _AnimatedContent = new List<ContentLink>();
-		private List<ContentLink> _FailedDownloads = new List<ContentLink>();
-		private ImageComparer _ImageComparer;
+		public event PropertyChangedEventHandler PropertyChanged;
 
-		public ImageDownloader()
+		protected ImmutableDictionary<string, PropertyInfo> _Arguments;
+		protected List<PropertyInfo> _SetArguments = new List<PropertyInfo>();
+		protected List<ContentLink> _AnimatedContent = new List<ContentLink>();
+		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
+		protected ImageComparer _ImageComparer;
+
+		public ImageDownloader() : this(new string[0]) { }
+		public ImageDownloader(params string[] args)
 		{
 			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
 				.Where(x => x.GetCustomAttribute<SettingAttribute>() != null)
 				.OrderByNonComparable(x => x.PropertyType)
-				.ToImmutableList();
-			_SetArguments = _Arguments.Where(x => x.GetCustomAttribute<SettingAttribute>().HasDefaultValue).ToList();
+				.ToImmutableDictionary(x => x.Name, x => x, StringComparer.OrdinalIgnoreCase);
+
+			MaxImageSimilarity = 1000;
+			ImagesCachedPerThread = 50;
+			CompareSavedImages = false;
+
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
-		}
-		public ImageDownloader(params string[] args) : this()
-		{
+
 			SetArguments(args);
 		}
 
 		/// <summary>
-		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
+		/// Start downloading images.
 		/// </summary>
-		/// <returns>An awaitable task which downloads images.</returns>
-		public async Task StartAsync()
-		{
-			IsReady = false;
-			IsDownloading = true;
-
-			_ImageComparer = new ImageComparer { ThumbnailSize = 32, };
-			if (CompareSavedImages)
-			{
-				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory), ImagesCachedPerThread);
-				Console.WriteLine();
-			}
-
-			var count = 0;
-			foreach (var post in (await GatherPostsAsync().ConfigureAwait(false)).Take(AmountToDownload))
-			{
-				WritePostToConsole(post, ++count);
-
-				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
-				foreach (var imageUri in gatherer.ImageUris)
-				{
-					await Task.Delay(100).ConfigureAwait(false);
-					try
-					{
-						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).ConfigureAwait(false)}");
-					}
-					catch (WebException e)
-					{
-						e.Write();
-						_FailedDownloads.Add(CreateContentLink(post, imageUri));
-					}
-				}
-			}
-			DownloadsFinished?.Invoke();
-			IsDownloading = false;
-
-			Console.WriteLine();
-			_ImageComparer.DeleteDuplicates(MaxImageSimilarity / 1000f);
-			Console.WriteLine();
-			IsDone = true;
-
-			SaveStoredContentLinks();
-		}
-		/// <summary>
-		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
-		/// </summary>
-		/// <param name="post">The post to save from.</param>
-		/// <param name="uri">The location to the file to save.</param>
-		/// <returns>A text response indicating what happened to the uri.</returns>
-		public async Task<string> DownloadImageAsync(UriImageGatherer gatherer, TPost post, Uri uri)
-		{
-			if (!String.IsNullOrWhiteSpace(gatherer.Error))
-			{
-				return gatherer.Error;
-			}
-			else if (gatherer.IsVideo)
-			{
-				_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
-				return $"{gatherer.OriginalUri} is animated content (gif/video).";
-			}
-
-			using (var resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false))
-			{
-				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
-				{
-					_AnimatedContent.Add(CreateContentLink(post, uri));
-					return $"{uri} is animated content (gif/video).";
-				}
-				else if (!resp.ContentType.Contains("image/"))
-				{
-					return $"{uri} is not an image.";
-				}
-
-				var file = new FileInfo(Path.Combine(Directory, GenerateFileName(post, resp, uri)));
-				if (file.Exists)
-				{
-					return $"{file} is already saved.";
-				}
-
-				using (var s = resp.GetResponseStream())
-				using (var ms = new MemoryStream())
-				{
-					//Need to use a memory stream and copy to it
-					//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
-					//And with this reponse stream seeks cannot be used on it.
-					await s.CopyToAsync(ms).ConfigureAwait(false);
-
-					//A match for the hash has been found, meaning this is a duplicate image
-					var hash = ms.Hash<MD5>();
-					if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
-					{
-						return $"{uri} had a matching hash with {alreadyDownloaded.File} meaning they have the same content.";
-					}
-
-					using (var bm = new Bitmap(ms))
-					{
-						if (bm == default(Bitmap))
-						{
-							return $"{uri} is the default bitmap and cannot be saved.";
-						}
-						else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
-						{
-							return $"{uri} is too small.";
-						}
-
-						bm.Save(file.FullName, ImageFormat.Png);
-						//Add to list if the download succeeds
-						_ImageComparer.TryStore(hash, new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize));
-						return $"Saved {uri} to {file}.";
-					}
-				}
-			}
-			throw new InvalidOperationException($"{nameof(DownloadImageAsync)} should not have been able to get to this point.");
-		}
+		/// <returns>An asynchronous task which downloads images.</returns>
+		public abstract Task StartAsync();
 		/// <summary>
 		/// Gives help for each argument that help has been asked for.
 		/// </summary>
@@ -324,10 +194,9 @@ namespace ImageDL.ImageDownloaders
 		{
 			foreach (var argName in argNames)
 			{
-				var arg = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(argName));
-				var text = arg == null
-					? $"{argName} is not a valid argument name."
-					: $"{arg.Name}: {arg.GetCustomAttribute<SettingAttribute>().Description}";
+				var text = _Arguments.TryGetValue(argName, out var property)
+					? $"{property.Name}: {property.GetCustomAttribute<SettingAttribute>().Description}"
+					: $"{argName} is not a valid argument name.";
 				Console.WriteLine(text);
 			}
 		}
@@ -351,16 +220,16 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		public void AskForArguments()
 		{
-			var unsetArgs = _Arguments.Where(x => !_SetArguments.Contains(x));
+			var unsetArgs = _Arguments.Where(x => !_SetArguments.Contains(x.Value));
 			if (!unsetArgs.Any())
 			{
 				return;
 			}
 
 			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var argument in unsetArgs)
+			foreach (var kvp in unsetArgs)
 			{
-				sb.AppendLine($"\t{argument.Name} ({argument.PropertyType.Name})");
+				sb.AppendLine($"\t{kvp.Key} ({kvp.Value.PropertyType.Name})");
 			}
 			Console.WriteLine(sb.ToString().Trim());
 		}
@@ -377,31 +246,18 @@ namespace ImageDL.ImageDownloaders
 			SaveContentLinks(ref _AnimatedContent, new FileInfo(Path.Combine(Directory, "Animated_Content.txt")));
 			SaveContentLinks(ref _FailedDownloads, new FileInfo(Path.Combine(Directory, "Failed_Downloads.txt")));
 		}
-
-		/// <summary>
-		/// Adds a <see cref="PropertyInfo"/> with the supplied name to <see cref="_SetArguments"/>.
-		/// </summary>
-		/// <param name="name">The property to find.</param>
-		protected void NotifyArgumentSet([CallerMemberName] string name = "")
-		{
-			if (!_SetArguments.Any(x => x.Name == name))
-			{
-				_SetArguments.Add(_Arguments.Single(x => x.Name == name));
-			}
-		}
 		/// <summary>
 		/// Invokes <see cref="PropertyChanged"/>.
 		/// </summary>
 		/// <param name="name">The property changed.</param>
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
+			if (!_SetArguments.Any(x => x.Name == name) && _Arguments.TryGetValue(name, out var property))
+			{
+				_SetArguments.Add(property);
+			}
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
-		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
-		protected abstract void WritePostToConsole(TPost post, int count);
-		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
-		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
-		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
 
 		private string SetArgument(string argument)
 		{
@@ -413,8 +269,7 @@ namespace ImageDL.ImageDownloaders
 			}
 
 			//See if any arguments have the supplied name
-			var property = _Arguments.SingleOrDefault(x => x.Name.CaseInsEquals(split[0]));
-			if (property == null)
+			if (!_Arguments.TryGetValue(split[0], out var property))
 			{
 				return $"{split[0]} is not a valid argument name.";
 			}
@@ -422,9 +277,16 @@ namespace ImageDL.ImageDownloaders
 			{
 				return $"Failed to set {property.Name}. Reason: may not have an empty value.";
 			}
-			else if (_TryParses.TryGetValue(property.PropertyType, out var f))
+			else if (TypeDescriptor.GetConverter(property.PropertyType) is TypeConverter converter)
 			{
-				property.SetValue(this, f(split[1]));
+				try
+				{
+					property.SetValue(this, converter.ConvertFromInvariantString(split[1]));
+				}
+				catch
+				{
+					return $"Failed to set {property.Name}. Reason: invalid value supplied.";
+				}
 			}
 			else if (property.PropertyType == typeof(string))
 			{
@@ -435,10 +297,9 @@ namespace ImageDL.ImageDownloaders
 				return $"Failed to set {property.Name}. Reason: invalid type (not user error).";
 			}
 
-			if (!_Arguments.Where(x => !_SetArguments.Contains(x)).Any())
+			if (!_Arguments.Where(x => !_SetArguments.Contains(x.Value)).Any())
 			{
-				AllArgumentsSet?.Invoke();
-				IsReady = true;
+				AllArgumentsSet = true;
 			}
 			return $"Successfully set {property.Name} to {property.GetValue(this)}.";
 		}
