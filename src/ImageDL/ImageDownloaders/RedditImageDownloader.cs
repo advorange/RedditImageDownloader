@@ -40,8 +40,8 @@ namespace ImageDL.ImageDownloaders
 
 		public RedditImageDownloader() : base()
 		{
-			CommandLineParserOptions.Add("sr|subreddit=", "the subreddit to download images from.", x => Subreddit = x);
-			CommandLineParserOptions.Add("st|score=", "the minimum score for an image to have before being ignored.", x => ScoreThreshold = Convert.ToInt32(x));
+			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", x => Subreddit = x);
+			CommandLineParserOptions.Add($"st|score|{nameof(ScoreThreshold)}=", "the minimum score for an image to have before being ignored.", x => ScoreThreshold = Convert.ToInt32(x));
 		}
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()

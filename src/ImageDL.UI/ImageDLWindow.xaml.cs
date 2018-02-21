@@ -2,6 +2,7 @@
 using ImageDL.UI.Classes;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;
+using ImageDL.Utilities;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -64,9 +65,9 @@ namespace ImageDL.UI
 			var children = GenericArguments.GetChildren().Concat(GetArgumentGrid(CurrentDownloaderType).GetChildren());
 			//Then get the arguments in viewboxes (checkboxes)
 			var argChildren = children.Concat(children.OfType<Viewbox>().Select(x => x.Child));
-			var tbs = argChildren.OfType<TextBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.Text}");
-			var cbs = argChildren.OfType<CheckBox>().Where(x => x.Tag != null).Select(x => $"{x.Tag.ToString()}:{x.IsChecked}");
-			Downloader.HeldObject.SetArguments(tbs.Concat(cbs).ToArray());
+			var tbs = argChildren.OfType<TextBox>().Where(x => x.Tag != null).Select(x => $@"-{x.Tag} ""{x.Text}""");
+			var cbs = argChildren.OfType<CheckBox>().Where(x => x.Tag != null).Select(x => $@"-{x.Tag} ""{x.IsChecked}""");
+			Downloader.HeldObject.CommandLineParserOptions.Parse(tbs.Concat(cbs).SelectMany(x => x.SplitLikeCommandLine()));
 		}
 		private void OnStartDownloadsButtonClick(object sender, RoutedEventArgs e)
 		{

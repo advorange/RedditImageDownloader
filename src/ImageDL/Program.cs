@@ -30,23 +30,7 @@ namespace ImageDL
 			while (!downloader.AllArgumentsSet)
 			{
 				downloader.AskForArguments();
-				var line = Console.ReadLine();
-				try
-				{
-					var extra = downloader.CommandLineParserOptions.Parse(line.SplitLikeCommandLine());
-					if (extra.Any())
-					{
-						Console.WriteLine($"The following parts were extra, was an argument mistyped? '{String.Join("', '", extra)}'");
-					}
-				}
-				catch (FormatException fe)
-				{
-					fe.Write();
-				}
-				catch (OptionException oe)
-				{
-					oe.Write();
-				}
+				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
 			}
 
 			await downloader.StartAsync().ConfigureAwait(false);

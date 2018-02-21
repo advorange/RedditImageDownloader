@@ -160,14 +160,14 @@ namespace ImageDL.ImageDownloaders
 		public ImageDownloader()
 		{
 			CommandLineParserOptions = new OptionSet()
-				.Add("d|dir=", "the directory to save to.", x => Directory = x)
-				.Add("a|amt=", "the amount of images to download.", x => AmountToDownload = Convert.ToInt32(x))
-				.Add("mw|minw=", "the minimum width to save an image with.", x => MinWidth = Convert.ToInt32(x))
-				.Add("mh|minh=", "the minimum height to save an image with.", x => MinHeight = Convert.ToInt32(x))
-				.Add("da|days=", "the oldest an image can be before it won't be saved.", x => MaxDaysOld = Convert.ToInt32(x))
-				.Add("s|sim=", "the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).", x => MaxImageSimilarity = Convert.ToInt32(x))
-				.Add("c|cached=", "how many images to cache on each thread (lower = faster but more CPU).", x => ImagesCachedPerThread = Convert.ToInt32(x))
-				.Add("csi|compare=", "whether or not to compare to already saved images.", x => CompareSavedImages = Convert.ToBoolean(x));
+				.Add($"d|dir|{nameof(Directory)}=", "the directory to save to.", x => Directory = x)
+				.Add($"a|amt|{nameof(AmountToDownload)}=", "the amount of images to download.", x => AmountToDownload = Convert.ToInt32(x))
+				.Add($"mw|minw|{nameof(MinWidth)}=", "the minimum width to save an image with.", x => MinWidth = Convert.ToInt32(x))
+				.Add($"mh|minh|{nameof(MinHeight)}=", "the minimum height to save an image with.", x => MinHeight = Convert.ToInt32(x))
+				.Add($"da|days|{nameof(MaxDaysOld)}=", "the oldest an image can be before it won't be saved.", x => MaxDaysOld = Convert.ToInt32(x))
+				.Add($"s|sim|{nameof(MaxImageSimilarity)}=", "the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).", x => MaxImageSimilarity = Convert.ToInt32(x))
+				.Add($"c|cached|{nameof(ImagesCachedPerThread)}=", "how many images to cache on each thread (lower = faster but more CPU).", x => ImagesCachedPerThread = Convert.ToInt32(x))
+				.Add($"csi|compare|{nameof(CompareSavedImages)}=", "whether or not to compare to already saved images.", x => CompareSavedImages = Convert.ToBoolean(x));
 
 			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
 				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
@@ -187,6 +187,28 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		/// <returns>An asynchronous task which downloads images.</returns>
 		public abstract Task StartAsync();
+		/// <summary>
+		/// Sets arguments with the supplied array of data.
+		/// </summary>
+		public void SetArguments(string[] args)
+		{
+			try
+			{
+				var extra = CommandLineParserOptions.Parse(args);
+				if (extra.Any())
+				{
+					Console.WriteLine($"The following parts were extra, was an argument mistyped? '{String.Join("', '", extra)}'");
+				}
+			}
+			catch (FormatException fe)
+			{
+				fe.Write();
+			}
+			catch (OptionException oe)
+			{
+				oe.Write();
+			}
+		}
 		/// <summary>
 		/// Prints out to the console what arguments are still needed.
 		/// </summary>
@@ -224,8 +246,9 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="name">The property changed.</param>
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
-			if (!_SetArguments.Any(x => x.Name == name) && _Arguments.TryGetValue(name, out var property))
+			if (_Arguments.TryGetValue(name, out var property) && !_SetArguments.Any(x => x.Name == name))
 			{
+				Console.WriteLine($"Successfully set {name}.");
 				_SetArguments.Add(property);
 			}
 			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x.Value)))
@@ -235,50 +258,6 @@ namespace ImageDL.ImageDownloaders
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 
-		private string SetArgument(string argument)
-		{
-			//Split, left side is the arg name, right is value
-			var split = argument.Split(new[] { ':' }, 2);
-			if (split.Length != 2)
-			{
-				return $"Unable to split \"{argument}\" to the correct length.";
-			}
-
-			//See if any arguments have the supplied name
-			if (!_Arguments.TryGetValue(split[0], out var property))
-			{
-				return $"{split[0]} is not a valid argument name.";
-			}
-			else if (String.IsNullOrWhiteSpace(split[1]))
-			{
-				return $"Failed to set {property.Name}. Reason: may not have an empty value.";
-			}
-			else if (TypeDescriptor.GetConverter(property.PropertyType) is TypeConverter converter)
-			{
-				try
-				{
-					property.SetValue(this, converter.ConvertFromInvariantString(split[1]));
-				}
-				catch
-				{
-					return $"Failed to set {property.Name}. Reason: invalid value supplied.";
-				}
-			}
-			else if (property.PropertyType == typeof(string))
-			{
-				property.SetValue(this, split[1]);
-			}
-			else
-			{
-				return $"Failed to set {property.Name}. Reason: invalid type (not user error).";
-			}
-
-			if (!_Arguments.Where(x => !_SetArguments.Contains(x.Value)).Any())
-			{
-				AllArgumentsSet = true;
-			}
-			return $"Successfully set {property.Name} to {property.GetValue(this)}.";
-		}
 		private void SaveContentLinks(ref List<ContentLink> contentLinks, FileInfo file)
 		{
 			//Only bother saving if any exist

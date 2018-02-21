@@ -83,6 +83,7 @@ namespace ImageDL.UI.Classes.Writers
 			}
 			return parts.ToArray();
 		}
+		//TODO: make work with spaces in dir name
 		private string[] StitchFilePathsBackTogether(string[] parts)
 		{
 			//Example arguments:
