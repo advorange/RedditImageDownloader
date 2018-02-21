@@ -92,18 +92,19 @@ namespace ImageDL.UI.Classes.Writers
 			for (int i = 0; i < parts.Length; ++i)
 			{
 				//Don't bother checking the string if it already has an invalid name
-				if (_InvalidChars.Any(x => parts[i].Contains(x)))
+				var p = parts[i].TrimEnd();
+				if (_InvalidChars.Any(x => p.Contains(x)))
 				{
 					continue;
 				}
 				//For this program, only allow files to be linked if they start like C:\\, D:\\ etc
-				else if (!_Drives.Any(x => parts[i].StartsWith(x)))
+				else if (!_Drives.Any(x => p.StartsWith(x)))
 				{
 					continue;
 				}
 				//"c:\\dog" doesn't exist so this won't go in here.
 				//File.Exists cares if there is an extension, so "c:\\dog.jpg" wouldn't have been found either
-				var firstFileCheck = new FileInfo(parts[i]);
+				var firstFileCheck = new FileInfo(p);
 				if (firstFileCheck.Exists)
 				{
 					paths.Add(new FilePath(firstFileCheck, i, i));
@@ -111,7 +112,7 @@ namespace ImageDL.UI.Classes.Writers
 				}
 				//Will start with "c:\\dog", then gets the dir "c:\\"
 				//Can't just use Path.GetDirectoryName because that leaves out the whitespace
-				var currDir = parts[i].Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
+				var currDir = p.Substring(0, Math.Max(0, parts[i].LastIndexOf('\\')));
 				//"c:\\" exists so keeps going. If the first directory doesn't exist then there's no point in showing any more
 				if (!Directory.Exists(currDir))
 				{
@@ -119,7 +120,7 @@ namespace ImageDL.UI.Classes.Writers
 				}
 
 				//Starts searching for files or folders which have their names start with "dog"
-				var searchFor = new StringBuilder(parts[i].Substring(currDir.Length + 1));
+				var searchFor = new StringBuilder(p.Substring(currDir.Length + 1));
 				for (int j = i + 1; j < parts.Length; ++j)
 				{
 					//Adds in " pic.jpg" so we're searching for "dog pic.jpg" now
@@ -209,7 +210,9 @@ namespace ImageDL.UI.Classes.Writers
 			{
 				//Have to check drives otherwise file.exists throws invalid scheme or something error
 				//If not file or url then just keep adding to current part
-				if ((!_Drives.Any(x => x.CaseInsEquals(part.Split(':')[0])) || !File.Exists(part)) && !part.IsValidUrl())
+				var isFile = _Drives.Any(x => x.CaseInsStartsWith(part.Split(':')[0])) && File.Exists(part);
+				var isUrl = part.IsValidUrl();
+				if (!isFile && !isUrl)
 				{
 					currentPart.Append(part);
 					continue;
