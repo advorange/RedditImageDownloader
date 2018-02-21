@@ -24,7 +24,6 @@ namespace ImageDL.Utilities
 		{
 			return String.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
 		}
-
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to check if a string contains a search string.
 		/// </summary>
@@ -35,7 +34,6 @@ namespace ImageDL.Utilities
 		{
 			return source != null && search != null && source.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to return the index of a search string.
 		/// </summary>
@@ -58,7 +56,6 @@ namespace ImageDL.Utilities
 		{
 			return source != null && search != null && source.StartsWith(search, StringComparison.OrdinalIgnoreCase);
 		}
-
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to check if a string ends with a search string.
 		/// </summary>
@@ -69,7 +66,6 @@ namespace ImageDL.Utilities
 		{
 			return source != null && search != null && source.EndsWith(search, StringComparison.OrdinalIgnoreCase);
 		}
-
 		/// <summary>
 		/// Returns the string with the oldValue replaced with the newValue case insensitively.
 		/// </summary>
@@ -135,7 +131,6 @@ namespace ImageDL.Utilities
 								: new[] { x };
 						}).SelectMany(x => x).Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
 		}
-
 		/// <summary>
 		/// Returns <see cref="DateTime.UtcNow"/> displaying years down to seconds.
 		/// </summary>
@@ -144,7 +139,6 @@ namespace ImageDL.Utilities
 		{
 			return DateTime.UtcNow.ToString("yyyyMMdd_hhmmss");
 		}
-
 		/// <summary>
 		/// Adds in spaces between each capital letter.
 		/// </summary>
@@ -192,17 +186,6 @@ namespace ImageDL.Utilities
 		{
 			return input.GroupBy(keySelector).SelectMany(x => x);
 		}
-
-		/// <summary>
-		/// Returns the amount of characters in a number.
-		/// </summary>
-		/// <param name="num">The number to get the length of.</param>
-		/// <returns>The amount of characters in a number.</returns>
-		public static int GetLength(this int num)
-		{
-			return num.ToString().Length;
-		}
-
 		/// <summary>
 		/// Returns true if the passed in string is a valid url.
 		/// </summary>
@@ -210,12 +193,10 @@ namespace ImageDL.Utilities
 		/// <returns>A boolean indicating whether or not the string is a url.</returns>
 		public static bool IsValidUrl(this string input)
 		{
-			return true
-&& !String.IsNullOrWhiteSpace(input)
-&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
-&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+			return !String.IsNullOrWhiteSpace(input)
+				&& Uri.TryCreate(input, UriKind.Absolute, out Uri uri)
+				&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 		}
-
 		/// <summary>
 		/// Returns true if the passed in uri is a valid url.
 		/// </summary>
@@ -223,11 +204,8 @@ namespace ImageDL.Utilities
 		/// <returns>A boolean indicating whether or not the uri is a url.</returns>
 		public static bool IsValidUrl(this Uri uri)
 		{
-			return true
-&& uri.IsAbsoluteUri
-&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+			return uri.IsAbsoluteUri && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 		}
-
 		/// <summary>
 		/// Returns true for most image mime types (png, jpg, tiff, etc) but false for gif and anything else.
 		/// </summary>
@@ -249,7 +227,6 @@ namespace ImageDL.Utilities
 			Console.WriteLine(e);
 			Console.ForegroundColor = currColor;
 		}
-
 		/// <summary>
 		/// Creates a web request and sets some properties to make it look more human.
 		/// </summary>

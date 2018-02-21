@@ -153,6 +153,18 @@ namespace ImageDL.ImageDownloaders
 				NotifyPropertyChanged();
 			}
 		}
+		private int _ImagesCachedPerThread = 50;
+		[Setting("The amount of images to cache per thread. Lower value means faster at the cost of higher CPU usage.", true)]
+		public int ImagesCachedPerThread
+		{
+			get => _ImagesCachedPerThread;
+			set
+			{
+				_ImagesCachedPerThread = value;
+				NotifyArgumentSet();
+				NotifyPropertyChanged();
+			}
+		}
 		private bool _CompareSavedImages = false;
 		[Setting("Whether or not to include already saved images in comparison for duplicates.", true)]
 		public bool CompareSavedImages
@@ -199,7 +211,7 @@ namespace ImageDL.ImageDownloaders
 			_ImageComparer = new ImageComparer { ThumbnailSize = 32, };
 			if (CompareSavedImages)
 			{
-				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory));
+				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory), ImagesCachedPerThread);
 				Console.WriteLine();
 			}
 
@@ -468,7 +480,7 @@ namespace ImageDL.ImageDownloaders
 
 			//Save all the links then say how many were saved
 			var title = Path.GetFileName(file.FullName).Replace("_", " ").FormatTitle();
-			var len = unsavedContent.Max(x => x.Score).GetLength();
+			var len = unsavedContent.Max(x => x.Score).ToString().Length;
 			var format = unsavedContent.OrderByDescending(x => x.Score).Select(x => $"{x.Score.ToString().PadLeft(len, '0')} {x.Uri}");
 			var write = String.Join(Environment.NewLine, format);
 			using (var writer = file.AppendText())
