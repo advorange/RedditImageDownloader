@@ -12,12 +12,12 @@ namespace ImageDL.UI.Classes.Writers
 {
 	internal class RichTextBoxStreamWriter : TextWriter
 	{
+		private static string[] _Drives = Environment.GetLogicalDrives();
+		private static char[] _InvalidChars = Path.GetInvalidPathChars();
+
 		private RichTextBox _RTB;
 		private string _CurrentLineText;
 		private DispatcherPriority _Priority = DispatcherPriority.ContextIdle;
-
-		private static string[] _Drives = Environment.GetLogicalDrives();
-		private static char[] _InvalidChars = Path.GetInvalidPathChars();
 
 		public override Encoding Encoding => Encoding.UTF32;
 
@@ -83,7 +83,6 @@ namespace ImageDL.UI.Classes.Writers
 			}
 			return parts.ToArray();
 		}
-		//TODO: make work with spaces in dir name
 		private string[] StitchFilePathsBackTogether(string[] parts)
 		{
 			//Example arguments:
@@ -92,7 +91,7 @@ namespace ImageDL.UI.Classes.Writers
 			for (int i = 0; i < parts.Length; ++i)
 			{
 				//Don't bother checking the string if it already has an invalid name
-				var p = parts[i].TrimEnd();
+				var p = parts[i];
 				if (_InvalidChars.Any(x => p.Contains(x)))
 				{
 					continue;

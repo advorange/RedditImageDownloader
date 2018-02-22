@@ -169,17 +169,14 @@ namespace ImageDL.UI.Classes
 				BitmapImage = bmi;
 				UpdateLastAccessed();
 			}
-
 			public void AddUsingWrapper(HyperlinkWrapper wrapper)
 			{
 				_UsingWrappers.Add(wrapper);
 			}
-
 			public void UpdateLastAccessed()
 			{
 				LastAccessedTicks = DateTime.UtcNow.Ticks;
 			}
-
 			public void Clear()
 			{
 				foreach (var wrapper in _UsingWrappers)

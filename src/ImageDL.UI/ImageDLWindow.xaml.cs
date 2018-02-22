@@ -40,20 +40,14 @@ namespace ImageDL.UI
 
 		private void OnOutputTextChanged(object sender, TextChangedEventArgs e)
 		{
-			if (!(sender is RichTextBox rtb))
+			if (sender is RichTextBox rtb)
 			{
-				return;
+				rtb.ScrollToEnd();
 			}
-
-			rtb.ScrollToEnd();
 		}
 		private void OnSiteButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (!(sender is Button b) || !(b.Tag is Type t))
-			{
-				return;
-			}
-			else if (CurrentDownloaderType != t)
+			if (sender is Button b && b.Tag is Type t && CurrentDownloaderType != t)
 			{
 				CurrentDownloaderType = t;
 				Downloader.HeldObject = (ImageDownloader)Activator.CreateInstance(t);
@@ -73,7 +67,6 @@ namespace ImageDL.UI
 		{
 			Task.Run(async () => await Downloader.HeldObject.StartAsync());
 		}
-
 		private Grid GetArgumentGrid(Type type)
 		{
 			if (type == typeof(RedditImageDownloader))
