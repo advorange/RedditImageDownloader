@@ -19,20 +19,9 @@ namespace ImageDL.ImageDownloaders
 	/// </summary>
 	public abstract class ImageDownloader : INotifyPropertyChanged
 	{
-		public OptionSet CommandLineParserOptions;
-
-		private string _Directory;
-		private int _AmountToDownload;
-		private int _MinWidth;
-		private int _MinHeight;
-		private int _MaxDaysOld;
-		private int _MaxImageSimilarity;
-		private int _ImagesCachedPerThread;
-		private bool _CompareSavedImages;
-		private bool _AllArgumentsSet;
-		private bool _BusyDownloading;
-		private bool _DownloadsFinished;
-
+		/// <summary>
+		/// The directory to save images to.
+		/// </summary>
 		public string Directory
 		{
 			get => _Directory;
@@ -46,70 +35,91 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				_Directory = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(_Directory);
 			}
 		}
+		/// <summary>
+		/// The amount of posts to look through.
+		/// </summary>
 		public int AmountToDownload
 		{
-			get => Math.Max(1, _AmountToDownload);
+			get => _AmountToDownload;
 			set
 			{
-				_AmountToDownload = value;
-				NotifyPropertyChanged();
+				_AmountToDownload = Math.Max(1, value);
+				NotifyPropertyChanged(_AmountToDownload);
 			}
 		}
+		/// <summary>
+		/// The minimum width an image can have before it won't be downloaded.
+		/// </summary>
 		public int MinWidth
 		{
 			get => _MinWidth;
 			set
 			{
-				_MinWidth = value;
-				NotifyPropertyChanged();
+				_MinWidth = Math.Max(0, value);
+				NotifyPropertyChanged(_MinWidth);
 			}
 		}
+		/// <summary>
+		/// The minimum height an image can have before it won't be downloaded.
+		/// </summary>
 		public int MinHeight
 		{
 			get => _MinHeight;
 			set
 			{
-				_MinHeight = value;
-				NotifyPropertyChanged();
+				_MinHeight = Math.Max(0, value);
+				NotifyPropertyChanged(_MinHeight);
 			}
 		}
+		/// <summary>
+		/// The maximum age an image can have before it won't be downloaded.
+		/// </summary>
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
 			set
 			{
-				_MaxDaysOld = value;
-				NotifyPropertyChanged();
+				_MaxDaysOld = Math.Max(0, value);
+				NotifyPropertyChanged(_MaxDaysOld);
 			}
 		}
+		/// <summary>
+		/// The maximum allowed image similarity before an image is considered a duplicate.
+		/// </summary>
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
 			set
 			{
 				_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value));
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(_MaxImageSimilarity);
 			}
 		}
+		/// <summary>
+		/// How many images to cache per thread. Lower = faster, but more CPU.
+		/// </summary>
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
 			set
 			{
-				_ImagesCachedPerThread = value;
-				NotifyPropertyChanged();
+				_ImagesCachedPerThread = Math.Max(1, value);
+				NotifyPropertyChanged(_ImagesCachedPerThread);
 			}
 		}
+		/// <summary>
+		/// Indicates whether or not to add already saved images to the cache before downloading images.
+		/// </summary>
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
 			set
 			{
 				_CompareSavedImages = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(_CompareSavedImages);
 			}
 		}
 		/// <summary>
@@ -121,7 +131,7 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_AllArgumentsSet = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(value);
 			}
 		}
 		/// <summary>
@@ -133,7 +143,7 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_BusyDownloading = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(value);
 			}
 		}
 		/// <summary>
@@ -145,10 +155,16 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_DownloadsFinished = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(value);
 			}
 		}
-
+		/// <summary>
+		/// The options for setting settings from the command line.
+		/// </summary>
+		public OptionSet CommandLineParserOptions;
+		/// <summary>
+		/// Indicates when a setting has been set.
+		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		protected ImmutableDictionary<string, PropertyInfo> _Arguments;
@@ -157,17 +173,68 @@ namespace ImageDL.ImageDownloaders
 		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
 		protected ImageComparer _ImageComparer;
 
+		private string _Directory;
+		private int _AmountToDownload;
+		private int _MinWidth;
+		private int _MinHeight;
+		private int _MaxDaysOld;
+		private int _MaxImageSimilarity;
+		private int _ImagesCachedPerThread;
+		private bool _CompareSavedImages;
+		private bool _AllArgumentsSet;
+		private bool _BusyDownloading;
+		private bool _DownloadsFinished;
+
 		public ImageDownloader()
 		{
 			CommandLineParserOptions = new OptionSet()
-				.Add($"d|dir|{nameof(Directory)}=", "the directory to save to.", x => Directory = x)
-				.Add($"a|amt|{nameof(AmountToDownload)}=", "the amount of images to download.", x => AmountToDownload = Convert.ToInt32(x))
-				.Add($"mw|minw|{nameof(MinWidth)}=", "the minimum width to save an image with.", x => MinWidth = Convert.ToInt32(x))
-				.Add($"mh|minh|{nameof(MinHeight)}=", "the minimum height to save an image with.", x => MinHeight = Convert.ToInt32(x))
-				.Add($"da|days|{nameof(MaxDaysOld)}=", "the oldest an image can be before it won't be saved.", x => MaxDaysOld = Convert.ToInt32(x))
-				.Add($"s|sim|{nameof(MaxImageSimilarity)}=", "the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).", x => MaxImageSimilarity = Convert.ToInt32(x))
-				.Add($"c|cached|{nameof(ImagesCachedPerThread)}=", "how many images to cache on each thread (lower = faster but more CPU).", x => ImagesCachedPerThread = Convert.ToInt32(x))
-				.Add($"csi|compare|{nameof(CompareSavedImages)}=", "whether or not to compare to already saved images.", x => CompareSavedImages = Convert.ToBoolean(x));
+			{
+				{
+					"h|help=",
+					"help command.",
+					DisplayHelp
+				},
+				{
+					$"d|dir|{nameof(Directory)}=",
+					"the directory to save to.",
+					i => Directory = i
+				},
+				{
+					$"a|amt|{nameof(AmountToDownload)}=",
+					"the amount of images to download.",
+					i => SetValue<int>(i, c => AmountToDownload = c)
+				},
+				{
+					$"mw|minw|{nameof(MinWidth)}=",
+					"the minimum width to save an image with.",
+					i => SetValue<int>(i, c => MinWidth = c)
+				},
+				{
+					$"mh|minh|{nameof(MinHeight)}=",
+					"the minimum height to save an image with.",
+					i => SetValue<int>(i, c => MinHeight = c)
+				},
+				{
+					$"da|days|{nameof(MaxDaysOld)}=",
+					"the oldest an image can be before it won't be saved.",
+					i => SetValue<int>(i, c => MaxDaysOld = c)
+				},
+				{
+					$"s|sim|{nameof(MaxImageSimilarity)}=",
+					"the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
+					i => SetValue<int>(i, c => MaxImageSimilarity = c)
+				},
+				{
+					$"c|cached|{nameof(ImagesCachedPerThread)}=",
+					"how many images to cache on each thread (lower = faster but more CPU).",
+					i => SetValue<int>(i, c => ImagesCachedPerThread = c)
+				},
+				{
+					$"csi|compare|{nameof(CompareSavedImages)}=",
+					"whether or not to compare to already saved images.",
+					i => SetValue<bool>(i, c => CompareSavedImages = c)
+				},
+			};
 
 			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
 				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
@@ -197,12 +264,12 @@ namespace ImageDL.ImageDownloaders
 				var extra = CommandLineParserOptions.Parse(args);
 				if (extra.Any())
 				{
-					Console.WriteLine($"The following parts were extra, was an argument mistyped? '{String.Join("', '", extra)}'");
+					Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", extra)}'");
 				}
 			}
-			catch (FormatException fe)
+			catch (FormatException)
 			{
-				fe.Write();
+				Console.WriteLine("An argument was the invalid type and could not be converted correctly.");
 			}
 			catch (OptionException oe)
 			{
@@ -244,11 +311,11 @@ namespace ImageDL.ImageDownloaders
 		/// Invokes <see cref="PropertyChanged"/>.
 		/// </summary>
 		/// <param name="name">The property changed.</param>
-		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
+		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
 		{
 			if (_Arguments.TryGetValue(name, out var property) && !_SetArguments.Any(x => x.Name == name))
 			{
-				Console.WriteLine($"Successfully set {name}.");
+				Console.WriteLine($"Successfully set {name} to '{value}'.");
 				_SetArguments.Add(property);
 			}
 			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x.Value)))
@@ -256,6 +323,28 @@ namespace ImageDL.ImageDownloaders
 				AllArgumentsSet = true;
 			}
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
+		/// <summary>
+		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="input"></param>
+		/// <param name="callback"></param>
+		protected void SetValue<T>(string input, Action<T> callback)
+		{
+			if (!(TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter))
+			{
+				throw new InvalidOperationException($"{typeof(T).Name} is not a valid type to convert to with this method.");
+			}
+
+			if (converter.IsValid(input))
+			{
+				callback((T)converter.ConvertFromInvariantString(input));
+			}
+			else
+			{
+				Console.WriteLine($"Unable to convert '{input}' to type {typeof(T).Name}.");
+			}
 		}
 
 		private void SaveContentLinks(ref List<ContentLink> contentLinks, FileInfo file)
@@ -307,6 +396,17 @@ namespace ImageDL.ImageDownloaders
 			}
 			Console.WriteLine($"Added {unsavedContent.Count()} links to {file.Name}.");
 			contentLinks.Clear();
+		}
+		private void DisplayHelp(string input)
+		{
+			if (CommandLineParserOptions.Contains(input))
+			{
+				Console.WriteLine($"{input}: {CommandLineParserOptions[input].Description}");
+			}
+			else
+			{
+				Console.WriteLine($"'{input}' is not a valid option.");
+			}
 		}
 	}
 }

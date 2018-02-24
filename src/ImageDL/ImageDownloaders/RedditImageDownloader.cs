@@ -15,33 +15,39 @@ namespace ImageDL.ImageDownloaders
 	/// </summary>
 	public sealed class RedditImageDownloader : GenericImageDownloader<Post>
 	{
-		private Reddit _Reddit = new Reddit(new WebAgent(), false);
-
-		private string _Subreddit;
+		/// <summary>
+		/// The subreddit to download images from.
+		/// </summary>
 		public string Subreddit
 		{
 			get => _Subreddit;
 			set
 			{
 				_Subreddit = value;
-				NotifyPropertyChanged();
+				NotifyPropertyChanged(_Subreddit);
 			}
 		}
-		private int _ScoreThreshold;
-		public int ScoreThreshold
+		/// <summary>
+		/// The minimum score a thread can have before images won't be downloaded from it.
+		/// </summary>
+		public int MinScore
 		{
 			get => _ScoreThreshold;
 			set
 			{
-				_ScoreThreshold = value;
-				NotifyPropertyChanged();
+				_ScoreThreshold = Math.Min(0, value);
+				NotifyPropertyChanged(_ScoreThreshold);
 			}
 		}
 
+		private Reddit _Reddit = new Reddit(new WebAgent(), false);
+		private string _Subreddit;
+		private int _ScoreThreshold;
+
 		public RedditImageDownloader() : base()
 		{
-			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", x => Subreddit = x);
-			CommandLineParserOptions.Add($"st|score|{nameof(ScoreThreshold)}=", "the minimum score for an image to have before being ignored.", x => ScoreThreshold = Convert.ToInt32(x));
+			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => Subreddit = i);
+			CommandLineParserOptions.Add($"ms|score|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
 		}
 
 		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
@@ -58,7 +64,7 @@ namespace ImageDL.ImageDownloaders
 					{
 						break;
 					}
-					else if (post.IsStickied || post.IsSelfPost || post.Score < ScoreThreshold)
+					else if (post.IsStickied || post.IsSelfPost || post.Score < MinScore)
 					{
 						continue;
 					}
