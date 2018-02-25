@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes;
+using ImageDL.Utilities;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -56,7 +57,6 @@ namespace ImageDL.ImageDownloaders
 			try
 			{
 				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
-
 				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
 				foreach (var post in subreddit.New)
 				{
@@ -83,7 +83,7 @@ namespace ImageDL.ImageDownloaders
 			}
 			catch (WebException e)
 			{
-				Console.WriteLine(e.Message);
+				e.Write();
 			}
 			Console.WriteLine();
 			return validPosts.OrderByDescending(x => x.Score);

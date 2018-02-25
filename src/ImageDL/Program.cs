@@ -27,8 +27,7 @@ namespace ImageDL
 				}
 				await downloader.StartAsync().ConfigureAwait(false);
 
-				Console.WriteLine($"Type '{EXIT}' to close the program.");
-				Console.ReadKey();
+				Console.WriteLine($"Type '{EXIT}' to close the program, otherwise type anything else to run it again.");
 			} while (Console.ReadLine() != EXIT);
 		}
 	}

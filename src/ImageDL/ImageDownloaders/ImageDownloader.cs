@@ -131,7 +131,7 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_AllArgumentsSet = value;
-				NotifyPropertyChanged(value);
+				NotifyPropertyChanged(_AllArgumentsSet);
 			}
 		}
 		/// <summary>
@@ -143,7 +143,7 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_BusyDownloading = value;
-				NotifyPropertyChanged(value);
+				NotifyPropertyChanged(_BusyDownloading);
 			}
 		}
 		/// <summary>
@@ -155,7 +155,7 @@ namespace ImageDL.ImageDownloaders
 			protected set
 			{
 				_DownloadsFinished = value;
-				NotifyPropertyChanged(value);
+				NotifyPropertyChanged(_DownloadsFinished);
 			}
 		}
 		/// <summary>

@@ -37,6 +37,7 @@ namespace ImageDL.ImageDownloaders
 			_ImageComparer = new ImageComparer { ThumbnailSize = 32, };
 			if (CompareSavedImages)
 			{
+				Console.WriteLine();
 				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory), ImagesCachedPerThread);
 				Console.WriteLine();
 			}
@@ -88,8 +89,13 @@ namespace ImageDL.ImageDownloaders
 				return $"{gatherer.OriginalUri} is animated content (gif/video).";
 			}
 
-			using (var resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false))
+			WebResponse resp = null;
+			Stream s = null;
+			MemoryStream ms = null;
+			Bitmap bm = null;
+			try
 			{
+				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
 				{
 					_AnimatedContent.Add(CreateContentLink(post, uri));
@@ -106,40 +112,38 @@ namespace ImageDL.ImageDownloaders
 					return $"{file} is already saved.";
 				}
 
-				using (var s = resp.GetResponseStream())
-				using (var ms = new MemoryStream())
+				//Need to use a memory stream and copy to it
+				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
+				//And with this reponse stream seeks cannot be used on it.
+				await (s = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
+
+				//A match for the hash has been found, meaning this is a duplicate image
+				var hash = ms.Hash<MD5>();
+				if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
 				{
-					//Need to use a memory stream and copy to it
-					//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
-					//And with this reponse stream seeks cannot be used on it.
-					await s.CopyToAsync(ms).ConfigureAwait(false);
-
-					//A match for the hash has been found, meaning this is a duplicate image
-					var hash = ms.Hash<MD5>();
-					if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
-					{
-						return $"{uri} had a matching hash with {alreadyDownloaded.File} meaning they have the same content.";
-					}
-
-					using (var bm = new Bitmap(ms))
-					{
-						if (bm == default(Bitmap))
-						{
-							return $"{uri} is the default bitmap and cannot be saved.";
-						}
-						else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
-						{
-							return $"{uri} is too small.";
-						}
-
-						bm.Save(file.FullName, ImageFormat.Png);
-						//Add to list if the download succeeds
-						_ImageComparer.TryStore(hash, new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize));
-						return $"Saved {uri} to {file}.";
-					}
+					return $"{uri} had a matching hash with {alreadyDownloaded.File} meaning they have the same content.";
 				}
+				else if ((bm = new Bitmap(ms)) == default(Bitmap))
+				{
+					return $"{uri} is the default bitmap and cannot be saved.";
+				}
+				else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
+				{
+					return $"{uri} is too small.";
+				}
+
+				bm.Save(file.FullName, ImageFormat.Png);
+				//Add to list if the download succeeds
+				_ImageComparer.TryStore(hash, new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize));
+				return $"Saved {uri} to {file}.";
 			}
-			throw new InvalidOperationException($"{nameof(DownloadImageAsync)} should not have been able to get to this point.");
+			finally
+			{
+				resp?.Dispose();
+				s?.Dispose();
+				ms?.Dispose();
+				bm?.Dispose();
+			}
 		}
 
 		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
