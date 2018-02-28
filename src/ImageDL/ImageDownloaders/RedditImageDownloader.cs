@@ -33,17 +33,17 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		public int MinScore
 		{
-			get => _ScoreThreshold;
+			get => _MinScore;
 			set
 			{
-				_ScoreThreshold = Math.Min(0, value);
-				NotifyPropertyChanged(_ScoreThreshold);
+				_MinScore = Math.Max(0, value);
+				NotifyPropertyChanged(_MinScore);
 			}
 		}
 
 		private Reddit _Reddit = new Reddit(new WebAgent(), false);
 		private string _Subreddit;
-		private int _ScoreThreshold;
+		private int _MinScore;
 
 		public RedditImageDownloader() : base()
 		{
