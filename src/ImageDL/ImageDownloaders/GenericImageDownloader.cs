@@ -102,7 +102,7 @@ namespace ImageDL.ImageDownloaders
 				}
 
 				var file = new FileInfo(Path.Combine(Directory, GenerateFileName(post, resp, uri)));
-				if (file.Exists)
+				if (File.Exists(file.FullName))
 				{
 					return $"{file} is already saved.";
 				}

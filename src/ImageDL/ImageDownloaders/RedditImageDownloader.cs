@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageDL.ImageDownloaders
@@ -58,30 +59,33 @@ namespace ImageDL.ImageDownloaders
 			{
 				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
-				foreach (var post in subreddit.New)
+
+				var valid = new CancellationTokenSource();
+				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, AmountToDownload).ForEachAsync(post =>
 				{
 					if (post.CreatedUTC < oldestAllowed)
 					{
-						break;
+						valid.Cancel();
 					}
 					else if (post.IsStickied || post.IsSelfPost || post.Score < MinScore)
 					{
-						continue;
+						return;
 					}
 
 					validPosts.Add(post);
 					if (validPosts.Count == AmountToDownload)
 					{
 						Console.WriteLine($"Finished gathering reddit posts.");
-						break;
+						valid.Cancel();
 					}
 					else if (validPosts.Count % 25 == 0)
 					{
 						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
-				}
+				}, valid.Token).ConfigureAwait(false);
 			}
-			catch (WebException e)
+			catch (TaskCanceledException) { /* nom nom */ }
+			catch (Exception e)
 			{
 				e.Write();
 			}
