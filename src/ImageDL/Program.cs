@@ -1,4 +1,5 @@
-﻿using ImageDL.ImageDownloaders;
+﻿using ImageDL.Classes;
+using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
 using System;
 using System.IO;
@@ -17,9 +18,14 @@ namespace ImageDL
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
 
+			string line = null;
 			do
 			{
 				var downloader = new RedditImageDownloader();
+				if (line != null)
+				{
+					downloader.SetArguments(line.SplitLikeCommandLine());
+				}
 				while (!downloader.AllArgumentsSet)
 				{
 					downloader.AskForArguments();
@@ -28,7 +34,7 @@ namespace ImageDL
 				await downloader.StartAsync().ConfigureAwait(false);
 
 				Console.WriteLine($"Type '{EXIT}' to close the program, otherwise type anything else to run it again.");
-			} while (Console.ReadLine() != EXIT);
+			} while ((line = Console.ReadLine()) != EXIT);
 		}
 	}
 }

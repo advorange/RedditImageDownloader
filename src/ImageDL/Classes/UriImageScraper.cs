@@ -164,10 +164,18 @@ namespace ImageDL.Classes
 		}
 		private static ScrapeResponse ScrapeImgurImages(HtmlDocument doc)
 		{
-			//Not sure if this is a foolproof way to only get the wanted images
+			//Only works on albums with less than 10 images
+			//Otherwise not all the images load in as images, but their ids will still be there.
+#if false
 			var images = doc.DocumentNode.Descendants("img");
 			var itemprop = images.Where(x => x.GetAttributeValue("itemprop", null) != null);
 			return new ScrapeResponse(itemprop.Select(x => x.GetAttributeValue("src", null)));
+#endif
+			var div = doc.DocumentNode.Descendants("div");
+			var images = div.Where(x => x.GetAttributeValue("itemtype", null) == "http://schema.org/ImageObject")
+				.Select(x => x.GetAttributeValue("id", null))
+				.Where(x => x != null);
+			return new ScrapeResponse(images.Select(x => $"https://i.imgur.com/{x}.png"));
 		}
 		private static ScrapeResponse ScrapeTumblrImages(HtmlDocument doc)
 		{

@@ -341,7 +341,7 @@
                         <controls:ImageDLTextBlock Grid.Column="0"
                                                    Text="Subreddit" />
                         <controls:ImageDLTextBlock Grid.Column="1"
-                                                   Text="Score Threshold" />
+                                                   Text="Minimum Score" />
 
                         <!-- Input -->
                         <controls:ImageDLTextBox x:Name="Subreddit"
@@ -349,12 +349,12 @@
                                                  Grid.Row="1"
                                                  Style="{StaticResource TBInput}"
                                                  Tag="{classes:NameOf Member=Subreddit, Type=downloaders:RedditImageDownloader}" />
-                        <controls:ImageDLNumberBox x:Name="ScoreThreshold"
+                        <controls:ImageDLNumberBox x:Name="MinScore"
                                                    Grid.Column="1"
                                                    Grid.Row="1"
                                                    MinValue="0"
                                                    MaxValue="500000"
-                                                   Tag="{classes:NameOf Member=ScoreThreshold, Type=downloaders:RedditImageDownloader}" />
+                                                   Tag="{classes:NameOf Member=MinScore, Type=downloaders:RedditImageDownloader}" />
 
                         <Grid.Style>
                             <Style TargetType="Grid">

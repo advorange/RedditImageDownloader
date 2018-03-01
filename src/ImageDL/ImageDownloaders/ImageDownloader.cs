@@ -27,11 +27,13 @@ namespace ImageDL.ImageDownloaders
 			get => _Directory;
 			set
 			{
-				if (!String.IsNullOrWhiteSpace(value) && !System.IO.Directory.Exists(value))
+				if (!_CreateDirectory && !System.IO.Directory.Exists(value))
 				{
-					Console.WriteLine($"{Directory} does not exist as a directory.");
-					_SetArguments.RemoveAll(x => x.Name == nameof(Directory));
-					return;
+					throw new ArgumentException($"{value} is not already created and -cd has not been used.", nameof(Directory));
+				}
+				else if (System.IO.Directory.CreateDirectory(value) is null)
+				{
+					throw new ArgumentException($"{value} is an invalid directory name.", nameof(Directory));
 				}
 
 				_Directory = value;
@@ -123,6 +125,30 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 		/// <summary>
+		/// Indicates whether or not to print extra information to the console. Such as variables being set.
+		/// </summary>
+		public bool Verbose
+		{
+			get => _Verbose;
+			set
+			{
+				_Verbose = value;
+				NotifyPropertyChanged(_Verbose);
+			}
+		}
+		/// <summary>
+		/// Indicates whether or not to create the directory if it does not exist.
+		/// </summary>
+		public bool CreateDirectory
+		{
+			get => _CreateDirectory;
+			set
+			{
+				_CreateDirectory = value;
+				NotifyPropertyChanged(_CreateDirectory);
+			}
+		}
+		/// <summary>
 		/// Returns true if all arguments (aside from ones with default values) have been set at least once.
 		/// </summary>
 		public bool AllArgumentsSet
@@ -181,6 +207,8 @@ namespace ImageDL.ImageDownloaders
 		private int _MaxImageSimilarity;
 		private int _ImagesCachedPerThread;
 		private bool _CompareSavedImages;
+		private bool _Verbose;
+		private bool _CreateDirectory;
 		private bool _AllArgumentsSet;
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
@@ -192,15 +220,15 @@ namespace ImageDL.ImageDownloaders
 				{
 					"h|help=",
 					"help command.",
-					DisplayHelp
+					i => DisplayHelp(i)
 				},
 				{
-					$"d|dir|{nameof(Directory)}=",
+					$"dir|{nameof(Directory)}=",
 					"the directory to save to.",
-					i => Directory = i
+					i => SetValue<string>(i, c => Directory = c)
 				},
 				{
-					$"a|amt|{nameof(AmountToDownload)}=",
+					$"amt|{nameof(AmountToDownload)}=",
 					"the amount of images to download.",
 					i => SetValue<int>(i, c => AmountToDownload = c)
 				},
@@ -215,25 +243,35 @@ namespace ImageDL.ImageDownloaders
 					i => SetValue<int>(i, c => MinHeight = c)
 				},
 				{
-					$"da|days|{nameof(MaxDaysOld)}=",
+					$"age|{nameof(MaxDaysOld)}=",
 					"the oldest an image can be before it won't be saved.",
 					i => SetValue<int>(i, c => MaxDaysOld = c)
 				},
 				{
-					$"s|sim|{nameof(MaxImageSimilarity)}=",
+					$"sim|{nameof(MaxImageSimilarity)}=",
 					"the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
 					i => SetValue<int>(i, c => MaxImageSimilarity = c)
 				},
 				{
-					$"c|cached|{nameof(ImagesCachedPerThread)}=",
+					$"icpt|{nameof(ImagesCachedPerThread)}=",
 					"how many images to cache on each thread (lower = faster but more CPU).",
 					i => SetValue<int>(i, c => ImagesCachedPerThread = c)
 				},
 				{
-					$"csi|compare|{nameof(CompareSavedImages)}=",
+					$"csi|{nameof(CompareSavedImages)}=",
 					"whether or not to compare to already saved images.",
 					i => SetValue<bool>(i, c => CompareSavedImages = c)
 				},
+				{
+					$"cd|create|{nameof(CreateDirectory)}:",
+					"whether or not to create the directory if it does not exist.",
+					i => SetValue<bool>(i, c => CreateDirectory = c, true, true)
+				},
+				{
+					$"v|{nameof(Verbose)}:",
+					"whether or not to print extra information to the console, such as variables being set.",
+					i => SetValue<bool>(i, c => Verbose = c, true, true)
+				}
 			};
 
 			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
@@ -241,6 +279,10 @@ namespace ImageDL.ImageDownloaders
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToImmutableDictionary(x => x.Name, x => x, StringComparer.OrdinalIgnoreCase);
 
+			//Set verbose to false so these settings don't print
+			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
+			Verbose = false;
+			CreateDirectory = false;
 			MaxImageSimilarity = 1000;
 			ImagesCachedPerThread = 50;
 			CompareSavedImages = false;
@@ -315,8 +357,11 @@ namespace ImageDL.ImageDownloaders
 		{
 			if (_Arguments.TryGetValue(name, out var property) && !_SetArguments.Any(x => x.Name == name))
 			{
-				Console.WriteLine($"Successfully set {name} to '{value}'.");
 				_SetArguments.Add(property);
+				if (_Verbose)
+				{
+					Console.WriteLine($"Successfully set {name} to '{value}'.");
+				}
 			}
 			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x.Value)))
 			{
@@ -330,20 +375,30 @@ namespace ImageDL.ImageDownloaders
 		/// <typeparam name="T"></typeparam>
 		/// <param name="input"></param>
 		/// <param name="callback"></param>
-		protected void SetValue<T>(string input, Action<T> callback)
+		protected void SetValue<T>(string input, Action<T> callback, bool useDefaultIfNull = false, T defaultValue = default)
 		{
-			if (!(TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter))
+			T val;
+			if (input == null && useDefaultIfNull)
 			{
-				throw new InvalidOperationException($"{typeof(T).Name} is not a valid type to convert to with this method.");
+				val = defaultValue;
 			}
-
-			if (converter.IsValid(input))
+			else if (TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter && converter.IsValid(input))
 			{
-				callback((T)converter.ConvertFromInvariantString(input));
+				val = (T)converter.ConvertFromInvariantString(input);
 			}
 			else
 			{
 				Console.WriteLine($"Unable to convert '{input}' to type {typeof(T).Name}.");
+				return;
+			}
+
+			try
+			{
+				callback(val);
+			}
+			catch (ArgumentException e)
+			{
+				e.Write();
 			}
 		}
 

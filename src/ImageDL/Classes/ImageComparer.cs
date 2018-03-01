@@ -173,7 +173,7 @@ namespace ImageDL.Classes
 			//If the file is already in there, delete whichever is worse
 			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
 			{
-				Delete(details, alreadyStoredVal, out var deletedDetails);
+				TryDelete(details, alreadyStoredVal, out var deletedDetails);
 			}
 			else if (!TryStore(md5hash, details))
 			{
@@ -224,10 +224,16 @@ namespace ImageDL.Classes
 					{
 						continue;
 					}
+					else if (TryDelete(iVal, jVal, out var deletedDetails))
+					{
+						kvps.Remove(deletedDetails);
+						Console.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Deleting {deletedDetails.File.Name}.");
+					}
+					else
+					{
+						Console.WriteLine($"Unable to delete the duplicate image {deletedDetails.File}.");
+					}
 					++matchCount;
-
-					Delete(iVal, jVal, out var deletedDetails);
-					kvps.Remove(deletedDetails);
 				}
 				++CurrentImagesSearched;
 			}
@@ -243,7 +249,7 @@ namespace ImageDL.Classes
 		/// <param name="i1">The first file to potentially delete.</param>
 		/// <param name="i2">The second file to potentially delete.</param>
 		/// <param name="deletedDetails">The details which the file associated with them has been deleted.</param>
-		private void Delete(ImageDetails i1, ImageDetails i2, out ImageDetails deletedDetails)
+		private bool TryDelete(ImageDetails i1, ImageDetails i2, out ImageDetails deletedDetails)
 		{
 			//Delete/remove whatever is the smaller image
 			var firstPix = i1.Width * i1.Height;
@@ -253,20 +259,16 @@ namespace ImageDL.Classes
 			var removeFirst = firstPix == secondPix
 				? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc
 				: firstPix < secondPix;
-			var fileToDelete = removeFirst ? i1.File : i2.File;
-			if (fileToDelete.Exists)
-			{
-				try
-				{
-					Console.WriteLine($"Certain match between {i1.File.Name} and {i2.File.Name}. Deleting {fileToDelete.Name}.");
-					FileSystem.DeleteFile(fileToDelete.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-				}
-				catch
-				{
-					Console.WriteLine($"Unable to delete the duplicate image {fileToDelete}.");
-				}
-			}
 			deletedDetails = removeFirst ? i1 : i2;
+			try
+			{
+				FileSystem.DeleteFile(deletedDetails.File.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
