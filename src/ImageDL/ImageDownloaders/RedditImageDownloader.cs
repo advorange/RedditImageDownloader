@@ -75,7 +75,6 @@ namespace ImageDL.ImageDownloaders
 					validPosts.Add(post);
 					if (validPosts.Count == AmountToDownload)
 					{
-						Console.WriteLine($"Finished gathering reddit posts.");
 						valid.Cancel();
 					}
 					else if (validPosts.Count % 25 == 0)
@@ -83,8 +82,12 @@ namespace ImageDL.ImageDownloaders
 						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
 				}, valid.Token).ConfigureAwait(false);
+				Console.WriteLine($"Finished gathering reddit posts.");
 			}
-			catch (TaskCanceledException) { /* nom nom */ }
+			catch (OperationCanceledException)
+			{
+				Console.WriteLine($"Finished gathering reddit posts.");
+			}
 			catch (Exception e)
 			{
 				e.Write();
