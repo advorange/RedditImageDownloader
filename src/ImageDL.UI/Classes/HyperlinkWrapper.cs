@@ -1,6 +1,6 @@
 ﻿using ImageDL.UI.Utilities;
 using ImageDL.Utilities;
-using ImageResizer;
+using ImageMagick;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -70,45 +70,46 @@ namespace ImageDL.UI.Classes
 		}
 		private CachedImage GenerateThumbnail(string path, string name)
 		{
-			using (var s = new MemoryStream())
+			try
 			{
-				try
+				using (var image = new MagickImage(path))
+				using (var ms = new MemoryStream())
 				{
 					//Create a thumbnail
-					ImageBuilder.Current.Build(path, s, new Instructions
+					image.Resize(new MagickGeometry
 					{
 						Width = SIZE,
 						Height = SIZE,
-						OutputFormat = OutputFormat.Png,
-						Mode = FitMode.Crop,
+						IgnoreAspectRatio = true,
 					});
+					image.Write(ms);
 
 					//Convert the thumbnail stream to an actual image
 					var bmi = new BitmapImage();
 					bmi.BeginInit();
 					bmi.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
 					bmi.CacheOption = BitmapCacheOption.OnLoad;
-					bmi.StreamSource = s;
+					bmi.StreamSource = ms;
 					bmi.UriSource = null;
 					bmi.EndInit();
 					bmi.Freeze();
 
 					return new CachedImage(bmi);
 				}
-				catch (UnauthorizedAccessException)
-				{
-					Console.WriteLine($"Unable to read {name}.");
-				}
-				catch (InvalidOperationException)
-				{
-					Console.WriteLine($"Unable to generate a thumbnail for {name}.");
-				}
-				catch (NotSupportedException)
-				{
-					Console.WriteLine($"Unable to generate a thumbnail for {name}.");
-				}
-				return null;
 			}
+			catch (UnauthorizedAccessException)
+			{
+				Console.WriteLine($"Unable to read {name}.");
+			}
+			catch (InvalidOperationException)
+			{
+				Console.WriteLine($"Unable to generate a thumbnail for {name}.");
+			}
+			catch (NotSupportedException)
+			{
+				Console.WriteLine($"Unable to generate a thumbnail for {name}.");
+			}
+			return null;
 		}
 		private void CleanCache()
 		{

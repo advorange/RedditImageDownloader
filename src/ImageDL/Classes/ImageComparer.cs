@@ -203,15 +203,10 @@ namespace ImageDL.Classes
 				}
 
 				var iVal = kvps[i];
-				if (!iVal.InitializedCorrectly)
-				{
-					continue;
-				}
-
 				for (int j = i - 1; j >= 0; --j)
 				{
 					var jVal = kvps[j];
-					if (!jVal.InitializedCorrectly || !iVal.Equals(jVal, percentForMatch))
+					if (!iVal.Equals(jVal, percentForMatch))
 					{
 						continue;
 					}

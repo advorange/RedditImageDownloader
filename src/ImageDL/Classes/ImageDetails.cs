@@ -1,5 +1,4 @@
 ﻿using ImageDL.Utilities;
-using ImageResizer;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -42,10 +41,6 @@ namespace ImageDL.Classes
 		/// The size of the image's thumbnail (the thumbnail is a square).
 		/// </summary>
 		public readonly int ThumbnailSize;
-		/// <summary>
-		/// Indicates whether or not the struct was created correctly.
-		/// </summary>
-		public readonly bool InitializedCorrectly;
 
 		/// <summary>
 		/// Creates the boolean hash for <see cref="HashedThumbnail"/> and sets all the variables.
@@ -59,16 +54,6 @@ namespace ImageDL.Classes
 		{
 			Uri = uri;
 			File = file;
-
-			Width = -1;
-			Height = -1;
-			HashedThumbnail = new ImmutableArray<bool>();
-			ThumbnailSize = 0;
-			InitializedCorrectly = false;
-			if (s.Length < 1)
-			{
-				return;
-			}
 
 			//Make sure that the stream can be read fully
 			s.Seek(0, SeekOrigin.Begin);
@@ -84,22 +69,12 @@ namespace ImageDL.Classes
 			{
 				CreateOptions = BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile,
 			};
-			try
-			{
-				bmi.BeginInit();
-				bmi.StreamSource = s;
-				bmi.DecodePixelWidth = thumbnailSize;
-				bmi.DecodePixelHeight = thumbnailSize;
-				bmi.EndInit();
-				bmi.Freeze();
-			}
-			//Comes from EndInit()
-			//Not sure why but it would always happen on a file called Sergeant_Stubby 2.jpg
-			catch (FileFormatException ffe)
-			{
-				ffe.Write();
-				return;
-			}
+			bmi.BeginInit();
+			bmi.StreamSource = s;
+			bmi.DecodePixelWidth = thumbnailSize;
+			bmi.DecodePixelHeight = thumbnailSize;
+			bmi.EndInit();
+			bmi.Freeze();
 
 			//Convert the image format to argb32bpp so the pixel size will always be 4
 			var fcbm = new FormatConvertedBitmap();
@@ -160,7 +135,7 @@ namespace ImageDL.Classes
 
 			HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
 			ThumbnailSize = thumbnailSize;
-			InitializedCorrectly = true;
+			s.Seek(0, SeekOrigin.Begin);
 		}
 
 		/// <summary>
@@ -210,14 +185,6 @@ namespace ImageDL.Classes
 			if (ThumbnailSize != other.ThumbnailSize)
 			{
 				throw new InvalidOperationException("The thumbnails must be the same size when checking equality.");
-			}
-			else if (!InitializedCorrectly)
-			{
-				throw new ArgumentException("not initialized correctly", "this");
-			}
-			else if (!other.InitializedCorrectly)
-			{
-				throw new ArgumentException("not initialized correctly", nameof(other));
 			}
 
 			//If the aspect ratio is too different then don't bother checking the hash

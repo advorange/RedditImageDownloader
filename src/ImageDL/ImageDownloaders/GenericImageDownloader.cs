@@ -85,9 +85,9 @@ namespace ImageDL.ImageDownloaders
 			}
 
 			WebResponse resp = null;
-			Stream s = null;
+			Stream rs = null;
 			MemoryStream ms = null;
-			Bitmap bm = null;
+			FileStream fs = null;
 			try
 			{
 				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
@@ -96,48 +96,46 @@ namespace ImageDL.ImageDownloaders
 					_AnimatedContent.Add(CreateContentLink(post, uri));
 					return $"{uri} is animated content (gif/video).";
 				}
-				else if (!resp.ContentType.Contains("image/"))
+				if (!resp.ContentType.Contains("image/"))
 				{
 					return $"{uri} is not an image.";
 				}
-
 				var file = new FileInfo(Path.Combine(Directory, GenerateFileName(post, resp, uri)));
 				if (File.Exists(file.FullName))
 				{
-					return $"{file} is already saved.";
+					return $"{uri} is already saved as {file}.";
 				}
 
 				//Need to use a memory stream and copy to it
 				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
 				//And with this reponse stream seeks cannot be used on it.
-				await (s = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
-
-				//A match for the hash has been found, meaning this is a duplicate image
+				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
 				var hash = ms.Hash<MD5>();
 				if (_ImageComparer.TryGetImage(hash, out var alreadyDownloaded))
 				{
-					return $"{uri} had a matching hash with {alreadyDownloaded.File} meaning they have the same content.";
-				}
-				else if ((bm = new Bitmap(ms)) == default(Bitmap))
-				{
-					return $"{uri} is the default bitmap and cannot be saved.";
-				}
-				else if (bm.PhysicalDimension.Width < MinWidth || bm.PhysicalDimension.Height < MinHeight)
-				{
-					return $"{uri} is too small.";
+					//A match for the hash has been found, meaning this is a duplicate 
+					return $"{uri} had a matching hash with {alreadyDownloaded.File}.";
 				}
 
-				bm.Save(file.FullName, ImageFormat.Png);
-				//Add to list if the download succeeds
-				_ImageComparer.TryStore(hash, new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize));
-				return $"Saved {uri} to {file}.";
+				var details = new ImageDetails(uri, file, ms, _ImageComparer.ThumbnailSize);
+				if (details.Width < MinWidth || details.Height < MinHeight)
+				{
+					return $"{uri} is too small ({details.Width}x{details.Height}).";
+				}
+				if (_ImageComparer.TryStore(hash, details))
+				{
+					//Add to list if the download succeeds
+					await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
+					return $"Saved {uri} to {file}.";
+				}
+				return $"Failed to save {uri} to {file}.";
 			}
 			finally
 			{
 				resp?.Dispose();
-				s?.Dispose();
+				rs?.Dispose();
 				ms?.Dispose();
-				bm?.Dispose();
+				fs?.Dispose();
 			}
 		}
 
