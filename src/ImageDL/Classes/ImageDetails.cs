@@ -55,13 +55,11 @@ namespace ImageDL.Classes
 			Uri = uri;
 			File = file;
 
-			//Make sure that the stream can be read fully
+			//Find out the standard version's size
 			s.Seek(0, SeekOrigin.Begin);
-
 			var decoder = BitmapDecoder.Create(s, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.Default);
 			Width = decoder.Frames[0].PixelWidth;
 			Height = decoder.Frames[0].PixelHeight;
-			//Reset the stream after the decoder has read it
 			s.Seek(0, SeekOrigin.Begin);
 
 			//Create an image with a small size
@@ -84,58 +82,62 @@ namespace ImageDL.Classes
 			fcbm.EndInit();
 			fcbm.Freeze();
 
-			var brightnesses = new List<float>();
-			var totalBrightness = 0f;
-			using (var ms = new MemoryStream())
+			MemoryStream ms = null;
+			Bitmap bm = null;
+			try
 			{
 				//Convert the small argb32bpp image to a memory stream
 				//So that ms can then be used in a bitmap to get all its pixels easily
 				var enc = new BmpBitmapEncoder();
 				enc.Frames.Add(BitmapFrame.Create(fcbm));
-				enc.Save(ms);
+				enc.Save(ms = new MemoryStream());
 
-				//Create a square thumbnail
-				using (var thumb = new Bitmap(ms))
+				bm = new Bitmap(ms);
+				//Source: https://stackoverflow.com/a/19586876
+				//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
+				var data = bm.LockBits(new Rectangle(Point.Empty, new Size(bm.Width, bm.Height)), ImageLockMode.ReadOnly, bm.PixelFormat);
+				var pixelSize = Image.GetPixelFormatSize(data.PixelFormat) / 8;
+				var padding = data.Stride - (data.Width * pixelSize);
+
+				//Copy the image's data to a new array
+				var bytes = new byte[data.Height * data.Stride];
+				Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
+
+				if (pixelSize != 4)
 				{
-					//Source: https://stackoverflow.com/a/19586876
-					//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
-					var data = thumb.LockBits(new Rectangle(Point.Empty, new Size(thumb.Width, thumb.Height)), ImageLockMode.ReadOnly, thumb.PixelFormat);
-					var pixelSize = Image.GetPixelFormatSize(data.PixelFormat) / 8;
-					var padding = data.Stride - (data.Width * pixelSize);
-
-					//Copy the image's data to a new array
-					var bytes = new byte[data.Height * data.Stride];
-					Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
-
-					if (pixelSize != 4)
-					{
-						throw new NotSupportedException("invalid image format: must be argb32bpp or able to be converted to that");
-					}
-
-					var index = 0;
-					for (var y = 0; y < data.Height; y++)
-					{
-						for (var x = 0; x < data.Width; x++)
-						{
-							var a = bytes[index + 3];
-							var r = bytes[index + 2];
-							var g = bytes[index + 1];
-							var b = bytes[index];
-							var brightness = (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
-							brightnesses.Add(brightness);
-							totalBrightness += brightness;
-							index += pixelSize;
-						}
-
-						index += padding;
-					}
+					throw new NotSupportedException("invalid image format: must be argb32bpp or able to be converted to that");
 				}
-			}
-			var avgBrightness = totalBrightness / brightnesses.Count;
 
-			HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
-			ThumbnailSize = thumbnailSize;
-			s.Seek(0, SeekOrigin.Begin);
+				var brightnesses = new List<float>();
+				var totalBrightness = 0f;
+				var index = 0;
+				for (var y = 0; y < data.Height; y++)
+				{
+					for (var x = 0; x < data.Width; x++)
+					{
+						var a = bytes[index + 3];
+						var r = bytes[index + 2];
+						var g = bytes[index + 1];
+						var b = bytes[index];
+						var brightness = (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
+						brightnesses.Add(brightness);
+						totalBrightness += brightness;
+						index += pixelSize;
+					}
+
+					index += padding;
+				}
+				var avgBrightness = totalBrightness / brightnesses.Count;
+
+				HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
+				ThumbnailSize = thumbnailSize;
+			}
+			finally
+			{
+				ms?.Dispose();
+				bm?.Dispose();
+				s.Seek(0, SeekOrigin.Begin);
+			}
 		}
 
 		/// <summary>

@@ -52,20 +52,20 @@ namespace ImageDL.ImageDownloaders
 			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
 		}
 
-		protected override async Task<IEnumerable<Post>> GatherPostsAsync()
+		protected override async Task<List<Post>> GatherPostsAsync()
 		{
 			var validPosts = new List<Post>();
 			try
 			{
 				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
-
 				var valid = new CancellationTokenSource();
 				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, AmountToDownload).ForEachAsync(post =>
 				{
 					if (post.CreatedUTC < oldestAllowed)
 					{
 						valid.Cancel();
+						valid.Token.ThrowIfCancellationRequested();
 					}
 					else if (post.IsStickied || post.IsSelfPost || post.Score < MinScore)
 					{
@@ -76,6 +76,7 @@ namespace ImageDL.ImageDownloaders
 					if (validPosts.Count == AmountToDownload)
 					{
 						valid.Cancel();
+						valid.Token.ThrowIfCancellationRequested();
 					}
 					else if (validPosts.Count % 25 == 0)
 					{
@@ -93,7 +94,7 @@ namespace ImageDL.ImageDownloaders
 				e.Write();
 			}
 			Console.WriteLine();
-			return validPosts.OrderByDescending(x => x.Score);
+			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
 		protected override void WritePostToConsole(Post post, int count)
 		{

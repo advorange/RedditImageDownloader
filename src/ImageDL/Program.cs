@@ -1,5 +1,4 @@
-﻿using ImageDL.Classes;
-using ImageDL.ImageDownloaders;
+﻿using ImageDL.ImageDownloaders;
 using ImageDL.Utilities;
 using System;
 using System.IO;
@@ -18,23 +17,71 @@ namespace ImageDL
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
 
-			string line = null;
-			do
+			//TODO: work on this
+			switch (Console.ReadLine())
 			{
-				var downloader = new RedditImageDownloader();
-				if (line != null)
+				case "1":
 				{
-					downloader.SetArguments(line.SplitLikeCommandLine());
-				}
-				while (!downloader.AllArgumentsSet)
-				{
-					downloader.AskForArguments();
-					downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
-				}
-				await downloader.StartAsync().ConfigureAwait(false);
+					string line = null;
+					do
+					{
+						var downloader = new RedditImageDownloader();
+						if (line != null)
+						{
+							downloader.SetArguments(line.SplitLikeCommandLine());
+						}
+						while (!downloader.AllArgumentsSet)
+						{
+							downloader.AskForArguments();
+							downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+						}
+						await downloader.StartAsync().ConfigureAwait(false);
 
-				Console.WriteLine($"Type '{EXIT}' to close the program, otherwise type anything else to run it again.");
-			} while ((line = Console.ReadLine()) != EXIT);
+						Console.WriteLine($"Type '{EXIT}' to close the program, otherwise type anything else to run it again.");
+					} while ((line = Console.ReadLine()) != EXIT);
+					return;
+				}
+				case "2":
+				{
+					DirectoryInfo directory = null;
+					while (!Directory.Exists(directory?.FullName))
+					{
+						Console.WriteLine("Enter a valid directory:");
+						try
+						{
+							directory = new DirectoryInfo(Console.ReadLine());
+						}
+						catch
+						{
+							Console.WriteLine("Invalid directory provided.");
+						}
+					}
+
+					Console.WriteLine("Provide the arguments to use for each directory:");
+					var line = Console.ReadLine();
+
+					foreach (var dir in directory.GetDirectories())
+					{
+						var downloader = new RedditImageDownloader();
+						if (line != null)
+						{
+							downloader.SetArguments(line.SplitLikeCommandLine());
+							downloader.Subreddit = dir.Name;
+							downloader.Directory = dir.FullName;
+						}
+						while (!downloader.AllArgumentsSet)
+						{
+							downloader.AskForArguments();
+							downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+						}
+						await downloader.StartAsync().ConfigureAwait(false);
+					}
+
+					Console.WriteLine("Finished updating the directories.");
+					Console.ReadLine();
+					return;
+				}
+			}
 		}
 	}
 }

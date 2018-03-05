@@ -29,6 +29,13 @@ namespace ImageDL.ImageDownloaders
 			AllArgumentsSet = false;
 			BusyDownloading = true;
 
+			var posts = await GatherPostsAsync().ConfigureAwait(false);
+			if (!posts.Any())
+			{
+				Console.WriteLine("Unable to find any images matching the search criteria.");
+				return;
+			}
+
 			_ImageComparer = new ImageComparer { ThumbnailSize = 32, };
 			if (CompareSavedImages)
 			{
@@ -38,7 +45,7 @@ namespace ImageDL.ImageDownloaders
 			}
 
 			var count = 0;
-			foreach (var post in (await GatherPostsAsync().ConfigureAwait(false)).Take(AmountToDownload))
+			foreach (var post in posts)
 			{
 				WritePostToConsole(post, ++count);
 
@@ -139,7 +146,7 @@ namespace ImageDL.ImageDownloaders
 			}
 		}
 
-		protected abstract Task<IEnumerable<TPost>> GatherPostsAsync();
+		protected abstract Task<List<TPost>> GatherPostsAsync();
 		protected abstract void WritePostToConsole(TPost post, int count);
 		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
 		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
