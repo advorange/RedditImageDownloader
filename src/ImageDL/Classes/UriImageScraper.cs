@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ImageDL.Classes
@@ -13,9 +14,9 @@ namespace ImageDL.Classes
 	/// <summary>
 	/// Gathers images from the passed in <see cref="Uri"/>. Attempts to scrape images if the link is not a direct image link.
 	/// </summary>
-	public sealed class UriImageGatherer
+	public class UriImageGatherer
 	{
-		private static string[] _AnimatedSites = new[]
+		protected static List<string> _AnimatedSites = new List<string>
 		{
 			"youtu.be", "youtube",
 			"gfycat",
@@ -26,15 +27,19 @@ namespace ImageDL.Classes
 			"twitch",
 			"liveleak",
 		};
+		protected static List<Test> _Info = new List<Test>
+		{
+			new Test(x => true, ScrapeImgurImages, ),
+		};
 
 		/// <summary>
 		/// The original <see cref="Uri"/> that was passed into the constructor.
 		/// </summary>
-		public readonly Uri OriginalUri;
+		public Uri OriginalUri { get; }
 		/// <summary>
 		/// Similar to <see cref="OriginalUri"/> except removes optional arguments and fixes some weird things sites do with their urls.
 		/// </summary>
-		public readonly Uri EditedUri;
+		public Uri EditedUri { get; private set; }
 		/// <summary>
 		/// The images to download.
 		/// </summary>
@@ -47,22 +52,15 @@ namespace ImageDL.Classes
 		/// Indicates whether or not the link leads to a video site.
 		/// </summary>
 		public bool IsVideo { get; private set; }
-		private readonly Site _Site;
-		private readonly bool _RequiresScraping;
+
+		private Test _Test;
 
 		private UriImageGatherer(Uri uri)
 		{
-			var u = uri.ToString();
+			throw new NotImplementedException("chofl");
 			OriginalUri = uri;
-			IsVideo = _AnimatedSites.Any(x => u.CaseInsContains(x));
-			//TODO: more comprehensive way of getting the site
-			_Site = Enum.GetValues(typeof(Site)).Cast<Site>().SingleOrDefault(x => u.CaseInsContains(x.ToString()));
-			_RequiresScraping = !IsVideo && (false
-				|| (_Site == Site.Imgur && (u.Contains("/a/") || u.Contains("/gallery/")))
-				|| (_Site == Site.Tumblr && !u.Contains("media.tumblr"))
-				|| (_Site == Site.DeviantArt && u.Contains("/art/"))
-				|| (_Site == Site.Instagram && u.Contains("/p/")));
-			EditedUri = EditUri(_Site, u);
+			IsVideo = _AnimatedSites.Any(x => uri.ToString().CaseInsContains(x));
+			EditedUri = EditUri();
 		}
 
 		/// <summary>
@@ -73,10 +71,10 @@ namespace ImageDL.Classes
 		public static async Task<UriImageGatherer> CreateGatherer(Uri uri)
 		{
 			var g = new UriImageGatherer(uri);
-			if (g._RequiresScraping)
+			if (g.RequiresScraping())
 			{
-				var response = await ScrapeImages(g._Site, g.OriginalUri).ConfigureAwait(false);
-				g.ImageUris = response.Uris.Select(x => EditUri(g._Site, x)).Where(x => x != null).ToImmutableList();
+				var response = await g.ScrapeImages().ConfigureAwait(false);
+				g.ImageUris = response.Uris.Select(x => g.EditUri(x)).Where(x => x != null).ToImmutableList();
 				g.Error = response.Error;
 			}
 			else
@@ -86,27 +84,13 @@ namespace ImageDL.Classes
 			return g;
 		}
 
-		//TODO: specify reddit image hosting
-		private static Uri EditUri(Site s, string uri)
+		private Uri EditUri()
 		{
-			var hasExtension = !String.IsNullOrWhiteSpace(Path.GetExtension(uri));
-
+			var uri = OriginalUri.ToString();
 			//Remove all optional arguments
 			if (uri.Contains('?'))
 			{
 				uri = uri.Substring(0, uri.IndexOf('?'));
-			}
-			//Imgur
-			if (s == Site.Imgur)
-			{
-				uri = uri.Replace("_d", ""); //Some thumbnail thing
-				uri = hasExtension ? uri : "https://i.imgur.com/" + uri.Substring(uri.LastIndexOf('/') + 1) + ".png";
-			}
-			//Tumblr
-			if (s == Site.Tumblr)
-			{
-				//Only want to download images so replace with this. If blog post will throw exception but whatever
-				uri = uri.Replace("/post/", "/image/");
 			}
 			//Http/Https
 			if (!uri.CaseInsStartsWith("http://") && !uri.CaseInsStartsWith("https://"))
@@ -114,45 +98,55 @@ namespace ImageDL.Classes
 				uri = uri.Contains("//") ? uri.Substring(uri.IndexOf("//") + 2) : uri;
 				uri = "https://" + uri;
 			}
-
-			return Uri.TryCreate(uri, UriKind.Absolute, out var result) ? result : null;
+			return Uri.TryCreate(_Test.UriEditer(uri), UriKind.Absolute, out var result) ? result : null;
 		}
-		private static async Task<ScrapeResponse> ScrapeImages(Site site, Uri uri)
+		private static string EditImgurUri(string uri)
 		{
+			var hasExtension = !String.IsNullOrWhiteSpace(Path.GetExtension(uri));
+			uri = uri.Replace("_d", ""); //Some thumbnail thing
+			uri = hasExtension ? uri : "https://i.imgur.com/" + uri.Substring(uri.LastIndexOf('/') + 1) + ".png";
+			return uri;
+		}
+		private static string EditTumblrUri(string uri)
+		{
+			//Only want to download images so replace with this. If blog post will throw exception but gets caught when downloading
+			uri = uri.Replace("/post/", "/image/");
+			return uri;
+		}
+
+		private async Task<ScrapeResponse> ScrapeImages()
+		{
+			WebResponse resp = null;
+			Stream s = null;
 			try
 			{
-				var req = uri.CreateWebRequest();
-				//DeviantArt 18+ filter
-				req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com"));
+				var req = OriginalUri.CreateWebRequest();
+				req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
 
-				using (var resp = await req.GetResponseAsync())
-				using (var s = resp.GetResponseStream())
+				var doc = new HtmlDocument();
+				doc.Load(s = (resp = await req.GetResponseAsync().ConfigureAwait(false)).GetResponseStream());
+
+				switch (_Site)
 				{
-					var doc = new HtmlDocument();
-					doc.Load(s);
-
-					switch (site)
+					case Site.Imgur:
 					{
-						case Site.Imgur:
-						{
-							return ScrapeImgurImages(doc);
-						}
-						case Site.Tumblr:
-						{
-							return ScrapeTumblrImages(doc);
-						}
-						case Site.DeviantArt:
-						{
-							return ScrapeDeviantArtImages(doc);
-						}
-						case Site.Instagram:
-						{
-							return ScrapeInstagramImages(doc);
-						}
-						default:
-						{
-							throw new ArgumentException($"The supplied uri {uri} is invalid for this method.");
-						}
+						return ScrapeImgurImages(doc);
+					}
+					case Site.Tumblr:
+					{
+						return ScrapeTumblrImages(doc);
+					}
+					case Site.DeviantArt:
+					{
+						return ScrapeDeviantArtImages(doc);
+					}
+					case Site.Instagram:
+					{
+						return ScrapeInstagramImages(doc);
+					}
+					default:
+					{
+						throw new ArgumentException($"The supplied uri {uri} is invalid for this method.");
 					}
 				}
 			}
@@ -160,6 +154,11 @@ namespace ImageDL.Classes
 			{
 				e.Write();
 				return new ScrapeResponse(new string[0], e.Message);
+			}
+			finally
+			{
+				resp?.Dispose();
+				s?.Dispose();
 			}
 		}
 		private static ScrapeResponse ScrapeImgurImages(HtmlDocument doc)
@@ -206,7 +205,7 @@ namespace ImageDL.Classes
 				{
 					var w = x.LastIndexOf("w,") + 2; //W for w,
 					var s = x.LastIndexOf(' '); //S for space
-					return w > -1 && s > -1 ? null : x.Substring(w, s - w);
+					return w < 0 || s < 0 || w > s ? null : x.Substring(w, s - w);
 				});
 
 				return img.Any()
@@ -225,24 +224,55 @@ namespace ImageDL.Classes
 			return new ScrapeResponse(images.Select(x => x.GetAttributeValue("content", null)));
 		}
 
-		private struct ScrapeResponse
+		private bool RequiresScraping()
 		{
-			public readonly IEnumerable<string> Uris;
-			public readonly string Error;
-
-			public ScrapeResponse(IEnumerable<string> uris, string error = null)
+			if (IsVideo)
 			{
-				Uris = uris.Where(x => !String.IsNullOrWhiteSpace(x));
-				Error = error;
+				return false;
 			}
+
+			var u = OriginalUri.ToString();
+			return (_Site == Site.Imgur && (u.Contains("/a/") || u.Contains("/gallery/")))
+				|| (_Site == Site.Tumblr && !u.Contains("media.tumblr"))
+				|| (_Site == Site.DeviantArt && u.Contains("/art/"))
+				|| (_Site == Site.Instagram && u.Contains("/p/"));
 		}
-		private enum Site
+		private static bool ImgurRequiresScraping()
 		{
-			None = 0,
-			Imgur,
-			Tumblr,
-			DeviantArt,
-			Instagram,
+
 		}
 	}
+
+	public class Test
+	{
+		public readonly Func<string, bool> WebsiteMatches;
+		public readonly Func<string, bool> RequiresScraping;
+		public readonly Func<string, string> UriEditer;
+		public readonly Func<HtmlDocument, ScrapeResponse> Scraper;
+
+		public Test(
+			Func<string, bool> websiteMatches,
+			Func<string, bool> requiresScraping,
+			Func<string, string> uriEditer,
+			Func<HtmlDocument, ScrapeResponse> scraper)
+		{
+			WebsiteMatches = websiteMatches;
+			RequiresScraping = requiresScraping;
+			UriEditer = uriEditer;
+			Scraper = scraper;
+		}
+	}
+
+	public struct ScrapeResponse
+	{
+		public readonly IEnumerable<string> Uris;
+		public readonly string Error;
+
+		public ScrapeResponse(IEnumerable<string> uris, string error = null)
+		{
+			Uris = uris.Where(x => !String.IsNullOrWhiteSpace(x));
+			Error = error;
+		}
+	}
+
 }

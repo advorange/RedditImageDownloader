@@ -25,7 +25,6 @@ namespace ImageDL.Classes
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		public int StoredImages => _Images.Count;
-		private int _CurrentImagesSearched;
 		public int CurrentImagesSearched
 		{
 			get => _CurrentImagesSearched;
@@ -35,13 +34,14 @@ namespace ImageDL.Classes
 				NotifyPropertyChanged();
 			}
 		}
-		private int _ThumbnailSize;
 		public int ThumbnailSize
 		{
 			get => _ThumbnailSize;
 			set => _ThumbnailSize = value;
 		}
 
+		private int _CurrentImagesSearched;
+		private int _ThumbnailSize;
 		private ConcurrentDictionary<string, ImageDetails> _Images = new ConcurrentDictionary<string, ImageDetails>();
 
 		/// <summary>
@@ -67,7 +67,7 @@ namespace ImageDL.Classes
 		/// Caches every file in the directory.
 		/// </summary>
 		/// <param name="directory">The directory to cache.</param>
-		public async Task CacheSavedFiles(DirectoryInfo directory, int taskGroupLength = 50)
+		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int taskGroupLength = 50)
 		{
 #if DEBUG
 			var sw = new System.Diagnostics.Stopwatch();
@@ -161,26 +161,6 @@ namespace ImageDL.Classes
 #endif
 		}
 		/// <summary>
-		/// Caches the file.
-		/// </summary>
-		/// <param name="file">The file to cache.</param>
-		public void CacheFile(FileInfo file)
-		{
-			if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
-			{
-				Console.WriteLine($"Failed to create a cached object of {file}.");
-			}
-			//If the file is already in there, delete whichever is worse
-			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
-			{
-				TryDelete(details, alreadyStoredVal, out var deletedDetails);
-			}
-			else if (!TryStore(md5hash, details))
-			{
-				Console.WriteLine($"Failed to cache {file}.");
-			}
-		}
-		/// <summary>
 		/// When the images have finished downloading run through each of them again to see if any are duplicates.
 		/// </summary>
 		/// <param name="percentForMatch">The percentage of similarity for an image to be considered a match. Ranges from 1 to 100.</param>
@@ -238,6 +218,27 @@ namespace ImageDL.Classes
 			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
 #endif
 		}
+
+		/// <summary>
+		/// Caches the file.
+		/// </summary>
+		/// <param name="file">The file to cache.</param>
+		private void CacheFile(FileInfo file)
+		{
+			if (!ImageDetails.TryCreateFromFile(file, ThumbnailSize, out var md5hash, out var details))
+			{
+				Console.WriteLine($"Failed to create a cached object of {file}.");
+			}
+			//If the file is already in there, delete whichever is worse
+			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
+			{
+				TryDelete(details, alreadyStoredVal, out var deletedDetails);
+			}
+			else if (!TryStore(md5hash, details))
+			{
+				Console.WriteLine($"Failed to cache {file}.");
+			}
+		}
 		/// <summary>
 		/// Deletes a file. Returns true if <paramref name="i1"/> is deleted, false if <paramref name="i2"/> is deleted.
 		/// </summary>
@@ -251,9 +252,7 @@ namespace ImageDL.Classes
 			var secondPix = i2.Width * i2.Height;
 			//If each image has the same pixel count then go by file creation time
 			//If not then just go by pixel count
-			var removeFirst = firstPix == secondPix
-				? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc
-				: firstPix < secondPix;
+			var removeFirst = firstPix == secondPix ? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc : firstPix < secondPix;
 			deletedDetails = removeFirst ? i1 : i2;
 			try
 			{
@@ -265,7 +264,6 @@ namespace ImageDL.Classes
 				return false;
 			}
 		}
-
 		private void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

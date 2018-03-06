@@ -110,9 +110,9 @@ namespace ImageDL.ImageDownloaders
 		{
 			return await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
 		}
-		protected override ContentLink CreateContentLink(Post post, Uri uri)
+		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)
 		{
-			return new ContentLink(uri, post.Score);
+			return new ContentLink(uri, post.Score, reason);
 		}
 	}
 }

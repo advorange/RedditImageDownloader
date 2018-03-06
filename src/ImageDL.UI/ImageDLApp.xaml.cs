@@ -9,7 +9,7 @@ namespace ImageDL.UI
 	/// <summary>
 	/// Interaction logic for ImageDLApp.xaml
 	/// </summary>
-	public partial class ImageDLApp : Application
+	public sealed partial class ImageDLApp : Application, IDisposable
 	{
 		private BindingListener _Listener = new BindingListener();
 
@@ -18,11 +18,14 @@ namespace ImageDL.UI
 			InitializeComponent();
 		}
 
+		public void Dispose()
+		{
+			_Listener.Dispose();
+		}
 		public void OnStartup(object sender, StartupEventArgs e)
 		{
 			DispatcherUnhandledException += OnDispatcherUnhandledException;
 		}
-
 		private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
 			//Display to the user what happened and also log it

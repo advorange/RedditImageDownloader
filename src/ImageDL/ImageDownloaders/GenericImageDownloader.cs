@@ -40,7 +40,7 @@ namespace ImageDL.ImageDownloaders
 			if (CompareSavedImages)
 			{
 				Console.WriteLine();
-				await _ImageComparer.CacheSavedFiles(new DirectoryInfo(Directory), ImagesCachedPerThread);
+				await _ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread);
 				Console.WriteLine();
 			}
 
@@ -60,7 +60,7 @@ namespace ImageDL.ImageDownloaders
 					catch (WebException e)
 					{
 						e.Write();
-						_FailedDownloads.Add(CreateContentLink(post, imageUri));
+						_Links.Add(CreateContentLink(post, imageUri, "Failed Download"));
 					}
 				}
 			}
@@ -87,7 +87,7 @@ namespace ImageDL.ImageDownloaders
 			}
 			else if (gatherer.IsVideo)
 			{
-				_AnimatedContent.Add(CreateContentLink(post, gatherer.OriginalUri));
+				_Links.Add(CreateContentLink(post, gatherer.OriginalUri, "Animated Content"));
 				return $"{gatherer.OriginalUri} is animated content (gif/video).";
 			}
 
@@ -100,7 +100,7 @@ namespace ImageDL.ImageDownloaders
 				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
 				{
-					_AnimatedContent.Add(CreateContentLink(post, uri));
+					_Links.Add(CreateContentLink(post, uri, "Animated Content"));
 					return $"{uri} is animated content (gif/video).";
 				}
 				if (!resp.ContentType.Contains("image/"))
@@ -150,6 +150,6 @@ namespace ImageDL.ImageDownloaders
 		protected abstract void WritePostToConsole(TPost post, int count);
 		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
 		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
-		protected abstract ContentLink CreateContentLink(TPost post, Uri uri);
+		protected abstract ContentLink CreateContentLink(TPost post, Uri uri, string reason);
 	}
 }

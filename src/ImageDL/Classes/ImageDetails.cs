@@ -124,7 +124,6 @@ namespace ImageDL.Classes
 						totalBrightness += brightness;
 						index += pixelSize;
 					}
-
 					index += padding;
 				}
 				var avgBrightness = totalBrightness / brightnesses.Count;
@@ -134,8 +133,8 @@ namespace ImageDL.Classes
 			}
 			finally
 			{
-				ms?.Dispose();
 				bm?.Dispose();
+				ms?.Dispose();
 				s.Seek(0, SeekOrigin.Begin);
 			}
 		}

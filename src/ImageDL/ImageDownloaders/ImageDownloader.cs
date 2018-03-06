@@ -193,10 +193,9 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		protected ImmutableDictionary<string, PropertyInfo> _Arguments;
+		protected ImmutableArray<PropertyInfo> _Arguments;
 		protected List<PropertyInfo> _SetArguments = new List<PropertyInfo>();
-		protected List<ContentLink> _AnimatedContent = new List<ContentLink>();
-		protected List<ContentLink> _FailedDownloads = new List<ContentLink>();
+		protected List<ContentLink> _Links = new List<ContentLink>();
 		protected ImageComparer _ImageComparer;
 
 		private string _Directory;
@@ -274,10 +273,7 @@ namespace ImageDL.ImageDownloaders
 				}
 			};
 
-			_Arguments = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
-				.OrderByNonComparable(x => x.PropertyType)
-				.ToImmutableDictionary(x => x.Name, x => x, StringComparer.OrdinalIgnoreCase);
+			_Arguments = GetArguments();
 
 			//Set verbose to false so these settings don't print
 			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
@@ -323,47 +319,35 @@ namespace ImageDL.ImageDownloaders
 		/// </summary>
 		public void AskForArguments()
 		{
-			var unsetArgs = _Arguments.Where(x => !_SetArguments.Contains(x.Value));
+			var unsetArgs = _Arguments.Where(x => !_SetArguments.Contains(x));
 			if (!unsetArgs.Any())
 			{
 				return;
 			}
 
 			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var kvp in unsetArgs)
+			foreach (var prop in unsetArgs)
 			{
-				sb.AppendLine($"\t{kvp.Key} ({kvp.Value.PropertyType.Name})");
+				sb.AppendLine($"\t{prop.Name} ({prop.PropertyType.Name})");
 			}
 			Console.WriteLine(sb.ToString().Trim());
 		}
-		/// <summary>
-		/// Saves the stored content links to file.
-		/// </summary>
-		public void SaveStoredContentLinks()
-		{
-			if (String.IsNullOrWhiteSpace(Directory))
-			{
-				return;
-			}
 
-			SaveContentLinks(ref _AnimatedContent, new FileInfo(Path.Combine(Directory, "Animated_Content.txt")));
-			SaveContentLinks(ref _FailedDownloads, new FileInfo(Path.Combine(Directory, "Failed_Downloads.txt")));
-		}
 		/// <summary>
 		/// Invokes <see cref="PropertyChanged"/>.
 		/// </summary>
 		/// <param name="name">The property changed.</param>
 		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
 		{
-			if (_Arguments.TryGetValue(name, out var property) && !_SetArguments.Any(x => x.Name == name))
+			if (!_SetArguments.Any(x => x.Name == name) && _Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
 			{
-				_SetArguments.Add(property);
+				_SetArguments.Add(prop);
 				if (_Verbose)
 				{
 					Console.WriteLine($"Successfully set {name} to '{value}'.");
 				}
 			}
-			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x.Value)))
+			if (!AllArgumentsSet && !_Arguments.Any(x => !_SetArguments.Contains(x)))
 			{
 				AllArgumentsSet = true;
 			}
@@ -401,57 +385,65 @@ namespace ImageDL.ImageDownloaders
 				e.Write();
 			}
 		}
-
-		private void SaveContentLinks(ref List<ContentLink> contentLinks, FileInfo file)
+		/// <summary>
+		/// Gets the names of settings (public, instance, has setter, has getter, and is a property).
+		/// </summary>
+		/// <returns></returns>
+		protected ImmutableArray<PropertyInfo> GetArguments()
 		{
-			//Only bother saving if any exist
-			if (!contentLinks.Any())
+			return GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
+				.OrderByNonComparable(x => x.PropertyType)
+				.ToImmutableArray();
+		}
+		/// <summary>
+		/// Saves the stored content links to file.
+		/// </summary>
+		protected virtual void SaveStoredContentLinks()
+		{
+			foreach (var kvp in _Links.GroupBy(x => x.Reason))
 			{
-				return;
-			}
-
-			//Only save links which are not already in the text document
-			var unsavedContent = new List<ContentLink>();
-			if (file.Exists)
-			{
-				using (var reader = new StreamReader(file.OpenRead()))
+				//Only save links which are not already in the text document
+				var file = new FileInfo(Path.Combine(Directory, $"{kvp.Key}.txt"));
+				var unsavedContent = new List<ContentLink>();
+				if (file.Exists)
 				{
-					var text = reader.ReadToEnd();
-					foreach (var anim in contentLinks)
+					using (var reader = new StreamReader(file.OpenRead()))
 					{
-						if (text.Contains(anim.Uri.ToString()))
+						var text = reader.ReadToEnd();
+						foreach (var anim in kvp)
 						{
-							continue;
-						}
+							if (text.Contains(anim.Uri.ToString()))
+							{
+								continue;
+							}
 
-						unsavedContent.Add(anim);
+							unsavedContent.Add(anim);
+						}
 					}
 				}
-			}
-			else
-			{
-				unsavedContent = _AnimatedContent;
-			}
+				else
+				{
+					unsavedContent = kvp.ToList();
+				}
+				if (!unsavedContent.Any())
+				{
+					continue;
+				}
 
-			if (!unsavedContent.Any())
-			{
-				return;
+				//Save all the links then say how many were saved
+				var len = unsavedContent.Max(x => x.Score).ToString().Length;
+				var format = unsavedContent.OrderByDescending(x => x.Score).Select(x => $"{x.Score.ToString().PadLeft(len, '0')} {x.Uri}");
+				using (var writer = file.AppendText())
+				{
+					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Utils.FormatDateTimeForSaving()}");
+					writer.WriteLine(String.Join(Environment.NewLine, format));
+					writer.WriteLine();
+				}
+				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
 			}
-
-			//Save all the links then say how many were saved
-			var title = Path.GetFileName(file.FullName).Replace("_", " ").FormatTitle();
-			var len = unsavedContent.Max(x => x.Score).ToString().Length;
-			var format = unsavedContent.OrderByDescending(x => x.Score).Select(x => $"{x.Score.ToString().PadLeft(len, '0')} {x.Uri}");
-			var write = String.Join(Environment.NewLine, format);
-			using (var writer = file.AppendText())
-			{
-				writer.WriteLine($"{title} - {Utils.FormatDateTimeForSaving()}");
-				writer.WriteLine(write);
-				writer.WriteLine();
-			}
-			Console.WriteLine($"Added {unsavedContent.Count()} links to {file.Name}.");
-			contentLinks.Clear();
 		}
+
 		private void DisplayHelp(string input)
 		{
 			if (CommandLineParserOptions.Contains(input))
