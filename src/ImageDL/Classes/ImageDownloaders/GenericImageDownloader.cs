@@ -1,16 +1,14 @@
-﻿using ImageDL.Classes;
+﻿using ImageDL.Classes.ImageGatherers;
 using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace ImageDL.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloaders
 {
 	/// <summary>
 	/// Downloads images from a site.
@@ -79,7 +77,7 @@ namespace ImageDL.ImageDownloaders
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		public async Task<string> DownloadImageAsync(UriImageGatherer gatherer, TPost post, Uri uri)
+		public async Task<string> DownloadImageAsync(ImageGatherer gatherer, TPost post, Uri uri)
 		{
 			if (!String.IsNullOrWhiteSpace(gatherer.Error))
 			{
@@ -149,7 +147,7 @@ namespace ImageDL.ImageDownloaders
 		protected abstract Task<List<TPost>> GatherPostsAsync();
 		protected abstract void WritePostToConsole(TPost post, int count);
 		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
-		protected abstract Task<UriImageGatherer> CreateGathererAsync(TPost post);
+		protected abstract Task<ImageGatherer> CreateGathererAsync(TPost post);
 		protected abstract ContentLink CreateContentLink(TPost post, Uri uri, string reason);
 	}
 }

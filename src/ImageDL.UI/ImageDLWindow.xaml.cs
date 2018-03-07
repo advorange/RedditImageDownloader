@@ -1,4 +1,4 @@
-﻿using ImageDL.ImageDownloaders;
+﻿using ImageDL.Classes.ImageDownloaders;
 using ImageDL.UI.Classes;
 using ImageDL.UI.Classes.Writers;
 using ImageDL.UI.Utilities;

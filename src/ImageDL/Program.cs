@@ -1,4 +1,4 @@
-﻿using ImageDL.ImageDownloaders;
+﻿using ImageDL.Classes.ImageDownloaders;
 using ImageDL.Utilities;
 using System;
 using System.IO;

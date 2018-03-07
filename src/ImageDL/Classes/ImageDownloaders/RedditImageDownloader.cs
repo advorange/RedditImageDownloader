@@ -1,4 +1,4 @@
-﻿using ImageDL.Classes;
+﻿using ImageDL.Classes.ImageGatherers;
 using ImageDL.Utilities;
 using RedditSharp;
 using RedditSharp.Things;
@@ -10,7 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImageDL.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloaders
 {
 	/// <summary>
 	/// Downloads images from reddit.
@@ -106,9 +106,9 @@ namespace ImageDL.ImageDownloaders
 			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
 			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 		}
-		protected override async Task<UriImageGatherer> CreateGathererAsync(Post post)
+		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)
 		{
-			return await UriImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
+			return await ImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
 		}
 		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)
 		{

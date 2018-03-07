@@ -1,5 +1,4 @@
-﻿using ImageDL.Classes;
-using ImageDL.Utilities;
+﻿using ImageDL.Utilities;
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageDL.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloaders
 {
 	/// <summary>
 	/// Non generic abstraction of <see cref="GenericImageDownloader{TPost}"/>.
