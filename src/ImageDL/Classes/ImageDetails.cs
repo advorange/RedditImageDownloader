@@ -17,6 +17,11 @@ namespace ImageDL.Classes
 	/// </summary>
 	public struct ImageDetails
 	{
+		//For caclulating brightness, source: https://stackoverflow.com/a/596243
+		private const float RED_WEIGHTING = 0.299f;
+		private const float GREEN_WEIGHTING = 0.587f;
+		private const float BLUE_WEIGHTING = 0.114f;
+
 		/// <summary>
 		/// The location of the source of the image.
 		/// </summary>
@@ -50,16 +55,52 @@ namespace ImageDL.Classes
 		/// <param name="s">The image stream.</param>
 		/// <param name="thumbnailSize">The size to make the thumbnail.</param>
 		/// <exception cref="NotSupportedException">Occurs when the image format is not argb32bpp or something which can be converted to that.</exception>
+		/// <exception cref="ArgumentException">When the stream length is less than 1.</exception>
 		public ImageDetails(Uri uri, FileInfo file, Stream s, int thumbnailSize)
 		{
+			if (s.Length < 1)
+			{
+				throw new ArgumentException("Stream length must be greater than 0.", nameof(s));
+			}
+
 			Uri = uri;
 			File = file;
+			ThumbnailSize = thumbnailSize;
 
+			var frame = GetFrame(s);
+			Width = frame.PixelWidth;
+			Height = frame.PixelHeight;
+
+			using (var bm = GenerateThumbnail(s, thumbnailSize))
+			{
+				//Source: https://stackoverflow.com/a/19586876
+				//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
+				var size = new Rectangle(Point.Empty, new Size(bm.Width, bm.Height));
+				var data = bm.LockBits(size, ImageLockMode.ReadOnly, bm.PixelFormat);
+
+				var pixelSize = Image.GetPixelFormatSize(data.PixelFormat) / 8;
+				if (pixelSize != 4)
+				{
+					throw new NotSupportedException("invalid image format: must be argb32bpp or able to be converted to that");
+				}
+				var padding = data.Stride - (data.Width * pixelSize);
+
+				//Copy the image's data to a new array
+				var bytes = new byte[data.Height * data.Stride];
+				Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
+
+				HashedThumbnail = GenerateThumbnailHash(bytes, data.Width, data.Height, padding, pixelSize);
+			}
+		}
+
+		private static BitmapFrame GetFrame(Stream s)
+		{
 			//Find out the standard version's size
 			s.Seek(0, SeekOrigin.Begin);
-			var decoder = BitmapDecoder.Create(s, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.Default);
-			Width = decoder.Frames[0].PixelWidth;
-			Height = decoder.Frames[0].PixelHeight;
+			return BitmapDecoder.Create(s, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.Default).Frames[0];
+		}
+		private static Bitmap GenerateThumbnail(Stream s, int thumbnailSize)
+		{
 			s.Seek(0, SeekOrigin.Begin);
 
 			//Create an image with a small size
@@ -82,61 +123,39 @@ namespace ImageDL.Classes
 			fcbm.EndInit();
 			fcbm.Freeze();
 
-			MemoryStream ms = null;
-			Bitmap bm = null;
-			try
+			using (var ms = new MemoryStream())
 			{
 				//Convert the small argb32bpp image to a memory stream
 				//So that ms can then be used in a bitmap to get all its pixels easily
 				var enc = new BmpBitmapEncoder();
 				enc.Frames.Add(BitmapFrame.Create(fcbm));
-				enc.Save(ms = new MemoryStream());
+				enc.Save(ms);
 
-				bm = new Bitmap(ms);
-				//Source: https://stackoverflow.com/a/19586876
-				//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
-				var data = bm.LockBits(new Rectangle(Point.Empty, new Size(bm.Width, bm.Height)), ImageLockMode.ReadOnly, bm.PixelFormat);
-				var pixelSize = Image.GetPixelFormatSize(data.PixelFormat) / 8;
-				var padding = data.Stride - (data.Width * pixelSize);
-
-				//Copy the image's data to a new array
-				var bytes = new byte[data.Height * data.Stride];
-				Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
-
-				if (pixelSize != 4)
-				{
-					throw new NotSupportedException("invalid image format: must be argb32bpp or able to be converted to that");
-				}
-
-				var brightnesses = new List<float>();
-				var totalBrightness = 0f;
-				var index = 0;
-				for (var y = 0; y < data.Height; y++)
-				{
-					for (var x = 0; x < data.Width; x++)
-					{
-						var a = bytes[index + 3];
-						var r = bytes[index + 2];
-						var g = bytes[index + 1];
-						var b = bytes[index];
-						var brightness = (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
-						brightnesses.Add(brightness);
-						totalBrightness += brightness;
-						index += pixelSize;
-					}
-					index += padding;
-				}
-				var avgBrightness = totalBrightness / brightnesses.Count;
-
-				HashedThumbnail = brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
-				ThumbnailSize = thumbnailSize;
+				return new Bitmap(ms);
 			}
-			finally
+		}
+		private static ImmutableArray<bool> GenerateThumbnailHash(byte[] bytes, int width, int height, int padding, int pixelSize)
+		{
+			var brightnesses = new List<float>();
+			var totalBrightness = 0f;
+			var index = 0;
+			for (var y = 0; y < height; y++)
 			{
-				bm?.Dispose();
-				ms?.Dispose();
-				s.Seek(0, SeekOrigin.Begin);
+				for (var x = 0; x < width; x++)
+				{
+					var a = bytes[index + 3];
+					var r = bytes[index + 2];
+					var g = bytes[index + 1];
+					var b = bytes[index];
+					var brightness = (RED_WEIGHTING * r + GREEN_WEIGHTING * g + BLUE_WEIGHTING * b) * (a / 255f);
+					brightnesses.Add(brightness);
+					totalBrightness += brightness;
+					index += pixelSize;
+				}
+				index += padding;
 			}
+			var avgBrightness = totalBrightness / brightnesses.Count;
+			return brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
 		}
 
 		/// <summary>

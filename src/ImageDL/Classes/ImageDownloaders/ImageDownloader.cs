@@ -1,4 +1,5 @@
-﻿using ImageDL.Utilities;
+﻿using ImageDL.Classes.ImageGatherers;
+using ImageDL.Utilities;
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
@@ -187,6 +188,17 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// The options for setting settings from the command line.
 		/// </summary>
 		public OptionSet CommandLineParserOptions;
+		/// <summary>
+		/// How to scrape from specific websites.
+		/// </summary>
+		public List<WebsiteScraper> Scrapers = new List<WebsiteScraper>
+		{
+			new DeviantArtScraper(),
+			new ImgurScraper(),
+			new InstagramScraper(),
+			new PixivScraper(),
+			new TumblrScraper(),
+		};
 		/// <summary>
 		/// Indicates when a setting has been set.
 		/// </summary>

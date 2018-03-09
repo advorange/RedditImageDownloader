@@ -235,12 +235,21 @@ namespace ImageDL.Utilities
 		public static HttpWebRequest CreateWebRequest(this Uri uri)
 		{
 			var req = (HttpWebRequest)WebRequest.Create(uri);
+
+			req.Headers["Accept-Language"] = "en-US"; //Make sure we get English results
 			req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
-			req.Credentials = CredentialCache.DefaultCredentials;
+			req.Referer = uri.ToString(); //Pixiv requires a referer that is a valid link on Pixiv. You can pass in the same link.
+
 			req.Timeout = 5000;
 			req.ReadWriteTimeout = 5000;
-			req.AllowAutoRedirect = true; //True so imgur can redirect to correct webpages
+			req.AllowAutoRedirect = true; //So Imgur can redirect to correct webpages
+
+			req.Credentials = CredentialCache.DefaultCredentials;
+			req.Proxy = new WebProxy(); //One of my computers throws an exception if the proxy is null
+
 			req.CookieContainer = new CookieContainer();
+			req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
+
 			return req;
 		}
 	}

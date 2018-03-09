@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes.ImageDownloaders;
+using ImageDL.Classes.ImageGatherers;
 using ImageDL.Utilities;
 using System;
 using System.IO;
@@ -16,6 +17,8 @@ namespace ImageDL
 		{
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
+
+			await new PixivScraper().ScrapeAsync(new Uri(@"https://www.pixiv.net/member_illust.php?mode=medium&illust_id=66985567")).ConfigureAwait(false);
 
 			//TODO: work on this
 			switch (Console.ReadLine())

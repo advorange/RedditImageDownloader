@@ -1,41 +1,42 @@
 ﻿using HtmlAgilityPack;
-using ImageDL.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
-	public sealed class TumblrScraper : IWebsiteScraper
+	public sealed class TumblrScraper : WebsiteScraper
 	{
-		private static Regex _DomainRegex = new Regex(@".+\.(tumblr)\..+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static Regex _DomainRegex = new Regex(@"\.(tumblr)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"^(?!.*(media\.tumblr)).*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public bool IsFromDomain(Uri uri)
+		public TumblrScraper() : base(true) { }
+
+		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
 		}
-		public bool RequiresScraping(Uri uri)
+		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		public string EditUri(Uri uri)
+		protected override Uri ProtectedEditUri(Uri uri)
 		{
 			//If blog post will throw exception but gets caught when downloading
-			return uri.ToString().Replace("/post/", "/image/");
+			return new Uri(uri.ToString().Replace("/post/", "/image/"));
 		}
-		public (IEnumerable<string> Uris, string error) Scrape(HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants().Any(x => x.GetAttributeValue("id", null) == "safemode_actions_display"))
 			{
-				return (Enumerable.Empty<string>(), "this tumblr post is locked behind safemode");
+				return Task.FromResult(new ScrapeResult(Enumerable.Empty<string>(), "this tumblr post is locked behind safemode"));
 			}
 
 			var meta = doc.DocumentNode.Descendants("meta");
 			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return (images.Select(x => x.GetAttributeValue("content", null)), null);
+			return Task.FromResult(new ScrapeResult(images.Select(x => x.GetAttributeValue("content", null)), null));
 		}
 	}
 }

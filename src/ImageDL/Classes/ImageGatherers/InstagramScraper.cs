@@ -1,34 +1,35 @@
 ﻿using HtmlAgilityPack;
-using ImageDL.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
-	public sealed class InstagramScraper : IWebsiteScraper
+	public sealed class InstagramScraper : WebsiteScraper
 	{
-		private static Regex _DomainRegex = new Regex(@".+\.(instagram)\..+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static Regex _DomainRegex = new Regex(@"\.(instagram)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"(\/p\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public bool IsFromDomain(Uri uri)
+		public InstagramScraper() : base(true) { }
+
+		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
 		}
-		public bool RequiresScraping(Uri uri)
+		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		public string EditUri(Uri uri)
+		protected override Uri ProtectedEditUri(Uri uri)
 		{
-			return uri.ToString();
+			return uri;
 		}
-		public (IEnumerable<string> Uris, string error) Scrape(HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			var meta = doc.DocumentNode.Descendants("meta");
 			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return (images.Select(x => x.GetAttributeValue("content", null)), null);
+			return Task.FromResult(new ScrapeResult(images.Select(x => x.GetAttributeValue("content", null)), null));
 		}
 	}
 }

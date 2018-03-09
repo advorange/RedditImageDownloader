@@ -108,7 +108,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		}
 		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)
 		{
-			return await ImageGatherer.CreateGatherer(post.Url).ConfigureAwait(false);
+			return await ImageGatherer.CreateGatherer(Scrapers, post.Url).ConfigureAwait(false);
 		}
 		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)
 		{

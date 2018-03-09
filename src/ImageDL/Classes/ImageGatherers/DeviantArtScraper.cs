@@ -1,30 +1,31 @@
 ﻿using HtmlAgilityPack;
-using ImageDL.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
-	public sealed class DeviantArtScraper : IWebsiteScraper
+	public sealed class DeviantArtScraper : WebsiteScraper
 	{
-		private static Regex _DomainRegex = new Regex(@".+\.(deviantart)\..+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static Regex _DomainRegex = new Regex(@"\.(deviantart)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"(\/art\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public bool IsFromDomain(Uri uri)
+		public DeviantArtScraper() : base(true) { }
+
+		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
 		}
-		public bool RequiresScraping(Uri uri)
+		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		public string EditUri(Uri uri)
+		protected override Uri ProtectedEditUri(Uri uri)
 		{
-			return uri.ToString();
+			return uri;
 		}
-		public (IEnumerable<string> Uris, string error) Scrape(HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//18+ filter (shouldn't be reached since the cookies are set)
 			if (doc.DocumentNode.Descendants("div").Any(x => x.HasClass("dev-content-mature")))
@@ -44,12 +45,12 @@ namespace ImageDL.Classes.ImageGatherers
 					return w < 0 || s < 0 || w > s ? null : x.Substring(w, s - w);
 				});
 
-				return img.Any() ? (img, null) : (Enumerable.Empty<string>(), "this deviantart post is locked behind mature content");
+				return Task.FromResult(new ScrapeResult(img, img.Any() ? null : "this deviantart post is locked behind mature content"));
 			}
 
 			var images = doc.DocumentNode.Descendants("img");
 			var deviations = images.Where(x => x.GetAttributeValue("data-embed-type", null) == "deviation");
-			return (deviations.Select(x => x.GetAttributeValue("src", null)), null);
+			return Task.FromResult(new ScrapeResult(deviations.Select(x => x.GetAttributeValue("src", null)), null));
 		}
 	}
 }

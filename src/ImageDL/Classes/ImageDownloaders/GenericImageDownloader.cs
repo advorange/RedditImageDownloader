@@ -83,7 +83,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			{
 				return gatherer.Error;
 			}
-			else if (gatherer.IsVideo)
+			else if (gatherer.IsAnimated)
 			{
 				_Links.Add(CreateContentLink(post, gatherer.OriginalUri, "Animated Content"));
 				return $"{gatherer.OriginalUri} is animated content (gif/video).";
@@ -130,6 +130,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				if (_ImageComparer.TryStore(hash, details))
 				{
 					//Add to list if the download succeeds
+					ms.Seek(0, SeekOrigin.Begin);
 					await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
 					return $"Saved {uri} to {file}.";
 				}
