@@ -55,6 +55,7 @@ namespace ImageDL.Classes.ImageGatherers
 		{
 			OriginalUri = uri;
 			Scraper = scrapers.SingleOrDefault(x => x.IsFromWebsite(OriginalUri));
+			EditedUri = Scraper == null ? OriginalUri : Scraper.EditUri(OriginalUri);
 			IsAnimated = AnimatedContentDomains.Any(x => x.IsMatch(OriginalUri.ToString()));
 		}
 
