@@ -12,24 +12,24 @@ namespace ImageDL.Classes
 		/// </summary>
 		public readonly Uri Uri;
 		/// <summary>
-		/// The score of the content.
+		/// The number to associate with this content. Can be score, id, etc.
 		/// </summary>
-		public readonly int Score;
+		public readonly int AssociatedNumber;
 		/// <summary>
 		/// The reason why this wasn't downloaded. E.G. failed download, not a static image.
 		/// </summary>
 		public readonly string Reason;
 
-		public ContentLink(Uri uri, int score, string reason)
+		public ContentLink(Uri uri, int associatedNumber, string reason)
 		{
 			Uri = uri;
-			Score = score;
+			AssociatedNumber = associatedNumber;
 			Reason = reason;
 		}
 
 		public override string ToString()
 		{
-			return $"{Score} {Uri}";
+			return $"{AssociatedNumber} {Uri}";
 		}
 	}
 }

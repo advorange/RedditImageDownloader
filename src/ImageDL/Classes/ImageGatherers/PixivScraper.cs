@@ -17,9 +17,8 @@ namespace ImageDL.Classes.ImageGatherers
 		private static Regex _RemoveC = new Regex(@"\/c\/(\d*?)x(\d*?)\/", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		//Find _p0_ in a url so we can replace it with an incremented version to get the next image in the post
 		private static Regex _FindP = new Regex(@"_p(\d*?)_", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		//Replace the mode with manga so all the images can easily be gotten
 		private static Regex _Mode = new Regex(@"mode=.*?&", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-		public PixivScraper() : base(false) { }
 
 		public override bool IsFromWebsite(Uri uri)
 		{
@@ -29,31 +28,31 @@ namespace ImageDL.Classes.ImageGatherers
 		{
 			return true;
 		}
-		protected override Uri ProtectedEditUri(Uri uri)
+		public override Uri EditUri(Uri uri)
 		{
 			return new Uri(_Mode.Replace(_RemoveC.Replace(uri.ToString(), "/"), "mode=manga&"));
 		}
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override async Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants("p").Any(x => x.HasClass("title") && x.InnerText.Contains("R-18")))
 			{
-				return Task.FromResult(new ScrapeResult(Enumerable.Empty<string>(), "this pixiv post is locked behind the R-18 filter"));
+				return new ScrapeResult(Enumerable.Empty<string>(), "this pixiv post is locked behind the R-18 filter");
 			}
 
 			var mode = HttpUtility.ParseQueryString(uri.Query)["mode"];
 			switch (mode)
 			{
 				case "medium": //Shouldn't reach this point since the uri will be edited to mode=manga
-					return Task.FromResult(ScrapeMedium(doc));
+					return await ScrapeMediumAsync(doc).ConfigureAwait(false);
 				case "manga":
-					return Task.FromResult(ScrapeManga(doc));
+					return ScrapeManga(doc);
 				default:
 					throw new InvalidOperationException($"Unknown mode supplied: {mode}.");
 			}
 		}
 
-		private ScrapeResult ScrapeMedium(HtmlDocument doc)
+		private async Task<ScrapeResult> ScrapeMediumAsync(HtmlDocument doc)
 		{
 			var imageContainer = doc.DocumentNode.Descendants("div").Where(x => x.HasClass("img-container"));
 			var image = imageContainer.SelectMany(x => x.Descendants("img")).SingleOrDefault();
@@ -68,7 +67,7 @@ namespace ImageDL.Classes.ImageGatherers
 					var req = uri.CreateWebRequest();
 					req.Method = WebRequestMethods.Http.Head;
 
-					using (var resp = (HttpWebResponse)req.GetResponse())
+					using (var resp = (HttpWebResponse)(await req.GetResponseAsync().ConfigureAwait(false)))
 					{
 						if (resp.StatusCode != HttpStatusCode.OK)
 						{

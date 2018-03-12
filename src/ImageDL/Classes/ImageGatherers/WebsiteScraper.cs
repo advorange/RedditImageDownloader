@@ -12,26 +12,15 @@ namespace ImageDL.Classes.ImageGatherers
 {
 	public abstract class WebsiteScraper
 	{
-		public readonly bool RemoveOptionalArguments;
-
-		public WebsiteScraper(bool removeOptionalArguments)
-		{
-			RemoveOptionalArguments = removeOptionalArguments;
-		}
-
 		/// <summary>
-		/// Can remove query parameters if that was set as true in the constructor, and calls the custom implementation after.
+		/// Removes query parameters from a url.
 		/// </summary>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		public Uri EditUri(Uri uri)
+		public Uri RemoveQuery(Uri uri)
 		{
 			var u = uri.ToString();
-			if (RemoveOptionalArguments && u.CaseInsIndexOf("?", out var pos))
-			{
-				u = u.Substring(0, pos);
-			}
-			return ProtectedEditUri(new Uri(u));
+			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : uri;
 		}
 		/// <summary>
 		/// Attempts to get images from <paramref name="uri"/>. Will not edit <paramref name="uri"/> at all. 
@@ -63,7 +52,7 @@ namespace ImageDL.Classes.ImageGatherers
 
 		public abstract bool IsFromWebsite(Uri uri);
 		public abstract bool RequiresScraping(Uri uri);
-		protected abstract Uri ProtectedEditUri(Uri uri);
+		public abstract Uri EditUri(Uri uri);
 		protected abstract Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc);
 
 		public sealed class ScrapeResult

@@ -18,7 +18,12 @@ namespace ImageDL
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
 
-			await new PixivScraper().ScrapeAsync(new Uri(@"https://www.pixiv.net/member_illust.php?mode=medium&illust_id=66985567")).ConfigureAwait(false);
+			var test = new DanbooruImageDownloader
+			{
+				TagString = "1girl thighhighs",
+				AmountToDownload = 1000,
+			};
+			await test.StartAsync().ConfigureAwait(false);
 
 			//TODO: work on this
 			switch (Console.ReadLine())

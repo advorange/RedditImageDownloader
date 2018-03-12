@@ -11,8 +11,6 @@ namespace ImageDL.Classes.ImageGatherers
 		private static Regex _DomainRegex = new Regex(@"\.(deviantart)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"(\/art\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public DeviantArtScraper() : base(true) { }
-
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
@@ -21,9 +19,9 @@ namespace ImageDL.Classes.ImageGatherers
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		protected override Uri ProtectedEditUri(Uri uri)
+		public override Uri EditUri(Uri uri)
 		{
-			return uri;
+			return RemoveQuery(uri);
 		}
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{

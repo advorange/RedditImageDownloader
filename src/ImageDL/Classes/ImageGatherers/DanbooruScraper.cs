@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
-	public sealed class InstagramScraper : WebsiteScraper
+	public sealed class DanbooruScraper : WebsiteScraper
 	{
-		private static Regex _DomainRegex = new Regex(@"\.(instagram)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static Regex _ScrapeRegex = new Regex(@"(\/p\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static Regex _DomainRegex = new Regex(@"(danbooru)\.(donmai)\.us", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static Regex _ScrapeRegex = new Regex(@"(\/posts\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		public override bool IsFromWebsite(Uri uri)
 		{
@@ -25,9 +25,7 @@ namespace ImageDL.Classes.ImageGatherers
 		}
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
-			var meta = doc.DocumentNode.Descendants("meta");
-			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return Task.FromResult(new ScrapeResult(images.Select(x => x.GetAttributeValue("content", null)), null));
+			throw new NotImplementedException();
 		}
 	}
 }

@@ -443,8 +443,8 @@ namespace ImageDL.Classes.ImageDownloaders
 				}
 
 				//Save all the links then say how many were saved
-				var len = unsavedContent.Max(x => x.Score).ToString().Length;
-				var format = unsavedContent.OrderByDescending(x => x.Score).Select(x => $"{x.Score.ToString().PadLeft(len, '0')} {x.Uri}");
+				var len = unsavedContent.Max(x => x.AssociatedNumber).ToString().Length;
+				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber).Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
 				using (var writer = file.AppendText())
 				{
 					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Utils.FormatDateTimeForSaving()}");

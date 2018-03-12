@@ -13,8 +13,6 @@ namespace ImageDL.Classes.ImageGatherers
 		private static Regex _DomainRegex = new Regex(@"\.(imgur)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"(\/a\/|\/gallery\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public ImgurScraper() : base(true) { }
-
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
@@ -23,9 +21,9 @@ namespace ImageDL.Classes.ImageGatherers
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		protected override Uri ProtectedEditUri(Uri uri)
+		public override Uri EditUri(Uri uri)
 		{
-			var u = uri.ToString();
+			var u = RemoveQuery(uri).ToString();
 			u = String.IsNullOrEmpty(Path.GetExtension(u)) ? $"https://i.imgur.com/{u.Substring(u.LastIndexOf('/') + 1)}.png" : u;
 			return new Uri(u.Replace("_d", "")); //Some thumbnail thing
 		}

@@ -16,7 +16,9 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
 	public abstract class GenericImageDownloader<TPost> : ImageDownloader
 	{
-		public GenericImageDownloader() : base() { }
+		private const int MAX_FILE_PATH_LENGTH = 255;
+		private const string ANIMATED_CONTENT = "Animated Content";
+		private const string FAILED_DOWNLOADS = "Failed Downloads";
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
@@ -30,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			var posts = await GatherPostsAsync().ConfigureAwait(false);
 			if (!posts.Any())
 			{
-				Console.WriteLine("Unable to find any images matching the search criteria.");
+				Console.WriteLine("Unable to find any posts matching the search criteria.");
 				return;
 			}
 
@@ -58,7 +60,7 @@ namespace ImageDL.Classes.ImageDownloaders
 					catch (WebException e)
 					{
 						e.Write();
-						_Links.Add(CreateContentLink(post, imageUri, "Failed Download"));
+						_Links.Add(CreateContentLink(post, imageUri, FAILED_DOWNLOADS));
 					}
 				}
 			}
@@ -85,7 +87,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 			else if (gatherer.IsAnimated)
 			{
-				_Links.Add(CreateContentLink(post, gatherer.OriginalUri, "Animated Content"));
+				_Links.Add(CreateContentLink(post, gatherer.OriginalUri, ANIMATED_CONTENT));
 				return $"{gatherer.OriginalUri} is animated content (gif/video).";
 			}
 
@@ -98,14 +100,20 @@ namespace ImageDL.Classes.ImageDownloaders
 				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
 				{
-					_Links.Add(CreateContentLink(post, uri, "Animated Content"));
+					_Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
 					return $"{uri} is animated content (gif/video).";
 				}
 				if (!resp.ContentType.Contains("image/"))
 				{
 					return $"{uri} is not an image.";
 				}
-				var file = new FileInfo(Path.Combine(Directory, GenerateFileName(post, resp, uri)));
+
+				var fileName = Path.Combine(Directory, GenerateFileName(post, resp, uri));
+				if (fileName.Length > MAX_FILE_PATH_LENGTH)
+				{
+					throw new InvalidOperationException($"file path + file name may not be longer than {MAX_FILE_PATH_LENGTH} characters in total.");
+				}
+				var file = new FileInfo(fileName);
 				if (File.Exists(file.FullName))
 				{
 					return $"{uri} is already saved as {file}.";

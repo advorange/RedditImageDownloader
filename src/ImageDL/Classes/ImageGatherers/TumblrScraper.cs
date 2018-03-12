@@ -11,8 +11,6 @@ namespace ImageDL.Classes.ImageGatherers
 		private static Regex _DomainRegex = new Regex(@"\.(tumblr)\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static Regex _ScrapeRegex = new Regex(@"^(?!.*(media\.tumblr)).*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-		public TumblrScraper() : base(true) { }
-
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return _DomainRegex.IsMatch(uri.Host);
@@ -21,10 +19,10 @@ namespace ImageDL.Classes.ImageGatherers
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
-		protected override Uri ProtectedEditUri(Uri uri)
+		public override Uri EditUri(Uri uri)
 		{
 			//If blog post will throw exception but gets caught when downloading
-			return new Uri(uri.ToString().Replace("/post/", "/image/"));
+			return new Uri(RemoveQuery(uri).ToString().Replace("/post/", "/image/"));
 		}
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{

@@ -39,12 +39,11 @@ namespace ImageDL.Utilities
 		/// </summary>
 		/// <param name="source"></param>
 		/// <param name="search"></param>
-		/// <param name="position"></param>
+		/// <param name="index"></param>
 		/// <returns></returns>
-		public static bool CaseInsIndexOf(this string source, string search, out int position)
+		public static bool CaseInsIndexOf(this string source, string search, out int index)
 		{
-			position = source == null || search == null ? -1 : source.IndexOf(search, StringComparison.OrdinalIgnoreCase);
-			return position >= 0;
+			return (index = source == null || search == null ? -1 : source.IndexOf(search, StringComparison.OrdinalIgnoreCase)) >= 0;
 		}
 		/// <summary>
 		/// Utilizes <see cref="StringComparison.OrdinalIgnoreCase"/> to check if a string ends with a search string.
@@ -125,11 +124,11 @@ namespace ImageDL.Utilities
 		public static string[] SplitLikeCommandLine(this string input)
 		{
 			return input.Split('"').Select((x, index) =>
-						{
-							return index % 2 == 0
-								? x.Split(new[] { ' ' })
-								: new[] { x };
-						}).SelectMany(x => x).Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
+			{
+				return index % 2 == 0
+					? x.Split(new[] { ' ' })
+					: new[] { x };
+			}).SelectMany(x => x).Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
 		}
 		/// <summary>
 		/// Returns <see cref="DateTime.UtcNow"/> displaying years down to seconds.
