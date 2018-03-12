@@ -130,13 +130,14 @@ namespace ImageDL.Classes.ImageDownloaders
 				//And with this reponse stream seeks cannot be used on it.
 				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
 
+				//TODO: parse size differently
 				img = Image.FromStream(ms, false, false);
 				if (img.Width < MinWidth || img.Height < MinHeight)
 				{
 					return $"{uri} is too small ({img.Width}x{img.Height}).";
 				}
 
-				if (ImageComparer == null || ImageComparer.TryStore(uri, file, ms, img, out var error))
+				if (ImageComparer == null || ImageComparer.TryStore(uri, file, ms, out var error))
 				{
 					//Add to list if the download succeeds
 					ms.Seek(0, SeekOrigin.Begin);

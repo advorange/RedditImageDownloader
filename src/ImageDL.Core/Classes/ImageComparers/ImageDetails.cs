@@ -1,7 +1,6 @@
 ﻿using ImageDL.Utilities;
 using System;
 using System.Collections.Immutable;
-using System.Drawing;
 using System.IO;
 
 namespace ImageDL.Classes.ImageComparers
@@ -42,11 +41,11 @@ namespace ImageDL.Classes.ImageComparers
 		/// <param name="thumbnailSize">The size to make the thumbnail.</param>
 		/// <exception cref="NotSupportedException">Occurs when the image format is not argb32bpp or something which can be converted to that.</exception>
 		/// <exception cref="ArgumentException">When the stream length is less than 1.</exception>
-		public static T Create<T>(Uri uri, FileInfo file, Stream s, Image image, int thumbnailSize) where T : ImageDetails, new()
+		public static T Create<T>(Uri uri, FileInfo file, Stream s, int thumbnailSize) where T : ImageDetails, new()
 		{
-			if (image == null)
+			if (s == null || s.Length < 1)
 			{
-				throw new ArgumentException("Image cannot be null.", nameof(image));
+				throw new ArgumentException("Stream cannot be null or empty.", nameof(s));
 			}
 
 			var details = new T
@@ -54,9 +53,10 @@ namespace ImageDL.Classes.ImageComparers
 				Uri = uri,
 				File = file,
 				ThumbnailSize = thumbnailSize,
-				Width = image.Width,
-				Height = image.Height,
 			};
+			(int width, int height) = details.GetSize(s);
+			details.Width = width;
+			details.Height = height;
 			details.HashedThumbnail = details.GenerateThumbnailHash(s, thumbnailSize);
 			return details;
 		}
@@ -82,10 +82,9 @@ namespace ImageDL.Classes.ImageComparers
 			try
 			{
 				using (var s = file.OpenRead())
-				using (var img = Image.FromStream(s, false, false))
 				{
 					md5Hash = s.MD5Hash();
-					details = Create<T>(new Uri(file.FullName), file, s, img, thumbnailSize);
+					details = Create<T>(new Uri(file.FullName), file, s, thumbnailSize);
 					return true;
 				}
 			}
@@ -129,6 +128,12 @@ namespace ImageDL.Classes.ImageComparers
 			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= percentageForSimilarity;
 		}
 
+		/// <summary>
+		/// Get the size of an image.
+		/// </summary>
+		/// <param name="s"></param>
+		/// <returns></returns>
+		protected abstract (int Width, int Height) GetSize(Stream s);
 		/// <summary>
 		/// Get the thumbnail hash so these can be more accurately compared.
 		/// </summary>

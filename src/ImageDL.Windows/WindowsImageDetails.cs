@@ -1,13 +1,10 @@
 ﻿using ImageDL.Classes.ImageComparers;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
+using Media = System.Windows.Media;
 
 namespace ImageDL.Windows
 {
@@ -20,51 +17,16 @@ namespace ImageDL.Windows
 		private const float RED_WEIGHTING = 0.299f;
 		private const float GREEN_WEIGHTING = 0.587f;
 		private const float BLUE_WEIGHTING = 0.114f;
+		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
 
-		protected override ImmutableArray<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
+		protected override (int Width, int Height) GetSize(Stream s)
 		{
-			using (var bm = GenerateThumbnail(s, thumbnailSize))
-			{
-				//Source: https://stackoverflow.com/a/19586876
-				//Lock the image once (GetPixel locks and unlocks a lot of times, it's quicker to do it this way)
-				var size = new Rectangle(Point.Empty, new Size(bm.Width, bm.Height));
-				var data = bm.LockBits(size, ImageLockMode.ReadOnly, bm.PixelFormat);
-
-				var pixelSize = Image.GetPixelFormatSize(data.PixelFormat) / 8;
-				if (pixelSize != 4)
-				{
-					throw new NotSupportedException("invalid image format: must be argb32bpp or able to be converted to that");
-				}
-				var padding = data.Stride - (data.Width * pixelSize);
-
-				//Copy the image's data to a new array
-				var bytes = new byte[data.Height * data.Stride];
-				Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
-
-				var brightnesses = new List<float>();
-				var totalBrightness = 0f;
-				var index = 0;
-				for (var y = 0; y < Height; y++)
-				{
-					for (var x = 0; x < Width; x++)
-					{
-						var a = bytes[index + 3];
-						var r = bytes[index + 2];
-						var g = bytes[index + 1];
-						var b = bytes[index];
-						var brightness = (RED_WEIGHTING * r + GREEN_WEIGHTING * g + BLUE_WEIGHTING * b) * (a / 255f);
-						brightnesses.Add(brightness);
-						totalBrightness += brightness;
-						index += pixelSize;
-					}
-					index += padding;
-				}
-				var avgBrightness = totalBrightness / brightnesses.Count;
-				return brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
-			}
+			//Find out the standard version's size
+			s.Seek(0, SeekOrigin.Begin);
+			var frame = BitmapDecoder.Create(s, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.Default).Frames[0];
+			return (frame.PixelWidth, frame.PixelHeight);
 		}
-
-		private Bitmap GenerateThumbnail(Stream s, int thumbnailSize)
+		protected override ImmutableArray<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -84,20 +46,35 @@ namespace ImageDL.Windows
 			var fcbm = new FormatConvertedBitmap();
 			fcbm.BeginInit();
 			fcbm.Source = bmi;
-			fcbm.DestinationFormat = System.Windows.Media.PixelFormats.Bgra32;
+			fcbm.DestinationFormat = PIXEL_FORMAT;
 			fcbm.EndInit();
 			fcbm.Freeze();
 
-			using (var ms = new MemoryStream())
-			{
-				//Convert the small argb32bpp image to a memory stream
-				//So that ms can then be used in a bitmap to get all its pixels easily
-				var enc = new BmpBitmapEncoder();
-				enc.Frames.Add(BitmapFrame.Create(fcbm));
-				enc.Save(ms);
+			//Copy the image's data to a new array
+			//Mostly gotten from here https://social.msdn.microsoft.com/Forums/vstudio/en-US/82a5731e-e201-4aaf-8d4b-062b138338fe/getting-pixel-information-from-a-bitmapimage?forum=wpf
+			var pixelSize = PIXEL_FORMAT.BitsPerPixel / 8;
+			var stride = fcbm.PixelWidth * pixelSize;
+			var bytes = new byte[fcbm.PixelHeight * stride];
+			fcbm.CopyPixels(bytes, stride, 0);
 
-				return new Bitmap(ms);
+			var brightnesses = new List<float>();
+			var totalBrightness = 0f;
+			for (var y = 0; y < fcbm.PixelHeight; ++y)
+			{
+				for (var x = 0; x < fcbm.PixelWidth; ++x)
+				{
+					var index = y * stride + x * pixelSize;
+					var r = bytes[index];
+					var g = bytes[index + 1];
+					var b = bytes[index + 2];
+					var a = bytes[index + 3];
+					var brightness = (RED_WEIGHTING * r + GREEN_WEIGHTING * g + BLUE_WEIGHTING * b) * (a / 255f);
+					brightnesses.Add(brightness);
+					totalBrightness += brightness;
+				}
 			}
+			var avgBrightness = totalBrightness / brightnesses.Count;
+			return brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
 		}
 	}
 }

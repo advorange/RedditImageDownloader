@@ -3,11 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.Core", "src\ImageDL.Core\ImageDL.Core.csproj", "{2D097060-95DF-4D63-82C3-D72182ECE92F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageDL.Core", "src\ImageDL.Core\ImageDL.Core.csproj", "{2D097060-95DF-4D63-82C3-D72182ECE92F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.Windows", "src\ImageDL.Windows\ImageDL.Windows.csproj", "{895DEFB0-35D6-46F1-8C8B-987380A79D28}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

@@ -8,7 +8,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -38,7 +37,7 @@ namespace ImageDL.Classes.ImageComparers
 		}
 
 		protected int _CurrentImagesSearched;
-		protected int _ThumbnailSize;
+		protected int _ThumbnailSize = 32;
 		protected ConcurrentDictionary<string, T> _Images = new ConcurrentDictionary<string, T>();
 
 		/// <summary>
@@ -46,7 +45,7 @@ namespace ImageDL.Classes.ImageComparers
 		/// </summary>
 		/// <param name="details">The image's details.</param>
 		/// <returns>Returns a boolean indicating whether or not the image details were successfully stored.</returns>
-		public bool TryStore(Uri uri, FileInfo file, Stream stream, Image image, out string error)
+		public bool TryStore(Uri uri, FileInfo file, Stream stream, out string error)
 		{
 			var hash = stream.MD5Hash();
 			if (_Images.TryGetValue(hash, out var value))
@@ -58,7 +57,7 @@ namespace ImageDL.Classes.ImageComparers
 			try
 			{
 				error = null;
-				return _Images.TryAdd(hash, ImageDetails.Create<T>(uri, file, stream, image, ThumbnailSize));
+				return _Images.TryAdd(hash, ImageDetails.Create<T>(uri, file, stream, ThumbnailSize));
 			}
 			catch (Exception e)
 			{
@@ -234,6 +233,7 @@ namespace ImageDL.Classes.ImageComparers
 			//If the file is already in there, delete whichever is worse
 			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
 			{
+				Console.WriteLine($"{file} has a matching hash so is being deleted.");
 				TryDelete(details, alreadyStoredVal, out var deletedDetails);
 			}
 			else if (!_Images.TryAdd(md5hash, details))
