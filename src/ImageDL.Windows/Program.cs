@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ImageDL
+namespace ImageDL.Windows
 {
 	public class Program
 	{
@@ -28,7 +28,7 @@ namespace ImageDL
 					string line = null;
 					do
 					{
-						var downloader = new RedditImageDownloader();
+						var downloader = new RedditImageDownloader(new WindowsImageComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -65,7 +65,7 @@ namespace ImageDL
 
 					foreach (var dir in directory.GetDirectories())
 					{
-						var downloader = new RedditImageDownloader();
+						var downloader = new RedditImageDownloader(new WindowsImageComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());

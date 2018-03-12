@@ -9,7 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
 
-namespace ImageDL.Classes
+namespace ImageDL.Windows
 {
 	/// <summary>
 	/// Holds details about an image which has been downloaded.

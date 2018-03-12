@@ -1,7 +1,7 @@
 ﻿using ImageDL.Classes.ImageComparers;
 using Microsoft.VisualBasic.FileIO;
 
-namespace ImageDL.Classes
+namespace ImageDL.Windows
 {
 	/// <summary>
 	/// Attempts to get rid of duplicate images.

@@ -218,7 +218,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
 
-		public ImageDownloader()
+		public ImageDownloader(IImageComparer imageComparer)
 		{
 			CommandLineParserOptions = new OptionSet()
 			{
@@ -279,6 +279,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				}
 			};
 			Arguments = GetArguments();
+			ImageComparer = imageComparer;
 
 			//Set verbose to false so these settings don't print
 			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values

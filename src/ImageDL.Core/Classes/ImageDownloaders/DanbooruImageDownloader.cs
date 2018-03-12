@@ -47,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private string _TagString;
 		private int _Page;
 
-		public DanbooruImageDownloader() : base()
+		public DanbooruImageDownloader(IImageComparer imageComparer) : base(imageComparer)
 		{
 			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
 			CommandLineParserOptions.Add($"{nameof(Page)}=", "the page to start from.", i => SetValue<int>(i, c => Page = c));

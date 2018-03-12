@@ -241,8 +241,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ImageComparer.cs" />
-    <Compile Include="ImageDetails.cs" />
+    <Compile Include="WindowsImageComparer.cs" />
+    <Compile Include="WindowsImageDetails.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

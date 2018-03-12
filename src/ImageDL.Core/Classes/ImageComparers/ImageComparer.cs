@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageComparers
 {
-	public abstract class ImageComparer<T> : INotifyPropertyChanged where T : ImageDetails, new()
+	public abstract class ImageComparer<T> : IImageComparer, INotifyPropertyChanged where T : ImageDetails, new()
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 

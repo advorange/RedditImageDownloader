@@ -42,14 +42,16 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 		}
 
-		private Reddit _Reddit = new Reddit(new WebAgent(), false);
+		private Reddit _Reddit;
 		private string _Subreddit;
 		private int _MinScore;
 
-		public RedditImageDownloader() : base()
+		public RedditImageDownloader(IImageComparer imageComparer) : base(imageComparer)
 		{
 			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
 			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
+
+			_Reddit = new Reddit(new WebAgent(), false);
 		}
 
 		protected override async Task<List<Post>> GatherPostsAsync()

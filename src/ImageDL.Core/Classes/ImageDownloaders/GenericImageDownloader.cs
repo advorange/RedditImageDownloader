@@ -21,6 +21,8 @@ namespace ImageDL.Classes.ImageDownloaders
 		private const string ANIMATED_CONTENT = "Animated Content";
 		private const string FAILED_DOWNLOADS = "Failed Downloads";
 
+		public GenericImageDownloader(IImageComparer imageComparer) : base(imageComparer) { }
+
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
 		/// </summary>
