@@ -16,7 +16,11 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageComparers
 {
-	public abstract class ImageComparer<T> : IImageComparer, INotifyPropertyChanged where T : ImageDetails, new()
+	/// <summary>
+	/// Compare images so duplicates don't get downloaded or kept.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	public class ImageComparer<T> : IImageComparer, INotifyPropertyChanged where T : ImageDetails, new()
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -39,6 +43,16 @@ namespace ImageDL.Classes.ImageComparers
 		protected int _CurrentImagesSearched;
 		protected int _ThumbnailSize = 32;
 		protected ConcurrentDictionary<string, T> _Images = new ConcurrentDictionary<string, T>();
+		protected Action<ImageDetails> _DeleteDetails;
+
+		/// <summary>
+		/// Creates an image comparer with the specified callback to be used when deleting files.
+		/// </summary>
+		/// <param name="deleteDetailsCallback">What to do when deleting files.</param>
+		public ImageComparer(Action<ImageDetails> deleteDetailsCallback = null)
+		{
+			_DeleteDetails = deleteDetailsCallback;
+		}
 
 		/// <summary>
 		/// Returns false if this was not able to be added to the image comparer's dictionary or is already added.
@@ -259,7 +273,14 @@ namespace ImageDL.Classes.ImageComparers
 			deletedDetails = removeFirst ? i1 : i2;
 			try
 			{
-				Delete(deletedDetails);
+				if (_DeleteDetails == null)
+				{
+					deletedDetails.File.Delete();
+				}
+				else
+				{
+					_DeleteDetails(deletedDetails);
+				}
 				return true;
 			}
 			catch
@@ -268,7 +289,6 @@ namespace ImageDL.Classes.ImageComparers
 			}
 		}
 
-		protected abstract void Delete(ImageDetails details);
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

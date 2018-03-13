@@ -13,10 +13,6 @@ namespace ImageDL.Windows
 	/// </summary>
 	public sealed class WindowsImageDetails : ImageDetails
 	{
-		//For caclulating brightness, source: https://stackoverflow.com/a/596243
-		private const float RED_WEIGHTING = 0.299f;
-		private const float GREEN_WEIGHTING = 0.587f;
-		private const float BLUE_WEIGHTING = 0.114f;
 		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
 
 		protected override (int Width, int Height) GetSize(Stream s)
@@ -58,7 +54,6 @@ namespace ImageDL.Windows
 			fcbm.CopyPixels(bytes, stride, 0);
 
 			var brightnesses = new List<float>();
-			var totalBrightness = 0f;
 			for (var y = 0; y < fcbm.PixelHeight; ++y)
 			{
 				for (var x = 0; x < fcbm.PixelWidth; ++x)
@@ -68,12 +63,11 @@ namespace ImageDL.Windows
 					var g = bytes[index + 1];
 					var b = bytes[index + 2];
 					var a = bytes[index + 3];
-					var brightness = (RED_WEIGHTING * r + GREEN_WEIGHTING * g + BLUE_WEIGHTING * b) * (a / 255f);
-					brightnesses.Add(brightness);
-					totalBrightness += brightness;
+					//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
+					brightnesses.Add((0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f));
 				}
 			}
-			var avgBrightness = totalBrightness / brightnesses.Count;
+			var avgBrightness = brightnesses.Average();
 			return brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
 		}
 	}

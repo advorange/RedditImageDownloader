@@ -184,6 +184,17 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_DownloadsFinished);
 			}
 		}
+		/// <summary>
+		/// How to scrape specific websites.
+		/// </summary>
+		public List<WebsiteScraper> Scrapers { get; protected set; } = new List<WebsiteScraper>
+		{
+			new DeviantArtScraper(),
+			new ImgurScraper(),
+			new InstagramScraper(),
+			new PixivScraper(),
+			new TumblrScraper(),
+		};
 
 		/// <summary>
 		/// Indicates when a setting has been set.
@@ -193,17 +204,8 @@ namespace ImageDL.Classes.ImageDownloaders
 		protected ImmutableArray<PropertyInfo> Arguments;
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
 		protected List<ContentLink> Links = new List<ContentLink>();
-		protected List<WebsiteScraper> Scrapers = new List<WebsiteScraper>
-		{
-			new DeviantArtScraper(),
-			new ImgurScraper(),
-			new InstagramScraper(),
-			new PixivScraper(),
-			new TumblrScraper(),
-		};
 		protected OptionSet CommandLineParserOptions;
 		protected IImageComparer ImageComparer;
-
 		private string _Directory;
 		private int _AmountToDownload;
 		private int _MinWidth;

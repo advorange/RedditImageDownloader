@@ -1,10 +1,12 @@
 ﻿using ImageDL.Classes.ImageDownloaders;
 using ImageDL.Classes.ImageGatherers;
+using ImageDL.Classes.ImageComparers;
 using ImageDL.Utilities;
 using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic.FileIO;
 
 namespace ImageDL.Windows
 {
@@ -18,7 +20,7 @@ namespace ImageDL.Windows
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
 
-			var result = await ImageGatherer.CreateGathererAsync(new[] { new ImgurScraper() }, new Uri(@"https://imgur.com/a/hTT3p")).ConfigureAwait(false);
+			var test = GetComparer();
 
 			//TODO: work on this
 			switch (Console.ReadLine())
@@ -28,7 +30,7 @@ namespace ImageDL.Windows
 					string line = null;
 					do
 					{
-						var downloader = new RedditImageDownloader(new WindowsImageComparer());
+						var downloader = new RedditImageDownloader(GetComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -65,7 +67,7 @@ namespace ImageDL.Windows
 
 					foreach (var dir in directory.GetDirectories())
 					{
-						var downloader = new RedditImageDownloader(new WindowsImageComparer());
+						var downloader = new RedditImageDownloader(GetComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -85,6 +87,14 @@ namespace ImageDL.Windows
 					return;
 				}
 			}
+		}
+
+		private static ImageComparer<WindowsImageDetails> GetComparer()
+		{
+			return new ImageComparer<WindowsImageDetails>(d =>
+			{
+				FileSystem.DeleteFile(d.File.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+			});
 		}
 	}
 }
