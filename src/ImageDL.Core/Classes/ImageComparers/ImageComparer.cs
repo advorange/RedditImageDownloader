@@ -3,6 +3,7 @@
 //#define FOREACH_ASYNC
 #define GROUPED_ASYNC
 
+using ImageDL.Core.Utilities;
 using ImageDL.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -11,6 +12,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,16 +45,6 @@ namespace ImageDL.Classes.ImageComparers
 		protected int _CurrentImagesSearched;
 		protected int _ThumbnailSize = 32;
 		protected ConcurrentDictionary<string, T> _Images = new ConcurrentDictionary<string, T>();
-		protected Action<ImageDetails> _DeleteDetails;
-
-		/// <summary>
-		/// Creates an image comparer with the specified callback to be used when deleting files.
-		/// </summary>
-		/// <param name="deleteDetailsCallback">What to do when deleting files.</param>
-		public ImageComparer(Action<ImageDetails> deleteDetailsCallback = null)
-		{
-			_DeleteDetails = deleteDetailsCallback;
-		}
 
 		/// <summary>
 		/// Returns false if this was not able to be added to the image comparer's dictionary or is already added.
@@ -267,19 +259,22 @@ namespace ImageDL.Classes.ImageComparers
 			//Delete/remove whatever is the smaller image
 			var firstPix = i1.Width * i1.Height;
 			var secondPix = i2.Width * i2.Height;
-			//If each image has the same pixel count then go by file creation time
-			//If not then just go by pixel count
+			//If each image has the same pixel count then go by file creation time, if not then just go by pixel count
 			var removeFirst = firstPix == secondPix ? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc : firstPix < secondPix;
-			deletedDetails = removeFirst ? i1 : i2;
+			return DeleteFile((deletedDetails = removeFirst ? i1 : i2).File);
+		}
+
+		protected virtual bool DeleteFile(FileInfo file)
+		{
 			try
 			{
-				if (_DeleteDetails == null)
+				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
-					deletedDetails.File.Delete();
+					RecycleBinMover.MoveFile(file);
 				}
 				else
 				{
-					_DeleteDetails(deletedDetails);
+					file.Delete();
 				}
 				return true;
 			}
@@ -288,7 +283,6 @@ namespace ImageDL.Classes.ImageComparers
 				return false;
 			}
 		}
-
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

@@ -20,8 +20,6 @@ namespace ImageDL.Windows
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(bufferSize), Console.InputEncoding, false, bufferSize));
 			Console.OutputEncoding = Encoding.UTF8;
 
-			var test = GetComparer();
-
 			//TODO: work on this
 			switch (Console.ReadLine())
 			{
@@ -30,7 +28,7 @@ namespace ImageDL.Windows
 					string line = null;
 					do
 					{
-						var downloader = new RedditImageDownloader(GetComparer());
+						var downloader = new RedditImageDownloader(new ImageComparer<WindowsImageDetails>());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -67,7 +65,7 @@ namespace ImageDL.Windows
 
 					foreach (var dir in directory.GetDirectories())
 					{
-						var downloader = new RedditImageDownloader(GetComparer());
+						var downloader = new RedditImageDownloader(new ImageComparer<WindowsImageDetails>());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -87,14 +85,6 @@ namespace ImageDL.Windows
 					return;
 				}
 			}
-		}
-
-		private static ImageComparer<WindowsImageDetails> GetComparer()
-		{
-			return new ImageComparer<WindowsImageDetails>(d =>
-			{
-				FileSystem.DeleteFile(d.File.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-			});
 		}
 	}
 }
