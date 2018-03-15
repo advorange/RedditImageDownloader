@@ -22,11 +22,11 @@ namespace ImageDL.Classes.ImageComparers
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class ImageComparer<T> : IImageComparer, INotifyPropertyChanged where T : ImageDetails, new()
+	public class ImageComparer<T> : IImageComparer where T : ImageDetails, new()
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		public int StoredImages => _Images.Count;
+		/// <inheritdoc/>
+		public int StoredImages => Images.Count;
+		/// <inheritdoc/>
 		public int CurrentImagesSearched
 		{
 			get => _CurrentImagesSearched;
@@ -36,25 +36,27 @@ namespace ImageDL.Classes.ImageComparers
 				NotifyPropertyChanged();
 			}
 		}
+		/// <inheritdoc/>
 		public int ThumbnailSize
 		{
 			get => _ThumbnailSize;
 			set => _ThumbnailSize = value;
 		}
 
-		protected int _CurrentImagesSearched;
-		protected int _ThumbnailSize = 32;
-		protected ConcurrentDictionary<string, T> _Images = new ConcurrentDictionary<string, T>();
+		private int _CurrentImagesSearched;
+		private int _ThumbnailSize = 32;
+		protected ConcurrentDictionary<string, T> Images = new ConcurrentDictionary<string, T>();
 
 		/// <summary>
-		/// Returns false if this was not able to be added to the image comparer's dictionary or is already added.
+		/// Indicates when 
 		/// </summary>
-		/// <param name="details">The image's details.</param>
-		/// <returns>Returns a boolean indicating whether or not the image details were successfully stored.</returns>
-		public bool TryStore(Uri uri, FileInfo file, Stream stream, out string error)
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		/// <inheritdoc/>
+		public bool TryStore(Uri uri, FileInfo file, Stream stream, int minWidth, int minHeight, out string error)
 		{
 			var hash = stream.MD5Hash();
-			if (_Images.TryGetValue(hash, out var value))
+			if (Images.TryGetValue(hash, out var value))
 			{
 				error = $"{uri} had a matching hash with {value.File}.";
 				return false;
@@ -62,8 +64,15 @@ namespace ImageDL.Classes.ImageComparers
 
 			try
 			{
+				var details = ImageDetails.Create<T>(uri, file, stream, ThumbnailSize);
+				if (details.Width < minWidth || details.Height < minHeight)
+				{
+					error = $"{uri} is too small ({details.Width}x{details.Height}).";
+					return false;
+				}
+
 				error = null;
-				return _Images.TryAdd(hash, ImageDetails.Create<T>(uri, file, stream, ThumbnailSize));
+				return Images.TryAdd(hash, details);
 			}
 			catch (Exception e)
 			{
@@ -71,10 +80,7 @@ namespace ImageDL.Classes.ImageComparers
 				return false;
 			}
 		}
-		/// <summary>
-		/// Caches every file in the directory.
-		/// </summary>
-		/// <param name="directory">The directory to cache.</param>
+		/// <inheritdoc/>
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int taskGroupLength = 50)
 		{
 #if DEBUG
@@ -168,10 +174,7 @@ namespace ImageDL.Classes.ImageComparers
 			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
 #endif
 		}
-		/// <summary>
-		/// When the images have finished downloading run through each of them again to see if any are duplicates.
-		/// </summary>
-		/// <param name="percentForMatch">The percentage of similarity for an image to be considered a match. Ranges from 1 to 100.</param>
+		/// <inheritdoc/>
 		public void DeleteDuplicates(float percentForMatch)
 		{
 #if DEBUG
@@ -180,7 +183,7 @@ namespace ImageDL.Classes.ImageComparers
 #endif
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
-			var kvps = new List<ImageDetails>(_Images.Values);
+			var kvps = new List<ImageDetails>(Images.Values);
 			var kvpCount = kvps.Count;
 			var matchCount = 0;
 			for (int i = kvpCount - 1; i > 0; --i)
@@ -237,12 +240,12 @@ namespace ImageDL.Classes.ImageComparers
 				Console.WriteLine($"Failed to create a cached object of {file}.");
 			}
 			//If the file is already in there, delete whichever is worse
-			else if (_Images.TryGetValue(md5hash, out var alreadyStoredVal))
+			else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
 			{
 				Console.WriteLine($"{file} has a matching hash so is being deleted.");
 				TryDelete(details, alreadyStoredVal, out var deletedDetails);
 			}
-			else if (!_Images.TryAdd(md5hash, details))
+			else if (!Images.TryAdd(md5hash, details))
 			{
 				Console.WriteLine($"Failed to cache {file}.");
 			}
@@ -263,7 +266,11 @@ namespace ImageDL.Classes.ImageComparers
 			var removeFirst = firstPix == secondPix ? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc : firstPix < secondPix;
 			return DeleteFile((deletedDetails = removeFirst ? i1 : i2).File);
 		}
-
+		/// <summary>
+		/// Deletes a file. On Windows this will send the file to the recycle bin, otherwise fully deletes the file.
+		/// </summary>
+		/// <param name="file"></param>
+		/// <returns></returns>
 		protected virtual bool DeleteFile(FileInfo file)
 		{
 			try
@@ -283,6 +290,10 @@ namespace ImageDL.Classes.ImageComparers
 				return false;
 			}
 		}
+		/// <summary>
+		/// Invokes <see cref="PropertyChanged"/>.
+		/// </summary>
+		/// <param name="name"></param>
 		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
+	/// <summary>
+	/// Scrapes images from a website.
+	/// </summary>
 	public abstract class WebsiteScraper
 	{
 		/// <summary>
@@ -49,10 +52,30 @@ namespace ImageDL.Classes.ImageGatherers
 				s?.Dispose();
 			}
 		}
-
+		/// <summary>
+		/// Determines if the uri can be scraped with this scraper.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <returns></returns>
 		public abstract bool IsFromWebsite(Uri uri);
+		/// <summary>
+		/// Determines if the uri requires scraping.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <returns></returns>
 		public abstract bool RequiresScraping(Uri uri);
+		/// <summary>
+		/// Edits the uri to remove unnecessary parts.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <returns></returns>
 		public abstract Uri EditUri(Uri uri);
+		/// <summary>
+		/// Scrapes the wanted information from formatted HTML.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <param name="doc"></param>
+		/// <returns></returns>
 		protected abstract Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc);
 
 		public sealed class ScrapeResult

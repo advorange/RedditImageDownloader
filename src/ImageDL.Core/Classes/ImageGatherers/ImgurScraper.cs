@@ -8,24 +8,31 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
+	/// <summary>
+	/// Scrapes images from imgur.com.
+	/// </summary>
 	public sealed class ImgurScraper : WebsiteScraper
 	{
 		private static Regex _ScrapeRegex = new Regex(@"(\/a\/|\/gallery\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+		/// <inheritdoc />
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return uri.Host.CaseInsContains("imgur.com");
 		}
+		/// <inheritdoc />
 		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
+		/// <inheritdoc />
 		public override Uri EditUri(Uri uri)
 		{
 			var u = RemoveQuery(uri).ToString();
 			u = String.IsNullOrEmpty(Path.GetExtension(u)) ? $"https://i.imgur.com/{u.Substring(u.LastIndexOf('/') + 1)}.png" : u;
 			return new Uri(u.Replace("_d", "")); //Some thumbnail thing
 		}
+		/// <inheritdoc />
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//Only works on albums with less than 10 images
@@ -36,10 +43,13 @@ namespace ImageDL.Classes.ImageGatherers
 			return new ScrapeResponse(itemprop.Select(x => x.GetAttributeValue("src", null)));
 #endif
 			var div = doc.DocumentNode.Descendants("div");
-			var images = div.Where(x => x.GetAttributeValue("itemtype", null) == "http://schema.org/ImageObject")
-				.Select(x => x.GetAttributeValue("id", null))
-				.Where(x => x != null);
-			return Task.FromResult(new ScrapeResult(images.Select(x => $"https://i.imgur.com/{x}.png"), null));
+			var content = div.Where(x =>
+			{
+				var itemType = x.GetAttributeValue("itemtype", null);
+				return itemType == "http://schema.org/ImageObject" || itemType == "http://schema.org/VideoObject";
+			});
+			var ids = content.Select(x => x.GetAttributeValue("id", null)).Where(x => x != null);
+			return Task.FromResult(new ScrapeResult(ids.Select(x => $"https://i.imgur.com/{x}.png"), null));
 		}
 	}
 }

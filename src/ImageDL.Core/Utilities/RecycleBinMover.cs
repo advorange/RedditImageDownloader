@@ -31,6 +31,10 @@ namespace ImageDL.Core.Utilities
 		public const int FOF_ALLOWUNDO = 0x40;
 		public const int FOF_NOCONFIRMATION = 0x10; //Don't prompt the user
 
+		/// <summary>
+		/// Utilizes <see cref="SHFileOperation(ref SHFILEOPSTRUCT)"/> to move a file to the recycle bin with undo preservation and no confirmation.
+		/// </summary>
+		/// <param name="file"></param>
 		public static void MoveFile(FileInfo file)
 		{
 			var shf = new SHFILEOPSTRUCT

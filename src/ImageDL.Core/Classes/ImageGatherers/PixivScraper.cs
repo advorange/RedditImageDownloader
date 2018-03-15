@@ -10,6 +10,9 @@ using System.Web;
 
 namespace ImageDL.Classes.ImageGatherers
 {
+	/// <summary>
+	/// Scrapes images from pixiv.net.
+	/// </summary>
 	public sealed class PixivScraper : WebsiteScraper
 	{
 		//Remove size arguments from an image (i.e. /c/600x600/ is saying to have a 600x600 image which we don't want)
@@ -19,18 +22,22 @@ namespace ImageDL.Classes.ImageGatherers
 		//Replace the mode with manga so all the images can easily be gotten
 		private static Regex _Mode = new Regex(@"mode=.*?&", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+		/// <inheritdoc />
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return uri.Host.CaseInsContains("pixiv.net");
 		}
+		/// <inheritdoc />
 		public override bool RequiresScraping(Uri uri)
 		{
 			return true;
 		}
+		/// <inheritdoc />
 		public override Uri EditUri(Uri uri)
 		{
 			return new Uri(_Mode.Replace(_RemoveC.Replace(uri.ToString(), "/"), "mode=manga&"));
 		}
+		/// <inheritdoc />
 		protected override async Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
@@ -50,7 +57,12 @@ namespace ImageDL.Classes.ImageGatherers
 					throw new InvalidOperationException($"Unknown mode supplied: {mode}.");
 			}
 		}
-
+		/// <summary>
+		/// Scrapes images from a pixiv uri with mode=medium (not recommended).
+		/// Has to keep changing the uri until an error occurs then can assume that's where the images stop.
+		/// </summary>
+		/// <param name="doc"></param>
+		/// <returns></returns>
 		private async Task<ScrapeResult> ScrapeMediumAsync(HtmlDocument doc)
 		{
 			var imageContainer = doc.DocumentNode.Descendants("div").Where(x => x.HasClass("img-container"));
@@ -84,6 +96,11 @@ namespace ImageDL.Classes.ImageGatherers
 			}
 			return new ScrapeResult(validUris, null);
 		}
+		/// <summary>
+		/// Scrapes images from a pixiv uri with mode=manga. Able to get all the image uris right away.
+		/// </summary>
+		/// <param name="doc"></param>
+		/// <returns></returns>
 		private ScrapeResult ScrapeManga(HtmlDocument doc)
 		{
 			var images = doc.DocumentNode.Descendants("img");

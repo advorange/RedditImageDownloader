@@ -15,7 +15,7 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public sealed class RedditImageDownloader : GenericImageDownloader<Post>
+	public sealed class RedditImageDownloader : ImageDownloader<Post>
 	{
 		/// <summary>
 		/// The subreddit to download images from.
@@ -54,6 +54,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			_Reddit = new Reddit(new WebAgent(), false);
 		}
 
+		/// <inheritdoc />
 		protected override async Task<List<Post>> GatherPostsAsync()
 		{
 			var validPosts = new List<Post>();
@@ -98,20 +99,24 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine();
 			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
+		/// <inheritdoc />
 		protected override void WritePostToConsole(Post post, int count)
 		{
 			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
 		}
+		/// <inheritdoc />
 		protected override string GenerateFileName(Post post, WebResponse response, Uri uri)
 		{
 			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
 			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
 			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 		}
+		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)
 		{
 			return await ImageGatherer.CreateGathererAsync(Scrapers, post.Url).ConfigureAwait(false);
 		}
+		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)
 		{
 			return new ContentLink(uri, post.Score, reason);

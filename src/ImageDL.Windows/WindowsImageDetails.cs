@@ -9,19 +9,13 @@ using Media = System.Windows.Media;
 namespace ImageDL.Windows
 {
 	/// <summary>
-	/// Holds details about an image which has been downloaded.
+	/// Holds details about an image which has been downloaded using a Windows specific implementation of <see cref="GenerateThumbnailHash(Stream, int)"/>.
 	/// </summary>
 	public sealed class WindowsImageDetails : ImageDetails
 	{
 		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
 
-		protected override (int Width, int Height) GetSize(Stream s)
-		{
-			//Find out the standard version's size
-			s.Seek(0, SeekOrigin.Begin);
-			var frame = BitmapDecoder.Create(s, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.Default).Frames[0];
-			return (frame.PixelWidth, frame.PixelHeight);
-		}
+		/// <inheritdoc />
 		protected override ImmutableArray<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);

@@ -3,7 +3,7 @@
 namespace ImageDL.Classes
 {
 	/// <summary>
-	/// Holds the location and score of content.
+	/// Holds the location of the content and a number assocated to it (can be score, id, etc).
 	/// </summary>
 	public struct ContentLink
 	{

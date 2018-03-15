@@ -1,12 +1,17 @@
-﻿using ImageDL.Classes.ImageGatherers;
+﻿using ImageDL.Classes.ImageComparers;
+using ImageDL.Classes.ImageGatherers;
+using ImageDL.Core.Interfaces;
 using ImageDL.Utilities;
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -15,13 +20,17 @@ using System.Threading.Tasks;
 namespace ImageDL.Classes.ImageDownloaders
 {
 	/// <summary>
-	/// Non generic abstraction of <see cref="GenericImageDownloader{TPost}"/>.
+	/// Downloads images from a site.
 	/// </summary>
-	public abstract class ImageDownloader : INotifyPropertyChanged
+	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
+	/// <typeparam name="TImageDetails">The type of image details.</typeparam>
+	public abstract class ImageDownloader<TPost> : IImageDownloader
 	{
-		/// <summary>
-		/// The directory to save images to.
-		/// </summary>
+		private const int MAX_FILE_PATH_LENGTH = 255;
+		private const string ANIMATED_CONTENT = "Animated Content";
+		private const string FAILED_DOWNLOADS = "Failed Downloads";
+
+		/// <inheritdoc />
 		public string Directory
 		{
 			get => _Directory;
@@ -40,9 +49,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_Directory);
 			}
 		}
-		/// <summary>
-		/// The amount of posts to look through.
-		/// </summary>
+		/// <inheritdoc />
 		public int AmountToDownload
 		{
 			get => _AmountToDownload;
@@ -52,9 +59,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_AmountToDownload);
 			}
 		}
-		/// <summary>
-		/// The minimum width an image can have before it won't be downloaded.
-		/// </summary>
+		/// <inheritdoc />
 		public int MinWidth
 		{
 			get => _MinWidth;
@@ -64,9 +69,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_MinWidth);
 			}
 		}
-		/// <summary>
-		/// The minimum height an image can have before it won't be downloaded.
-		/// </summary>
+		/// <inheritdoc />
 		public int MinHeight
 		{
 			get => _MinHeight;
@@ -76,9 +79,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_MinHeight);
 			}
 		}
-		/// <summary>
-		/// The maximum age an image can have before it won't be downloaded.
-		/// </summary>
+		/// <inheritdoc />
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
@@ -88,9 +89,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_MaxDaysOld);
 			}
 		}
-		/// <summary>
-		/// The maximum allowed image similarity before an image is considered a duplicate.
-		/// </summary>
+		/// <inheritdoc />
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
@@ -100,9 +99,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_MaxImageSimilarity);
 			}
 		}
-		/// <summary>
-		/// How many images to cache per thread. Lower = faster, but more CPU.
-		/// </summary>
+		/// <inheritdoc />
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
@@ -112,9 +109,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_ImagesCachedPerThread);
 			}
 		}
-		/// <summary>
-		/// Indicates whether or not to add already saved images to the cache before downloading images.
-		/// </summary>
+		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
@@ -124,9 +119,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_CompareSavedImages);
 			}
 		}
-		/// <summary>
-		/// Indicates whether or not to print extra information to the console. Such as variables being set.
-		/// </summary>
+		/// <inheritdoc />
 		public bool Verbose
 		{
 			get => _Verbose;
@@ -136,9 +129,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_Verbose);
 			}
 		}
-		/// <summary>
-		/// Indicates whether or not to create the directory if it does not exist.
-		/// </summary>
+		/// <inheritdoc />
 		public bool CreateDirectory
 		{
 			get => _CreateDirectory;
@@ -148,9 +139,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_CreateDirectory);
 			}
 		}
-		/// <summary>
-		/// Returns true if all arguments (aside from ones with default values) have been set at least once.
-		/// </summary>
+		/// <inheritdoc />
 		public bool AllArgumentsSet
 		{
 			get => _AllArgumentsSet;
@@ -160,9 +149,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_AllArgumentsSet);
 			}
 		}
-		/// <summary>
-		/// Returns true when images are being downloaded.
-		/// </summary>
+		/// <inheritdoc />
 		public bool BusyDownloading
 		{
 			get => _BusyDownloading;
@@ -172,9 +159,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_BusyDownloading);
 			}
 		}
-		/// <summary>
-		/// Returns true after all images have been downloaded.
-		/// </summary>
+		/// <inheritdoc />
 		public bool DownloadsFinished
 		{
 			get => _DownloadsFinished;
@@ -184,9 +169,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_DownloadsFinished);
 			}
 		}
-		/// <summary>
-		/// How to scrape specific websites.
-		/// </summary>
+		/// <inheritdoc />
 		public List<WebsiteScraper> Scrapers { get; protected set; } = new List<WebsiteScraper>
 		{
 			new DeviantArtScraper(),
@@ -196,16 +179,12 @@ namespace ImageDL.Classes.ImageDownloaders
 			new TumblrScraper(),
 		};
 
-		/// <summary>
-		/// Indicates when a setting has been set.
-		/// </summary>
-		public event PropertyChangedEventHandler PropertyChanged;
-
 		protected ImmutableArray<PropertyInfo> Arguments;
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
 		protected List<ContentLink> Links = new List<ContentLink>();
 		protected OptionSet CommandLineParserOptions;
 		protected IImageComparer ImageComparer;
+
 		private string _Directory;
 		private int _AmountToDownload;
 		private int _MinWidth;
@@ -220,9 +199,235 @@ namespace ImageDL.Classes.ImageDownloaders
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
 
+		/// <summary>
+		/// Indicates when a setting has been set.
+		/// </summary>
+		public event PropertyChangedEventHandler PropertyChanged;
+
 		public ImageDownloader(IImageComparer imageComparer)
 		{
-			CommandLineParserOptions = new OptionSet()
+			CommandLineParserOptions = GetCommandLineParserOptions();
+			Arguments = GetArguments();
+			ImageComparer = imageComparer;
+
+			//Set verbose to false so these settings don't print
+			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
+			Verbose = false;
+			CreateDirectory = false;
+			MaxImageSimilarity = 1000;
+			ImagesCachedPerThread = 50;
+			CompareSavedImages = false;
+
+			//Save on close in case program is closed while running
+			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
+		}
+
+		/// <inheritdoc />
+		public async Task StartAsync()
+		{
+			AllArgumentsSet = false;
+			BusyDownloading = true;
+
+			var posts = await GatherPostsAsync().ConfigureAwait(false);
+			if (!posts.Any())
+			{
+				Console.WriteLine("Unable to find any posts matching the search criteria.");
+				return;
+			}
+
+			if (ImageComparer != null && CompareSavedImages)
+			{
+				Console.WriteLine();
+				await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread);
+				Console.WriteLine();
+			}
+
+			var count = 0;
+			foreach (var post in posts)
+			{
+				WritePostToConsole(post, ++count);
+
+				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
+				foreach (var imageUri in gatherer.ImageUris)
+				{
+					await Task.Delay(100).ConfigureAwait(false);
+					try
+					{
+						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).ConfigureAwait(false)}");
+					}
+					catch (WebException e)
+					{
+						e.Write();
+						Links.Add(CreateContentLink(post, imageUri, FAILED_DOWNLOADS));
+					}
+				}
+			}
+			BusyDownloading = false;
+
+			if (ImageComparer != null)
+			{
+				Console.WriteLine();
+				ImageComparer.DeleteDuplicates(MaxImageSimilarity / 1000f);
+				Console.WriteLine();
+			}
+			DownloadsFinished = true;
+
+			SaveStoredContentLinks();
+		}
+		/// <inheritdoc />
+		public void SetArguments(string[] args)
+		{
+			try
+			{
+				var extra = CommandLineParserOptions.Parse(args);
+				if (extra.Any())
+				{
+					Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", extra)}'");
+				}
+			}
+			catch (FormatException)
+			{
+				Console.WriteLine("An argument was the invalid type and could not be converted correctly.");
+			}
+			catch (OptionException oe)
+			{
+				oe.Write();
+			}
+		}
+		/// <inheritdoc />
+		public void AskForArguments()
+		{
+			var unsetArgs = Arguments.Where(x => !ModifiedArguments.Contains(x));
+			if (!unsetArgs.Any())
+			{
+				return;
+			}
+
+			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
+			foreach (var prop in unsetArgs)
+			{
+				sb.AppendLine($"\t{prop.Name} ({prop.PropertyType.Name})");
+			}
+			Console.WriteLine(sb.ToString().Trim());
+		}
+		/// <summary>
+		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
+		/// </summary>
+		/// <param name="post">The post to save from.</param>
+		/// <param name="uri">The location to the file to save.</param>
+		/// <returns>A text response indicating what happened to the uri.</returns>
+		protected async Task<string> DownloadImageAsync(ImageGatherer gatherer, TPost post, Uri uri)
+		{
+			if (!String.IsNullOrWhiteSpace(gatherer.Error))
+			{
+				return gatherer.Error;
+			}
+			else if (gatherer.IsAnimated)
+			{
+				Links.Add(CreateContentLink(post, gatherer.OriginalUri, ANIMATED_CONTENT));
+				return $"{gatherer.OriginalUri} is animated content (gif/video).";
+			}
+
+			WebResponse resp = null;
+			Stream rs = null;
+			MemoryStream ms = null;
+			Metafile meta = null;
+			FileStream fs = null;
+			try
+			{
+				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
+				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
+				{
+					Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
+					return $"{uri} is animated content (gif/video).";
+				}
+				if (!resp.ContentType.Contains("image/"))
+				{
+					return $"{uri} is not an image.";
+				}
+
+				var fileName = Path.Combine(Directory, GenerateFileName(post, resp, uri));
+				if (fileName.Length > MAX_FILE_PATH_LENGTH)
+				{
+					throw new InvalidOperationException($"file path + file name may not be longer than {MAX_FILE_PATH_LENGTH} characters in total.");
+				}
+				var file = new FileInfo(fileName);
+				if (File.Exists(file.FullName))
+				{
+					return $"{uri} is already saved as {file}.";
+				}
+
+				//Need to use a memory stream and copy to it
+				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
+				//And with this reponse stream seeks cannot be used on it.
+				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
+
+				if (ImageComparer == null)
+				{
+					(int width, int height) = ImageDetails.GetSize(ms);
+					if (width < MinWidth || height < MinHeight)
+					{
+						return $"{uri} is too small ({meta.Width}x{meta.Height}).";
+					}
+				}
+				if (!ImageComparer.TryStore(uri, file, ms, MinWidth, MinHeight, out var error))
+				{
+					return error;
+				}
+
+				//Add to list if the download succeeds
+				ms.Seek(0, SeekOrigin.Begin);
+				await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
+				return $"Saved {uri} to {file}.";
+			}
+			finally
+			{
+				resp?.Dispose();
+				rs?.Dispose();
+				ms?.Dispose();
+				meta?.Dispose();
+				fs?.Dispose();
+			}
+		}
+		/// <summary>
+		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="input"></param>
+		/// <param name="callback"></param>
+		protected void SetValue<T>(string input, Action<T> callback, bool useDefaultIfNull = false, T defaultValue = default)
+		{
+			T val;
+			if (input == null && useDefaultIfNull)
+			{
+				val = defaultValue;
+			}
+			else if (TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter && converter.IsValid(input))
+			{
+				val = (T)converter.ConvertFromInvariantString(input);
+			}
+			else
+			{
+				Console.WriteLine($"Unable to convert '{input}' to type {typeof(T).Name}.");
+				return;
+			}
+
+			try
+			{
+				callback(val);
+			}
+			catch (ArgumentException e)
+			{
+				e.Write();
+			}
+		}
+		/// <summary>
+		/// Returns the default options that are used to set values through console input.
+		/// </summary>
+		/// <returns></returns>
+		protected OptionSet GetCommandLineParserOptions()
+		{
+			return new OptionSet
 			{
 				{
 					"h|help=",
@@ -280,118 +485,6 @@ namespace ImageDL.Classes.ImageDownloaders
 					i => SetValue<bool>(i, c => Verbose = c, true, true)
 				}
 			};
-			Arguments = GetArguments();
-			ImageComparer = imageComparer;
-
-			//Set verbose to false so these settings don't print
-			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
-			Verbose = false;
-			CreateDirectory = false;
-			MaxImageSimilarity = 1000;
-			ImagesCachedPerThread = 50;
-			CompareSavedImages = false;
-
-			//Save on close in case program is closed while running
-			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
-		}
-
-		/// <summary>
-		/// Start downloading images.
-		/// </summary>
-		/// <returns>An asynchronous task which downloads images.</returns>
-		public abstract Task StartAsync();
-		/// <summary>
-		/// Sets arguments with the supplied array of data.
-		/// </summary>
-		public void SetArguments(string[] args)
-		{
-			try
-			{
-				var extra = CommandLineParserOptions.Parse(args);
-				if (extra.Any())
-				{
-					Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", extra)}'");
-				}
-			}
-			catch (FormatException)
-			{
-				Console.WriteLine("An argument was the invalid type and could not be converted correctly.");
-			}
-			catch (OptionException oe)
-			{
-				oe.Write();
-			}
-		}
-		/// <summary>
-		/// Prints out to the console what arguments are still needed.
-		/// </summary>
-		public void AskForArguments()
-		{
-			var unsetArgs = Arguments.Where(x => !ModifiedArguments.Contains(x));
-			if (!unsetArgs.Any())
-			{
-				return;
-			}
-
-			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var prop in unsetArgs)
-			{
-				sb.AppendLine($"\t{prop.Name} ({prop.PropertyType.Name})");
-			}
-			Console.WriteLine(sb.ToString().Trim());
-		}
-
-		/// <summary>
-		/// Invokes <see cref="PropertyChanged"/>.
-		/// </summary>
-		/// <param name="name">The property changed.</param>
-		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
-		{
-			if (!ModifiedArguments.Any(x => x.Name == name) && Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
-			{
-				ModifiedArguments.Add(prop);
-				if (_Verbose)
-				{
-					Console.WriteLine($"Successfully set {name} to '{value}'.");
-				}
-			}
-			if (!AllArgumentsSet && !Arguments.Any(x => !ModifiedArguments.Contains(x)))
-			{
-				AllArgumentsSet = true;
-			}
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		}
-		/// <summary>
-		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="input"></param>
-		/// <param name="callback"></param>
-		protected void SetValue<T>(string input, Action<T> callback, bool useDefaultIfNull = false, T defaultValue = default)
-		{
-			T val;
-			if (input == null && useDefaultIfNull)
-			{
-				val = defaultValue;
-			}
-			else if (TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter && converter.IsValid(input))
-			{
-				val = (T)converter.ConvertFromInvariantString(input);
-			}
-			else
-			{
-				Console.WriteLine($"Unable to convert '{input}' to type {typeof(T).Name}.");
-				return;
-			}
-
-			try
-			{
-				callback(val);
-			}
-			catch (ArgumentException e)
-			{
-				e.Write();
-			}
 		}
 		/// <summary>
 		/// Gets the names of settings (public, instance, has setter, has getter, and is a property).
@@ -407,7 +500,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Saves the stored content links to file.
 		/// </summary>
-		protected virtual void SaveStoredContentLinks()
+		protected void SaveStoredContentLinks()
 		{
 			foreach (var kvp in Links.GroupBy(x => x.Reason))
 			{
@@ -451,8 +544,11 @@ namespace ImageDL.Classes.ImageDownloaders
 				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
 			}
 		}
-
-		private void DisplayHelp(string input)
+		/// <summary>
+		/// Displays help for whatever option has the supplied key.
+		/// </summary>
+		/// <param name="input"></param>
+		protected void DisplayHelp(string input)
 		{
 			if (CommandLineParserOptions.Contains(input))
 			{
@@ -463,5 +559,58 @@ namespace ImageDL.Classes.ImageDownloaders
 				Console.WriteLine($"'{input}' is not a valid option.");
 			}
 		}
+		/// <summary>
+		/// Invokes <see cref="PropertyChanged"/>.
+		/// </summary>
+		/// <param name="name">The property changed.</param>
+		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
+		{
+			if (!ModifiedArguments.Any(x => x.Name == name) && Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
+			{
+				ModifiedArguments.Add(prop);
+				if (_Verbose)
+				{
+					Console.WriteLine($"Successfully set {name} to '{value}'.");
+				}
+			}
+			if (!AllArgumentsSet && !Arguments.Any(x => !ModifiedArguments.Contains(x)))
+			{
+				AllArgumentsSet = true;
+			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
+		/// <summary>
+		/// Gathers the posts which match the supplied settings.
+		/// </summary>
+		/// <returns></returns>
+		protected abstract Task<List<TPost>> GatherPostsAsync();
+		/// <summary>
+		/// Writes the post to the console indicating it is being downloaded.
+		/// </summary>
+		/// <param name="post"></param>
+		/// <param name="count"></param>
+		protected abstract void WritePostToConsole(TPost post, int count);
+		/// <summary>
+		/// Generate a filename to save an image with.
+		/// </summary>
+		/// <param name="post"></param>
+		/// <param name="response"></param>
+		/// <param name="uri"></param>
+		/// <returns></returns>
+		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
+		/// <summary>
+		/// Scrape images from a post.
+		/// </summary>
+		/// <param name="post"></param>
+		/// <returns></returns>
+		protected abstract Task<ImageGatherer> CreateGathererAsync(TPost post);
+		/// <summary>
+		/// Store information about an image from a post.
+		/// </summary>
+		/// <param name="post"></param>
+		/// <param name="uri"></param>
+		/// <param name="reason"></param>
+		/// <returns></returns>
+		protected abstract ContentLink CreateContentLink(TPost post, Uri uri, string reason);
 	}
 }

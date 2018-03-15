@@ -1,12 +1,10 @@
-﻿using ImageDL.Classes.ImageDownloaders;
-using ImageDL.Classes.ImageGatherers;
-using ImageDL.Classes.ImageComparers;
+﻿using ImageDL.Classes.ImageComparers;
+using ImageDL.Classes.ImageDownloaders;
 using ImageDL.Utilities;
 using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic.FileIO;
 
 namespace ImageDL.Windows
 {

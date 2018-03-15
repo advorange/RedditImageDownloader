@@ -7,22 +7,29 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
+	/// <summary>
+	/// Scrapes images from instagram.com.
+	/// </summary>
 	public sealed class InstagramScraper : WebsiteScraper
 	{
 		private static Regex _ScrapeRegex = new Regex(@"(\/p\/)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+		/// <inheritdoc />
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return uri.Host.CaseInsContains("instagram.com");
 		}
+		/// <inheritdoc />
 		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
+		/// <inheritdoc />
 		public override Uri EditUri(Uri uri)
 		{
 			return RemoveQuery(uri);
 		}
+		/// <inheritdoc />
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			var meta = doc.DocumentNode.Descendants("meta");

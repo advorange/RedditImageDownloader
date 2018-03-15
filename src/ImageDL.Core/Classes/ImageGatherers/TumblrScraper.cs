@@ -7,23 +7,30 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageGatherers
 {
+	/// <summary>
+	/// Scrapes images from tumblr.com.
+	/// </summary>
 	public sealed class TumblrScraper : WebsiteScraper
 	{
 		private static Regex _ScrapeRegex = new Regex(@"^(?!.*(media\.tumblr)).*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+		/// <inheritdoc />
 		public override bool IsFromWebsite(Uri uri)
 		{
 			return uri.Host.CaseInsContains("tumblr.com");
 		}
+		/// <inheritdoc />
 		public override bool RequiresScraping(Uri uri)
 		{
 			return _ScrapeRegex.IsMatch(uri.ToString());
 		}
+		/// <inheritdoc />
 		public override Uri EditUri(Uri uri)
 		{
 			//If blog post will throw exception but gets caught when downloading
 			return new Uri(RemoveQuery(uri).ToString().Replace("/post/", "/image/"));
 		}
+		/// <inheritdoc />
 		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
 		{
 			//18+ filter

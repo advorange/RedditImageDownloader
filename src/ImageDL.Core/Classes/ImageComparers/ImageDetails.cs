@@ -1,10 +1,15 @@
 ﻿using ImageDL.Utilities;
+using MetadataExtractor;
 using System;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 
 namespace ImageDL.Classes.ImageComparers
 {
+	/// <summary>
+	/// Holds information about an image.
+	/// </summary>
 	public abstract class ImageDetails
 	{
 		/// <summary>
@@ -33,6 +38,27 @@ namespace ImageDL.Classes.ImageComparers
 		public int ThumbnailSize { get; private set; }
 
 		/// <summary>
+		/// Gets the width and height of an image through metadata.
+		/// </summary>
+		/// <param name="s">The image's data.</param>
+		/// <returns></returns>
+		public static (int Width, int Height) GetSize(Stream s)
+		{
+			try
+			{
+				s.Seek(0, SeekOrigin.Begin);
+				var metadata = ImageMetadataReader.ReadMetadata(s);
+				var tags = metadata.SelectMany(x => x.Tags);
+				var width = Convert.ToInt32(tags.Single(x => x.Name == "Image Width").Description.Split(' ')[0]);
+				var height = Convert.ToInt32(tags.Single(x => x.Name == "Image Height").Description.Split(' ')[0]);
+				return (width, height);
+			}
+			catch (Exception e)
+			{
+				throw new InvalidOperationException("Unable to parse the image width and height from the file's metadata.", e);
+			}
+		}
+		/// <summary>
 		/// Creates the boolean hash for <see cref="HashedThumbnail"/> and sets all the variables.
 		/// </summary>
 		/// <param name="uri">The source of the image.</param>
@@ -48,15 +74,15 @@ namespace ImageDL.Classes.ImageComparers
 				throw new ArgumentException("Stream cannot be null or empty.", nameof(s));
 			}
 
+			(int width, int height) = GetSize(s);
 			var details = new T
 			{
 				Uri = uri,
 				File = file,
 				ThumbnailSize = thumbnailSize,
+				Width = width,
+				Height = height,
 			};
-			(int width, int height) = details.GetSize(s);
-			details.Width = width;
-			details.Height = height;
 			details.HashedThumbnail = details.GenerateThumbnailHash(s, thumbnailSize);
 			return details;
 		}
@@ -93,6 +119,7 @@ namespace ImageDL.Classes.ImageComparers
 				return false;
 			}
 		}
+
 		/// <summary>
 		/// Returns true if the percentage of elements which match are greater than or equal to <paramref name="percentageForSimilarity"/>.
 		/// </summary>
@@ -128,12 +155,6 @@ namespace ImageDL.Classes.ImageComparers
 			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= percentageForSimilarity;
 		}
 
-		/// <summary>
-		/// Get the size of an image.
-		/// </summary>
-		/// <param name="s"></param>
-		/// <returns></returns>
-		protected abstract (int Width, int Height) GetSize(Stream s);
 		/// <summary>
 		/// Get the thumbnail hash so these can be more accurately compared.
 		/// </summary>

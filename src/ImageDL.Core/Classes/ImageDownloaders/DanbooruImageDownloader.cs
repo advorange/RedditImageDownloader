@@ -16,8 +16,11 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// <summary>
 	/// Downloads images from Danbooru.
 	/// </summary>
-	public sealed class DanbooruImageDownloader : GenericImageDownloader<DanbooruPost>
+	public sealed class DanbooruImageDownloader : ImageDownloader<DanbooruPost>
 	{
+		/// <summary>
+		/// The terms to search for. Split by spaces. Max allowed is two.
+		/// </summary>
 		public string TagString
 		{
 			get => _TagString;
@@ -32,6 +35,9 @@ namespace ImageDL.Classes.ImageDownloaders
 				NotifyPropertyChanged(_TagString);
 			}
 		}
+		/// <summary>
+		/// The page to start downloading from.
+		/// </summary>
 		public int Page
 		{
 			get => _Page;
@@ -58,6 +64,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			Page = 1;
 		}
 
+		/// <inheritdoc />
 		protected override async Task<List<DanbooruPost>> GatherPostsAsync()
 		{
 			var validPosts = new List<DanbooruPost>();
@@ -94,20 +101,24 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine();
 			return validPosts.OrderBy(x => x.PostedDateTime).ToList();
 		}
+		/// <inheritdoc />
 		protected override void WritePostToConsole(DanbooruPost post, int count)
 		{
 			Console.WriteLine($"[#{count}] {GetPostUri(post)}");
 		}
+		/// <inheritdoc />
 		protected override string GenerateFileName(DanbooruPost post, WebResponse response, Uri uri)
 		{
 			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
 			var totalName = $"{post.PostId}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
 			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 		}
+		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(DanbooruPost post)
 		{
 			return await ImageGatherer.CreateGathererAsync(Scrapers, new Uri(GetPostUri(post))).ConfigureAwait(false);
 		}
+		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(DanbooruPost post, Uri uri, string reason)
 		{
 			return new ContentLink(uri, post.PostId, reason);
