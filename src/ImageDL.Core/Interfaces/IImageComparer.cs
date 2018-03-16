@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -38,13 +39,20 @@ namespace ImageDL.Classes
 		/// Attempts to cache files which have already been saved.
 		/// </summary>
 		/// <param name="directory">The directory to cache files from.</param>
-		/// <param name="taskGroupLength">How many images to cache per thread. Lower = faster, but more CPU/Disk usage</param>
+		/// <param name="imagesPerThread">How many images to cache per thread. Lower = faster, but more CPU/Disk usage</param>
 		/// <returns></returns>
-		Task CacheSavedFilesAsync(DirectoryInfo directory, int taskGroupLength);
+		Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread);
 		/// <summary>
 		/// Checks each image against every other image in order to detect duplicates.
 		/// </summary>
 		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
 		void DeleteDuplicates(float matchPercentage);
+		/// <summary>
+		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
+		/// </summary>
+		/// <param name="s">The image's data.</param>
+		/// <param name="thumbnailSize">The size to make the image.</param>
+		/// <returns>The image's hash.</returns>
+		IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
 	}
 }

@@ -247,7 +247,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WindowsImageDetails.cs" />
+    <Compile Include="WindowsImageComparer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

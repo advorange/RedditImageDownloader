@@ -26,7 +26,7 @@ namespace ImageDL.Windows
 					string line = null;
 					do
 					{
-						var downloader = new RedditImageDownloader(new ImageComparer<WindowsImageDetails>());
+						var downloader = new RedditImageDownloader(new WindowsImageComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());
@@ -63,7 +63,7 @@ namespace ImageDL.Windows
 
 					foreach (var dir in directory.GetDirectories())
 					{
-						var downloader = new RedditImageDownloader(new ImageComparer<WindowsImageDetails>());
+						var downloader = new RedditImageDownloader(new WindowsImageComparer());
 						if (line != null)
 						{
 							downloader.SetArguments(line.SplitLikeCommandLine());

@@ -22,7 +22,7 @@ namespace ImageDL.Classes.ImageComparers
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class ImageComparer<T> : IImageComparer where T : ImageDetails, new()
+	public abstract class ImageComparer : IImageComparer
 	{
 		/// <inheritdoc/>
 		public int StoredImages => Images.Count;
@@ -45,10 +45,10 @@ namespace ImageDL.Classes.ImageComparers
 
 		private int _CurrentImagesSearched;
 		private int _ThumbnailSize = 32;
-		protected ConcurrentDictionary<string, T> Images = new ConcurrentDictionary<string, T>();
+		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
 
 		/// <summary>
-		/// Indicates when 
+		/// Indicates when <see cref="CurrentImagesSearched"/> is incremented.
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -64,15 +64,15 @@ namespace ImageDL.Classes.ImageComparers
 
 			try
 			{
-				var details = ImageDetails.Create<T>(uri, file, stream, ThumbnailSize);
-				if (details.Width < minWidth || details.Height < minHeight)
+				(int width, int height) = stream.GetImageSize();
+				if (width < minWidth || height < minHeight)
 				{
-					error = $"{uri} is too small ({details.Width}x{details.Height}).";
+					error = $"{uri} is too small ({width}x{height}).";
 					return false;
 				}
 
 				error = null;
-				return Images.TryAdd(hash, details);
+				return Images.TryAdd(hash, new ImageDetails(uri, file, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
 			}
 			catch (Exception e)
 			{
@@ -81,70 +81,12 @@ namespace ImageDL.Classes.ImageComparers
 			}
 		}
 		/// <inheritdoc/>
-		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int taskGroupLength = 50)
+		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread)
 		{
-#if DEBUG
-			var sw = new System.Diagnostics.Stopwatch();
-			sw.Start();
-#endif
 			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
 			var len = files.Length;
-#if SINGLE_SYNC //At least 4x slower than Grouped_Async. Very low memory usage
-			for (int i = 0; i < len; ++i)
-			{
-				if (i % 25 == 0 || i == len - 1)
-				{
-					Console.WriteLine($"{i + 1}/{len} images cached.");
-				}
-
-				var file = files[i];
-				try
-				{
-					CacheFile(file);
-				}
-				catch (ArgumentException)
-				{
-					Console.WriteLine($"{file} is not a valid image.");
-				}
-			}
-#elif PARALLEL //Extremely high CPU usage, very fast.
-			Parallel.ForEach(files, file =>
-			{
-				try
-				{
-					CacheFile(file);
-				}
-				catch (ArgumentException)
-				{
-					Console.WriteLine($"{file} is not a valid image.");
-				}
-			});
-#elif FOREACH_ASYNC //Effectively same as Parallel
-			var tasks = new List<Task>();
-			for (int i = 0; i < len; ++i)
-			{
-				if (i % 25 == 0 || i == len - 1)
-				{
-					Console.WriteLine($"{i + 1}/{len} images cached.");
-				}
-
-				var file = files[i];
-				tasks.Add(Task.Run(() =>
-				{
-					try
-					{
-						CacheFile(file);
-					}
-					catch (ArgumentException)
-					{
-						Console.WriteLine($"{file} is not a valid image.");
-					}
-				}));
-			}
-			await Task.WhenAll(tasks).ConfigureAwait(false);
-#elif GROUPED_ASYNC //Best combination of speed and memory usage.
 			var grouped = files.Select((file, index) => new { file, index })
-				.GroupBy(x => x.index / taskGroupLength)
+				.GroupBy(x => x.index / imagesPerThread)
 				.Select(g => g.Select(obj => obj.file));
 			var count = 0;
 			var tasks = grouped.Select(group => Task.Run(() =>
@@ -153,7 +95,19 @@ namespace ImageDL.Classes.ImageComparers
 				{
 					try
 					{
-						CacheFile(file);
+						if (!TryCreateImageDetailsFromFile(file, ThumbnailSize, out var md5hash, out var details))
+						{
+							Console.WriteLine($"Failed to create a cached object of {file}.");
+						}
+						//If the file is already in there, delete whichever is worse
+						else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
+						{
+							Delete(details, alreadyStoredVal);
+						}
+						else if (!Images.TryAdd(md5hash, details))
+						{
+							Console.WriteLine($"Failed to cache {file}.");
+						}
 					}
 					catch (ArgumentException)
 					{
@@ -168,24 +122,15 @@ namespace ImageDL.Classes.ImageComparers
 				}
 			}));
 			await Task.WhenAll(tasks).ConfigureAwait(false);
-#endif
-#if DEBUG
-			sw.Stop();
-			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
-#endif
 		}
 		/// <inheritdoc/>
 		public void DeleteDuplicates(float percentForMatch)
 		{
-#if DEBUG
-			var sw = new System.Diagnostics.Stopwatch();
-			sw.Start();
-#endif
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
 			var kvps = new List<ImageDetails>(Images.Values);
 			var kvpCount = kvps.Count;
-			var matchCount = 0;
+			var deleteCount = 0;
 			for (int i = kvpCount - 1; i > 0; --i)
 			{
 				if (i % 25 == 0 || i == kvpCount - 1)
@@ -204,50 +149,48 @@ namespace ImageDL.Classes.ImageComparers
 
 					//Check once again but with a higher resolution
 					var resToCheck = new[] { iVal.Width, iVal.Height, jVal.Width, jVal.Height, 512 }.Min();
-					if (!ImageDetails.TryCreateFromFile<T>(iVal.File, resToCheck, out var md5Hashi, out var newIVal) ||
-						!ImageDetails.TryCreateFromFile<T>(jVal.File, resToCheck, out var md5Hashj, out var newJVal) ||
+					if (!TryCreateImageDetailsFromFile(iVal.File, resToCheck, out var md5Hashi, out var newIVal) ||
+						!TryCreateImageDetailsFromFile(jVal.File, resToCheck, out var md5Hashj, out var newJVal) ||
 						!newIVal.Equals(newJVal, percentForMatch))
 					{
 						continue;
 					}
-					else if (TryDelete(iVal, jVal, out var deletedDetails))
+					else if (Delete(iVal, jVal) is ImageDetails deletedDetails)
 					{
 						kvps.Remove(deletedDetails);
-						Console.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Deleting {deletedDetails.File.Name}.");
+						++deleteCount;
 					}
-					else
-					{
-						Console.WriteLine($"Unable to delete the duplicate image {deletedDetails.File}.");
-					}
-					++matchCount;
 				}
 				++CurrentImagesSearched;
 			}
-			Console.WriteLine($"{matchCount} match(es) found.");
-#if DEBUG
-			sw.Stop();
-			Console.WriteLine($"Time taken: {sw.ElapsedTicks} ticks, {sw.ElapsedMilliseconds} milliseconds");
-#endif
+			Console.WriteLine($"{deleteCount} match(es) found and deleted.");
 		}
+		/// <inheritdoc/>
+		public abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
 		/// <summary>
-		/// Caches the file.
+		/// Attempts to create image details from a file.
 		/// </summary>
-		/// <param name="file">The file to cache.</param>
-		public void CacheFile(FileInfo file)
+		/// <param name="file"></param>
+		/// <param name="thumbnailSize"></param>
+		/// <param name="md5Hash"></param>
+		/// <param name="details"></param>
+		/// <returns></returns>
+		protected bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
-			if (!ImageDetails.TryCreateFromFile<T>(file, ThumbnailSize, out var md5hash, out var details))
+			//The second check is because for some reason file.Exists will be true when the file does NOT exist
+			if (!file.FullName.IsImagePath() || !File.Exists(file.FullName))
 			{
-				Console.WriteLine($"Failed to create a cached object of {file}.");
+				md5Hash = null;
+				details = default;
+				return false;
 			}
-			//If the file is already in there, delete whichever is worse
-			else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
+
+			using (var fs = file.OpenRead())
 			{
-				Console.WriteLine($"{file} has a matching hash so is being deleted.");
-				TryDelete(details, alreadyStoredVal, out var deletedDetails);
-			}
-			else if (!Images.TryAdd(md5hash, details))
-			{
-				Console.WriteLine($"Failed to cache {file}.");
+				md5Hash = fs.MD5Hash();
+				(int width, int height) = fs.GetImageSize();
+				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, ThumbnailSize));
+				return true;
 			}
 		}
 		/// <summary>
@@ -257,37 +200,32 @@ namespace ImageDL.Classes.ImageComparers
 		/// <param name="i2"></param>
 		/// <param name="deletedDetails"></param>
 		/// <returns></returns>
-		public bool TryDelete(ImageDetails i1, ImageDetails i2, out ImageDetails deletedDetails)
+		protected ImageDetails Delete(ImageDetails i1, ImageDetails i2)
 		{
 			//Delete/remove whatever is the smaller image
 			var firstPix = i1.Width * i1.Height;
 			var secondPix = i2.Width * i2.Height;
 			//If each image has the same pixel count then go by file creation time, if not then just go by pixel count
 			var removeFirst = firstPix == secondPix ? i1.File?.CreationTimeUtc < i2.File?.CreationTimeUtc : firstPix < secondPix;
-			return DeleteFile((deletedDetails = removeFirst ? i1 : i2).File);
-		}
-		/// <summary>
-		/// Deletes a file. On Windows this will send the file to the recycle bin, otherwise fully deletes the file.
-		/// </summary>
-		/// <param name="file"></param>
-		/// <returns></returns>
-		protected virtual bool DeleteFile(FileInfo file)
-		{
+			var deletedDetails = removeFirst ? i1 : i2;
 			try
 			{
 				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 				{
-					RecycleBinMover.MoveFile(file);
+					RecycleBinMover.MoveFile(deletedDetails.File);
 				}
 				else
 				{
-					file.Delete();
+					deletedDetails.File.Delete();
 				}
-				return true;
+
+				Console.WriteLine($"Certain match between {i1.File.Name} and {i2.File.Name}. Deleted {deletedDetails.File.Name}.");
+				return deletedDetails;
 			}
 			catch
 			{
-				return false;
+				Console.WriteLine($"Unable to delete the duplicate image {deletedDetails.File}.");
+				return deletedDetails;
 			}
 		}
 		/// <summary>

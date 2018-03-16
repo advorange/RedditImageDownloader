@@ -364,7 +364,7 @@ namespace ImageDL.Classes.ImageDownloaders
 
 				if (ImageComparer == null)
 				{
-					(int width, int height) = ImageDetails.GetSize(ms);
+					(int width, int height) = ms.GetImageSize();
 					if (width < MinWidth || height < MinHeight)
 					{
 						return $"{uri} is too small ({meta.Width}x{meta.Height}).";

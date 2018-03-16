@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MetadataExtractor;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -225,6 +226,28 @@ namespace ImageDL.Utilities
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine(e);
 			Console.ForegroundColor = currColor;
+		}
+
+		/// <summary>
+		/// Gets the width and height of an image through metadata.
+		/// </summary>
+		/// <param name="s">The image's data.</param>
+		/// <returns></returns>
+		public static (int Width, int Height) GetImageSize(this Stream s)
+		{
+			try
+			{
+				s.Seek(0, SeekOrigin.Begin);
+				var metadata = ImageMetadataReader.ReadMetadata(s);
+				var tags = metadata.SelectMany(x => x.Tags);
+				var width = Convert.ToInt32(tags.Single(x => x.Name == "Image Width").Description.Split(' ')[0]);
+				var height = Convert.ToInt32(tags.Single(x => x.Name == "Image Height").Description.Split(' ')[0]);
+				return (width, height);
+			}
+			catch (Exception e)
+			{
+				throw new InvalidOperationException("Unable to parse the image width and height from the file's metadata.", e);
+			}
 		}
 		/// <summary>
 		/// Creates a web request and sets some properties to make it look more human.

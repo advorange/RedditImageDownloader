@@ -1,6 +1,5 @@
 ﻿using ImageDL.Classes.ImageComparers;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
@@ -9,14 +8,14 @@ using Media = System.Windows.Media;
 namespace ImageDL.Windows
 {
 	/// <summary>
-	/// Holds details about an image which has been downloaded using a Windows specific implementation of <see cref="GenerateThumbnailHash(Stream, int)"/>.
+	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="GenerateThumbnailHash(Stream, int)"/>.
 	/// </summary>
-	public sealed class WindowsImageDetails : ImageDetails
+	public sealed class WindowsImageComparer : ImageComparer
 	{
 		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
 
 		/// <inheritdoc />
-		protected override ImmutableArray<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
+		public override IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -62,7 +61,7 @@ namespace ImageDL.Windows
 				}
 			}
 			var avgBrightness = brightnesses.Average();
-			return brightnesses.Select(x => x > avgBrightness).ToImmutableArray();
+			return brightnesses.Select(x => x > avgBrightness);
 		}
 	}
 }
