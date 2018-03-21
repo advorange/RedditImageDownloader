@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes
+namespace ImageDL.Interfaces
 {
 	/// <summary>
 	/// Interface for something that can compare images.

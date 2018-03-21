@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes.ImageGatherers;
+using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Imouto.BooruParser.Loaders;
 using Imouto.BooruParser.Model.Danbooru;
@@ -70,8 +71,6 @@ namespace ImageDL.Classes.ImageDownloaders
 			var validPosts = new List<DanbooruPost>();
 			try
 			{
-				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
-
 				var search = $"https://danbooru.donmai.us/posts.json?utf8=✓" +
 					$"&tags={WebUtility.UrlEncode(TagString)}" +
 					$"&limit={AmountToDownload}" +
@@ -81,7 +80,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				foreach (var searchResult in searchResults.Results)
 				{
 					var post = (DanbooruPost)(await _Danbooru.LoadPostAsync(searchResult.Id).ConfigureAwait(false));
-					if (post.PostedDateTime.ToUniversalTime() < oldestAllowed)
+					if (post.PostedDateTime.ToUniversalTime() < OldestAllowed)
 					{
 						break;
 					}

@@ -1,10 +1,7 @@
-﻿//#define SINGLE_SYNC
-//#define PARALLEL
-//#define FOREACH_ASYNC
-#define GROUPED_ASYNC
-
-using ImageDL.Core.Utilities;
+﻿using ImageDL.Core.Utilities;
+using ImageDL.Interfaces;
 using ImageDL.Utilities;
+using MetadataExtractor;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -52,6 +49,27 @@ namespace ImageDL.Classes.ImageComparers
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
+		/// <summary>
+		/// Gets the width and height of an image through metadata.
+		/// </summary>
+		/// <param name="s">The image's data.</param>
+		/// <returns></returns>
+		public static (int Width, int Height) GetImageSize(Stream s)
+		{
+			try
+			{
+				s.Seek(0, SeekOrigin.Begin);
+				var metadata = ImageMetadataReader.ReadMetadata(s);
+				var tags = metadata.SelectMany(x => x.Tags);
+				var width = Convert.ToInt32(tags.Single(x => x.Name == "Image Width").Description.Split(' ')[0]);
+				var height = Convert.ToInt32(tags.Single(x => x.Name == "Image Height").Description.Split(' ')[0]);
+				return (width, height);
+			}
+			catch (Exception e)
+			{
+				throw new InvalidOperationException("Unable to parse the image width and height from the file's metadata.", e);
+			}
+		}
 		/// <inheritdoc/>
 		public bool TryStore(Uri uri, FileInfo file, Stream stream, int minWidth, int minHeight, out string error)
 		{
@@ -64,7 +82,7 @@ namespace ImageDL.Classes.ImageComparers
 
 			try
 			{
-				(int width, int height) = stream.GetImageSize();
+				var (width, height) = GetImageSize(stream);
 				if (width < minWidth || height < minHeight)
 				{
 					error = $"{uri} is too small ({width}x{height}).";
@@ -175,7 +193,7 @@ namespace ImageDL.Classes.ImageComparers
 		/// <param name="md5Hash"></param>
 		/// <param name="details"></param>
 		/// <returns></returns>
-		protected bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
+		public bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
 			//The second check is because for some reason file.Exists will be true when the file does NOT exist
 			if (!file.FullName.IsImagePath() || !File.Exists(file.FullName))
@@ -188,7 +206,7 @@ namespace ImageDL.Classes.ImageComparers
 			using (var fs = file.OpenRead())
 			{
 				md5Hash = fs.MD5Hash();
-				(int width, int height) = fs.GetImageSize();
+				var (width, height) = GetImageSize(fs);
 				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, ThumbnailSize));
 				return true;
 			}
@@ -200,7 +218,7 @@ namespace ImageDL.Classes.ImageComparers
 		/// <param name="i2"></param>
 		/// <param name="deletedDetails"></param>
 		/// <returns></returns>
-		protected ImageDetails Delete(ImageDetails i1, ImageDetails i2)
+		public ImageDetails Delete(ImageDetails i1, ImageDetails i2)
 		{
 			//Delete/remove whatever is the smaller image
 			var firstPix = i1.Width * i1.Height;

@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageGatherers
 	/// </summary>
 	public class ImageGatherer
 	{
-		protected static List<Regex> AnimatedContentDomains = new List<Regex>
+		public static List<Regex> AnimatedContentDomains = new List<Regex>
 		{
 			new Regex(@"\.youtu\.be", RegexOptions.Compiled | RegexOptions.IgnoreCase),
 			new Regex(@"\.youtube\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),

@@ -1,9 +1,11 @@
 ﻿using ImageDL.Classes.ImageGatherers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 
-namespace ImageDL.Core.Interfaces
+namespace ImageDL.Interfaces
 {
 	/// <summary>
 	/// Interface for something that can download images.
@@ -66,6 +68,10 @@ namespace ImageDL.Core.Interfaces
 		/// How to scrape specific websites.
 		/// </summary>
 		List<WebsiteScraper> Scrapers { get; }
+		/// <summary>
+		/// The oldest allowed posts.
+		/// </summary>
+		DateTime OldestAllowed { get; }
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.

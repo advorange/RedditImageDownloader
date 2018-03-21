@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
 using Media = System.Windows.Media;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Windows
 {

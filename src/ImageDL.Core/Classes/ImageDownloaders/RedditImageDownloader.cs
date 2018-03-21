@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes.ImageGatherers;
+using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using RedditSharp;
 using RedditSharp.Things;
@@ -60,12 +61,11 @@ namespace ImageDL.Classes.ImageDownloaders
 			var validPosts = new List<Post>();
 			try
 			{
-				var oldestAllowed = DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
-				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
 				var valid = new CancellationTokenSource();
+				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
 				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, AmountToDownload).ForEachAsync(post =>
 				{
-					if (post.CreatedUTC < oldestAllowed)
+					if (post.CreatedUTC < OldestAllowed)
 					{
 						valid.Cancel();
 						valid.Token.ThrowIfCancellationRequested();

@@ -1,14 +1,11 @@
-﻿using ImageDL.Classes.ImageComparers;
-using ImageDL.Classes.ImageGatherers;
-using ImageDL.Core.Interfaces;
+﻿using ImageDL.Classes.ImageGatherers;
+using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -170,14 +167,13 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 		}
 		/// <inheritdoc />
-		public List<WebsiteScraper> Scrapers { get; protected set; } = new List<WebsiteScraper>
-		{
-			new DeviantArtScraper(),
-			new ImgurScraper(),
-			new InstagramScraper(),
-			new PixivScraper(),
-			new TumblrScraper(),
-		};
+		public List<WebsiteScraper> Scrapers { get; protected set; } = typeof(IImageDownloader).Assembly.DefinedTypes
+			.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
+			.Select(x => Activator.CreateInstance(x))
+			.Cast<WebsiteScraper>()
+			.ToList();
+		/// <inheritdoc />
+		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 
 		protected ImmutableArray<PropertyInfo> Arguments;
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
@@ -331,7 +327,6 @@ namespace ImageDL.Classes.ImageDownloaders
 			WebResponse resp = null;
 			Stream rs = null;
 			MemoryStream ms = null;
-			Metafile meta = null;
 			FileStream fs = null;
 			try
 			{
@@ -364,10 +359,10 @@ namespace ImageDL.Classes.ImageDownloaders
 
 				if (ImageComparer == null)
 				{
-					(int width, int height) = ms.GetImageSize();
+					var (width, height) = ImageComparers.ImageComparer.GetImageSize(ms);
 					if (width < MinWidth || height < MinHeight)
 					{
-						return $"{uri} is too small ({meta.Width}x{meta.Height}).";
+						return $"{uri} is too small ({width}x{height}).";
 					}
 				}
 				if (!ImageComparer.TryStore(uri, file, ms, MinWidth, MinHeight, out var error))
@@ -375,7 +370,6 @@ namespace ImageDL.Classes.ImageDownloaders
 					return error;
 				}
 
-				//Add to list if the download succeeds
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
 				return $"Saved {uri} to {file}.";
@@ -385,7 +379,6 @@ namespace ImageDL.Classes.ImageDownloaders
 				resp?.Dispose();
 				rs?.Dispose();
 				ms?.Dispose();
-				meta?.Dispose();
 				fs?.Dispose();
 			}
 		}
