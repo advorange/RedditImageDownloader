@@ -253,6 +253,7 @@ namespace ImageDL.Utilities
 		}
 		/// <summary>
 		/// Gets the width and height of an image through metadata.
+		/// If multiple widths and heights are gotten via metadata, will return the smallest ones.
 		/// </summary>
 		/// <param name="s">The image's data.</param>
 		/// <returns></returns>
@@ -261,15 +262,14 @@ namespace ImageDL.Utilities
 			try
 			{
 				s.Seek(0, SeekOrigin.Begin);
-				var metadata = ImageMetadataReader.ReadMetadata(s);
-				var tags = metadata.SelectMany(x => x.Tags);
-				var width = Convert.ToInt32(tags.Single(x => x.Name == "Image Width").Description.Split(' ')[0]);
-				var height = Convert.ToInt32(tags.Single(x => x.Name == "Image Height").Description.Split(' ')[0]);
+				var tags = ImageMetadataReader.ReadMetadata(s).SelectMany(x => x.Tags);
+				var width = tags.Where(x => x.Name == "Image Width").Min(x => Convert.ToInt32(x.Description.Split(' ')[0]));
+				var height = tags.Where(x => x.Name == "Image Height").Min(x => Convert.ToInt32(x.Description.Split(' ')[0]));
 				return (width, height);
 			}
 			catch (Exception e)
 			{
-				throw new InvalidOperationException("Unable to parse the image width and height from the file's metadata.", e);
+				throw new InvalidOperationException("Unable to parse the image's width and height from the stream's metadata.", e);
 			}
 		}
 	}
