@@ -30,9 +30,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				{
 					throw new ArgumentException("Cannot search for more than two tags.", nameof(TagString));
 				}
-
-				_TagString = value;
-				NotifyPropertyChanged(_TagString);
+				NotifyPropertyChanged(_TagString = value);
 			}
 		}
 		/// <summary>
@@ -41,11 +39,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		public int Page
 		{
 			get => _Page;
-			set
-			{
-				_Page = Math.Min(1, value);
-				NotifyPropertyChanged(_Page);
-			}
+			set => NotifyPropertyChanged(_Page = Math.Min(1, value));
 		}
 
 		private BooruLoader _Booru;

@@ -40,133 +40,83 @@ namespace ImageDL.Classes.ImageDownloaders
 				{
 					throw new ArgumentException($"{value} is an invalid directory name.", nameof(Directory));
 				}
-
-				_Directory = value;
-				NotifyPropertyChanged(_Directory);
+				NotifyPropertyChanged(_Directory = value);
 			}
 		}
 		/// <inheritdoc />
 		public int AmountToDownload
 		{
 			get => _AmountToDownload;
-			set
-			{
-				_AmountToDownload = Math.Max(1, value);
-				NotifyPropertyChanged(_AmountToDownload);
-			}
+			set => NotifyPropertyChanged(_AmountToDownload = Math.Max(1, value));
 		}
 		/// <inheritdoc />
 		public int MinWidth
 		{
 			get => _MinWidth;
-			set
-			{
-				_MinWidth = Math.Max(0, value);
-				NotifyPropertyChanged(_MinWidth);
-			}
+			set => NotifyPropertyChanged(_MinWidth = Math.Max(0, value));
 		}
 		/// <inheritdoc />
 		public int MinHeight
 		{
 			get => _MinHeight;
-			set
-			{
-				_MinHeight = Math.Max(0, value);
-				NotifyPropertyChanged(_MinHeight);
-			}
+			set => NotifyPropertyChanged(_MinHeight = Math.Max(0, value));
 		}
 		/// <inheritdoc />
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
-			set
-			{
-				_MaxDaysOld = Math.Max(0, value);
-				NotifyPropertyChanged(_MaxDaysOld);
-			}
+			set => NotifyPropertyChanged(_MaxDaysOld = Math.Max(0, value));
 		}
 		/// <inheritdoc />
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
-			set
-			{
-				_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value));
-				NotifyPropertyChanged(_MaxImageSimilarity);
-			}
+			set => NotifyPropertyChanged(_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value)));
 		}
 		/// <inheritdoc />
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
-			set
-			{
-				_ImagesCachedPerThread = Math.Max(1, value);
-				NotifyPropertyChanged(_ImagesCachedPerThread);
-			}
+			set => NotifyPropertyChanged(_ImagesCachedPerThread = Math.Max(1, value));
 		}
 		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
-			set
-			{
-				_CompareSavedImages = value;
-				NotifyPropertyChanged(_CompareSavedImages);
-			}
+			set => NotifyPropertyChanged(_CompareSavedImages = value);
 		}
 		/// <inheritdoc />
 		public bool Verbose
 		{
 			get => _Verbose;
-			set
-			{
-				_Verbose = value;
-				NotifyPropertyChanged(_Verbose);
-			}
+			set => NotifyPropertyChanged(_Verbose = value);
 		}
 		/// <inheritdoc />
 		public bool CreateDirectory
 		{
 			get => _CreateDirectory;
-			set
-			{
-				_CreateDirectory = value;
-				NotifyPropertyChanged(_CreateDirectory);
-			}
+			set => NotifyPropertyChanged(_CreateDirectory = value);
 		}
 		/// <inheritdoc />
 		public bool AllArgumentsSet
 		{
 			get => _AllArgumentsSet;
-			protected set
-			{
-				_AllArgumentsSet = value;
-				NotifyPropertyChanged(_AllArgumentsSet);
-			}
+			protected set => NotifyPropertyChanged(_AllArgumentsSet = value);
 		}
 		/// <inheritdoc />
 		public bool BusyDownloading
 		{
 			get => _BusyDownloading;
-			protected set
-			{
-				_BusyDownloading = value;
-				NotifyPropertyChanged(_BusyDownloading);
-			}
+			protected set => NotifyPropertyChanged(_BusyDownloading = value);
 		}
 		/// <inheritdoc />
 		public bool DownloadsFinished
 		{
 			get => _DownloadsFinished;
-			protected set
-			{
-				_DownloadsFinished = value;
-				NotifyPropertyChanged(_DownloadsFinished);
-			}
+			protected set => NotifyPropertyChanged(_DownloadsFinished = value);
 		}
 		/// <inheritdoc />
-		public List<WebsiteScraper> Scrapers { get; protected set; } = typeof(IImageDownloader).Assembly.DefinedTypes
+		public List<WebsiteScraper> Scrapers { get; set; } = typeof(IImageDownloader).Assembly.DefinedTypes
 			.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
 			.Select(x => Activator.CreateInstance(x))
 			.Cast<WebsiteScraper>()
@@ -177,7 +127,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		public IImageComparer ImageComparer
 		{
 			get => _ImageComparer;
-			set => _ImageComparer = value;
+			set => NotifyPropertyChanged(_ImageComparer = value);
 		}
 
 		protected ImmutableArray<PropertyInfo> Arguments;

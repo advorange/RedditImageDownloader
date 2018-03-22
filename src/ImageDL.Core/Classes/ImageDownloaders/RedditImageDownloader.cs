@@ -23,11 +23,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		public string Subreddit
 		{
 			get => _Subreddit;
-			set
-			{
-				_Subreddit = value;
-				NotifyPropertyChanged(_Subreddit);
-			}
+			set => NotifyPropertyChanged(_Subreddit = value);
 		}
 		/// <summary>
 		/// The minimum score a thread can have before images won't be downloaded from it.
@@ -35,11 +31,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		public int MinScore
 		{
 			get => _MinScore;
-			set
-			{
-				_MinScore = Math.Max(0, value);
-				NotifyPropertyChanged(_MinScore);
-			}
+			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
 		}
 
 		private Reddit _Reddit;
