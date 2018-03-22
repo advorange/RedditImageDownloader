@@ -86,33 +86,13 @@ namespace ImageDL.Classes.ImageComparers
 		/// </summary>
 		/// <param name="other">The other image details to compare and delete.</param>
 		/// <returns></returns>
-		public ImageDetails Delete(ImageDetails other)
+		public ImageDetails DetermineWhichToDelete(ImageDetails other)
 		{
 			//Delete/remove whatever is the smaller image
 			var firstPix = Width * Height;
 			var secondPix = other.Width * other.Height;
 			//If each image has the same pixel count then go by file creation time, if not then just go by pixel count
-			var removeFirst = firstPix == secondPix ? File?.CreationTimeUtc < other.File?.CreationTimeUtc : firstPix < secondPix;
-			var deletedDetails = removeFirst ? this : other;
-			try
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					RecycleBinMover.MoveFile(deletedDetails.File);
-				}
-				else
-				{
-					deletedDetails.File.Delete();
-				}
-
-				Console.WriteLine($"Certain match between {File.Name} and {other.File.Name}. Deleted {deletedDetails.File.Name}.");
-				return deletedDetails;
-			}
-			catch
-			{
-				Console.WriteLine($"Unable to delete the duplicate image {deletedDetails.File}.");
-				return deletedDetails;
-			}
+			return (firstPix == secondPix ? File?.CreationTimeUtc < other.File?.CreationTimeUtc : firstPix < secondPix) ? this : other;
 		}
 	}
 }

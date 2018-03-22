@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace ImageDL.Core.Utilities
@@ -7,7 +9,7 @@ namespace ImageDL.Core.Utilities
 	/// <summary>
 	/// Sends a file to the recycle bin on Windows. Source: https://stackoverflow.com/a/3282450
 	/// </summary>
-	internal static class RecycleBinMover
+	public static class RecycleBinMover
 	{
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 1)]
 		public struct SHFILEOPSTRUCT
@@ -35,15 +37,28 @@ namespace ImageDL.Core.Utilities
 		/// Utilizes <see cref="SHFileOperation(ref SHFILEOPSTRUCT)"/> to move a file to the recycle bin with undo preservation and no confirmation.
 		/// </summary>
 		/// <param name="file"></param>
-		public static void MoveFile(FileInfo file)
+		public static int MoveFile(FileInfo file)
+		{
+			return Move(file.FullName);
+		}
+		/// <summary>
+		/// Utilizes <see cref="SHFileOperation(ref SHFILEOPSTRUCT)"/> to move multiple files to the recycle bin with undo preservation and no confirmation.
+		/// </summary>
+		/// <param name="files"></param>
+		public static int MoveFiles(IEnumerable<FileInfo> files)
+		{
+			//Files need to be joined with null char and entire string needs to end with it too
+			return Move(String.Join("\0", files.Select(x => x.FullName)) + "\0");
+		}
+		private static int Move(string input)
 		{
 			var shf = new SHFILEOPSTRUCT
 			{
 				wFunc = FO_DELETE,
 				fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION,
-				pFrom = file.FullName
+				pFrom = input
 			};
-			SHFileOperation(ref shf);
+			return SHFileOperation(ref shf);
 		}
 	}
 }

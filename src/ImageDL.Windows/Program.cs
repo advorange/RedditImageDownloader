@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes.ImageDownloaders;
+using ImageDL.Core.Utilities;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using System;
@@ -29,6 +30,14 @@ namespace ImageDL.Windows
 		{
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
+
+			var files = new FileInfo[]
+			{
+				new FileInfo(@"D:\Images\Pictures\Weeb\Mass Downloaded\AnimeWallpaper\7nu4dg_wcsjyyyjau701.png"),
+				new FileInfo(@"D:\Images\Pictures\Weeb\Mass Downloaded\AnimeWallpaper\7nvq2n_0m26huabqv701.jpg"),
+			};
+			RecycleBinMover.MoveFiles(files);
+
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
 			do
 			{

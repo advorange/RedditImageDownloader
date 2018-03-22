@@ -1,4 +1,5 @@
-﻿using ImageDL.Interfaces;
+﻿using ImageDL.Core.Utilities;
+using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -7,6 +8,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -89,7 +91,9 @@ namespace ImageDL.Classes.ImageComparers
 		/// <inheritdoc />
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread)
 		{
-			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath()).OrderBy(x => x.CreationTimeUtc).ToArray();
+			//Don't cache files which have already been cached (accidentally let this not be checked before, and froze my PC)
+			var alreadyCachedFiles = Images.Select(x => x.Value.File);
+			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCachedFiles.Contains(x)).OrderBy(x => x.CreationTimeUtc).ToArray();
 			var len = files.Length;
 			var grouped = files.Select((file, index) => new { file, index })
 				.GroupBy(x => x.index / imagesPerThread)
@@ -108,7 +112,7 @@ namespace ImageDL.Classes.ImageComparers
 						//If the file is already in there, delete whichever is worse
 						else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
 						{
-							details.Delete(alreadyStoredVal);
+							details.DetermineWhichToDelete(alreadyStoredVal);
 						}
 						else if (!Images.TryAdd(md5hash, details))
 						{
@@ -136,7 +140,7 @@ namespace ImageDL.Classes.ImageComparers
 			//Start at the top and work the way down
 			var kvps = new List<ImageDetails>(Images.Values);
 			var kvpCount = kvps.Count;
-			var deleteCount = 0;
+			var filesToDelete = new List<FileInfo>();
 			for (int i = kvpCount - 1; i > 0; --i)
 			{
 				if (i % 25 == 0 || i == kvpCount - 1)
@@ -162,12 +166,40 @@ namespace ImageDL.Classes.ImageComparers
 						continue;
 					}
 
-					kvps.Remove(iVal.Delete(jVal));
-					++deleteCount;
+					var detailsToDelete = iVal.DetermineWhichToDelete(jVal);
+					Console.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Will delete {detailsToDelete.File.Name}.");
+					kvps.Remove(detailsToDelete);
+					filesToDelete.Add(detailsToDelete.File);
 				}
 				++CurrentImagesSearched;
 			}
-			Console.WriteLine($"{deleteCount} match(es) found and deleted.");
+
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				try
+				{
+					RecycleBinMover.MoveFiles(filesToDelete);
+				}
+				catch (Exception e)
+				{
+					e.Write();
+				}
+			}
+			else
+			{
+				foreach (var file in filesToDelete)
+				{
+					try
+					{
+						file.Delete();
+					}
+					catch (Exception e)
+					{
+						e.Write();
+					}
+				}
+			}
+			Console.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
 		/// <inheritdoc />
 		public abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
