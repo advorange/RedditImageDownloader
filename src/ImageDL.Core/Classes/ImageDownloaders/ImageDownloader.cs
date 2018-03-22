@@ -116,11 +116,11 @@ namespace ImageDL.Classes.ImageDownloaders
 			protected set => NotifyPropertyChanged(_DownloadsFinished = value);
 		}
 		/// <inheritdoc />
-		public List<WebsiteScraper> Scrapers { get; set; } = typeof(IImageDownloader).Assembly.DefinedTypes
-			.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
-			.Select(x => Activator.CreateInstance(x))
-			.Cast<WebsiteScraper>()
-			.ToList();
+		public List<WebsiteScraper> Scrapers
+		{
+			get => _Scrapers;
+			set => NotifyPropertyChanged(_Scrapers = value);
+		}
 		/// <inheritdoc />
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 		/// <inheritdoc />
@@ -148,6 +148,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private bool _AllArgumentsSet;
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
+		private List<WebsiteScraper> _Scrapers;
 		private IImageComparer _ImageComparer;
 
 		/// <summary>
@@ -157,8 +158,9 @@ namespace ImageDL.Classes.ImageDownloaders
 
 		public ImageDownloader()
 		{
-			CommandLineParserOptions = GetCommandLineParserOptions();
 			Arguments = GetArguments();
+			CommandLineParserOptions = GetCommandLineParserOptions();
+			Scrapers = GetScrapers();
 
 			//Set verbose to false so these settings don't print
 			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
@@ -179,6 +181,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			AllArgumentsSet = false;
 			BusyDownloading = true;
 
+			Console.WriteLine();
 			var posts = await GatherPostsAsync().ConfigureAwait(false);
 			if (!posts.Any())
 			{
@@ -507,6 +510,18 @@ namespace ImageDL.Classes.ImageDownloaders
 				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
 				.OrderByNonComparable(x => x.PropertyType)
 				.ToImmutableArray();
+		}
+		/// <summary>
+		/// Gets the base scrapers instructing how to scrape certain websites.
+		/// </summary>
+		/// <returns></returns>
+		private List<WebsiteScraper> GetScrapers()
+		{
+			return typeof(IImageDownloader).Assembly.DefinedTypes
+				.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
+				.Select(x => Activator.CreateInstance(x))
+				.Cast<WebsiteScraper>()
+				.ToList();
 		}
 		/// <summary>
 		/// Displays help for whatever option has the supplied key.
