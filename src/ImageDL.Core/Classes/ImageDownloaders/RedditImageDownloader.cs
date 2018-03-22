@@ -1,5 +1,4 @@
 ﻿using ImageDL.Classes.ImageGatherers;
-using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using RedditSharp;
 using RedditSharp.Things;

@@ -1,6 +1,5 @@
 ﻿using ImageDL.Interfaces;
 using ImageDL.Utilities;
-using MetadataExtractor;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

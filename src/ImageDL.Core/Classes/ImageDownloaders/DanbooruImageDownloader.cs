@@ -1,5 +1,4 @@
 ﻿using ImageDL.Classes.ImageGatherers;
-using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Imouto.BooruParser.Loaders;
 using Imouto.BooruParser.Model.Danbooru;
