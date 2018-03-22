@@ -224,7 +224,7 @@ namespace ImageDL.Utilities
 		{
 			var currColor = Console.ForegroundColor;
 			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine(e);
+			Console.Error.WriteLine(e);
 			Console.ForegroundColor = currColor;
 		}
 		/// <summary>
@@ -251,6 +251,27 @@ namespace ImageDL.Utilities
 			req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
 
 			return req;
+		}
+		/// <summary>
+		/// Gets the width and height of an image through metadata.
+		/// </summary>
+		/// <param name="s">The image's data.</param>
+		/// <returns></returns>
+		public static (int Width, int Height) GetImageSize(this Stream s)
+		{
+			try
+			{
+				s.Seek(0, SeekOrigin.Begin);
+				var metadata = ImageMetadataReader.ReadMetadata(s);
+				var tags = metadata.SelectMany(x => x.Tags);
+				var width = Convert.ToInt32(tags.Single(x => x.Name == "Image Width").Description.Split(' ')[0]);
+				var height = Convert.ToInt32(tags.Single(x => x.Name == "Image Height").Description.Split(' ')[0]);
+				return (width, height);
+			}
+			catch (Exception e)
+			{
+				throw new InvalidOperationException("Unable to parse the image width and height from the file's metadata.", e);
+			}
 		}
 	}
 }

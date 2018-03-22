@@ -23,7 +23,6 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// <typeparam name="TImageDetails">The type of image details.</typeparam>
 	public abstract class ImageDownloader<TPost> : IImageDownloader
 	{
-		private const int MAX_FILE_PATH_LENGTH = 255;
 		private const string ANIMATED_CONTENT = "Animated Content";
 		private const string FAILED_DOWNLOADS = "Failed Downloads";
 
@@ -174,12 +173,17 @@ namespace ImageDL.Classes.ImageDownloaders
 			.ToList();
 		/// <inheritdoc />
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
+		/// <inheritdoc />
+		public IImageComparer ImageComparer
+		{
+			get => _ImageComparer;
+			set => _ImageComparer = value;
+		}
 
 		protected ImmutableArray<PropertyInfo> Arguments;
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
 		protected List<ContentLink> Links = new List<ContentLink>();
 		protected OptionSet CommandLineParserOptions;
-		protected IImageComparer ImageComparer;
 
 		private string _Directory;
 		private int _AmountToDownload;
@@ -194,17 +198,17 @@ namespace ImageDL.Classes.ImageDownloaders
 		private bool _AllArgumentsSet;
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
+		private IImageComparer _ImageComparer;
 
 		/// <summary>
 		/// Indicates when a setting has been set.
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
-		public ImageDownloader(IImageComparer imageComparer)
+		public ImageDownloader()
 		{
 			CommandLineParserOptions = GetCommandLineParserOptions();
 			Arguments = GetArguments();
-			ImageComparer = imageComparer;
 
 			//Set verbose to false so these settings don't print
 			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
@@ -231,13 +235,6 @@ namespace ImageDL.Classes.ImageDownloaders
 				return;
 			}
 
-			if (ImageComparer != null && CompareSavedImages)
-			{
-				Console.WriteLine();
-				await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread);
-				Console.WriteLine();
-			}
-
 			var count = 0;
 			foreach (var post in posts)
 			{
@@ -251,7 +248,8 @@ namespace ImageDL.Classes.ImageDownloaders
 					{
 						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).ConfigureAwait(false)}");
 					}
-					catch (WebException e)
+					//Catch all so they can be written and logged as a failed download
+					catch (Exception e)
 					{
 						e.Write();
 						Links.Add(CreateContentLink(post, imageUri, FAILED_DOWNLOADS));
@@ -260,8 +258,16 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 			BusyDownloading = false;
 
-			if (ImageComparer != null)
+			//No point in trying to cache images or delete duplicates if
+			//a) image comparer doesn't exist to do that
+			//b) nothing new was saved
+			if (ImageComparer != null && ImageComparer.StoredImages > 0)
 			{
+				if (CompareSavedImages)
+				{
+					Console.WriteLine();
+					await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread);
+				}
 				Console.WriteLine();
 				ImageComparer.DeleteDuplicates(MaxImageSimilarity / 1000f);
 				Console.WriteLine();
@@ -340,13 +346,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				{
 					return $"{uri} is not an image.";
 				}
-
-				var fileName = Path.Combine(Directory, GenerateFileName(post, resp, uri));
-				if (fileName.Length > MAX_FILE_PATH_LENGTH)
-				{
-					throw new InvalidOperationException($"file path + file name may not be longer than {MAX_FILE_PATH_LENGTH} characters in total.");
-				}
-				var file = new FileInfo(fileName);
+				var file = GenerateFileInfo(post, resp, uri);
 				if (File.Exists(file.FullName))
 				{
 					return $"{uri} is already saved as {file}.";
@@ -357,19 +357,19 @@ namespace ImageDL.Classes.ImageDownloaders
 				//And with this reponse stream seeks cannot be used on it.
 				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
 
-				if (ImageComparer == null)
+				//If image is too small, don't bother saving
+				var (width, height) = ms.GetImageSize();
+				if (width < MinWidth || height < MinHeight)
 				{
-					var (width, height) = ImageComparers.ImageComparer.GetImageSize(ms);
-					if (width < MinWidth || height < MinHeight)
-					{
-						return $"{uri} is too small ({width}x{height}).";
-					}
+					return $"{uri} is too small ({width}x{height}).";
 				}
-				if (!ImageComparer.TryStore(uri, file, ms, MinWidth, MinHeight, out var error))
+				//If the image comparer returns any errors when trying to store, then return that error
+				if (ImageComparer != null && !ImageComparer.TryStore(uri, file, ms, width, height, out var error))
 				{
 					return error;
 				}
 
+				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
 				return $"Saved {uri} to {file}.";
@@ -415,10 +415,77 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 		}
 		/// <summary>
+		/// Saves the stored content links to file.
+		/// </summary>
+		protected void SaveStoredContentLinks()
+		{
+			foreach (var kvp in Links.GroupBy(x => x.Reason))
+			{
+				//Only save links which are not already in the text document
+				var file = new FileInfo(Path.Combine(Directory, $"{kvp.Key}.txt"));
+				var unsavedContent = new List<ContentLink>();
+				if (file.Exists)
+				{
+					using (var reader = new StreamReader(file.OpenRead()))
+					{
+						var text = reader.ReadToEnd();
+						foreach (var anim in kvp)
+						{
+							if (text.Contains(anim.Uri.ToString()))
+							{
+								continue;
+							}
+
+							unsavedContent.Add(anim);
+						}
+					}
+				}
+				else
+				{
+					unsavedContent = kvp.ToList();
+				}
+				if (!unsavedContent.Any())
+				{
+					continue;
+				}
+
+				//Save all the links then say how many were saved
+				var len = unsavedContent.Max(x => x.AssociatedNumber).ToString().Length;
+				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber).Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
+				using (var writer = file.AppendText())
+				{
+					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Utils.FormatDateTimeForSaving()}");
+					writer.WriteLine(String.Join(Environment.NewLine, format));
+					writer.WriteLine();
+				}
+				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
+			}
+		}
+		/// <summary>
+		/// Invokes <see cref="PropertyChanged"/>.
+		/// </summary>
+		/// <param name="name">The property changed.</param>
+		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
+		{
+			if (!ModifiedArguments.Any(x => x.Name == name) && Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
+			{
+				ModifiedArguments.Add(prop);
+				if (_Verbose)
+				{
+					Console.WriteLine($"Successfully set {name} to '{value}'.");
+				}
+			}
+			if (!AllArgumentsSet && !Arguments.Any(x => !ModifiedArguments.Contains(x)))
+			{
+				AllArgumentsSet = true;
+			}
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+		}
+		/// <summary>
 		/// Returns the default options that are used to set values through console input.
 		/// </summary>
 		/// <returns></returns>
-		protected OptionSet GetCommandLineParserOptions()
+		private OptionSet GetCommandLineParserOptions()
 		{
 			return new OptionSet
 			{
@@ -483,7 +550,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// Gets the names of settings (public, instance, has setter, has getter, and is a property).
 		/// </summary>
 		/// <returns></returns>
-		protected ImmutableArray<PropertyInfo> GetArguments()
+		private ImmutableArray<PropertyInfo> GetArguments()
 		{
 			return GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
 				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
@@ -491,57 +558,10 @@ namespace ImageDL.Classes.ImageDownloaders
 				.ToImmutableArray();
 		}
 		/// <summary>
-		/// Saves the stored content links to file.
-		/// </summary>
-		protected void SaveStoredContentLinks()
-		{
-			foreach (var kvp in Links.GroupBy(x => x.Reason))
-			{
-				//Only save links which are not already in the text document
-				var file = new FileInfo(Path.Combine(Directory, $"{kvp.Key}.txt"));
-				var unsavedContent = new List<ContentLink>();
-				if (file.Exists)
-				{
-					using (var reader = new StreamReader(file.OpenRead()))
-					{
-						var text = reader.ReadToEnd();
-						foreach (var anim in kvp)
-						{
-							if (text.Contains(anim.Uri.ToString()))
-							{
-								continue;
-							}
-
-							unsavedContent.Add(anim);
-						}
-					}
-				}
-				else
-				{
-					unsavedContent = kvp.ToList();
-				}
-				if (!unsavedContent.Any())
-				{
-					continue;
-				}
-
-				//Save all the links then say how many were saved
-				var len = unsavedContent.Max(x => x.AssociatedNumber).ToString().Length;
-				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber).Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
-				using (var writer = file.AppendText())
-				{
-					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Utils.FormatDateTimeForSaving()}");
-					writer.WriteLine(String.Join(Environment.NewLine, format));
-					writer.WriteLine();
-				}
-				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
-			}
-		}
-		/// <summary>
 		/// Displays help for whatever option has the supplied key.
 		/// </summary>
 		/// <param name="input"></param>
-		protected void DisplayHelp(string input)
+		private void DisplayHelp(string input)
 		{
 			if (CommandLineParserOptions.Contains(input))
 			{
@@ -552,26 +572,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				Console.WriteLine($"'{input}' is not a valid option.");
 			}
 		}
-		/// <summary>
-		/// Invokes <see cref="PropertyChanged"/>.
-		/// </summary>
-		/// <param name="name">The property changed.</param>
-		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
-		{
-			if (!ModifiedArguments.Any(x => x.Name == name) && Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
-			{
-				ModifiedArguments.Add(prop);
-				if (_Verbose)
-				{
-					Console.WriteLine($"Successfully set {name} to '{value}'.");
-				}
-			}
-			if (!AllArgumentsSet && !Arguments.Any(x => !ModifiedArguments.Contains(x)))
-			{
-				AllArgumentsSet = true;
-			}
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		}
+
 		/// <summary>
 		/// Gathers the posts which match the supplied settings.
 		/// </summary>
@@ -590,7 +591,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <param name="response"></param>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		protected abstract string GenerateFileName(TPost post, WebResponse response, Uri uri);
+		protected abstract FileInfo GenerateFileInfo(TPost post, WebResponse response, Uri uri);
 		/// <summary>
 		/// Scrape images from a post.
 		/// </summary>

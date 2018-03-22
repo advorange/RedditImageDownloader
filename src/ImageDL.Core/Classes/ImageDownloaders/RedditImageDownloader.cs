@@ -47,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private string _Subreddit;
 		private int _MinScore;
 
-		public RedditImageDownloader(IImageComparer imageComparer) : base(imageComparer)
+		public RedditImageDownloader()
 		{
 			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
 			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
@@ -105,11 +105,12 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
 		}
 		/// <inheritdoc />
-		protected override string GenerateFileName(Post post, WebResponse response, Uri uri)
+		protected override FileInfo GenerateFileInfo(Post post, WebResponse response, Uri uri)
 		{
 			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
 			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
-			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			return new FileInfo(Path.Combine(Directory, validName));
 		}
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)

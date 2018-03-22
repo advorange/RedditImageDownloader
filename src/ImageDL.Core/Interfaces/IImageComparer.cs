@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageDL.Classes.ImageComparers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -12,7 +13,7 @@ namespace ImageDL.Interfaces
 	public interface IImageComparer : INotifyPropertyChanged
 	{
 		/// <summary>
-		/// The amount of images the comparer currently has stroed.
+		/// The amount of images the comparer currently has stored.
 		/// </summary>
 		int StoredImages { get; }
 		/// <summary>
@@ -30,11 +31,20 @@ namespace ImageDL.Interfaces
 		/// <param name="uri">The location of the image.</param>
 		/// <param name="file">The file the image is saved to or will be saved to.</param>
 		/// <param name="stream">The image's data.</param>
-		/// <param name="minWidth">The minimum acceptable width for the image.</param>
-		/// <param name="minHeight">The minimum acceptable height for the image.</param>
+		/// <param name="width">The width of the original image.</param>
+		/// <param name="height">The height of the original image.</param>
 		/// <param name="error">If there are any problems with trying to cache the file.</param>
 		/// <returns></returns>
-		bool TryStore(Uri uri, FileInfo file, Stream stream, int minWidth, int minHeight, out string error);
+		bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error);
+		/// <summary>
+		/// Attempts to create image details from a file.
+		/// </summary>
+		/// <param name="file">The file to cache.</param>
+		/// <param name="thumbnailSize">The size to create the thumbnail.</param>
+		/// <param name="md5Hash">The hash of the image's stream.</param>
+		/// <param name="details">The details of the image.</param>
+		/// <returns></returns>
+		bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details);
 		/// <summary>
 		/// Attempts to cache files which have already been saved.
 		/// </summary>

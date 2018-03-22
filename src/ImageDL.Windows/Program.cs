@@ -29,7 +29,6 @@ namespace ImageDL.Windows
 		{
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
-
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
 			do
 			{
@@ -62,7 +61,10 @@ namespace ImageDL.Windows
 
 			foreach (var dir in GetDirectory().GetDirectories())
 			{
-				var downloader = new RedditImageDownloader(new WindowsImageComparer());
+				var downloader = new RedditImageDownloader
+				{
+					ImageComparer = new WindowsImageComparer(),
+				};
 				if (arguments != null)
 				{
 					downloader.SetArguments(arguments.SplitLikeCommandLine());
@@ -91,7 +93,9 @@ namespace ImageDL.Windows
 		}
 		private static IImageDownloader CreateDownloader(Type t)
 		{
-			return (IImageDownloader)Activator.CreateInstance(t, new object[] { new WindowsImageComparer() });
+			var downloader = (IImageDownloader)Activator.CreateInstance(t);
+			downloader.ImageComparer = new WindowsImageComparer();
+			return downloader;
 		}
 		private static DirectoryInfo GetDirectory()
 		{

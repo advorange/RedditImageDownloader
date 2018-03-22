@@ -72,6 +72,10 @@ namespace ImageDL.Interfaces
 		/// The oldest allowed posts.
 		/// </summary>
 		DateTime OldestAllowed { get; }
+		/// <summary>
+		/// The comparer to use for images.
+		/// </summary>
+		IImageComparer ImageComparer { get; set; }
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.

@@ -54,7 +54,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private string _TagString;
 		private int _Page;
 
-		public DanbooruImageDownloader(IImageComparer imageComparer) : base(imageComparer)
+		public DanbooruImageDownloader()
 		{
 			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
 			CommandLineParserOptions.Add($"{nameof(Page)}=", "the page to start from.", i => SetValue<int>(i, c => Page = c));
@@ -106,11 +106,12 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine($"[#{count}] {GetPostUri(post)}");
 		}
 		/// <inheritdoc />
-		protected override string GenerateFileName(DanbooruPost post, WebResponse response, Uri uri)
+		protected override FileInfo GenerateFileInfo(DanbooruPost post, WebResponse response, Uri uri)
 		{
 			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
 			var totalName = $"{post.PostId}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
-			return new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			return new FileInfo(Path.Combine(Directory, validName));
 		}
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(DanbooruPost post)
