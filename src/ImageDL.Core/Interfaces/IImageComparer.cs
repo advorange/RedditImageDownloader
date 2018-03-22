@@ -23,7 +23,7 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
 		/// </summary>
-		int ThumbnailSize { get; }
+		int ThumbnailSize { get; set; }
 
 		/// <summary>
 		/// Attempts to cache the image.

@@ -217,6 +217,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			MaxImageSimilarity = 1000;
 			ImagesCachedPerThread = 50;
 			CompareSavedImages = false;
+			ImageComparer = null;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
