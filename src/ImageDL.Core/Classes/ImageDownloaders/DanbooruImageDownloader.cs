@@ -40,25 +40,15 @@ namespace ImageDL.Classes.ImageDownloaders
 			get => _Page;
 			set => NotifyPropertyChanged(_Page = Math.Min(1, value));
 		}
-		/// <summary>
-		/// The minimum score an image can have before it won't be downloaded.
-		/// </summary>
-		public int MinScore
-		{
-			get => _MinScore;
-			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
-		}
 
 		private HttpClient _Client;
 		private string _TagString;
 		private int _Page;
-		private int _MinScore;
 
 		public DanbooruImageDownloader()
 		{
 			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
 			CommandLineParserOptions.Add($"{nameof(Page)}=", "the page to start from.", i => SetValue<int>(i, c => Page = c));
-			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
 
 			Page = 1;
 
@@ -71,6 +61,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			var validPosts = new List<DanbooruPost>();
 			try
 			{
+				//Uses for instead of while to save 2 lines.
 				var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
 				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
 				{
@@ -82,16 +73,17 @@ namespace ImageDL.Classes.ImageDownloaders
 
 					try
 					{
-						var iterVal = await Iterate(validPosts, i).ConfigureAwait(false);
+						var iterVal = await IterateAsync(validPosts, i).ConfigureAwait(false);
 						if (iterVal < 0)
 						{
 							break;
 						}
 					}
-					catch (HttpRequestException he) when (he.Message.Contains("421")) //Rate limited
+					catch (HttpRequestException hre) when (hre.Message.Contains("421")) //Rate limited
 					{
 						nextRetry = DateTime.UtcNow.AddSeconds(30);
 						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
+						--i; //To make up for how this rate limited request doesn't return anything
 						continue;
 					}
 				}
@@ -115,8 +107,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <inheritdoc />
 		protected override FileInfo GenerateFileInfo(DanbooruPost post, WebResponse response, Uri uri)
 		{
-			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
-			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
+			var totalName = $"{post.Id}_{(response.ResponseUri.LocalPath ?? uri.ToString()).Split('/').Last()}";
 			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 			return new FileInfo(Path.Combine(Directory, validName));
 		}
@@ -132,7 +123,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			return new ContentLink(uri, post.Score, reason);
 		}
 
-		private async Task<int> Iterate(List<DanbooruPost> validPosts, int iteration)
+		private async Task<int> IterateAsync(List<DanbooruPost> validPosts, int iteration)
 		{
 			//Limit caps out at 200 per pages, so can't get this all in one iteration. Have to keep incrementing page.
 			var search = $"https://danbooru.donmai.us/posts.json?utf8=✓" +
@@ -173,10 +164,13 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 
 			//Anything less than a full page means everything's been searched
-			return posts.Count < 25 ? -1 : posts.Count;
+			return posts.Count < Math.Min(AmountToDownload, 200) ? -1 : posts.Count;
 		}
 	}
 
+	/// <summary>
+	/// Json model for a danbooru post.
+	/// </summary>
 	public class DanbooruPost
 	{
 		[JsonProperty("id")]
@@ -302,7 +296,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			{
 				switch (type)
 				{
-					case TagType.Default:
+					case TagType.All:
 						return TagString.Split(' ');
 					case TagType.General:
 						return TagStringGeneral.Split(' ');
@@ -329,15 +323,33 @@ namespace ImageDL.Classes.ImageDownloaders
 		[JsonIgnore]
 		public string[] Pools => String.IsNullOrWhiteSpace(PoolString)
 			? new string[0] : PoolString.Split(' ').Select(x => x.Replace("pool:", "")).ToArray();
-	}
 
-	public enum TagType
-	{
-		Default,
-		General,
-		Character,
-		Copyright,
-		Artist,
-		Meta,
+		public enum TagType
+		{
+			/// <summary>
+			/// Every tag that the image has on it. General, meta, etc.
+			/// </summary>
+			All,
+			/// <summary>
+			/// Tags for what the character is doing or looking like.
+			/// </summary>
+			General,
+			/// <summary>
+			/// Tags for who is in the image.
+			/// </summary>
+			Character,
+			/// <summary>
+			/// Tags for who owns the image.
+			/// </summary>
+			Copyright,
+			/// <summary>
+			/// Tags for who made the image.
+			/// </summary>
+			Artist,
+			/// <summary>
+			/// Tags about the image file. Resolution, official, etc.
+			/// </summary>
+			Meta,
+		}
 	}
 }

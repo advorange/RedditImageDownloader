@@ -81,6 +81,12 @@ namespace ImageDL.Classes.ImageDownloaders
 			set => NotifyPropertyChanged(_ImagesCachedPerThread = Math.Max(1, value));
 		}
 		/// <inheritdoc />
+		public int MinScore
+		{
+			get => _MinScore;
+			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
+		}
+		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
@@ -144,6 +150,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		private int _MaxDaysOld;
 		private int _MaxImageSimilarity;
 		private int _ImagesCachedPerThread;
+		private int _MinScore;
 		private bool _CompareSavedImages;
 		private bool _Verbose;
 		private bool _CreateDirectory;
@@ -170,6 +177,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			CreateDirectory = false;
 			MaxImageSimilarity = 1000;
 			ImagesCachedPerThread = 50;
+			MinScore = 0;
 			CompareSavedImages = false;
 			ImageComparer = null;
 
@@ -486,6 +494,11 @@ namespace ImageDL.Classes.ImageDownloaders
 					$"icpt|{nameof(ImagesCachedPerThread)}=",
 					"how many images to cache on each thread (lower = faster but more CPU).",
 					i => SetValue<int>(i, c => ImagesCachedPerThread = c)
+				},
+				{
+					$"ms|mins|{nameof(MinScore)}=",
+					"the minimum score for an image to have before being ignored.",
+					i => SetValue<int>(i, c => MinScore = c)
 				},
 				{
 					$"csi|{nameof(CompareSavedImages)}=",

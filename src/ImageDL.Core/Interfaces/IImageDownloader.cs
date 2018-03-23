@@ -41,6 +41,10 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		int ImagesCachedPerThread { get; set; }
 		/// <summary>
+		/// The minimum score an image can have before it won't be downloaded. Not every site uses this.
+		/// </summary>
+		int MinScore { get; set; }
+		/// <summary>
 		/// Indicates whether or not to add already saved images to the cache before downloading images.
 		/// </summary>
 		bool CompareSavedImages { get; set; }

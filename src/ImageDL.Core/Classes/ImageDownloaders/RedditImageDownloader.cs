@@ -25,23 +25,13 @@ namespace ImageDL.Classes.ImageDownloaders
 			get => _Subreddit;
 			set => NotifyPropertyChanged(_Subreddit = value);
 		}
-		/// <summary>
-		/// The minimum score a thread can have before images won't be downloaded from it.
-		/// </summary>
-		public int MinScore
-		{
-			get => _MinScore;
-			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
-		}
 
 		private Reddit _Reddit;
 		private string _Subreddit;
-		private int _MinScore;
 
 		public RedditImageDownloader()
 		{
 			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
-			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
 
 			_Reddit = new Reddit(new WebAgent(), false);
 		}
@@ -98,8 +88,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <inheritdoc />
 		protected override FileInfo GenerateFileInfo(Post post, WebResponse response, Uri uri)
 		{
-			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
-			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
+			var totalName = $"{post.Id}_{(response.ResponseUri.LocalPath ?? uri.ToString()).Split('/').Last()}";
 			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 			return new FileInfo(Path.Combine(Directory, validName));
 		}

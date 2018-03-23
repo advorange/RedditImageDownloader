@@ -30,15 +30,6 @@ namespace ImageDL.Windows
 		{
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
-
-			var test = new DanbooruImageDownloader
-			{
-				TagString = "highres",
-				AmountToDownload = 1000,
-				MaxDaysOld = 100,
-			};
-			await test.StartAsync().ConfigureAwait(false);
-
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
 			do
 			{

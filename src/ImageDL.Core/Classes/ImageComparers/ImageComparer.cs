@@ -91,10 +91,12 @@ namespace ImageDL.Classes.ImageComparers
 		/// <inheritdoc />
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread)
 		{
-			//Don't cache files which have already been cached (accidentally let this not be checked before, and froze my PC)
-			//TODO: check to make sure this excludes already cached things correctly
-			var alreadyCachedFiles = Images.Select(x => x.Value.File);
-			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCachedFiles.Contains(x)).OrderBy(x => x.CreationTimeUtc).ToArray();
+			//Don't cache files which have already been cached
+			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
+			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
+			var alreadyCached = Images.Select(x => x.Value.File.FullName);
+			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.FullName))
+				.OrderBy(x => x.CreationTimeUtc).ToArray();
 			var len = files.Length;
 			var grouped = files.Select((file, index) => new { file, index })
 				.GroupBy(x => x.index / imagesPerThread)
