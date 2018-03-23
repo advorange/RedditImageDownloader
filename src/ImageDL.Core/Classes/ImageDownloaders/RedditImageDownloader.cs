@@ -77,17 +77,17 @@ namespace ImageDL.Classes.ImageDownloaders
 						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
 				}, valid.Token).ConfigureAwait(false);
-				Console.WriteLine($"Finished gathering reddit posts.");
 			}
-			catch (OperationCanceledException)
-			{
-				Console.WriteLine($"Finished gathering reddit posts.");
-			}
+			catch (OperationCanceledException) { }
 			catch (Exception e)
 			{
 				e.Write();
 			}
-			Console.WriteLine();
+			finally
+			{
+				Console.WriteLine($"Finished gathering reddit posts.");
+				Console.WriteLine();
+			}
 			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
 		/// <inheritdoc />

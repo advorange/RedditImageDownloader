@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageDL.Interfaces
@@ -79,8 +80,9 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
 		/// </summary>
+		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
-		Task StartAsync();
+		Task StartAsync(CancellationToken token = default);
 		/// <summary>
 		/// Sets values with passed in values parsed from strings.
 		/// </summary>

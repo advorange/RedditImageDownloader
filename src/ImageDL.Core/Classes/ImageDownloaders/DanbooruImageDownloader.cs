@@ -1,15 +1,14 @@
 ﻿using ImageDL.Classes.ImageGatherers;
 using ImageDL.Utilities;
-using Imouto.BooruParser.Loaders;
-using Imouto.BooruParser.Model.Danbooru;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using Model = Imouto.BooruParser.Model.Danbooru.Json.Post;
 
 namespace ImageDL.Classes.ImageDownloaders
 {
@@ -41,21 +40,29 @@ namespace ImageDL.Classes.ImageDownloaders
 			get => _Page;
 			set => NotifyPropertyChanged(_Page = Math.Min(1, value));
 		}
+		/// <summary>
+		/// The minimum score an image can have before it won't be downloaded.
+		/// </summary>
+		public int MinScore
+		{
+			get => _MinScore;
+			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
+		}
 
-		private BooruLoader _Booru;
-		private DanbooruLoader _Danbooru;
+		private HttpClient _Client;
 		private string _TagString;
 		private int _Page;
+		private int _MinScore;
 
 		public DanbooruImageDownloader()
 		{
 			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
 			CommandLineParserOptions.Add($"{nameof(Page)}=", "the page to start from.", i => SetValue<int>(i, c => Page = c));
-
-			_Booru = new BooruLoader(null, 1240);
-			_Danbooru = new DanbooruLoader(null, null, 1240, null, _Booru);
+			CommandLineParserOptions.Add($"ms|mins|{nameof(MinScore)}=", "the minimum score for an image to have before being ignored.", i => SetValue<int>(i, c => MinScore = c));
 
 			Page = 1;
+
+			_Client = new HttpClient();
 		}
 
 		/// <inheritdoc />
@@ -64,62 +71,273 @@ namespace ImageDL.Classes.ImageDownloaders
 			var validPosts = new List<DanbooruPost>();
 			try
 			{
-				var search = $"https://danbooru.donmai.us/posts.json?utf8=✓" +
-					$"&tags={WebUtility.UrlEncode(TagString)}" +
-					$"&limit={AmountToDownload}" +
-					$"&page={Page}";
-				var pageHtml = await _Booru.LoadPageAsync(search).ConfigureAwait(false);
-				var searchResults = new DanbooruSearchResult(JsonConvert.DeserializeObject<List<Model>>(pageHtml));
-				foreach (var searchResult in searchResults.Results)
+				var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
+				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
 				{
-					var post = (DanbooruPost)(await _Danbooru.LoadPostAsync(searchResult.Id).ConfigureAwait(false));
-					if (post.PostedDateTime.ToUniversalTime() < OldestAllowed)
+					var diff = nextRetry - DateTime.UtcNow;
+					if (diff.Ticks > 0)
 					{
-						break;
-					}
-					else if (post.ImageSize.Width < MinWidth || post.ImageSize.Height < MinHeight)
-					{
-						Console.WriteLine($"{GetPostUri(post)} is too small ({post.ImageSize.Width}x{post.ImageSize.Height}).");
+						await Task.Delay(diff).ConfigureAwait(false);
 					}
 
-					validPosts.Add(post);
+					try
+					{
+						var iterVal = await Iterate(validPosts, i).ConfigureAwait(false);
+						if (iterVal < 0)
+						{
+							break;
+						}
+					}
+					catch (HttpRequestException he) when (he.Message.Contains("421")) //Rate limited
+					{
+						nextRetry = DateTime.UtcNow.AddSeconds(30);
+						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
+						continue;
+					}
 				}
-				Console.WriteLine("Finished gathering danbooru posts.");
 			}
 			catch (Exception e)
 			{
 				e.Write();
 			}
-			Console.WriteLine();
-			return validPosts.OrderBy(x => x.PostedDateTime).ToList();
+			finally
+			{
+				Console.WriteLine($"Finished gathering Danbooru posts.");
+				Console.WriteLine();
+			}
+			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
 		/// <inheritdoc />
 		protected override void WritePostToConsole(DanbooruPost post, int count)
 		{
-			Console.WriteLine($"[#{count}] {GetPostUri(post)}");
+			Console.WriteLine($"[#{count}|\u2191{post.Score}] http://danbooru.donmai.us/posts/{post.Id}");
 		}
 		/// <inheritdoc />
 		protected override FileInfo GenerateFileInfo(DanbooruPost post, WebResponse response, Uri uri)
 		{
 			var gottenName = response.Headers["Content-Disposition"] ?? response.ResponseUri.LocalPath ?? uri.ToString();
-			var totalName = $"{post.PostId}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
+			var totalName = $"{post.Id}_{gottenName.Substring(gottenName.LastIndexOf('/') + 1)}";
 			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
 			return new FileInfo(Path.Combine(Directory, validName));
 		}
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(DanbooruPost post)
 		{
-			return await ImageGatherer.CreateGathererAsync(Scrapers, new Uri(GetPostUri(post))).ConfigureAwait(false);
+			var uri = new Uri($"http://danbooru.donmai.us{post.FileUrl}");
+			return await ImageGatherer.CreateGathererAsync(Scrapers, uri).ConfigureAwait(false);
 		}
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(DanbooruPost post, Uri uri, string reason)
 		{
-			return new ContentLink(uri, post.PostId, reason);
+			return new ContentLink(uri, post.Score, reason);
 		}
 
-		private string GetPostUri(DanbooruPost post)
+		private async Task<int> Iterate(List<DanbooruPost> validPosts, int iteration)
 		{
-			return $"http://danbooru.donmai.us/posts/{post.PostId}";
+			//Limit caps out at 200 per pages, so can't get this all in one iteration. Have to keep incrementing page.
+			var search = $"https://danbooru.donmai.us/posts.json?utf8=✓" +
+				$"&tags={WebUtility.UrlEncode(TagString)}" +
+				$"&limit={AmountToDownload}" +
+				$"&page={Page + iteration}";
+
+			//Get the Json from Danbooru
+			string json;
+			using (var resp = await _Client.SendAsync(new HttpRequestMessage(HttpMethod.Get, search)).ConfigureAwait(false))
+			{
+				resp.EnsureSuccessStatusCode();
+				json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+			}
+
+			//Deserialize the Json and look through all the posts
+			var posts = JsonConvert.DeserializeObject<List<DanbooruPost>>(json);
+			foreach (var post in posts)
+			{
+				if (post.CreatedAt.ToUniversalTime() < OldestAllowed)
+				{
+					return -1;
+				}
+				else if (post.ImageWidth < MinWidth || post.ImageHeight < MinHeight || post.Score < MinScore)
+				{
+					continue;
+				}
+
+				validPosts.Add(post);
+				if (validPosts.Count == AmountToDownload)
+				{
+					return -1;
+				}
+				else if (validPosts.Count % 25 == 0)
+				{
+					Console.WriteLine($"{validPosts.Count} Danbooru posts found.");
+				}
+			}
+
+			//Anything less than a full page means everything's been searched
+			return posts.Count < 25 ? -1 : posts.Count;
 		}
+	}
+
+	public class DanbooruPost
+	{
+		[JsonProperty("id")]
+		public readonly int Id;
+		[JsonProperty("uploader_id")]
+		public readonly int UploaderId;
+		[JsonProperty("parent_id")]
+		public readonly int? ParentId;
+		[JsonProperty("approver_id")]
+		public readonly int? ApproverId;
+		[JsonProperty("pixiv_id")]
+		public readonly int? PixivId;
+
+		[JsonProperty("score")]
+		public readonly int Score;
+		[JsonProperty("up_score")]
+		public readonly int UpScore;
+		[JsonProperty("down_score")]
+		public readonly int DownScore;
+		[JsonProperty("fav_count")]
+		public readonly int FavCount;
+
+		[JsonProperty("is_note_locked")]
+		public readonly bool IsNoteLocked;
+		[JsonProperty("is_rating_locked")]
+		public readonly bool IsRatingLocked;
+		[JsonProperty("is_status_locked")]
+		public readonly bool IsStatusLocked;
+		[JsonProperty("is_pending")]
+		public readonly bool IsPending;
+		[JsonProperty("is_flagged")]
+		public readonly bool IsFlagged;
+		[JsonProperty("is_deleted")]
+		public readonly bool IsDeleted;
+		[JsonProperty("is_banned")]
+		public readonly bool IsBanned;
+
+		[JsonProperty("md5")]
+		public readonly string Md5;
+		[JsonProperty("file_ext")]
+		public readonly string FileExt;
+		[JsonProperty("file_size")]
+		public readonly long FileSize;
+		[JsonProperty("image_width")]
+		public readonly int ImageWidth;
+		[JsonProperty("image_height")]
+		public readonly int ImageHeight;
+		[JsonProperty("file_url")]
+		public readonly string FileUrl;
+		[JsonProperty("large_file_url")]
+		public readonly string LargeFileUrl;
+		[JsonProperty("preview_file_url")]
+		public readonly string PreviewFileUrl;
+		[JsonProperty("has_large")]
+		public readonly bool HasLarge;
+
+		[JsonProperty("has_children")]
+		public readonly bool HasChildren;
+		[JsonProperty("has_active_children")]
+		public readonly bool HasActiveChildren;
+		[JsonProperty("has_visible_children")]
+		public readonly bool HasVisibleChildren;
+		[JsonProperty("children_ids")]
+		public readonly string ChildrenIdsString;
+
+		[JsonProperty("created_at")]
+		public readonly DateTime CreatedAt;
+		[JsonProperty("last_comment_bumped_at")]
+		public readonly DateTime? LastCommentBumpedAt;
+		[JsonProperty("last_noted_at")]
+		public readonly DateTime? LastNotedAt;
+		[JsonProperty("updated_at")]
+		public readonly DateTime? UpdatedAt;
+		[JsonProperty("last_commented_at")]
+		public readonly DateTime? LastCommentedAt;
+
+		[JsonProperty("source")]
+		public readonly string Source;
+		[JsonProperty("uploader_name")]
+		public readonly string UploaderName;
+		[JsonProperty("rating")]
+		public readonly char Rating;
+		[JsonProperty("bit_flags")]
+		public readonly ulong BitFlags; //Not sure if this is the correct type
+		[JsonProperty("fav_string")]
+		public readonly string FavString;
+		[JsonProperty("pool_string")]
+		public readonly string PoolString;
+		[JsonProperty("keeper_data")]
+		public readonly Dictionary<string, int> KeeperData; //Not sure if this is the correct type
+
+		#region Tags
+		[JsonProperty("tag_string")]
+		public readonly string TagString;
+		[JsonProperty("tag_string_general")]
+		public readonly string TagStringGeneral;
+		[JsonProperty("tag_string_character")]
+		public readonly string TagStringCharacter;
+		[JsonProperty("tag_string_copyright")]
+		public readonly string TagStringCopyright;
+		[JsonProperty("tag_string_artist")]
+		public readonly string TagStringArtist;
+		[JsonProperty("tag_string_meta")]
+		public readonly string TagStringMeta;
+
+		[JsonProperty("tag_count")]
+		public readonly int TagCount;
+		[JsonProperty("tag_count_general")]
+		public readonly int TagCountGeneral;
+		[JsonProperty("tag_count_character")]
+		public readonly int TagCountCharacter;
+		[JsonProperty("tag_count_copyright")]
+		public readonly int TagCountCopyright;
+		[JsonProperty("tag_count_artist")]
+		public readonly int TagCountArtist;
+		[JsonProperty("tag_count_meta")]
+		public readonly int TagCountMeta;
+		#endregion
+
+		public string[] this[TagType type]
+		{
+			get
+			{
+				switch (type)
+				{
+					case TagType.Default:
+						return TagString.Split(' ');
+					case TagType.General:
+						return TagStringGeneral.Split(' ');
+					case TagType.Character:
+						return TagStringCharacter.Split(' ');
+					case TagType.Copyright:
+						return TagStringCopyright.Split(' ');
+					case TagType.Artist:
+						return TagStringArtist.Split(' ');
+					case TagType.Meta:
+						return TagStringMeta.Split(' ');
+					default:
+						throw new ArgumentException("Invalid type tag type supplied.", nameof(type));
+				}
+			}
+		}
+
+		[JsonIgnore]
+		public int[] ChildrenIds => String.IsNullOrWhiteSpace(ChildrenIdsString)
+			? new int[0] : ChildrenIdsString.Split(' ').Select(x => Convert.ToInt32(x)).ToArray();
+		[JsonIgnore]
+		public int[] Favorites => String.IsNullOrWhiteSpace(FavString)
+			? new int[0] : FavString.Split(' ').Select(x => Convert.ToInt32(x.Replace("fav:", ""))).ToArray();
+		[JsonIgnore]
+		public string[] Pools => String.IsNullOrWhiteSpace(PoolString)
+			? new string[0] : PoolString.Split(' ').Select(x => x.Replace("pool:", "")).ToArray();
+	}
+
+	public enum TagType
+	{
+		Default,
+		General,
+		Character,
+		Copyright,
+		Artist,
+		Meta,
 	}
 }

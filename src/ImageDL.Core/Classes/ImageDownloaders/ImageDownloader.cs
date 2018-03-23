@@ -12,6 +12,7 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageDownloaders
@@ -134,6 +135,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
 		protected List<ContentLink> Links = new List<ContentLink>();
 		protected OptionSet CommandLineParserOptions;
+		protected SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
 		private string _Directory;
 		private int _AmountToDownload;
@@ -176,8 +178,10 @@ namespace ImageDL.Classes.ImageDownloaders
 		}
 
 		/// <inheritdoc />
-		public async Task StartAsync()
+		public async Task StartAsync(CancellationToken token = default)
 		{
+			await SemaphoreSlim.WaitAsync(token).ConfigureAwait(false);
+
 			AllArgumentsSet = false;
 			BusyDownloading = true;
 
@@ -195,7 +199,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				WritePostToConsole(post, ++count);
 
 				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
-				foreach (var imageUri in gatherer.ImageUris)
+				foreach (var imageUri in gatherer.GatheredUris)
 				{
 					await Task.Delay(100).ConfigureAwait(false);
 					try
@@ -229,6 +233,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			DownloadsFinished = true;
 
 			SaveStoredContentLinks();
+			SemaphoreSlim.Release();
 		}
 		/// <inheritdoc />
 		public void SetArguments(string[] args)
@@ -276,12 +281,11 @@ namespace ImageDL.Classes.ImageDownloaders
 		{
 			if (!String.IsNullOrWhiteSpace(gatherer.Error))
 			{
+				if (gatherer.IsAnimated)
+				{
+					Links.Add(CreateContentLink(post, gatherer.OriginalUri, ANIMATED_CONTENT));
+				}
 				return gatherer.Error;
-			}
-			else if (gatherer.IsAnimated)
-			{
-				Links.Add(CreateContentLink(post, gatherer.OriginalUri, ANIMATED_CONTENT));
-				return $"{gatherer.OriginalUri} is animated content (gif/video).";
 			}
 
 			WebResponse resp = null;

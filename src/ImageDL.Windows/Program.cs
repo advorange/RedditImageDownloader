@@ -31,12 +31,13 @@ namespace ImageDL.Windows
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
 
-			var files = new FileInfo[]
+			var test = new DanbooruImageDownloader
 			{
-				new FileInfo(@"D:\Images\Pictures\Weeb\Mass Downloaded\AnimeWallpaper\7nu4dg_wcsjyyyjau701.png"),
-				new FileInfo(@"D:\Images\Pictures\Weeb\Mass Downloaded\AnimeWallpaper\7nvq2n_0m26huabqv701.jpg"),
+				TagString = "highres",
+				AmountToDownload = 1000,
+				MaxDaysOld = 100,
 			};
-			RecycleBinMover.MoveFiles(files);
+			await test.StartAsync().ConfigureAwait(false);
 
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
 			do

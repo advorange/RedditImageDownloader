@@ -92,6 +92,7 @@ namespace ImageDL.Classes.ImageComparers
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread)
 		{
 			//Don't cache files which have already been cached (accidentally let this not be checked before, and froze my PC)
+			//TODO: check to make sure this excludes already cached things correctly
 			var alreadyCachedFiles = Images.Select(x => x.Value.File);
 			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCachedFiles.Contains(x)).OrderBy(x => x.CreationTimeUtc).ToArray();
 			var len = files.Length;

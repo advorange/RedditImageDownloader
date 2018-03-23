@@ -37,9 +37,6 @@
     <Reference Include="HtmlAgilityPack, Version=1.7.1.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\HtmlAgilityPack.1.7.1\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
-    <Reference Include="Imouto.BooruParser, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Imouto.BooruParser.1.0.1\lib\netstandard1.6\Imouto.BooruParser.dll</HintPath>
-    </Reference>
     <Reference Include="Magick.NET-Q16-AnyCPU, Version=7.4.3.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Magick.NET-Q16-AnyCPU.7.4.3\lib\net40\Magick.NET-Q16-AnyCPU.dll</HintPath>
     </Reference>

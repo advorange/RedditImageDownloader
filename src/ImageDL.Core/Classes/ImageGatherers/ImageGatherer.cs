@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageDL.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -30,10 +31,6 @@ namespace ImageDL.Classes.ImageGatherers
 		/// </summary>
 		public Uri OriginalUri { get; private set; }
 		/// <summary>
-		/// The edited <see cref="Uri"/> that will be scraped.
-		/// </summary>
-		public Uri EditedUri { get; private set; }
-		/// <summary>
 		/// Indicates whether or not the link leads to a video site.
 		/// </summary>
 		public bool IsAnimated { get; private set; }
@@ -44,9 +41,9 @@ namespace ImageDL.Classes.ImageGatherers
 		/// <summary>
 		/// The images to download.
 		/// </summary>
-		public ImmutableArray<Uri> ImageUris { get; private set; }
+		public ImmutableArray<Uri> GatheredUris { get; private set; }
 		/// <summary>
-		/// Any errors which have occurred during getting <see cref="ImageUris"/>.
+		/// Any errors which have occurred during getting <see cref="GatheredUris"/>.
 		/// </summary>
 		public string Error { get; private set; }
 
@@ -62,19 +59,32 @@ namespace ImageDL.Classes.ImageGatherers
 			{
 				OriginalUri = uri,
 				Scraper = scraper,
-				EditedUri = scraper == null ? uri : scraper.EditUri(uri),
 				IsAnimated = AnimatedContentDomains.Any(x => x.IsMatch(uri.ToString())),
 			};
 
-			if (!g.IsAnimated && g.Scraper != null && g.Scraper.RequiresScraping(uri))
+			var editedUri = scraper == null ? uri : scraper.EditUri(uri);
+			//If the link goes directly to an image, just use that
+			if (editedUri.ToString().IsImagePath())
+			{
+				g.GatheredUris = new[] { editedUri }.ToImmutableArray();
+			}
+			//If the link is animated, return nothing and give an error
+			else if (g.IsAnimated)
+			{
+				g.GatheredUris = new[] { editedUri }.ToImmutableArray();
+				g.Error = $"{editedUri} is animated content (gif/video).";
+			}
+			//If the scraper isn't null and the uri requires scraping, scrape it
+			else if (g.Scraper != null && g.Scraper.RequiresScraping(uri))
 			{
 				var response = await g.Scraper.ScrapeAsync(g.OriginalUri).ConfigureAwait(false);
-				g.ImageUris = response.Uris.Select(x => g.Scraper.EditUri(x)).Where(x => x != null).ToImmutableArray();
+				g.GatheredUris = response.Uris.Select(x => g.Scraper.EditUri(x)).Where(x => x != null).ToImmutableArray();
 				g.Error = response.Error;
 			}
+			//Otherwise, just return the uri and hope for the best.
 			else
 			{
-				g.ImageUris = new[] { g.EditedUri }.ToImmutableArray();
+				g.GatheredUris = new[] { editedUri }.ToImmutableArray();
 			}
 			return g;
 		}
