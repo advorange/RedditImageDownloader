@@ -1,4 +1,4 @@
-﻿using ImageDL.Utilities;
+﻿using AdvorangesUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -13,6 +13,9 @@ namespace ImageDL.Classes.ImageGatherers
 	/// </summary>
 	public class ImageGatherer
 	{
+		/// <summary>
+		/// Regex for checking if a uri leads to animated content (video, gif, etc).
+		/// </summary>
 		public static List<Regex> AnimatedContentDomains = new List<Regex>
 		{
 			new Regex(@"\.youtu\.be", RegexOptions.Compiled | RegexOptions.IgnoreCase),
@@ -50,6 +53,7 @@ namespace ImageDL.Classes.ImageGatherers
 		/// <summary>
 		/// Gathers images from <paramref name="uri"/>.
 		/// </summary>
+		/// <param name="scrapers">The scrapers to use for gathering images from webpages.</param>
 		/// <param name="uri">The location to get images from.</param>
 		/// <returns>A <see cref="ImageGatherer"/> which contains any images gathered and any errors which occurred.</returns>
 		public static async Task<ImageGatherer> CreateGathererAsync(IEnumerable<WebsiteScraper> scrapers, Uri uri)
@@ -77,7 +81,7 @@ namespace ImageDL.Classes.ImageGatherers
 			//If the scraper isn't null and the uri requires scraping, scrape it
 			else if (g.Scraper != null && g.Scraper.RequiresScraping(uri))
 			{
-				var response = await g.Scraper.ScrapeAsync(g.OriginalUri).ConfigureAwait(false);
+				var response = await g.Scraper.ScrapeAsync(g.OriginalUri).CAF();
 				g.GatheredUris = response.Uris.Select(x => g.Scraper.EditUri(x)).Where(x => x != null).ToImmutableArray();
 				g.Error = response.Error;
 			}

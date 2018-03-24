@@ -7,6 +7,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <LangVersion>latest</LangVersion>
     <DefineConstants>TRACE;DEBUG;NETSTANDARD2_0 WIN</DefineConstants>
+    <DocumentationFile>bin\Debug\netstandard2.0\ImageDL.Core.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -14,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AdvorangesUtils" Version="1.0.1" />
     <PackageReference Include="HtmlAgilityPack" Version="1.7.1" />
     <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="7.4.3" />
     <PackageReference Include="MediaTypeMap" Version="2.1.0">

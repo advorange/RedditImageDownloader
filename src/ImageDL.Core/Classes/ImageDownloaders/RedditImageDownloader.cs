@@ -1,5 +1,5 @@
-﻿using ImageDL.Classes.ImageGatherers;
-using ImageDL.Utilities;
+﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageGatherers;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -29,6 +29,9 @@ namespace ImageDL.Classes.ImageDownloaders
 		private Reddit _Reddit;
 		private string _Subreddit;
 
+		/// <summary>
+		/// Creates an image downloader for reddit.
+		/// </summary>
 		public RedditImageDownloader()
 		{
 			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
@@ -43,7 +46,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			try
 			{
 				var valid = new CancellationTokenSource();
-				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).ConfigureAwait(false);
+				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
 				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, AmountToDownload).ForEachAsync(post =>
 				{
 					if (post.CreatedUTC < OldestAllowed)
@@ -66,7 +69,7 @@ namespace ImageDL.Classes.ImageDownloaders
 					{
 						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
-				}, valid.Token).ConfigureAwait(false);
+				}, valid.Token).CAF();
 			}
 			catch (OperationCanceledException) { }
 			catch (Exception e)
@@ -95,7 +98,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)
 		{
-			return await ImageGatherer.CreateGathererAsync(Scrapers, post.Url).ConfigureAwait(false);
+			return await ImageGatherer.CreateGathererAsync(Scrapers, post.Url).CAF();
 		}
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)

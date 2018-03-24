@@ -1,9 +1,7 @@
-﻿using ImageDL.Core.Utilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace ImageDL.Classes.ImageComparers
 {

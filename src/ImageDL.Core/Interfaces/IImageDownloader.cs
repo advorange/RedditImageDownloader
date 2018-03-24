@@ -45,6 +45,14 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		int MinScore { get; set; }
 		/// <summary>
+		/// The minimum aspect ratio an image can have.
+		/// </summary>
+		float MinAspectRatio { get; set; }
+		/// <summary>
+		/// The maximum aspect ratio an image can have.
+		/// </summary>
+		float MaxAspectRatio { get; set; }
+		/// <summary>
 		/// Indicates whether or not to add already saved images to the cache before downloading images.
 		/// </summary>
 		bool CompareSavedImages { get; set; }

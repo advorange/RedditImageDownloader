@@ -1,5 +1,5 @@
-﻿using ImageDL.Classes.ImageGatherers;
-using ImageDL.Utilities;
+﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageGatherers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -45,6 +45,9 @@ namespace ImageDL.Classes.ImageDownloaders
 		private string _TagString;
 		private int _Page;
 
+		/// <summary>
+		/// Creates an image downloader for Danbooru.
+		/// </summary>
 		public DanbooruImageDownloader()
 		{
 			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
@@ -68,12 +71,12 @@ namespace ImageDL.Classes.ImageDownloaders
 					var diff = nextRetry - DateTime.UtcNow;
 					if (diff.Ticks > 0)
 					{
-						await Task.Delay(diff).ConfigureAwait(false);
+						await Task.Delay(diff).CAF();
 					}
 
 					try
 					{
-						var iterVal = await IterateAsync(validPosts, i).ConfigureAwait(false);
+						var iterVal = await IterateAsync(validPosts, i).CAF();
 						if (iterVal < 0)
 						{
 							break;
@@ -115,7 +118,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		protected override async Task<ImageGatherer> CreateGathererAsync(DanbooruPost post)
 		{
 			var uri = new Uri($"http://danbooru.donmai.us{post.FileUrl}");
-			return await ImageGatherer.CreateGathererAsync(Scrapers, uri).ConfigureAwait(false);
+			return await ImageGatherer.CreateGathererAsync(Scrapers, uri).CAF();
 		}
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(DanbooruPost post, Uri uri, string reason)
@@ -133,10 +136,10 @@ namespace ImageDL.Classes.ImageDownloaders
 
 			//Get the Json from Danbooru
 			string json;
-			using (var resp = await _Client.SendAsync(new HttpRequestMessage(HttpMethod.Get, search)).ConfigureAwait(false))
+			using (var resp = await _Client.SendAsync(new HttpRequestMessage(HttpMethod.Get, search)).CAF())
 			{
 				resp.EnsureSuccessStatusCode();
-				json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+				json = await resp.Content.ReadAsStringAsync().CAF();
 			}
 
 			//Deserialize the Json and look through all the posts
@@ -173,6 +176,7 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// </summary>
 	public class DanbooruPost
 	{
+#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
 		[JsonProperty("id")]
 		public readonly int Id;
 		[JsonProperty("uploader_id")]
@@ -323,7 +327,11 @@ namespace ImageDL.Classes.ImageDownloaders
 		[JsonIgnore]
 		public string[] Pools => String.IsNullOrWhiteSpace(PoolString)
 			? new string[0] : PoolString.Split(' ').Select(x => x.Replace("pool:", "")).ToArray();
+#pragma warning restore 1591
 
+		/// <summary>
+		/// The type of tags to get.
+		/// </summary>
 		public enum TagType
 		{
 			/// <summary>

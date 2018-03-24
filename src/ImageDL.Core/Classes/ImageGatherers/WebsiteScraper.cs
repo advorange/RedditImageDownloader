@@ -1,5 +1,5 @@
-﻿using HtmlAgilityPack;
-using ImageDL.Utilities;
+﻿using AdvorangesUtils;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -15,6 +15,31 @@ namespace ImageDL.Classes.ImageGatherers
 	/// </summary>
 	public abstract class WebsiteScraper
 	{
+		/// <summary>
+		/// Creates a web request and sets some properties to make it look more human.
+		/// </summary>
+		/// <param name="uri">The site to navigate to.</param>
+		/// <returns>A webrequest to <paramref name="uri"/>.</returns>
+		public static HttpWebRequest CreateWebRequest(Uri uri)
+		{
+			var req = (HttpWebRequest)WebRequest.Create(uri);
+
+			req.Headers["Accept-Language"] = "en-US"; //Make sure we get English results
+			req.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+			req.Referer = uri.ToString(); //Pixiv requires a referer that is a valid link on Pixiv. You can pass in the same link.
+
+			req.Timeout = 5000;
+			req.ReadWriteTimeout = 5000;
+			req.AllowAutoRedirect = true; //So Imgur can redirect to correct webpages
+
+			req.Credentials = CredentialCache.DefaultCredentials;
+			req.Proxy = new WebProxy(); //One of my computers throws an exception if the proxy is null
+
+			req.CookieContainer = new CookieContainer();
+			req.CookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
+
+			return req;
+		}
 		/// <summary>
 		/// Removes query parameters from a url.
 		/// </summary>
@@ -37,9 +62,9 @@ namespace ImageDL.Classes.ImageGatherers
 			try
 			{
 				var doc = new HtmlDocument();
-				doc.Load(s = (resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false)).GetResponseStream());
+				doc.Load(s = (resp = await CreateWebRequest(uri).GetResponseAsync().CAF()).GetResponseStream());
 
-				return await ProtectedScrapeAsync(uri, doc).ConfigureAwait(false);
+				return await ProtectedScrapeAsync(uri, doc).CAF();
 			}
 			catch (WebException e)
 			{
@@ -78,11 +103,25 @@ namespace ImageDL.Classes.ImageGatherers
 		/// <returns></returns>
 		protected abstract Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc);
 
+		/// <summary>
+		/// The results from scraping a website.
+		/// </summary>
 		public sealed class ScrapeResult
 		{
+			/// <summary>
+			/// The gotten image uris from scraping the website.
+			/// </summary>
 			public readonly ImmutableArray<Uri> Uris;
+			/// <summary>
+			/// Any error gotten when attemping to scrape the website.
+			/// </summary>
 			public readonly string Error;
 
+			/// <summary>
+			/// Converts the strings to uris and sets the values.
+			/// </summary>
+			/// <param name="uris">The scraped uris.</param>
+			/// <param name="error">The gotten error.</param>
 			public ScrapeResult(IEnumerable<string> uris, string error)
 			{
 				Uris = uris.Select(x => new Uri(x)).ToImmutableArray();

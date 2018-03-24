@@ -1,6 +1,6 @@
-﻿using ImageDL.Classes.ImageGatherers;
+﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageGatherers;
 using ImageDL.Interfaces;
-using ImageDL.Utilities;
 using NDesk.Options;
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,6 @@ namespace ImageDL.Classes.ImageDownloaders
 	/// Downloads images from a site.
 	/// </summary>
 	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
-	/// <typeparam name="TImageDetails">The type of image details.</typeparam>
 	public abstract class ImageDownloader<TPost> : IImageDownloader
 	{
 		private const string ANIMATED_CONTENT = "Animated Content";
@@ -87,6 +86,18 @@ namespace ImageDL.Classes.ImageDownloaders
 			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
 		}
 		/// <inheritdoc />
+		public float MinAspectRatio
+		{
+			get => _MinAspectRatio;
+			set => NotifyPropertyChanged(_MinAspectRatio = Math.Max(0f, value));
+		}
+		/// <inheritdoc />
+		public float MaxAspectRatio
+		{
+			get => _MaxAspectRatio;
+			set => NotifyPropertyChanged(_MaxAspectRatio = Math.Max(0f, value));
+		}
+		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
@@ -137,10 +148,25 @@ namespace ImageDL.Classes.ImageDownloaders
 			set => NotifyPropertyChanged(_ImageComparer = value);
 		}
 
+		/// <summary>
+		/// The arguments that need to be set.
+		/// </summary>
 		protected ImmutableArray<PropertyInfo> Arguments;
+		/// <summary>
+		/// Arguments which have been set.
+		/// </summary>
 		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
+		/// <summary>
+		/// Links to content that is animated, failed to download, etc.
+		/// </summary>
 		protected List<ContentLink> Links = new List<ContentLink>();
+		/// <summary>
+		/// Used to set arguments via command line.
+		/// </summary>
 		protected OptionSet CommandLineParserOptions;
+		/// <summary>
+		/// To make sure only one instance is running at a time.
+		/// </summary>
 		protected SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
 		private string _Directory;
@@ -151,6 +177,8 @@ namespace ImageDL.Classes.ImageDownloaders
 		private int _MaxImageSimilarity;
 		private int _ImagesCachedPerThread;
 		private int _MinScore;
+		private float _MinAspectRatio;
+		private float _MaxAspectRatio;
 		private bool _CompareSavedImages;
 		private bool _Verbose;
 		private bool _CreateDirectory;
@@ -165,6 +193,9 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// </summary>
 		public event PropertyChangedEventHandler PropertyChanged;
 
+		/// <summary>
+		/// Creates an image downloader.
+		/// </summary>
 		public ImageDownloader()
 		{
 			Arguments = GetArguments();
@@ -178,23 +209,26 @@ namespace ImageDL.Classes.ImageDownloaders
 			MaxImageSimilarity = 1000;
 			ImagesCachedPerThread = 50;
 			MinScore = 0;
+			MinAspectRatio = float.MinValue;
+			MaxAspectRatio = float.MaxValue;
 			CompareSavedImages = false;
 			ImageComparer = null;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
+			AppDomain.CurrentDomain.UnhandledException += (sender, e) => LogUnhandledException(e.ExceptionObject);
 		}
 
 		/// <inheritdoc />
 		public async Task StartAsync(CancellationToken token = default)
 		{
-			await SemaphoreSlim.WaitAsync(token).ConfigureAwait(false);
+			await SemaphoreSlim.WaitAsync(token).CAF();
 
 			AllArgumentsSet = false;
 			BusyDownloading = true;
 
 			Console.WriteLine();
-			var posts = await GatherPostsAsync().ConfigureAwait(false);
+			var posts = await GatherPostsAsync().CAF();
 			if (!posts.Any())
 			{
 				Console.WriteLine("Unable to find any posts matching the search criteria.");
@@ -204,15 +238,16 @@ namespace ImageDL.Classes.ImageDownloaders
 			var count = 0;
 			foreach (var post in posts)
 			{
+				token.ThrowIfCancellationRequested();
 				WritePostToConsole(post, ++count);
 
-				var gatherer = await CreateGathererAsync(post).ConfigureAwait(false);
+				var gatherer = await CreateGathererAsync(post).CAF();
 				foreach (var imageUri in gatherer.GatheredUris)
 				{
-					await Task.Delay(100).ConfigureAwait(false);
+					await Task.Delay(100).CAF();
 					try
 					{
-						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).ConfigureAwait(false)}");
+						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).CAF()}");
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
@@ -232,7 +267,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				if (CompareSavedImages)
 				{
 					Console.WriteLine();
-					await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread);
+					await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread, token);
 				}
 				Console.WriteLine();
 				ImageComparer.DeleteDuplicates(MaxImageSimilarity / 1000f);
@@ -282,6 +317,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
 		/// </summary>
+		/// <param name="gatherer">The gathered image uris.</param>
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
@@ -302,7 +338,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			FileStream fs = null;
 			try
 			{
-				resp = await uri.CreateWebRequest().GetResponseAsync().ConfigureAwait(false);
+				resp = await WebsiteScraper.CreateWebRequest(uri).GetResponseAsync().CAF();
 				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
 				{
 					Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
@@ -321,13 +357,19 @@ namespace ImageDL.Classes.ImageDownloaders
 				//Need to use a memory stream and copy to it
 				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
 				//And with this reponse stream seeks cannot be used on it.
-				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).ConfigureAwait(false);
+				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).CAF();
 
 				//If image is too small, don't bother saving
 				var (width, height) = ms.GetImageSize();
 				if (width < MinWidth || height < MinHeight)
 				{
 					return $"{uri} is too small ({width}x{height}).";
+				}
+				//Check aspect ratio now
+				var aspectRatio = width / (float)height;
+				if (aspectRatio < MinAspectRatio || aspectRatio > MaxAspectRatio)
+				{
+					return $"{uri} does not fit in the aspect ratio restrictions ({width}x{height})";
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (ImageComparer != null && !ImageComparer.TryStore(uri, file, ms, width, height, out var error))
@@ -337,7 +379,7 @@ namespace ImageDL.Classes.ImageDownloaders
 
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
-				await ms.CopyToAsync(fs = file.Create()).ConfigureAwait(false);
+				await ms.CopyToAsync(fs = file.Create()).CAF();
 				return $"Saved {uri} to {file}.";
 			}
 			finally
@@ -352,8 +394,10 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
-		/// <param name="input"></param>
-		/// <param name="callback"></param>
+		/// <param name="input">The text supplied for the argument.</param>
+		/// <param name="callback">How to set the property.</param>
+		/// <param name="useDefaultIfNull">Whether or not to use the default value is the value is null.</param>
+		/// <param name="defaultValue">The default value for the property.</param>
 		protected void SetValue<T>(string input, Action<T> callback, bool useDefaultIfNull = false, T defaultValue = default)
 		{
 			T val;
@@ -420,7 +464,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber).Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
 				using (var writer = file.AppendText())
 				{
-					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Utils.FormatDateTimeForSaving()}");
+					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Formatting.ToSaving()}");
 					writer.WriteLine(String.Join(Environment.NewLine, format));
 					writer.WriteLine();
 				}
@@ -430,6 +474,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Invokes <see cref="PropertyChanged"/>.
 		/// </summary>
+		/// <param name="value">The newly set value.</param>
 		/// <param name="name">The property changed.</param>
 		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
 		{
@@ -501,6 +546,16 @@ namespace ImageDL.Classes.ImageDownloaders
 					i => SetValue<int>(i, c => MinScore = c)
 				},
 				{
+					$"minar|{nameof(MinAspectRatio)}=",
+					"the minimum aspect ratio for an image to have before being ignored.",
+					i => SetValue<float>(i, c => MinAspectRatio = c)
+				},
+				{
+					$"maxar|{nameof(MaxAspectRatio)}=",
+					"the maximum aspect ratio for an image to have before being ignored.",
+					i => SetValue<float>(i, c => MaxAspectRatio = c)
+				},
+				{
 					$"csi|{nameof(CompareSavedImages)}=",
 					"whether or not to compare to already saved images.",
 					i => SetValue<bool>(i, c => CompareSavedImages = c)
@@ -553,6 +608,17 @@ namespace ImageDL.Classes.ImageDownloaders
 			else
 			{
 				Console.WriteLine($"'{input}' is not a valid option.");
+			}
+		}
+		/// <summary>
+		/// Logs an uncaught exception to the supplied directory.
+		/// </summary>
+		private void LogUnhandledException(object e)
+		{
+			//Use File.AppendText instead of new StreamWriter so the text doesn't get overwritten.
+			using (var writer = new FileInfo(Path.Combine(Directory, "Uncaught Exceptions.txt")).AppendText())
+			{
+				writer.WriteLine($"{DateTime.UtcNow.ToLongDateString()} {DateTime.UtcNow.ToLongTimeString()}: {e}\n");
 			}
 		}
 

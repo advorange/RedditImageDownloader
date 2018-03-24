@@ -1,5 +1,5 @@
-﻿using HtmlAgilityPack;
-using ImageDL.Utilities;
+﻿using AdvorangesUtils;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +50,7 @@ namespace ImageDL.Classes.ImageGatherers
 			switch (mode)
 			{
 				case "medium": //Shouldn't reach this point since the uri will be edited to mode=manga
-					return await ScrapeMediumAsync(doc).ConfigureAwait(false);
+					return await ScrapeMediumAsync(doc).CAF();
 				case "manga":
 					return ScrapeManga(doc);
 				default:
@@ -75,10 +75,10 @@ namespace ImageDL.Classes.ImageGatherers
 			{
 				try
 				{
-					var req = uri.CreateWebRequest();
+					var req = CreateWebRequest(uri);
 					req.Method = WebRequestMethods.Http.Head;
 
-					using (var resp = (HttpWebResponse)(await req.GetResponseAsync().ConfigureAwait(false)))
+					using (var resp = (HttpWebResponse)(await req.GetResponseAsync().CAF()))
 					{
 						if (resp.StatusCode != HttpStatusCode.OK)
 						{

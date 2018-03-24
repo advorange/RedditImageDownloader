@@ -19,7 +19,13 @@ namespace ImageDL.Classes
 		/// The reason why this wasn't downloaded. E.G. failed download, not a static image.
 		/// </summary>
 		public readonly string Reason;
-
+		
+		/// <summary>
+		/// Creates a content link, which stores a uri, number (score, etc), and the reason for creating it.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <param name="associatedNumber"></param>
+		/// <param name="reason"></param>
 		public ContentLink(Uri uri, int associatedNumber, string reason)
 		{
 			Uri = uri;
@@ -27,6 +33,10 @@ namespace ImageDL.Classes
 			Reason = reason;
 		}
 
+		/// <summary>
+		/// Returns the number and the uri.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return $"{AssociatedNumber} {Uri}";

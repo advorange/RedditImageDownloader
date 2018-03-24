@@ -1,7 +1,6 @@
-﻿using ImageDL.Classes.ImageDownloaders;
-using ImageDL.Core.Utilities;
+﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloaders;
 using ImageDL.Interfaces;
-using ImageDL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,7 +34,7 @@ namespace ImageDL.Windows
 			{
 				if (Methods.TryGetValue(Console.ReadLine(), out var t))
 				{
-					await t().ConfigureAwait(false);
+					await t().CAF();
 					Console.WriteLine($"Method finished. Type '{EXIT}' to exit the program, otherwise type anything else to run it again.");
 				}
 				else
@@ -53,7 +52,7 @@ namespace ImageDL.Windows
 				downloader.AskForArguments();
 				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
 			}
-			await downloader.StartAsync().ConfigureAwait(false);
+			await downloader.StartAsync().CAF();
 		}
 		private static async Task UpdateRedditDirectory()
 		{
@@ -77,7 +76,7 @@ namespace ImageDL.Windows
 					downloader.AskForArguments();
 					downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
 				}
-				await downloader.StartAsync().ConfigureAwait(false);
+				await downloader.StartAsync().CAF();
 			}
 		}
 

@@ -1,6 +1,5 @@
-﻿using ImageDL.Core.Utilities;
+﻿using AdvorangesUtils;
 using ImageDL.Interfaces;
-using ImageDL.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,7 +16,6 @@ namespace ImageDL.Classes.ImageComparers
 	/// <summary>
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
 	public abstract class ImageComparer : IImageComparer
 	{
 		/// <inheritdoc/>
@@ -39,9 +37,13 @@ namespace ImageDL.Classes.ImageComparers
 			set => _ThumbnailSize = value;
 		}
 
+		/// <summary>
+		/// The images which have currently been cached.
+		/// </summary>
+		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
+
 		private int _CurrentImagesSearched;
 		private int _ThumbnailSize = 32;
-		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
 
 		/// <summary>
 		/// Indicates when <see cref="CurrentImagesSearched"/> is incremented.
@@ -51,7 +53,7 @@ namespace ImageDL.Classes.ImageComparers
 		/// <inheritdoc />
 		public bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error)
 		{
-			var hash = stream.MD5Hash();
+			var hash = stream.GetMD5Hash();
 			if (Images.TryGetValue(hash, out var value))
 			{
 				error = $"{uri} had a matching hash with {value.File}.";
@@ -82,14 +84,14 @@ namespace ImageDL.Classes.ImageComparers
 
 			using (var fs = file.OpenRead())
 			{
-				md5Hash = fs.MD5Hash();
+				md5Hash = fs.GetMD5Hash();
 				var (width, height) = fs.GetImageSize();
 				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, thumbnailSize));
 				return true;
 			}
 		}
 		/// <inheritdoc />
-		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread)
+		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default)
 		{
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
@@ -106,6 +108,7 @@ namespace ImageDL.Classes.ImageComparers
 			{
 				foreach (var file in group)
 				{
+					token.ThrowIfCancellationRequested();
 					try
 					{
 						if (!TryCreateImageDetailsFromFile(file, ThumbnailSize, out var md5hash, out var details))
@@ -133,8 +136,8 @@ namespace ImageDL.Classes.ImageComparers
 						Console.WriteLine($"{Math.Min(c, len)}/{len} images cached.");
 					}
 				}
-			}));
-			await Task.WhenAll(tasks).ConfigureAwait(false);
+			}, token));
+			await Task.WhenAll(tasks).CAF();
 		}
 		/// <inheritdoc />
 		public void DeleteDuplicates(float percentForMatch)
@@ -177,31 +180,7 @@ namespace ImageDL.Classes.ImageComparers
 				++CurrentImagesSearched;
 			}
 
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				try
-				{
-					RecycleBinMover.MoveFiles(filesToDelete);
-				}
-				catch (Exception e)
-				{
-					e.Write();
-				}
-			}
-			else
-			{
-				foreach (var file in filesToDelete)
-				{
-					try
-					{
-						file.Delete();
-					}
-					catch (Exception e)
-					{
-						e.Write();
-					}
-				}
-			}
+			RecyclingUtils.MoveFiles(filesToDelete);
 			Console.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
 		/// <inheritdoc />

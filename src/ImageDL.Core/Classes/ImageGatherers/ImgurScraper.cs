@@ -1,5 +1,5 @@
-﻿using HtmlAgilityPack;
-using ImageDL.Utilities;
+﻿using AdvorangesUtils;
+using HtmlAgilityPack;
 using System;
 using System.IO;
 using System.Linq;
