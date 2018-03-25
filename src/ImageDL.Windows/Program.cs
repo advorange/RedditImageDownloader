@@ -3,6 +3,7 @@ using ImageDL.Classes.ImageDownloaders;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -17,29 +18,37 @@ namespace ImageDL.Windows
 
 		public static Dictionary<string, Type> ImageDownloaders = typeof(IImageDownloader).Assembly.DefinedTypes
 			.Where(x => !x.IsAbstract && typeof(IImageDownloader).IsAssignableFrom(x))
-			.Select(x => x.AsType())
-			.ToDictionary(x => x.Name.FormatTitle().Split(' ')[0], x => x, StringComparer.OrdinalIgnoreCase);
-		public static Dictionary<string, Func<Task>> Methods = new Dictionary<string, Func<Task>>(StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(x => x.Name.FormatTitle().Split(' ')[0], x => x.AsType(), StringComparer.OrdinalIgnoreCase);
+		public static List<Func<Task>> Methods = new List<Func<Task>>
 		{
-			{ nameof(Single), Single },
-			{ nameof(UpdateRedditDirectory), UpdateRedditDirectory },
+			Single, UpdateRedditDirectory,
 		};
 
 		public static async Task Main(string[] args)
 		{
+			var q = new DeviantArtImageDownloader()
+			{
+				ImageComparer = new WindowsImageComparer(),
+				Username = "disharmonica",
+				AmountToDownload = 100,
+				MaxDaysOld = 100000,
+			};
+			await q.StartAsync().CAF();
+
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
-			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
+			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
 			do
 			{
-				if (Methods.TryGetValue(Console.ReadLine(), out var t))
+				var line = Console.ReadLine();
+				if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<Task> t)
 				{
 					await t().CAF();
 					Console.WriteLine($"Method finished. Type '{EXIT}' to exit the program, otherwise type anything else to run it again.");
 				}
 				else
 				{
-					Console.WriteLine($"Invalid method. Pick from one of the following methods: '{String.Join("', '", Methods.Keys)}'");
+					Console.WriteLine($"Invalid method. Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
 				}
 			} while (Console.ReadLine() != EXIT);
 		}
@@ -82,14 +91,16 @@ namespace ImageDL.Windows
 
 		private static Type GetDownloaderType()
 		{
-			Type downloaderType;
 			Console.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
-			while (!ImageDownloaders.TryGetValue(Console.ReadLine(), out downloaderType))
+			while (true)
 			{
-				Console.WriteLine($"Invalid downloader; pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
-				continue;
+				if (!ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
+				{
+					Console.WriteLine($"Invalid downloader; pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
+					continue;
+				}
+				return downloaderType;
 			}
-			return downloaderType;
 		}
 		private static IImageDownloader CreateDownloader(Type t)
 		{

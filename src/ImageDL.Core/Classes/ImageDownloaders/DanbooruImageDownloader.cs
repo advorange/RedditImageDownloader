@@ -65,8 +65,9 @@ namespace ImageDL.Classes.ImageDownloaders
 			try
 			{
 				//Uses for instead of while to save 2 lines.
+				var keepGoing = true;
 				var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
-				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
+				for (int i = 0; keepGoing && validPosts.Count < AmountToDownload; ++i)
 				{
 					var diff = nextRetry - DateTime.UtcNow;
 					if (diff.Ticks > 0)
@@ -74,20 +75,18 @@ namespace ImageDL.Classes.ImageDownloaders
 						await Task.Delay(diff).CAF();
 					}
 
-					try
+					switch (await IterateAsync(validPosts, i).CAF())
 					{
-						var iterVal = await IterateAsync(validPosts, i).CAF();
-						if (iterVal < 0)
-						{
+						case IterationResult.RateLimit: //If rate limited, wait 30 seconds, then continue
+							--i;
+							nextRetry = DateTime.UtcNow.AddSeconds(30);
+							Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
+							goto case IterationResult.Success;
+						case IterationResult.Success:
+							continue;
+						case IterationResult.End:
+							keepGoing = false;
 							break;
-						}
-					}
-					catch (HttpRequestException hre) when (hre.Message.Contains("421")) //Rate limited
-					{
-						nextRetry = DateTime.UtcNow.AddSeconds(30);
-						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
-						--i; //To make up for how this rate limited request doesn't return anything
-						continue;
 					}
 				}
 			}
@@ -108,16 +107,19 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine($"[#{count}|\u2191{post.Score}] http://danbooru.donmai.us/posts/{post.Id}");
 		}
 		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(DanbooruPost post, WebResponse response, Uri uri)
+		protected override FileInfo GenerateFileInfo(DanbooruPost post, Uri uri)
 		{
-			var totalName = $"{post.Id}_{(response.ResponseUri.LocalPath ?? uri.ToString()).Split('/').Last()}";
-			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
-			return new FileInfo(Path.Combine(Directory, validName));
+			var extension = Path.GetExtension(uri.LocalPath);
+			var name = $"{post.Id}_{post.TagStringArtist}_{post.TagStringCharacter}".Replace(' ', '_');
+			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(DanbooruPost post)
 		{
-			var uri = new Uri($"http://danbooru.donmai.us{post.FileUrl}");
+			if (!Uri.TryCreate(post.FileUrl, UriKind.Absolute, out var uri))
+			{
+				uri = new Uri($"https://danbooru.donmai.us{post.FileUrl}");
+			}
 			return await ImageGatherer.CreateGathererAsync(Scrapers, uri).CAF();
 		}
 		/// <inheritdoc />
@@ -126,7 +128,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			return new ContentLink(uri, post.Score, reason);
 		}
 
-		private async Task<int> IterateAsync(List<DanbooruPost> validPosts, int iteration)
+		private async Task<IterationResult> IterateAsync(List<DanbooruPost> validPosts, int iteration)
 		{
 			//Limit caps out at 200 per pages, so can't get this all in one iteration. Have to keep incrementing page.
 			var search = $"https://danbooru.donmai.us/posts.json?utf8=✓" +
@@ -138,7 +140,16 @@ namespace ImageDL.Classes.ImageDownloaders
 			string json;
 			using (var resp = await _Client.SendAsync(new HttpRequestMessage(HttpMethod.Get, search)).CAF())
 			{
-				resp.EnsureSuccessStatusCode();
+				if (!resp.IsSuccessStatusCode)
+				{
+					var code = (int)resp.StatusCode;
+					if (code == 421 || code == 429) //Rate limit error codes
+					{
+						return IterationResult.RateLimit;
+					}
+					//Just throw at this point since it's most likely irrecoverable
+					resp.EnsureSuccessStatusCode();
+				}
 				json = await resp.Content.ReadAsStringAsync().CAF();
 			}
 
@@ -148,9 +159,9 @@ namespace ImageDL.Classes.ImageDownloaders
 			{
 				if (post.CreatedAt.ToUniversalTime() < OldestAllowed)
 				{
-					return -1;
+					return IterationResult.End;
 				}
-				else if (post.ImageWidth < MinWidth || post.ImageHeight < MinHeight || post.Score < MinScore)
+				else if (!FitsSizeRequirements(null, post.ImageWidth, post.ImageHeight, out _) || post.Score < MinScore)
 				{
 					continue;
 				}
@@ -158,7 +169,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				validPosts.Add(post);
 				if (validPosts.Count == AmountToDownload)
 				{
-					return -1;
+					return IterationResult.End;
 				}
 				else if (validPosts.Count % 25 == 0)
 				{
@@ -167,7 +178,14 @@ namespace ImageDL.Classes.ImageDownloaders
 			}
 
 			//Anything less than a full page means everything's been searched
-			return posts.Count < Math.Min(AmountToDownload, 200) ? -1 : posts.Count;
+			return posts.Count < Math.Min(AmountToDownload, 200) ? IterationResult.End : IterationResult.Success;
+		}
+
+		private enum IterationResult
+		{
+			Success,
+			End,
+			RateLimit,
 		}
 	}
 
@@ -292,7 +310,6 @@ namespace ImageDL.Classes.ImageDownloaders
 		public readonly int TagCountArtist;
 		[JsonProperty("tag_count_meta")]
 		public readonly int TagCountMeta;
-		#endregion
 
 		public string[] this[TagType type]
 		{
@@ -317,6 +334,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				}
 			}
 		}
+		#endregion
 
 		[JsonIgnore]
 		public int[] ChildrenIds => String.IsNullOrWhiteSpace(ChildrenIdsString)

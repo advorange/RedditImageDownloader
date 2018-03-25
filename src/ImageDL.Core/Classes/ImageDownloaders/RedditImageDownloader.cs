@@ -89,11 +89,11 @@ namespace ImageDL.Classes.ImageDownloaders
 			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
 		}
 		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Post post, WebResponse response, Uri uri)
+		protected override FileInfo GenerateFileInfo(Post post, Uri uri)
 		{
-			var totalName = $"{post.Id}_{(response.ResponseUri.LocalPath ?? uri.ToString()).Split('/').Last()}";
-			var validName = new string(totalName.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
-			return new FileInfo(Path.Combine(Directory, validName));
+			var extension = Path.GetExtension(uri.LocalPath);
+			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
+			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
 		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)

@@ -216,9 +216,27 @@ namespace ImageDL.Classes.ImageDownloaders
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
-			AppDomain.CurrentDomain.UnhandledException += (sender, e) => LogUnhandledException(e.ExceptionObject);
+			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 		}
 
+		/// <summary>
+		/// Returns a file info with a maximum path length of 255 characters.
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <param name="name"></param>
+		/// <param name="extension"></param>
+		/// <returns></returns>
+		public static FileInfo GenerateFileInfo(string directory, string name, string extension)
+		{
+			//Make sure the extension has a period
+			extension = extension.StartsWith(".") ? extension : "." + extension;
+			//Remove any invalid file name path characters
+			name = new string(name.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			//Max file name length has to be under 260 for windows, but 256 for some other things, so just go with 255.
+			var nameLen = 255 - directory.Length - 1 - extension.Length; //Subtract extra 1 for / between dir and file
+			//Cut the file name down to its valid length so no length errors occur
+			return new FileInfo(Path.Combine(directory, name.Substring(0, Math.Min(name.Length, nameLen)) + extension));
+		}
 		/// <inheritdoc />
 		public async Task StartAsync(CancellationToken token = default)
 		{
@@ -348,7 +366,7 @@ namespace ImageDL.Classes.ImageDownloaders
 				{
 					return $"{uri} is not an image.";
 				}
-				var file = GenerateFileInfo(post, resp, uri);
+				var file = GenerateFileInfo(post, resp.ResponseUri);
 				if (File.Exists(file.FullName))
 				{
 					return $"{uri} is already saved as {file}.";
@@ -357,24 +375,18 @@ namespace ImageDL.Classes.ImageDownloaders
 				//Need to use a memory stream and copy to it
 				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
 				//And with this reponse stream seeks cannot be used on it.
-				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream()).CAF();
+				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream());
 
 				//If image is too small, don't bother saving
 				var (width, height) = ms.GetImageSize();
-				if (width < MinWidth || height < MinHeight)
+				if (!FitsSizeRequirements(uri, width, height, out var sizeError))
 				{
-					return $"{uri} is too small ({width}x{height}).";
-				}
-				//Check aspect ratio now
-				var aspectRatio = width / (float)height;
-				if (aspectRatio < MinAspectRatio || aspectRatio > MaxAspectRatio)
-				{
-					return $"{uri} does not fit in the aspect ratio restrictions ({width}x{height})";
+					return sizeError;
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
-				if (ImageComparer != null && !ImageComparer.TryStore(uri, file, ms, width, height, out var error))
+				if (ImageComparer != null && !ImageComparer.TryStore(uri, file, ms, width, height, out var cachingError))
 				{
-					return error;
+					return cachingError;
 				}
 
 				//Save the file
@@ -389,6 +401,32 @@ namespace ImageDL.Classes.ImageDownloaders
 				ms?.Dispose();
 				fs?.Dispose();
 			}
+		}
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		protected bool FitsSizeRequirements(Uri uri, int width, int height, out string error)
+		{
+			//Check min width/height
+			if (width < MinWidth || height < MinHeight)
+			{
+				error = $"{uri} is too small ({width}x{height}).";
+				return false;
+			}
+			//Check aspect ratio
+			var aspectRatio = width / (float)height;
+			if (aspectRatio < MinAspectRatio || aspectRatio > MaxAspectRatio)
+			{
+				error = $"{uri} does not fit in the aspect ratio restrictions ({width}x{height}).";
+				return false;
+			}
+			error = null;
+			return true;
 		}
 		/// <summary>
 		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
@@ -461,7 +499,8 @@ namespace ImageDL.Classes.ImageDownloaders
 
 				//Save all the links then say how many were saved
 				var len = unsavedContent.Max(x => x.AssociatedNumber).ToString().Length;
-				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber).Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
+				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber)
+					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
 				using (var writer = file.AppendText())
 				{
 					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Formatting.ToSaving()}");
@@ -610,17 +649,6 @@ namespace ImageDL.Classes.ImageDownloaders
 				Console.WriteLine($"'{input}' is not a valid option.");
 			}
 		}
-		/// <summary>
-		/// Logs an uncaught exception to the supplied directory.
-		/// </summary>
-		private void LogUnhandledException(object e)
-		{
-			//Use File.AppendText instead of new StreamWriter so the text doesn't get overwritten.
-			using (var writer = new FileInfo(Path.Combine(Directory, "Uncaught Exceptions.txt")).AppendText())
-			{
-				writer.WriteLine($"{DateTime.UtcNow.ToLongDateString()} {DateTime.UtcNow.ToLongTimeString()}: {e}\n");
-			}
-		}
 
 		/// <summary>
 		/// Gathers the posts which match the supplied settings.
@@ -637,10 +665,9 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// Generate a filename to save an image with.
 		/// </summary>
 		/// <param name="post"></param>
-		/// <param name="response"></param>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		protected abstract FileInfo GenerateFileInfo(TPost post, WebResponse response, Uri uri);
+		protected abstract FileInfo GenerateFileInfo(TPost post, Uri uri);
 		/// <summary>
 		/// Scrape images from a post.
 		/// </summary>
