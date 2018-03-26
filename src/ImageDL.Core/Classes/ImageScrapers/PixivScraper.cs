@@ -1,14 +1,16 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloaders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace ImageDL.Classes.ImageGatherers
+namespace ImageDL.Classes.ImageScrapers
 {
 	/// <summary>
 	/// Scrapes images from pixiv.net.
@@ -38,21 +40,21 @@ namespace ImageDL.Classes.ImageGatherers
 			return new Uri(_Mode.Replace(_RemoveC.Replace(uri.ToString(), "/"), "mode=manga&"));
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override async Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants("p").Any(x => x.HasClass("title") && x.InnerText.Contains("R-18")))
 			{
-				return new ScrapeResult(Enumerable.Empty<string>(), "this pixiv post is locked behind the R-18 filter");
+				return new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), "this pixiv post is locked behind the R-18 filter");
 			}
 
 			var mode = HttpUtility.ParseQueryString(uri.Query)["mode"];
 			switch (mode)
 			{
 				case "medium": //Shouldn't reach this point since the uri will be edited to mode=manga
-					return await ScrapeMediumAsync(doc).CAF();
+					return await ScrapeMediumAsync(client, uri, doc).CAF();
 				case "manga":
-					return ScrapeManga(doc);
+					return ScrapeManga(uri, doc);
 				default:
 					throw new InvalidOperationException($"Unknown mode supplied: {mode}.");
 			}
@@ -61,13 +63,15 @@ namespace ImageDL.Classes.ImageGatherers
 		/// Scrapes images from a pixiv uri with mode=medium (not recommended).
 		/// Has to keep changing the uri until an error occurs then can assume that's where the images stop.
 		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="uri"></param>
 		/// <param name="doc"></param>
 		/// <returns></returns>
-		private async Task<ScrapeResult> ScrapeMediumAsync(HtmlDocument doc)
+		private async Task<ScrapeResult> ScrapeMediumAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			var imageContainer = doc.DocumentNode.Descendants("div").Where(x => x.HasClass("img-container"));
 			var image = imageContainer.SelectMany(x => x.Descendants("img")).SingleOrDefault();
-			var uri = EditUri(new Uri(image.GetAttributeValue("src", null)));
+			var iteratedUri = EditUri(new Uri(image.GetAttributeValue("src", null)));
 
 			var validUris = new List<string>();
 			var index = 0;
@@ -75,10 +79,7 @@ namespace ImageDL.Classes.ImageGatherers
 			{
 				try
 				{
-					var req = CreateWebRequest(uri);
-					req.Method = WebRequestMethods.Http.Head;
-
-					using (var resp = (HttpWebResponse)(await req.GetResponseAsync().CAF()))
+					using (var resp = await client.SendWithRefererAsync(iteratedUri, HttpMethod.Head).CAF())
 					{
 						if (resp.StatusCode != HttpStatusCode.OK)
 						{
@@ -86,26 +87,27 @@ namespace ImageDL.Classes.ImageGatherers
 						}
 					}
 
-					validUris.Add(uri.ToString());
-					uri = new Uri(_FindP.Replace(uri.ToString(), $"_p{++index}_"));
+					validUris.Add(iteratedUri.ToString());
+					iteratedUri = new Uri(_FindP.Replace(iteratedUri.ToString(), $"_p{++index}_"));
 				}
 				catch (WebException)
 				{
 					break;
 				}
 			}
-			return new ScrapeResult(validUris, null);
+			return new ScrapeResult(uri, false, this, Convert(validUris), null);
 		}
 		/// <summary>
 		/// Scrapes images from a pixiv uri with mode=manga. Able to get all the image uris right away.
 		/// </summary>
+		/// <param name="uri"></param>
 		/// <param name="doc"></param>
 		/// <returns></returns>
-		private ScrapeResult ScrapeManga(HtmlDocument doc)
+		private ScrapeResult ScrapeManga(Uri uri, HtmlDocument doc)
 		{
 			var images = doc.DocumentNode.Descendants("img");
 			var mangaImages = images.Where(x => x.GetAttributeValue("data-filter", null) == "manga-image");
-			return new ScrapeResult(mangaImages.Select(x => x.GetAttributeValue("data-src", null)), null);
+			return new ScrapeResult(uri, false, this, Convert(mangaImages.Select(x => x.GetAttributeValue("data-src", null))), null);
 		}
 	}
 }

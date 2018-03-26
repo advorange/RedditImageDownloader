@@ -1,16 +1,15 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageGatherers;
+using ImageDL.Classes.ImageScrapers;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloaders.Reddit
 {
 	/// <summary>
 	/// Downloads images from reddit.
@@ -26,7 +25,7 @@ namespace ImageDL.Classes.ImageDownloaders
 			set => NotifyPropertyChanged(_Subreddit = value);
 		}
 
-		private Reddit _Reddit;
+		private RedditSharp.Reddit _Reddit;
 		private string _Subreddit;
 
 		/// <summary>
@@ -36,7 +35,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		{
 			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
 
-			_Reddit = new Reddit(new WebAgent(), false);
+			_Reddit = new RedditSharp.Reddit(new WebAgent(), false);
 		}
 
 		/// <inheritdoc />
@@ -96,9 +95,9 @@ namespace ImageDL.Classes.ImageDownloaders
 			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
-		protected override async Task<ImageGatherer> CreateGathererAsync(Post post)
+		protected override async Task<ScrapeResult> GatherImagesAsync(Post post)
 		{
-			return await ImageGatherer.CreateGathererAsync(Scrapers, post.Url).CAF();
+			return await Client.ScrapeImagesAsync(post.Url).CAF();
 		}
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)

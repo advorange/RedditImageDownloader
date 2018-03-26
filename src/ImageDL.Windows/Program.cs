@@ -1,9 +1,9 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloaders;
+using ImageDL.Classes.ImageDownloaders.DeviantArt;
+using ImageDL.Classes.ImageDownloaders.Reddit;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,15 +26,6 @@ namespace ImageDL.Windows
 
 		public static async Task Main(string[] args)
 		{
-			var q = new DeviantArtImageDownloader()
-			{
-				ImageComparer = new WindowsImageComparer(),
-				Username = "disharmonica",
-				AmountToDownload = 100,
-				MaxDaysOld = 100000,
-			};
-			await q.StartAsync().CAF();
-
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");

@@ -1,12 +1,13 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloaders;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageGatherers
+namespace ImageDL.Classes.ImageScrapers
 {
 	/// <summary>
 	/// Scrapes images from imgur.com.
@@ -33,7 +34,7 @@ namespace ImageDL.Classes.ImageGatherers
 			return new Uri(u.Replace("_d", "")); //Some thumbnail thing
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//Only works on albums with less than 10 images
 			//Otherwise not all the images load in as images, but their ids will still be there.
@@ -49,7 +50,7 @@ namespace ImageDL.Classes.ImageGatherers
 				return itemType == "http://schema.org/ImageObject" || itemType == "http://schema.org/VideoObject";
 			});
 			var ids = content.Select(x => x.GetAttributeValue("id", null)).Where(x => x != null);
-			return Task.FromResult(new ScrapeResult(ids.Select(x => $"https://i.imgur.com/{x}.png"), null));
+			return Task.FromResult(new ScrapeResult(uri, false, this, Convert(ids.Select(x => $"https://i.imgur.com/{x}.png")), null));
 		}
 	}
 }

@@ -1,6 +1,4 @@
-﻿using ImageDL.Classes.ImageGatherers;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,10 +74,6 @@ namespace ImageDL.Interfaces
 		/// Returns true after all images have been downloaded.
 		/// </summary>
 		bool DownloadsFinished { get; }
-		/// <summary>
-		/// How to scrape specific websites.
-		/// </summary>
-		List<WebsiteScraper> Scrapers { get; }
 		/// <summary>
 		/// The oldest allowed posts.
 		/// </summary>

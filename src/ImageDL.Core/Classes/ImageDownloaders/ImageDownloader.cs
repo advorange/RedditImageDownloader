@@ -1,5 +1,5 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageGatherers;
+using ImageDL.Classes.ImageScrapers;
 using ImageDL.Interfaces;
 using NDesk.Options;
 using System;
@@ -8,7 +8,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -134,12 +134,6 @@ namespace ImageDL.Classes.ImageDownloaders
 			protected set => NotifyPropertyChanged(_DownloadsFinished = value);
 		}
 		/// <inheritdoc />
-		public List<WebsiteScraper> Scrapers
-		{
-			get => _Scrapers;
-			set => NotifyPropertyChanged(_Scrapers = value);
-		}
-		/// <inheritdoc />
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 		/// <inheritdoc />
 		public IImageComparer ImageComparer
@@ -165,6 +159,10 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// </summary>
 		protected OptionSet CommandLineParserOptions;
 		/// <summary>
+		/// Used to download files.
+		/// </summary>
+		protected ImageDownloaderClient Client;
+		/// <summary>
 		/// To make sure only one instance is running at a time.
 		/// </summary>
 		protected SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
@@ -185,7 +183,6 @@ namespace ImageDL.Classes.ImageDownloaders
 		private bool _AllArgumentsSet;
 		private bool _BusyDownloading;
 		private bool _DownloadsFinished;
-		private List<WebsiteScraper> _Scrapers;
 		private IImageComparer _ImageComparer;
 
 		/// <summary>
@@ -200,7 +197,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		{
 			Arguments = GetArguments();
 			CommandLineParserOptions = GetCommandLineParserOptions();
-			Scrapers = GetScrapers();
+			Client = new ImageDownloaderClient();
 
 			//Set verbose to false so these settings don't print
 			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
@@ -259,8 +256,8 @@ namespace ImageDL.Classes.ImageDownloaders
 				token.ThrowIfCancellationRequested();
 				WritePostToConsole(post, ++count);
 
-				var gatherer = await CreateGathererAsync(post).CAF();
-				foreach (var imageUri in gatherer.GatheredUris)
+				var gatherer = await GatherImagesAsync(post).CAF();
+				foreach (var imageUri in gatherer.ImageUris)
 				{
 					await Task.Delay(100).CAF();
 					try
@@ -335,47 +332,48 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
 		/// </summary>
-		/// <param name="gatherer">The gathered image uris.</param>
+		/// <param name="result">The gathered image uris.</param>
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		protected async Task<string> DownloadImageAsync(ImageGatherer gatherer, TPost post, Uri uri)
+		protected async Task<string> DownloadImageAsync(ScrapeResult result, TPost post, Uri uri)
 		{
-			if (!String.IsNullOrWhiteSpace(gatherer.Error))
+			if (!String.IsNullOrWhiteSpace(result.Error))
 			{
-				if (gatherer.IsAnimated)
+				if (result.IsAnimated)
 				{
-					Links.Add(CreateContentLink(post, gatherer.OriginalUri, ANIMATED_CONTENT));
+					Links.Add(CreateContentLink(post, result.OriginalUri, ANIMATED_CONTENT));
 				}
-				return gatherer.Error;
+				return result.Error;
 			}
 
-			WebResponse resp = null;
+			HttpResponseMessage resp = null;
 			Stream rs = null;
 			MemoryStream ms = null;
 			FileStream fs = null;
 			try
 			{
-				resp = await WebsiteScraper.CreateWebRequest(uri).GetResponseAsync().CAF();
-				if (resp.ContentType.Contains("video/") || resp.ContentType == "image/gif")
+				resp = await Client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
+				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
+				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
 					Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
 					return $"{uri} is animated content (gif/video).";
 				}
-				if (!resp.ContentType.Contains("image/"))
+				if (!contentType.Contains("image/"))
 				{
 					return $"{uri} is not an image.";
 				}
-				var file = GenerateFileInfo(post, resp.ResponseUri);
+				var file = GenerateFileInfo(post, resp.Headers.Location ?? uri);
 				if (File.Exists(file.FullName))
 				{
 					return $"{uri} is already saved as {file}.";
 				}
 
 				//Need to use a memory stream and copy to it
-				//Otherwise doing either the md5 hash or creating a bitmap ends up getting to the end of the response stream
+				//Otherwise doing either the md5 hash or creating an image ends up getting to the end of the response stream
 				//And with this reponse stream seeks cannot be used on it.
-				await (rs = resp.GetResponseStream()).CopyToAsync(ms = new MemoryStream());
+				await (rs = await resp.Content.ReadAsStreamAsync().CAF()).CopyToAsync(ms = new MemoryStream());
 
 				//If image is too small, don't bother saving
 				var (width, height) = ms.GetImageSize();
@@ -623,18 +621,6 @@ namespace ImageDL.Classes.ImageDownloaders
 				.ToImmutableArray();
 		}
 		/// <summary>
-		/// Gets the base scrapers instructing how to scrape certain websites.
-		/// </summary>
-		/// <returns></returns>
-		private List<WebsiteScraper> GetScrapers()
-		{
-			return typeof(IImageDownloader).Assembly.DefinedTypes
-				.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
-				.Select(x => Activator.CreateInstance(x))
-				.Cast<WebsiteScraper>()
-				.ToList();
-		}
-		/// <summary>
 		/// Displays help for whatever option has the supplied key.
 		/// </summary>
 		/// <param name="input"></param>
@@ -673,7 +659,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// </summary>
 		/// <param name="post"></param>
 		/// <returns></returns>
-		protected abstract Task<ImageGatherer> CreateGathererAsync(TPost post);
+		protected abstract Task<ScrapeResult> GatherImagesAsync(TPost post);
 		/// <summary>
 		/// Store information about an image from a post.
 		/// </summary>

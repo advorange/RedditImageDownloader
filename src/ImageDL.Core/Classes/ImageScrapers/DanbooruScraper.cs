@@ -1,11 +1,12 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloaders;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageGatherers
+namespace ImageDL.Classes.ImageScrapers
 {
 	/// <summary>
 	/// Scrapes images from danbooru.donmai.us.
@@ -30,14 +31,14 @@ namespace ImageDL.Classes.ImageGatherers
 			return RemoveQuery(uri);
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			var a = doc.DocumentNode.Descendants("a");
 			var imageResize = a.SingleOrDefault(x => x.GetAttributeValue("id", null) == "image-resize-link");
 			if (imageResize is HtmlNode imageResizeNode)
 			{
 				var link = "http://danbooru.donmai.us" + imageResizeNode.GetAttributeValue("href", null);
-				return Task.FromResult(new ScrapeResult(new[] { link }, null));
+				return Task.FromResult(new ScrapeResult(uri, false, this, Convert(new[] { link }), null));
 			}
 
 			var img = doc.DocumentNode.Descendants("img");
@@ -45,10 +46,10 @@ namespace ImageDL.Classes.ImageGatherers
 			if (image is HtmlNode imageNode)
 			{
 				var link = "http://danbooru.donmain.us" + imageNode.GetAttributeValue("src", null);
-				return Task.FromResult(new ScrapeResult(new[] { link }, null));
+				return Task.FromResult(new ScrapeResult(uri, false, this, Convert(new[] { link }), null));
 			}
 
-			return Task.FromResult(new ScrapeResult(Enumerable.Empty<string>(), "Unable to gather any images."));
+			return Task.FromResult(new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), "Unable to gather any images."));
 		}
 	}
 }

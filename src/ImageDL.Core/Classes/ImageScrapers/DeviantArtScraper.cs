@@ -1,11 +1,12 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloaders;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageGatherers
+namespace ImageDL.Classes.ImageScrapers
 {
 	/// <summary>
 	/// Scrapes images from deviantart.com.
@@ -30,7 +31,7 @@ namespace ImageDL.Classes.ImageGatherers
 			return RemoveQuery(uri);
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//18+ filter (shouldn't be reached since the cookies are set)
 			if (doc.DocumentNode.Descendants("div").Any(x => x.HasClass("dev-content-mature")))
@@ -50,12 +51,13 @@ namespace ImageDL.Classes.ImageGatherers
 					return w < 0 || s < 0 || w > s ? null : x.Substring(w, s - w);
 				});
 
-				return Task.FromResult(new ScrapeResult(img, img.Any() ? null : "this deviantart post is locked behind mature content"));
+				var error = img.Any() ? null : "this deviantart post is locked behind mature content";
+				return Task.FromResult(new ScrapeResult(uri, false, this, Convert(img), error));
 			}
 
 			var images = doc.DocumentNode.Descendants("img");
 			var deviations = images.Where(x => x.GetAttributeValue("data-embed-type", null) == "deviation");
-			return Task.FromResult(new ScrapeResult(deviations.Select(x => x.GetAttributeValue("src", null)), null));
+			return Task.FromResult(new ScrapeResult(uri, false, this, Convert(deviations.Select(x => x.GetAttributeValue("src", null))), null));
 		}
 	}
 }

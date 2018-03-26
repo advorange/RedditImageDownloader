@@ -1,11 +1,12 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloaders;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageGatherers
+namespace ImageDL.Classes.ImageScrapers
 {
 	/// <summary>
 	/// Scrapes images from instagram.com.
@@ -30,11 +31,11 @@ namespace ImageDL.Classes.ImageGatherers
 			return RemoveQuery(uri);
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(Uri uri, HtmlDocument doc)
+		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			var meta = doc.DocumentNode.Descendants("meta");
 			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return Task.FromResult(new ScrapeResult(images.Select(x => x.GetAttributeValue("content", null)), null));
+			return Task.FromResult(new ScrapeResult(uri, false, this, Convert(images.Select(x => x.GetAttributeValue("content", null))), null));
 		}
 	}
 }
