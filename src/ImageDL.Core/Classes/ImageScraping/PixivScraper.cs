@@ -1,6 +1,6 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
-using ImageDL.Classes.ImageDownloaders;
+using ImageDL.Classes.ImageDownloading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace ImageDL.Classes.ImageScrapers
+namespace ImageDL.Classes.ImageScraping
 {
 	/// <summary>
 	/// Scrapes images from pixiv.net.

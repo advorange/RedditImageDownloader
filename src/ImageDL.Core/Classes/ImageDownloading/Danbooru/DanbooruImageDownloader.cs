@@ -1,15 +1,15 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScrapers;
+using ImageDL.Classes.ImageScraping;
+using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders.Danbooru
+namespace ImageDL.Classes.ImageDownloading.Danbooru
 {
 	/// <summary>
 	/// Downloads images from Danbooru.
@@ -28,7 +28,8 @@ namespace ImageDL.Classes.ImageDownloaders.Danbooru
 				{
 					throw new ArgumentException("Cannot search for more than two tags.", nameof(TagString));
 				}
-				NotifyPropertyChanged(_TagString = value);
+				_TagString = value;
+				NotifyPropertyChanged();
 			}
 		}
 		/// <summary>
@@ -37,7 +38,11 @@ namespace ImageDL.Classes.ImageDownloaders.Danbooru
 		public int Page
 		{
 			get => _Page;
-			set => NotifyPropertyChanged(_Page = Math.Min(1, value));
+			set
+			{
+				_Page = Math.Min(1, value);
+				NotifyPropertyChanged();
+			}
 		}
 
 		private string _TagString;
@@ -48,10 +53,15 @@ namespace ImageDL.Classes.ImageDownloaders.Danbooru
 		/// </summary>
 		public DanbooruImageDownloader()
 		{
-			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", "the tags to search for.", i => SetValue<string>(i, c => TagString = c));
-			CommandLineParserOptions.Add($"{nameof(Page)}=", "the page to start from.", i => SetValue<int>(i, c => Page = c));
-
-			Page = 1;
+			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
+			{
+				HelpString = "the tags to search for.",
+			});
+			SettingParser.Add(new Setting<int>(new[] { nameof(Page), }, x => Page = x)
+			{
+				HelpString = "the page to start from.",
+				DefaultValue = 1, //Start on the first page
+			});
 		}
 
 		/// <inheritdoc />

@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageComparers
+namespace ImageDL.Classes.ImageComparing
 {
 	/// <summary>
 	/// Compare images so duplicates don't get downloaded or kept.

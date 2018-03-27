@@ -1,5 +1,6 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScrapers;
+using ImageDL.Classes.ImageScraping;
+using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,10 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders.DeviantArt
+namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
 	/// <summary>
 	/// Downloads images from DeviantArt.
@@ -63,15 +63,24 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 		/// </summary>
 		public DeviantArtImageDownloader()
 		{
-			CommandLineParserOptions.Add($"id|{nameof(ClientId)}=", "the id of the client to get authentication from.", i => SetValue<string>(i, c => ClientId = c));
-			CommandLineParserOptions.Add($"secret|{nameof(ClientSecret)}=", "the secret of the client to get authentication from.", i => SetValue<string>(i, c => ClientSecret = c));
-			CommandLineParserOptions.Add($"user|{nameof(Username)}=", "the user gather images from.", i => SetValue<string>(i, c => Username = c));
-			CommandLineParserOptions.Add($"tags|{nameof(TagString)}=", $"the tags to search for. For additional help, visit {SEARCH}", i => SetValue<string>(i, c => TagString = c));
-
-			ClientId = null;
-			ClientSecret = null;
-			Username = null;
-			TagString = null;
+			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
+			{
+				HelpString = "the id of the client to get authentication from.",
+				DefaultValue = null,
+			});
+			SettingParser.Add(new Setting<string>(new[] { nameof(ClientSecret), "secret" }, x => ClientSecret = x)
+			{
+				HelpString = "the secret of the client to get authentication from.",
+				DefaultValue = null,
+			});
+			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "username" }, x => Username = x)
+			{
+				HelpString = "the user gather images from.",
+			});
+			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
+			{
+				HelpString = $"the tags to search for. For additional help, visit {SEARCH}",
+			});
 		}
 
 		/// <inheritdoc />
@@ -80,27 +89,11 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 			var validPosts = new List<DeviantArtPost>();
 			try
 			{
-				string token = null;
-				if (ClientId != null && ClientSecret != null)
+				var (token, duration) = await GetTokenAsync().CAF();
+				if (token != null)
 				{
-					var request = $"https://www.deviantart.com/oauth2/token" +
-						$"?grant_type=client_credentials" +
-						$"&client_id={ClientId}" +
-						$"&client_secret={ClientSecret}";
-
-					using (var resp = await Client.SendWithRefererAsync(new Uri(request), HttpMethod.Get).CAF())
-					{
-						if (resp.IsSuccessStatusCode)
-						{
-							token = JObject.Parse(await resp.Content.ReadAsStringAsync().CAF())["access_token"].ToObject<string>();
-						}
-					}
-				}
-
-				if (!String.IsNullOrWhiteSpace(token))
-				{
-					Client.UpdateAPIKey(token, TimeSpan.FromHours(1));
-					validPosts = (await GetPostsThroughApi(token).CAF()).Select(x => new DeviantArtPost(x)).ToList();
+					Client.UpdateAPIKey(token, duration);
+					validPosts = (await GetPostsThroughApi().CAF()).Select(x => new DeviantArtPost(x)).ToList();
 				}
 				else
 				{
@@ -157,6 +150,29 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 			}
 			return query.Trim('+');
 		}
+		private async Task<(string Token, TimeSpan Duration)> GetTokenAsync()
+		{
+			string token = null;
+			TimeSpan duration = default;
+			if (ClientId != null && ClientSecret != null)
+			{
+				var request = $"https://www.deviantart.com/oauth2/token" +
+					$"?grant_type=client_credentials" +
+					$"&client_id={ClientId}" +
+					$"&client_secret={ClientSecret}";
+
+				using (var resp = await Client.SendWithRefererAsync(new Uri(request), HttpMethod.Get).CAF())
+				{
+					if (resp.IsSuccessStatusCode)
+					{
+						var jObj = JObject.Parse(await resp.Content.ReadAsStringAsync().CAF());
+						token = jObj["access_token"].ToObject<string>();
+						duration = TimeSpan.FromSeconds(jObj["expires_in"].ToObject<int>());
+					}
+				}
+			}
+			return (token, duration);
+		}
 		private async Task<List<ScrapedDeviantArtPost>> GetPostsThroughScraping()
 		{
 			var validPosts = new List<ScrapedDeviantArtPost>();
@@ -205,8 +221,8 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 					}
 				}
 
-				//24 is a full page, but for some reason only 22 can be gotten usually
-				if (finished || posts.Count < 22)
+				//24 is a full page, but for some reason only 20 or so can be gotten usually
+				if (finished || posts.Count < 20)
 				{
 					break;
 				}
@@ -214,15 +230,26 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 			}
 			return validPosts;
 		}
-		private async Task<List<ApiDeviantArtResults.ApiDeviantArtPost>> GetPostsThroughApi(string token)
+		private async Task<List<ApiDeviantArtResults.ApiDeviantArtPost>> GetPostsThroughApi()
 		{
 			var validPosts = new List<ApiDeviantArtResults.ApiDeviantArtPost>();
 			for (int i = 0; validPosts.Count < AmountToDownload;)
 			{
+				if (Client.APIKeyLastUpdated + Client.APIKeyDuration >= DateTime.UtcNow)
+				{
+					var (newToken, duration) = await GetTokenAsync().CAF();
+					if (newToken == null)
+					{
+						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
+					}
+					Client.UpdateAPIKey(newToken, duration);
+				}
+
 				var search = $"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 					$"?offset={i}" +
+					$"&mature_content=true" +
 					$"&q={GenerateQuery()}" +
-					$"&access_token={token}";
+					$"&access_token={Client.APIKey}";
 
 				var json = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(search), TimeSpan.FromSeconds(1)).CAF();
 

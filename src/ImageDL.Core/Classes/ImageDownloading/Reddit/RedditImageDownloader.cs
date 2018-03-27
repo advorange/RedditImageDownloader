@@ -1,5 +1,6 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScrapers;
+using ImageDL.Classes.ImageScraping;
+using ImageDL.Classes.SettingParsing;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders.Reddit
+namespace ImageDL.Classes.ImageDownloading.Reddit
 {
 	/// <summary>
 	/// Downloads images from reddit.
@@ -33,7 +34,10 @@ namespace ImageDL.Classes.ImageDownloaders.Reddit
 		/// </summary>
 		public RedditImageDownloader()
 		{
-			CommandLineParserOptions.Add($"sr|subreddit|{nameof(Subreddit)}=", "the subreddit to download images from.", i => SetValue<string>(i, c => Subreddit = c));
+			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
+			{
+				HelpString = "the subreddit to download images from.",
+			});
 
 			_Reddit = new RedditSharp.Reddit(new WebAgent(), false);
 		}

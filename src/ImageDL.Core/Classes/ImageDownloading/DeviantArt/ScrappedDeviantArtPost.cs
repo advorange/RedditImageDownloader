@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace ImageDL.Classes.ImageDownloaders.DeviantArt
+namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via scraping a gallery.

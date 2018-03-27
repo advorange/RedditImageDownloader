@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ImageDL.Classes.ImageDownloaders.DeviantArt
+namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
 	/// <summary>
 	/// Model for similarities between scraped posts and posts gotten through the API.
@@ -61,7 +61,7 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 			AuthorUsername = api.Author.Username;
 			AuthorUserIcon = api.Author.UserIcon;
 			AuthorUUID = api.Author.UUID;
-			Thumbnails = api.Thumbnails.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent)).ToList();
+			Thumbnails = api.Thumbnails?.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent))?.ToList() ?? new List<Thumbnail>();
 		}
 		internal DeviantArtPost(ScrapedDeviantArtPost scrape)
 		{
@@ -71,10 +71,10 @@ namespace ImageDL.Classes.ImageDownloaders.DeviantArt
 			Height = scrape.Height;
 			Favorites = -1;
 			Source = scrape.Source;
-			AuthorUsername = scrape.Author.Username;
-			AuthorUserIcon = scrape.Author.UserIcon;
-			AuthorUUID = scrape.Author.UUID;
-			Thumbnails = scrape.Sizes.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent)).ToList();
+			AuthorUsername = scrape.Author?.Username;
+			AuthorUserIcon = scrape.Author?.UserIcon;
+			AuthorUUID = scrape.Author?.UUID;
+			Thumbnails = scrape.Sizes?.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent))?.ToList() ?? new List<Thumbnail>();
 		}
 
 		/// <summary>

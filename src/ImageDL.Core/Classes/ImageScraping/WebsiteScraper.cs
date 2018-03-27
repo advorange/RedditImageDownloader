@@ -1,6 +1,6 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
-using ImageDL.Classes.ImageDownloaders;
+using ImageDL.Classes.ImageDownloading;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageScrapers
+namespace ImageDL.Classes.ImageScraping
 {
 	/// <summary>
 	/// Scrapes images from a website.

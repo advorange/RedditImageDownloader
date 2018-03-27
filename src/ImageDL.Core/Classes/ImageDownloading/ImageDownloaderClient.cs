@@ -1,5 +1,5 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScrapers;
+using ImageDL.Classes.ImageScraping;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloading
 {
 	/// <summary>
 	/// Client used to scrape images and download images.
@@ -27,19 +27,19 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// The currently used API key. This doesn't lead to any site in specific.
 		/// </summary>
-		public string Key => _Key;
+		public string APIKey => _APIKey;
 		/// <summary>
 		/// The last time the API key was updated.
 		/// </summary>
-		public DateTime KeyLastUpdated => _KeyLastUpdated;
+		public DateTime APIKeyLastUpdated => _APIKeyLastUpdated;
 		/// <summary>
-		/// When the key needs to be updated by.
+		/// How long until the API key is invalid.
 		/// </summary>
-		public DateTime KeyNeedsUpdating => _KeyNeedsUpdating;
+		public TimeSpan APIKeyDuration => _APIKeyDuration;
 
-		private string _Key;
-		private DateTime _KeyLastUpdated;
-		private DateTime _KeyNeedsUpdating;
+		private string _APIKey;
+		private DateTime _APIKeyLastUpdated;
+		private TimeSpan _APIKeyDuration;
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
@@ -96,24 +96,26 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// Updates the stored API key and the time it needs to reset.
 		/// </summary>
 		/// <param name="key"></param>
-		/// <param name="validity"></param>
-		public void UpdateAPIKey(string key, TimeSpan validity)
+		/// <param name="duration"></param>
+		public void UpdateAPIKey(string key, TimeSpan duration)
 		{
-			_Key = key;
-			_KeyLastUpdated = DateTime.UtcNow;
-			_KeyNeedsUpdating = DateTime.UtcNow.Add(validity);
+			_APIKey = key;
+			_APIKeyLastUpdated = DateTime.UtcNow;
+			_APIKeyDuration = duration;
 		}
 		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
+		/// Will throw if tries are used up/all errors other than 421 and 429.
 		/// </summary>
 		/// <param name="uri"></param>
 		/// <param name="wait">The amount of time to wait between retries. This will be doubled each retry.</param>
-		/// <param name="retries"></param>
+		/// <param name="tries"></param>
 		/// <returns></returns>
-		public async Task<string> GetMainTextAndRetryIfRateLimitedAsync(Uri uri, TimeSpan wait, int retries = 3)
+		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
+		public async Task<string> GetMainTextAndRetryIfRateLimitedAsync(Uri uri, TimeSpan wait, int tries = 3)
 		{
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
-			for (int i = 0; i < retries; ++i)
+			for (int i = 0; i < tries; ++i)
 			{
 				var diff = nextRetry - DateTime.UtcNow;
 				if (diff.Ticks > 0)
@@ -127,7 +129,7 @@ namespace ImageDL.Classes.ImageDownloaders
 					if (code == 421 || code == 429) //Rate limit error codes
 					{
 						//Wait longer on each failure
-						nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i + 1)));
+						nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i)));
 						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
 						continue;
 					}
@@ -139,7 +141,7 @@ namespace ImageDL.Classes.ImageDownloaders
 					return await resp.Content.ReadAsStringAsync().CAF();
 				}
 			}
-			throw new InvalidOperationException($"Unable to get the requested text after {retries} retries.");
+			throw new HttpRequestException($"Unable to get the requested text after {tries} retries.");
 		}
 		/// <summary>
 		/// Gathers images from <paramref name="uri"/>.

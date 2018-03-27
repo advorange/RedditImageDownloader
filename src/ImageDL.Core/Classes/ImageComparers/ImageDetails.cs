@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 
-namespace ImageDL.Classes.ImageComparers
+namespace ImageDL.Classes.ImageComparing
 {
 	/// <summary>
 	/// Holds information about an image.

@@ -1,4 +1,4 @@
-﻿using ImageDL.Classes.ImageComparers;
+﻿using ImageDL.Classes.ImageComparing;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

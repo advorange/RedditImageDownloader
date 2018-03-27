@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace ImageDL.Classes.ImageScrapers
+namespace ImageDL.Classes.ImageScraping
 {
 	/// <summary>
 	/// Gathers images from the passed in <see cref="Uri"/>. Attempts to scrape images if the link is not a direct image link.

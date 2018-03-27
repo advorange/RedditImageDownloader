@@ -1,5 +1,6 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScrapers;
+using ImageDL.Classes.ImageScraping;
+using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using NDesk.Options;
 using System;
@@ -9,13 +10,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloaders
+namespace ImageDL.Classes.ImageDownloading
 {
 	/// <summary>
 	/// Downloads images from a site.
@@ -40,98 +39,159 @@ namespace ImageDL.Classes.ImageDownloaders
 				{
 					throw new ArgumentException($"{value} is an invalid directory name.", nameof(Directory));
 				}
-				NotifyPropertyChanged(_Directory = value);
+				_Directory = value;
+				NotifyPropertyChanged();
 			}
 		}
 		/// <inheritdoc />
 		public int AmountToDownload
 		{
 			get => _AmountToDownload;
-			set => NotifyPropertyChanged(_AmountToDownload = Math.Max(1, value));
+			set
+			{
+				_AmountToDownload = Math.Max(1, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int MinWidth
 		{
 			get => _MinWidth;
-			set => NotifyPropertyChanged(_MinWidth = Math.Max(0, value));
+			set
+			{
+				_MinWidth = Math.Max(0, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int MinHeight
 		{
 			get => _MinHeight;
-			set => NotifyPropertyChanged(_MinHeight = Math.Max(0, value));
+			set
+			{
+				_MinHeight = Math.Max(0, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
-			set => NotifyPropertyChanged(_MaxDaysOld = Math.Max(0, value));
+			set
+			{
+				_MaxDaysOld = Math.Max(0, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
-			set => NotifyPropertyChanged(_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value)));
+			set
+			{
+				_MaxImageSimilarity = Math.Min(1000, Math.Max(1, value));
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
-			set => NotifyPropertyChanged(_ImagesCachedPerThread = Math.Max(1, value));
+			set
+			{
+				_ImagesCachedPerThread = Math.Max(1, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public int MinScore
 		{
 			get => _MinScore;
-			set => NotifyPropertyChanged(_MinScore = Math.Max(0, value));
+			set
+			{
+				_MinScore = Math.Max(0, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public float MinAspectRatio
 		{
 			get => _MinAspectRatio;
-			set => NotifyPropertyChanged(_MinAspectRatio = Math.Max(0f, value));
+			set
+			{
+				_MinAspectRatio = Math.Max(0f, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public float MaxAspectRatio
 		{
 			get => _MaxAspectRatio;
-			set => NotifyPropertyChanged(_MaxAspectRatio = Math.Max(0f, value));
+			set
+			{
+				_MaxAspectRatio = Math.Max(0f, value);
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
-			set => NotifyPropertyChanged(_CompareSavedImages = value);
+			set
+			{
+				_CompareSavedImages = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool Verbose
 		{
 			get => _Verbose;
-			set => NotifyPropertyChanged(_Verbose = value);
+			set
+			{
+				_Verbose = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool CreateDirectory
 		{
 			get => _CreateDirectory;
-			set => NotifyPropertyChanged(_CreateDirectory = value);
+			set
+			{
+				_CreateDirectory = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool AllArgumentsSet
 		{
 			get => _AllArgumentsSet;
-			protected set => NotifyPropertyChanged(_AllArgumentsSet = value);
+			protected set
+			{
+				_AllArgumentsSet = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool BusyDownloading
 		{
 			get => _BusyDownloading;
-			protected set => NotifyPropertyChanged(_BusyDownloading = value);
+			protected set
+			{
+				_BusyDownloading = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public bool DownloadsFinished
 		{
 			get => _DownloadsFinished;
-			protected set => NotifyPropertyChanged(_DownloadsFinished = value);
+			protected set
+			{
+				_DownloadsFinished = value;
+				NotifyPropertyChanged();
+			}
 		}
 		/// <inheritdoc />
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
@@ -139,17 +199,13 @@ namespace ImageDL.Classes.ImageDownloaders
 		public IImageComparer ImageComparer
 		{
 			get => _ImageComparer;
-			set => NotifyPropertyChanged(_ImageComparer = value);
+			set
+			{
+				_ImageComparer = value;
+				NotifyPropertyChanged();
+			}
 		}
 
-		/// <summary>
-		/// The arguments that need to be set.
-		/// </summary>
-		protected ImmutableArray<PropertyInfo> Arguments;
-		/// <summary>
-		/// Arguments which have been set.
-		/// </summary>
-		protected List<PropertyInfo> ModifiedArguments = new List<PropertyInfo>();
 		/// <summary>
 		/// Links to content that is animated, failed to download, etc.
 		/// </summary>
@@ -157,7 +213,7 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Used to set arguments via command line.
 		/// </summary>
-		protected OptionSet CommandLineParserOptions;
+		protected SettingParser SettingParser;
 		/// <summary>
 		/// Used to download files.
 		/// </summary>
@@ -195,21 +251,8 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// </summary>
 		public ImageDownloader()
 		{
-			Arguments = GetArguments();
-			CommandLineParserOptions = GetCommandLineParserOptions();
+			SettingParser = GetSettingParser();
 			Client = new ImageDownloaderClient();
-
-			//Set verbose to false so these settings don't print
-			//These settings are default values, but need to be set from here so NotifyPropertyChanged adds them to the set values
-			Verbose = false;
-			CreateDirectory = false;
-			MaxImageSimilarity = 1000;
-			ImagesCachedPerThread = 50;
-			MinScore = 0;
-			MinAspectRatio = float.MinValue;
-			MaxAspectRatio = float.MaxValue;
-			CompareSavedImages = false;
-			ImageComparer = null;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
@@ -296,38 +339,36 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <inheritdoc />
 		public void SetArguments(string[] args)
 		{
-			try
+			var result = SettingParser.Parse(args);
+			if (!Verbose)
 			{
-				var extra = CommandLineParserOptions.Parse(args);
-				if (extra.Any())
-				{
-					Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", extra)}'");
-				}
+				return;
 			}
-			catch (FormatException)
+
+			if (result.Successes.Any())
 			{
-				Console.WriteLine("An argument was the invalid type and could not be converted correctly.");
+				Console.WriteLine();
+				Console.WriteLine(String.Join("\n", result.Successes));
 			}
-			catch (OptionException oe)
+			if (result.Errors.Any())
 			{
-				oe.Write();
+				Console.WriteLine();
+				Console.WriteLine($"The following errors occurred:\n{String.Join("\n\t", result.Errors)}");
+			}
+			if (result.UnusedParts.Any())
+			{
+				Console.WriteLine();
+				Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", result.UnusedParts)}'");
+			}
+			if (result.Successes.Any() || result.Errors.Any() || result.UnusedParts.Any())
+			{
+				Console.WriteLine();
 			}
 		}
 		/// <inheritdoc />
 		public void AskForArguments()
 		{
-			var unsetArgs = Arguments.Where(x => !ModifiedArguments.Contains(x));
-			if (!unsetArgs.Any())
-			{
-				return;
-			}
-
-			var sb = new StringBuilder("The following arguments need to be set:" + Environment.NewLine);
-			foreach (var prop in unsetArgs)
-			{
-				sb.AppendLine($"\t{prop.Name} ({prop.PropertyType.Name})");
-			}
-			Console.WriteLine(sb.ToString().Trim());
+			Console.WriteLine(SettingParser.FormatNeededSettings());
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
@@ -427,40 +468,6 @@ namespace ImageDL.Classes.ImageDownloaders
 			return true;
 		}
 		/// <summary>
-		/// Attempts to invoke the callback with the string converted to the supplied type, otherwise prints to the console describing what happened.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="input">The text supplied for the argument.</param>
-		/// <param name="callback">How to set the property.</param>
-		/// <param name="useDefaultIfNull">Whether or not to use the default value is the value is null.</param>
-		/// <param name="defaultValue">The default value for the property.</param>
-		protected void SetValue<T>(string input, Action<T> callback, bool useDefaultIfNull = false, T defaultValue = default)
-		{
-			T val;
-			if (input == null && useDefaultIfNull)
-			{
-				val = defaultValue;
-			}
-			else if (TypeDescriptor.GetConverter(typeof(T)) is TypeConverter converter && converter.IsValid(input))
-			{
-				val = (T)converter.ConvertFromInvariantString(input);
-			}
-			else
-			{
-				Console.WriteLine($"Unable to convert '{input}' to type {typeof(T).Name}.");
-				return;
-			}
-
-			try
-			{
-				callback(val);
-			}
-			catch (ArgumentException e)
-			{
-				e.Write();
-			}
-		}
-		/// <summary>
 		/// Saves the stored content links to file.
 		/// </summary>
 		protected void SaveStoredContentLinks()
@@ -511,129 +518,80 @@ namespace ImageDL.Classes.ImageDownloaders
 		/// <summary>
 		/// Invokes <see cref="PropertyChanged"/>.
 		/// </summary>
-		/// <param name="value">The newly set value.</param>
 		/// <param name="name">The property changed.</param>
-		protected void NotifyPropertyChanged(object value, [CallerMemberName] string name = "")
+		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
 		{
-			if (!ModifiedArguments.Any(x => x.Name == name) && Arguments.SingleOrDefault(x => x.Name == name) is PropertyInfo prop)
-			{
-				ModifiedArguments.Add(prop);
-				if (_Verbose)
-				{
-					Console.WriteLine($"Successfully set {name} to '{value}'.");
-				}
-			}
-			if (!AllArgumentsSet && !Arguments.Any(x => !ModifiedArguments.Contains(x)))
-			{
-				AllArgumentsSet = true;
-			}
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 		}
 		/// <summary>
 		/// Returns the default options that are used to set values through console input.
 		/// </summary>
 		/// <returns></returns>
-		private OptionSet GetCommandLineParserOptions()
+		private SettingParser GetSettingParser()
 		{
-			return new OptionSet
+			return new SettingParser(new[] { "--", "-", "/" })
 			{
+				new Setting<string>(new[] { nameof(Directory), "dir" }, x => Directory = x)
 				{
-					"h|help=",
-					"help command.",
-					i => DisplayHelp(i)
+					HelpString = "the directory to save to.",
 				},
+				new Setting<int>(new[] {nameof(AmountToDownload), "amt"}, x => AmountToDownload = x)
 				{
-					$"dir|{nameof(Directory)}=",
-					"the directory to save to.",
-					i => SetValue<string>(i, c => Directory = c)
+					HelpString = "the amount of images to download.",
 				},
+				new Setting<int>(new[] {nameof(MinWidth), "minw", "mw" }, x => MinWidth = x)
 				{
-					$"amt|{nameof(AmountToDownload)}=",
-					"the amount of images to download.",
-					i => SetValue<int>(i, c => AmountToDownload = c)
+					HelpString = "the minimum width to save an image with.",
 				},
+				new Setting<int>(new[] {nameof(MinHeight), "minh", "mh" }, x => MinHeight = x)
 				{
-					$"mw|minw|{nameof(MinWidth)}=",
-					"the minimum width to save an image with.",
-					i => SetValue<int>(i, c => MinWidth = c)
+					HelpString = "the minimum height to save an image with.",
 				},
+				new Setting<int>(new[] {nameof(MaxDaysOld), "age" }, x => MaxDaysOld = x)
 				{
-					$"mh|minh|{nameof(MinHeight)}=",
-					"the minimum height to save an image with.",
-					i => SetValue<int>(i, c => MinHeight = c)
+					HelpString = "the oldest an image can be before it won't be saved.",
 				},
+				new Setting<int>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x)
 				{
-					$"age|{nameof(MaxDaysOld)}=",
-					"the oldest an image can be before it won't be saved.",
-					i => SetValue<int>(i, c => MaxDaysOld = c)
+					HelpString = "the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
+					DefaultValue = 1000,
 				},
+				new Setting<int>(new[] {nameof(ImagesCachedPerThread), "icpt" }, x => ImagesCachedPerThread = x)
 				{
-					$"sim|{nameof(MaxImageSimilarity)}=",
-					"the percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
-					i => SetValue<int>(i, c => MaxImageSimilarity = c)
+					HelpString = "how many images to cache on each thread (lower = faster but more CPU).",
+					DefaultValue = 50,
 				},
+				new Setting<int>(new[] {nameof(MinScore), "mins", "ms" }, x => MinScore = x)
 				{
-					$"icpt|{nameof(ImagesCachedPerThread)}=",
-					"how many images to cache on each thread (lower = faster but more CPU).",
-					i => SetValue<int>(i, c => ImagesCachedPerThread = c)
+					HelpString = "the minimum score for an image to have before being ignored.",
+					DefaultValue = 0,
 				},
+				new Setting<float>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x)
 				{
-					$"ms|mins|{nameof(MinScore)}=",
-					"the minimum score for an image to have before being ignored.",
-					i => SetValue<int>(i, c => MinScore = c)
+					HelpString = "the minimum aspect ratio for an image to have before being ignored.",
+					DefaultValue = float.MinValue,
 				},
+				new Setting<float>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x)
 				{
-					$"minar|{nameof(MinAspectRatio)}=",
-					"the minimum aspect ratio for an image to have before being ignored.",
-					i => SetValue<float>(i, c => MinAspectRatio = c)
+					HelpString = "the maximum aspect ratio for an image to have before being ignored.",
+					DefaultValue = float.MaxValue,
 				},
+				new Setting<bool>(new[] {nameof(CompareSavedImages), "csi" }, x => CompareSavedImages = x)
 				{
-					$"maxar|{nameof(MaxAspectRatio)}=",
-					"the maximum aspect ratio for an image to have before being ignored.",
-					i => SetValue<float>(i, c => MaxAspectRatio = c)
+					HelpString = "whether or not to compare to already saved images.",
+					DefaultValue = false,
 				},
+				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
 				{
-					$"csi|{nameof(CompareSavedImages)}=",
-					"whether or not to compare to already saved images.",
-					i => SetValue<bool>(i, c => CompareSavedImages = c)
+					HelpString = "whether or not to create the directory if it does not exist.",
+					DefaultValue = false,
 				},
+				new Setting<bool>(new[] {nameof(Verbose), "v" }, x => Verbose = x)
 				{
-					$"cd|create|{nameof(CreateDirectory)}:",
-					"whether or not to create the directory if it does not exist.",
-					i => SetValue<bool>(i, c => CreateDirectory = c, true, true)
+					HelpString = "whether or not to print extra information to the console, such as variables being set.",
+					DefaultValue = false,
 				},
-				{
-					$"v|{nameof(Verbose)}:",
-					"whether or not to print extra information to the console, such as variables being set.",
-					i => SetValue<bool>(i, c => Verbose = c, true, true)
-				}
 			};
-		}
-		/// <summary>
-		/// Gets the names of settings (public, instance, has setter, has getter, and is a property).
-		/// </summary>
-		/// <returns></returns>
-		private ImmutableArray<PropertyInfo> GetArguments()
-		{
-			return GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-				.Where(x => x.GetSetMethod() != null && x.GetGetMethod() != null)
-				.OrderByNonComparable(x => x.PropertyType)
-				.ToImmutableArray();
-		}
-		/// <summary>
-		/// Displays help for whatever option has the supplied key.
-		/// </summary>
-		/// <param name="input"></param>
-		private void DisplayHelp(string input)
-		{
-			if (CommandLineParserOptions.Contains(input))
-			{
-				Console.WriteLine($"{input}: {CommandLineParserOptions[input].Description}");
-			}
-			else
-			{
-				Console.WriteLine($"'{input}' is not a valid option.");
-			}
 		}
 
 		/// <summary>

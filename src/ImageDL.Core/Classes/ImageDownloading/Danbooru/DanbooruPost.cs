@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ImageDL.Classes.ImageDownloaders.Danbooru
+namespace ImageDL.Classes.ImageDownloading.Danbooru
 {
 	/// <summary>
 	/// Json model for a danbooru post.
