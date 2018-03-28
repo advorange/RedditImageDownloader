@@ -25,7 +25,6 @@ namespace ImageDL.Classes.ImageDownloading
 	{
 		private const string ANIMATED_CONTENT = "Animated Content";
 		private const string FAILED_DOWNLOADS = "Failed Downloads";
-		private const string START = "Start";
 
 		/// <inheritdoc />
 		public string Directory

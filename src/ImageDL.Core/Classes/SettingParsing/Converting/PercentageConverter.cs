@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ImageDL.Classes.SettingParsing.Converting
+﻿namespace ImageDL.Classes.SettingParsing.Converting
 {
 	/// <summary>
 	/// A class for attempting to convert to percentages.

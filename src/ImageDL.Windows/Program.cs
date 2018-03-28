@@ -1,6 +1,4 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes;
-using ImageDL.Classes.ImageDownloading.DeviantArt;
 using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Interfaces;
 using System;
