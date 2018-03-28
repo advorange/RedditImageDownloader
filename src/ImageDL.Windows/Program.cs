@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Classes;
 using ImageDL.Classes.ImageDownloading.DeviantArt;
 using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Interfaces;
@@ -31,7 +32,7 @@ namespace ImageDL.Windows
 			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
 			do
 			{
-				var line = Console.ReadLine();
+				var line = Console.ReadLine().Trim();
 				if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<Task> t)
 				{
 					await t().CAF();
@@ -47,10 +48,10 @@ namespace ImageDL.Windows
 		private static async Task Single()
 		{
 			var downloader = CreateDownloader(GetDownloaderType());
-			while (!downloader.AllArgumentsSet)
+			while (!downloader.CanStart())
 			{
 				downloader.AskForArguments();
-				downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+				downloader.SetArguments(Console.ReadLine());
 			}
 			await downloader.StartAsync().CAF();
 		}
@@ -67,14 +68,14 @@ namespace ImageDL.Windows
 				};
 				if (arguments != null)
 				{
-					downloader.SetArguments(arguments.SplitLikeCommandLine());
+					downloader.SetArguments(arguments);
 					downloader.Subreddit = dir.Name;
 					downloader.Directory = dir.FullName;
 				}
-				while (!downloader.AllArgumentsSet)
+				while (!downloader.CanStart())
 				{
 					downloader.AskForArguments();
-					downloader.SetArguments(Console.ReadLine().SplitLikeCommandLine());
+					downloader.SetArguments(Console.ReadLine());
 				}
 				await downloader.StartAsync().CAF();
 			}
@@ -85,7 +86,7 @@ namespace ImageDL.Windows
 			Console.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
 			while (true)
 			{
-				if (!ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
+				if (!ImageDownloaders.TryGetValue(Console.ReadLine().Trim(), out var downloaderType))
 				{
 					Console.WriteLine($"Invalid downloader; pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
 					continue;

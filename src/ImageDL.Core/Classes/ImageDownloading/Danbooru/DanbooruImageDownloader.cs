@@ -55,11 +55,11 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
 			{
-				HelpString = "the tags to search for.",
+				Description = "The tags to search for.",
 			});
 			SettingParser.Add(new Setting<int>(new[] { nameof(Page), }, x => Page = x)
 			{
-				HelpString = "the page to start from.",
+				Description = "The page to start from.",
 				DefaultValue = 1, //Start on the first page
 			});
 		}

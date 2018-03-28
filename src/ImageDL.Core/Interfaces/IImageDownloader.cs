@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageDL.Classes;
+using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +34,7 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// The maximum allowed image similarity before an image is considered a duplicate.
 		/// </summary>
-		int MaxImageSimilarity { get; set; }
+		Percentage MaxImageSimilarity { get; set; }
 		/// <summary>
 		/// How many images to cache per thread. Lower = faster, but more CPU.
 		/// </summary>
@@ -45,11 +46,11 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// The minimum aspect ratio an image can have.
 		/// </summary>
-		float MinAspectRatio { get; set; }
+		AspectRatio MinAspectRatio { get; set; }
 		/// <summary>
 		/// The maximum aspect ratio an image can have.
 		/// </summary>
-		float MaxAspectRatio { get; set; }
+		AspectRatio MaxAspectRatio { get; set; }
 		/// <summary>
 		/// Indicates whether or not to add already saved images to the cache before downloading images.
 		/// </summary>
@@ -63,17 +64,9 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		bool CreateDirectory { get; set; }
 		/// <summary>
-		/// Returns true if all arguments (aside from ones with default values) have been set at least once.
+		/// Indicates the user wants the downloader to start.
 		/// </summary>
-		bool AllArgumentsSet { get; }
-		/// <summary>
-		/// Returns true when images are being downloaded.
-		/// </summary>
-		bool BusyDownloading { get; }
-		/// <summary>
-		/// Returns true after all images have been downloaded.
-		/// </summary>
-		bool DownloadsFinished { get; }
+		bool Start { get; set; }
 		/// <summary>
 		/// The oldest allowed posts.
 		/// </summary>
@@ -84,6 +77,11 @@ namespace ImageDL.Interfaces
 		IImageComparer ImageComparer { get; set; }
 
 		/// <summary>
+		/// Indicates that all arguments have been set and that the user wants the downloader to start.
+		/// </summary>
+		/// <returns></returns>
+		bool CanStart();
+		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
 		/// </summary>
 		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
@@ -92,8 +90,8 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// Sets values with passed in values parsed from strings.
 		/// </summary>
-		/// <param name="args">The arguments to set.</param>
-		void SetArguments(string[] args);
+		/// <param name="input">The arguments to set.</param>
+		void SetArguments(string input);
 		/// <summary>
 		/// Asks for unset arguments which are necessary for the downloader to start.
 		/// </summary>

@@ -65,7 +65,7 @@ namespace ImageDL.Classes.ImageDownloading
 				Credentials = CredentialCache.DefaultCredentials,
 				Proxy = new WebProxy(), //One of my computers throws an exception if the proxy is null
 				CookieContainer = cookieContainer,
-				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate, //TODO: figure out why this stops exceptions
+				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 			};
 		}
 		private static List<Regex> GetDefaultAnimatedContentDomains()
@@ -141,7 +141,7 @@ namespace ImageDL.Classes.ImageDownloading
 					return await resp.Content.ReadAsStringAsync().CAF();
 				}
 			}
-			throw new HttpRequestException($"Unable to get the requested text after {tries} retries.");
+			throw new HttpRequestException($"Unable to get the requested text after {tries} tries.");
 		}
 		/// <summary>
 		/// Gathers images from <paramref name="uri"/>.

@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Classes.SettingParsing.Converting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -13,7 +14,7 @@ namespace ImageDL.Classes.SettingParsing
 	public class Setting<T> : Setting
 	{
 		/// <summary>
-		/// Default value of the setting.
+		/// Default value of the setting. This will indicate the setting is optional, but has a value other than the default value of the type.
 		/// </summary>
 		public T DefaultValue
 		{
@@ -39,7 +40,7 @@ namespace ImageDL.Classes.SettingParsing
 		public Setting(IEnumerable<string> names, Action<T> setter, SettingConverter<T> converter = default) : base(names)
 		{
 			Setter = setter ?? throw new ArgumentException("Invalid setter supplied.");
-			Converter = converter ?? (SettingConverter<T>)PrimitiveSettingConverters.GetConverter<T>();
+			Converter = converter ?? PrimitiveSettingConverters.GetConverter<T>();
 		}
 
 		/// <inheritdoc />
@@ -71,6 +72,12 @@ namespace ImageDL.Classes.SettingParsing
 			return true;
 		}
 		/// <inheritdoc />
+		public override string GetHelp()
+		{
+			var defaultValue = EqualityComparer<T>.Default.Equals(DefaultValue, default) ? "" : $" Default value is {DefaultValue}.";
+			return $"{Names[0]}: {Description}{defaultValue}";
+		}
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return $"{Names[0]} ({typeof(T).Name})";
@@ -89,15 +96,16 @@ namespace ImageDL.Classes.SettingParsing
 		/// <summary>
 		/// String indicating what this setting does.
 		/// </summary>
-		public string HelpString { get; set; }
+		public string Description { get; set; }
 		/// <summary>
 		/// Indicates the setting is a boolean which only requires an attempt at parsing it for it to set itself to true.
+		/// The passed in string will always be <see cref="Boolean.TrueString"/>.
 		/// </summary>
 		public bool IsFlag { get; set; }
 		/// <summary>
-		/// Seems like a dumb setting, but is used for the help command.
+		/// Indicates the argument is optional.
 		/// </summary>
-		public bool IsNotSetting { get; set; }
+		public bool IsOptional { get; set; }
 		/// <summary>
 		/// Indicates that the setting cannot be null.
 		/// </summary>
@@ -106,6 +114,10 @@ namespace ImageDL.Classes.SettingParsing
 		/// Indicates whether or not the setting has been set yet.
 		/// </summary>
 		public bool HasBeenSet { get; protected set; }
+		/// <summary>
+		/// Indicates this is for providing help, and is not necessarily a setting.
+		/// </summary>
+		public bool IsHelp => Names.Any(x => x.CaseInsEquals("help") || x.CaseInsEquals("h"));
 
 		/// <summary>
 		/// The names of this command.
@@ -137,6 +149,11 @@ namespace ImageDL.Classes.SettingParsing
 		/// <param name="response"></param>
 		/// <returns></returns>
 		public abstract bool TrySetValue(string value, out string response);
+		/// <summary>
+		/// Returns a string with additional information about the setting.
+		/// </summary>
+		/// <returns></returns>
+		public abstract string GetHelp();
 		/// <inheritdoc />
 		public override string ToString()
 		{

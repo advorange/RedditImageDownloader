@@ -1,5 +1,6 @@
 ﻿using AdvorangesUtils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace ImageDL.Classes.SettingParsing
 	/// Parses options and then sets them.
 	/// </summary>
 	/// <remarks>Reserved setting names: help, h</remarks>
-	public class SettingParser : Dictionary<string, Setting>
+	public class SettingParser : IEnumerable<Setting>
 	{
 		/// <summary>
 		/// Valid prefixes for a setting.
@@ -21,30 +22,25 @@ namespace ImageDL.Classes.SettingParsing
 		/// Returns true if every setting has been set or is optional.
 		/// </summary>
 		/// <returns></returns>
-		public bool AllSet => !Values.Any(x => !(x.HasBeenSet || x.IsNotSetting));
+		public bool AllSet => !GetNeededSettings().Any();
+
+		private readonly Dictionary<string, Guid> _NameMap = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<Guid, Setting> _SettingMap = new Dictionary<Guid, Setting>();
 
 		/// <summary>
 		/// Creates an instance of <see cref="SettingParser"/>.
 		/// </summary>
 		/// <param name="prefixes"></param>
-		public SettingParser(IEnumerable<string> prefixes) : base(StringComparer.OrdinalIgnoreCase)
+		public SettingParser(IEnumerable<string> prefixes)
 		{
-			Add(new Setting<string>(new[] { "help", "h" }, x => GetHelp(x)) { IsNotSetting = true, });
-
 			Prefixes = prefixes.ToImmutableArray();
+			Add(new Setting<string>(new[] { "Help", "h" }, x => { })
+			{
+				Description = "Gives you help. Can't fix your life.",
+				IsOptional = true,
+			});
 		}
 
-		/// <summary>
-		/// Adds the setting to the dictionary with each of its names as a key.
-		/// </summary>
-		/// <param name="setting"></param>
-		public void Add(Setting setting)
-		{
-			foreach (var name in setting.Names)
-			{
-				Add(name, setting);
-			}
-		}
 		/// <summary>
 		/// Finds settings and then sets their value. Returns unused parts.
 		/// </summary>
@@ -60,9 +56,9 @@ namespace ImageDL.Classes.SettingParsing
 					{
 						continue;
 					}
-					if (TryGetValue(part.Substring(prefix.Length), out var setting))
+					if (_NameMap.TryGetValue(part.Substring(prefix.Length), out var guid))
 					{
-						return setting;
+						return _SettingMap[guid];
 					}
 				}
 				return null;
@@ -71,6 +67,7 @@ namespace ImageDL.Classes.SettingParsing
 			var unusedParts = new List<string>();
 			var successes = new List<string>();
 			var errors = new List<string>();
+			var help = new List<string>();
 			var array = parts.ToArray();
 			for (int i = 0; i < array.Length; ++i)
 			{
@@ -85,12 +82,18 @@ namespace ImageDL.Classes.SettingParsing
 				//If it's a flag set its value to true then go to the next part
 				else if (setting.IsFlag)
 				{
-					value = true.ToString();
+					value = Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
-				else if (array.Length - 1 > i && !(GetSetting(array[i + 1]) is Setting throaway))
+				else if (array.Length - 1 > i && !(GetSetting(array[i + 1]) is Setting throwaway))
 				{
-					value = array[i + 1];
+					value = array[++i]; //Make sure to increment i since the part is being used as a setting
+				}
+				//If help and had argument, would have gone into the above statement.
+				//This means it has gotten to the flag aspect of it, so null can just be passed in.
+				else if (setting.IsHelp)
+				{
+					value = null;
 				}
 				//Otherwise this part is unused
 				else
@@ -99,7 +102,11 @@ namespace ImageDL.Classes.SettingParsing
 					continue;
 				}
 
-				if (setting.TrySetValue(value, out var response))
+				if (setting.IsHelp)
+				{
+					help.Add(GetHelp(value));
+				}
+				else if (setting.TrySetValue(value, out var response))
 				{
 					successes.Add(response);
 				}
@@ -108,25 +115,15 @@ namespace ImageDL.Classes.SettingParsing
 					errors.Add(response);
 				}
 			}
-			return new SettingsParseResult(unusedParts, successes, errors);
+			return new SettingsParseResult(unusedParts, successes, errors, help);
 		}
 		/// <summary>
 		/// Returns the needed arguments all put into one string.
 		/// </summary>
 		/// <returns></returns>
-		public string FormatNeededSettings()
+		public IEnumerable<Setting> GetNeededSettings()
 		{
-			if (AllSet)
-			{
-				return $"Every setting that is necessary has been set.";
-			}
-
-			var sb = new StringBuilder("The following settings need to be set:" + Environment.NewLine);
-			foreach (var setting in Values.Distinct().Where(x => !(x.HasBeenSet || x.IsNotSetting)))
-			{
-				sb.AppendLine($"\t{setting.ToString()}");
-			}
-			return sb.ToString().Trim();
+			return _SettingMap.Values.Where(x => !(x.HasBeenSet || x.IsOptional));
 		}
 		/// <summary>
 		/// Gets the help information associated with this setting name.
@@ -135,14 +132,62 @@ namespace ImageDL.Classes.SettingParsing
 		/// <returns></returns>
 		public string GetHelp(string input)
 		{
-			if (TryGetValue(input, out var setting))
+			if (String.IsNullOrWhiteSpace(input))
 			{
-				return $"{input}: {setting.HelpString}";
+				var vals = _SettingMap.Values.Select(x =>
+				{
+					return x.Names.Length < 2 ? x.Names[0] : $"{x.Names[0]} ({String.Join(", ", x.Names.Skip(1))})";
+				});
+				return $"All Settings:\n\t{String.Join("\n\t", vals)}";
+			}
+			else if (_NameMap.TryGetValue(input, out var guid))
+			{
+				return _SettingMap[guid].GetHelp();
 			}
 			else
 			{
-				return $"'{input}' is not a valid option.";
+				return $"'{input}' is not a valid setting.";
 			}
+		}
+		/// <summary>
+		/// Adds the setting to the dictionary and maps it by its names.
+		/// </summary>
+		/// <param name="setting"></param>
+		public void Add(Setting setting)
+		{
+			var guid = Guid.NewGuid();
+			foreach (var name in setting.Names)
+			{
+				_NameMap.Add(name, guid);
+			}
+			_SettingMap.Add(guid, setting);
+		}
+		/// <summary>
+		/// Removes the setting from the dictionary and unmaps all its names.
+		/// </summary>
+		/// <param name="setting"></param>
+		/// <returns></returns>
+		public bool Remove(Setting setting)
+		{
+			if (!_NameMap.TryGetValue(setting.Names[0], out var guid))
+			{
+				return false;
+			}
+			foreach (var name in setting.Names)
+			{
+				_NameMap.Remove(name);
+			}
+			return _SettingMap.Remove(guid);
+		}
+		/// <inheritdoc />
+		public IEnumerator<Setting> GetEnumerator()
+		{
+			return _SettingMap.Values.GetEnumerator();
+		}
+		/// <inheritdoc />
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return _SettingMap.Values.GetEnumerator();
 		}
 	}
 }

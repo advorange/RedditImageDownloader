@@ -19,6 +19,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	public sealed class DeviantArtImageDownloader : ImageDownloader<DeviantArtPost>
 	{
 		private const string SEARCH = "https://www.deviantartsupport.com/en/article/are-there-any-tricks-to-narrowing-down-a-search-on-deviantart";
+		private const string API = "https://www.deviantart.com/developers/";
 
 		/// <summary>
 		/// The client id to get the authorization token from.
@@ -37,14 +38,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			set => NotifyPropertyChanged(_ClientSecret = value);
 		}
 		/// <summary>
-		/// The username of the DeviantArt user to search.
-		/// </summary>
-		public string Username
-		{
-			get => _Username;
-			set => NotifyPropertyChanged(_Username = value);
-		}
-		/// <summary>
 		/// The tags to search for.
 		/// </summary>
 		public string TagString
@@ -55,7 +48,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 
 		private string _ClientId;
 		private string _ClientSecret;
-		private string _Username;
 		private string _TagString;
 
 		/// <summary>
@@ -65,21 +57,17 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
 			{
-				HelpString = "the id of the client to get authentication from.",
-				DefaultValue = null,
+				Description = $"The id of the client to get authentication from. For additional help, visit {API}.",
+				IsOptional = true,
 			});
 			SettingParser.Add(new Setting<string>(new[] { nameof(ClientSecret), "secret" }, x => ClientSecret = x)
 			{
-				HelpString = "the secret of the client to get authentication from.",
-				DefaultValue = null,
-			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "username" }, x => Username = x)
-			{
-				HelpString = "the user gather images from.",
+				Description = $"The secret of the client to get authentication from. For additional help, visit {API}.",
+				IsOptional = true,
 			});
 			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
 			{
-				HelpString = $"the tags to search for. For additional help, visit {SEARCH}",
+				Description = $"the tags to search for. For additional help, visit {SEARCH}.",
 			});
 		}
 
@@ -143,10 +131,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			if (MaxDaysOld > 0)
 			{
 				query += $"+max_age:{MaxDaysOld}d";
-			}
-			if (!String.IsNullOrWhiteSpace(Username))
-			{
-				query += $"+by:{WebUtility.UrlEncode(Username)}";
 			}
 			return query.Trim('+');
 		}

@@ -36,7 +36,8 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{
-				HelpString = "the subreddit to download images from.",
+				Description = "The subreddit to download images from.",
+				IsFlag = true,
 			});
 
 			_Reddit = new RedditSharp.Reddit(new WebAgent(), false);

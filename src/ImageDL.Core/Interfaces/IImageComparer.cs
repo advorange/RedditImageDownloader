@@ -1,4 +1,5 @@
-﻿using ImageDL.Classes.ImageComparing;
+﻿using ImageDL.Classes;
+using ImageDL.Classes.ImageComparing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -58,7 +59,7 @@ namespace ImageDL.Interfaces
 		/// Checks each image against every other image in order to detect duplicates.
 		/// </summary>
 		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
-		void DeleteDuplicates(float matchPercentage);
+		void DeleteDuplicates(Percentage matchPercentage);
 		/// <summary>
 		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
 		/// </summary>

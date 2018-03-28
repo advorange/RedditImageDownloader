@@ -46,14 +46,14 @@ namespace ImageDL.Classes.ImageComparing
 		}
 
 		/// <summary>
-		/// Returns true if the percentage of elements which match are greater than or equal to <paramref name="percentageForSimilarity"/>.
+		/// Returns true if the percentage of elements which match are greater than or equal to <paramref name="matchPercentage"/>.
 		/// </summary>
 		/// <param name="other">The details to compare to.</param>
-		/// <param name="percentageForSimilarity">The valid percentage for matching.</param>
+		/// <param name="matchPercentage">The valid percentage for matching.</param>
 		/// <returns>Returns a boolean indicating whether or not the hashes match.</returns>
 		/// <exception cref="InvalidOperationException">Occurs when the thumbnail sizes do not match.</exception>
 		/// <exception cref="ArgumentException">Occurs when either image details are not initialized correctly.</exception>
-		public bool Equals(ImageDetails other, float percentageForSimilarity)
+		public bool Equals(ImageDetails other, Percentage matchPercentage)
 		{
 			if (ThumbnailSize != other.ThumbnailSize)
 			{
@@ -61,7 +61,7 @@ namespace ImageDL.Classes.ImageComparing
 			}
 
 			//If the aspect ratio is too different then don't bother checking the hash
-			var margin = 1 - percentageForSimilarity;
+			var margin = 1 - matchPercentage.Value;
 			var otherAR = other.Width / (float)other.Height;
 			var thisAR = Width / (float)Height;
 			if (otherAR > thisAR * (1 + margin) || otherAR < thisAR * (1 - margin))
@@ -77,7 +77,7 @@ namespace ImageDL.Classes.ImageComparing
 					++matchCount;
 				}
 			}
-			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= percentageForSimilarity;
+			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= matchPercentage.Value;
 		}
 		/// <summary>
 		/// Attempts to delete either this or the other image details. Whichever is lower res will be deleted and then returned.

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ImageDL.Classes.SettingParsing
+namespace ImageDL.Classes.SettingParsing.Converting
 {
 	/// <summary>
 	/// Holds every primitive <see cref="SettingConverter{T}"/>.
@@ -32,9 +32,9 @@ namespace ImageDL.Classes.SettingParsing
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public static SettingConverter GetConverter<T>()
+		public static SettingConverter<T> GetConverter<T>()
 		{
-			return GetConverter(typeof(T));
+			return (SettingConverter<T>)GetConverter(typeof(T));
 		}
 		/// <summary>
 		/// Attempts to get a primitive converter based on the passed in type.

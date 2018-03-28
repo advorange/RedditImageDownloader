@@ -22,6 +22,10 @@ namespace ImageDL.Classes.SettingParsing
 		/// </summary>
 		public readonly ImmutableArray<string> Errors;
 		/// <summary>
+		/// Result gotten via the help setting.
+		/// </summary>
+		public readonly ImmutableArray<string> Help;
+		/// <summary>
 		/// Returns true if <see cref="UnusedParts"/> and <see cref="Errors"/> are both empty.
 		/// </summary>
 		public readonly bool IsSuccess;
@@ -32,11 +36,13 @@ namespace ImageDL.Classes.SettingParsing
 		/// <param name="unusedParts"></param>
 		/// <param name="successes"></param>
 		/// <param name="errors"></param>
-		public SettingsParseResult(IEnumerable<string> unusedParts, IEnumerable<string> successes, IEnumerable<string> errors)
+		/// <param name="help"></param>
+		public SettingsParseResult(IEnumerable<string> unusedParts, IEnumerable<string> successes, IEnumerable<string> errors, IEnumerable<string> help)
 		{
 			UnusedParts = (unusedParts ?? Enumerable.Empty<string>()).ToImmutableArray();
 			Successes = (successes ?? Enumerable.Empty<string>()).ToImmutableArray();
 			Errors = (errors ?? Enumerable.Empty<string>()).ToImmutableArray();
+			Help = (help ?? Enumerable.Empty<string>()).ToImmutableArray();
 			IsSuccess = !UnusedParts.Any() && !Errors.Any();
 		}
 	}

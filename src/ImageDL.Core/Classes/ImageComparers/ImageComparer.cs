@@ -139,7 +139,7 @@ namespace ImageDL.Classes.ImageComparing
 			await Task.WhenAll(tasks).CAF();
 		}
 		/// <inheritdoc />
-		public void DeleteDuplicates(float percentForMatch)
+		public void DeleteDuplicates(Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
@@ -157,7 +157,7 @@ namespace ImageDL.Classes.ImageComparing
 				for (int j = i - 1; j >= 0; --j)
 				{
 					var jVal = kvps[j];
-					if (!iVal.Equals(jVal, percentForMatch))
+					if (!iVal.Equals(jVal, matchPercentage))
 					{
 						continue;
 					}
@@ -166,7 +166,7 @@ namespace ImageDL.Classes.ImageComparing
 					var resToCheck = new[] { iVal.Width, iVal.Height, jVal.Width, jVal.Height, 512 }.Min();
 					if (!TryCreateImageDetailsFromFile(iVal.File, resToCheck, out var md5Hashi, out var newIVal) ||
 						!TryCreateImageDetailsFromFile(jVal.File, resToCheck, out var md5Hashj, out var newJVal) ||
-						!newIVal.Equals(newJVal, percentForMatch))
+						!newIVal.Equals(newJVal, matchPercentage))
 					{
 						continue;
 					}

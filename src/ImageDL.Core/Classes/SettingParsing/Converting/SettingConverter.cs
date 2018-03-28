@@ -1,4 +1,4 @@
-﻿namespace ImageDL.Classes.SettingParsing
+﻿namespace ImageDL.Classes.SettingParsing.Converting
 {
 	/// <summary>
 	/// A class for attempting to convert values.
