@@ -10,7 +10,7 @@ namespace ImageDL.Classes.SettingParsing
 	/// A generic class for option, specifying what the option type is.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class Setting<T> : Setting
+	public sealed class Setting<T> : Setting
 	{
 		/// <summary>
 		/// Default value of the setting. This will indicate the setting is optional, but has a value other than the default value of the type.
@@ -141,10 +141,6 @@ namespace ImageDL.Classes.SettingParsing
 	/// </summary>
 	public abstract class Setting
 	{
-		/// <summary>
-		/// The names of settings that this setting conflicts with.
-		/// </summary>
-		public List<string> ConflictsWith { get; set; }
 		/// <summary>
 		/// String indicating what this setting does.
 		/// </summary>

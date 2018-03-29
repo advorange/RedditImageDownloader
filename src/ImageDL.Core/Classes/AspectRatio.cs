@@ -8,7 +8,7 @@ namespace ImageDL.Classes
 	/// <summary>
 	/// The ratio of width to height.
 	/// </summary>
-	public class AspectRatio
+	public struct AspectRatio
 	{
 		/// <summary>
 		/// The calculated aspect ratio.

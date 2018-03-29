@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes;
+using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.SettingParsing;
 using System;
 using System.Threading;
@@ -66,7 +67,7 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// The comparer to use for images.
 		/// </summary>
-		IImageComparer ImageComparer { get; set; }
+		ImageComparer ImageComparer { get; set; }
 		/// <summary>
 		/// Used to set arguments via command line.
 		/// </summary>

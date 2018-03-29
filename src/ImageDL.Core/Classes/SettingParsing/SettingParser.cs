@@ -12,7 +12,7 @@ namespace ImageDL.Classes.SettingParsing
 	/// Parses options and then sets them.
 	/// </summary>
 	/// <remarks>Reserved setting names: help, h</remarks>
-	public class SettingParser : IEnumerable<Setting>
+	public sealed class SettingParser : IEnumerable<Setting>
 	{
 		/// <summary>
 		/// Valid prefixes for a setting.

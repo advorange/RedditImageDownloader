@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -112,7 +113,7 @@ namespace ImageDL.Classes.ImageDownloading
 			set => _Start = value;
 		}
 		/// <inheritdoc />
-		public IImageComparer ImageComparer
+		public ImageComparer ImageComparer
 		{
 			get => _ImageComparer;
 			set => _ImageComparer = value;
@@ -154,7 +155,7 @@ namespace ImageDL.Classes.ImageDownloading
 		private bool _CompareSavedImages;
 		private bool _CreateDirectory;
 		private bool _Start;
-		private IImageComparer _ImageComparer;
+		private ImageComparer _ImageComparer;
 		private SettingParser _SettingParser;
 
 		/// <summary>

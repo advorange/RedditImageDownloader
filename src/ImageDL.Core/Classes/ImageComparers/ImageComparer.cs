@@ -3,10 +3,8 @@ using ImageDL.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,41 +13,32 @@ namespace ImageDL.Classes.ImageComparing
 	/// <summary>
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
-	public abstract class ImageComparer : IImageComparer
+	public abstract class ImageComparer
 	{
-		/// <inheritdoc/>
+		/// <summary>
+		/// The amount of images the comparer currently has stored.
+		/// </summary>
 		public int StoredImages => Images.Count;
-		/// <inheritdoc/>
-		public int CurrentImagesSearched
-		{
-			get => _CurrentImagesSearched;
-			private set
-			{
-				_CurrentImagesSearched = value;
-				NotifyPropertyChanged();
-			}
-		}
-		/// <inheritdoc/>
-		public int ThumbnailSize
-		{
-			get => _ThumbnailSize;
-			set => _ThumbnailSize = value;
-		}
+		/// <summary>
+		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
+		/// </summary>
+		public int ThumbnailSize { get; set; } = 32;
 
 		/// <summary>
 		/// The images which have currently been cached.
 		/// </summary>
 		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
 
-		private int _CurrentImagesSearched;
-		private int _ThumbnailSize = 32;
-
 		/// <summary>
-		/// Indicates when <see cref="CurrentImagesSearched"/> is incremented.
+		/// Attempts to cache the image.
 		/// </summary>
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		/// <inheritdoc />
+		/// <param name="uri">The location of the image.</param>
+		/// <param name="file">The file the image is saved to or will be saved to.</param>
+		/// <param name="stream">The image's data.</param>
+		/// <param name="width">The width of the original image.</param>
+		/// <param name="height">The height of the original image.</param>
+		/// <param name="error">If there are any problems with trying to cache the file.</param>
+		/// <returns></returns>
 		public bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
@@ -70,7 +59,14 @@ namespace ImageDL.Classes.ImageComparing
 				return false;
 			}
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Attempts to create image details from a file.
+		/// </summary>
+		/// <param name="file">The file to cache.</param>
+		/// <param name="thumbnailSize">The size to create the thumbnail.</param>
+		/// <param name="md5Hash">The hash of the image's stream.</param>
+		/// <param name="details">The details of the image.</param>
+		/// <returns></returns>
 		public bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
 		{
 			//The second check is because for some reason file.Exists will be true when the file does NOT exist
@@ -89,7 +85,13 @@ namespace ImageDL.Classes.ImageComparing
 				return true;
 			}
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Attempts to cache files which have already been saved.
+		/// </summary>
+		/// <param name="directory">The directory to cache files from.</param>
+		/// <param name="imagesPerThread">How many images to cache per thread. Lower = faster, but more CPU/Disk usage</param>
+		/// <param name="token">The token used to cancel caching files.</param>
+		/// <returns></returns>
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default)
 		{
 			//Don't cache files which have already been cached
@@ -138,7 +140,10 @@ namespace ImageDL.Classes.ImageComparing
 			}, token));
 			await Task.WhenAll(tasks).CAF();
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Checks each image against every other image in order to detect duplicates.
+		/// </summary>
+		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
 		public void DeleteDuplicates(Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
@@ -176,21 +181,17 @@ namespace ImageDL.Classes.ImageComparing
 					kvps.Remove(detailsToDelete);
 					filesToDelete.Add(detailsToDelete.File);
 				}
-				++CurrentImagesSearched;
 			}
 
 			RecyclingUtils.MoveFiles(filesToDelete);
 			Console.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
-		/// <inheritdoc />
-		public abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
 		/// <summary>
-		/// Invokes <see cref="PropertyChanged"/>.
+		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
 		/// </summary>
-		/// <param name="name"></param>
-		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		}
+		/// <param name="s">The image's data.</param>
+		/// <param name="thumbnailSize">The size to make the image.</param>
+		/// <returns>The image's hash.</returns>
+		public abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
 	}
 }
