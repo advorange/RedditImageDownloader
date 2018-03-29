@@ -66,7 +66,16 @@ namespace ImageDL.Classes.SettingParsing
 				return false;
 			}
 
-			_Setter(result);
+			try
+			{
+				_Setter(result);
+			}
+			//Catch all because who knows what exceptions will happen, and it's user input
+			catch (Exception e)
+			{
+				response = e.Message;
+				return false;
+			}
 			HasBeenSet = true;
 			response = $"Successfully set {Names[0]} to '{result?.ToString() ?? "NULL"}'.";
 			return true;

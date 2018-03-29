@@ -3,27 +3,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ImageDL.Classes.ImageDownloading.Danbooru
+namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 {
 	/// <summary>
-	/// Json model for a danbooru post.
+	/// Json model for a Danbooru post.
 	/// </summary>
-	public class DanbooruPost
+	public class DanbooruPost : BooruPost
 	{
 #pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
-		[JsonProperty("id")]
-		public readonly int Id;
 		[JsonProperty("uploader_id")]
 		public readonly int UploaderId;
-		[JsonProperty("parent_id")]
-		public readonly int? ParentId;
 		[JsonProperty("approver_id")]
 		public readonly int? ApproverId;
 		[JsonProperty("pixiv_id")]
 		public readonly int? PixivId;
 
-		[JsonProperty("score")]
-		public readonly int Score;
 		[JsonProperty("up_score")]
 		public readonly int UpScore;
 		[JsonProperty("down_score")]
@@ -50,14 +44,10 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		public readonly string Md5;
 		[JsonProperty("file_ext")]
 		public readonly string FileExt;
-		[JsonProperty("file_size")]
-		public readonly long FileSize;
 		[JsonProperty("image_width")]
-		public readonly int ImageWidth;
+		public override int Width { get; }
 		[JsonProperty("image_height")]
-		public readonly int ImageHeight;
-		[JsonProperty("file_url")]
-		public readonly string FileUrl;
+		public override int Height { get; }
 		[JsonProperty("large_file_url")]
 		public readonly string LargeFileUrl;
 		[JsonProperty("preview_file_url")]
@@ -65,8 +55,6 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		[JsonProperty("has_large")]
 		public readonly bool HasLarge;
 
-		[JsonProperty("has_children")]
-		public readonly bool HasChildren;
 		[JsonProperty("has_active_children")]
 		public readonly bool HasActiveChildren;
 		[JsonProperty("has_visible_children")]
@@ -74,8 +62,6 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		[JsonProperty("children_ids")]
 		public readonly string ChildrenIdsString;
 
-		[JsonProperty("created_at")]
-		public readonly DateTime CreatedAt;
 		[JsonProperty("last_comment_bumped_at")]
 		public readonly DateTime? LastCommentBumpedAt;
 		[JsonProperty("last_noted_at")]
@@ -85,12 +71,8 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		[JsonProperty("last_commented_at")]
 		public readonly DateTime? LastCommentedAt;
 
-		[JsonProperty("source")]
-		public readonly string Source;
 		[JsonProperty("uploader_name")]
 		public readonly string UploaderName;
-		[JsonProperty("rating")]
-		public readonly char Rating;
 		[JsonProperty("bit_flags")]
 		public readonly ulong BitFlags; //Not sure if this is the correct type
 		[JsonProperty("fav_string")]

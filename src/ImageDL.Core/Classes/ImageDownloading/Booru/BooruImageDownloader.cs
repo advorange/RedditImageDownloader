@@ -9,12 +9,13 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace ImageDL.Classes.ImageDownloading.Danbooru
+namespace ImageDL.Classes.ImageDownloading.Booru
 {
 	/// <summary>
-	/// Downloads images from Danbooru.
+	/// Downloads images from a -booru based website.
 	/// </summary>
-	public sealed class DanbooruImageDownloader : ImageDownloader<DanbooruPost>
+	/// <typeparam name="T"></typeparam>
+	public abstract class BooruImageDownloader<T> : ImageDownloader<T> where T : BooruPost
 	{
 		/// <summary>
 		/// The terms to search for. Split by spaces. Max allowed is two.
@@ -24,9 +25,9 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 			get => _TagString;
 			set
 			{
-				if (value.Split(' ').Length > 2)
+				if (value.Split(' ').Length > _TagLimit)
 				{
-					throw new ArgumentException("Cannot search for more than two tags.", nameof(TagString));
+					throw new ArgumentException($"Cannot search for more than {_TagLimit} tags.", nameof(TagString));
 				}
 				_TagString = value;
 			}
@@ -42,11 +43,17 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 
 		private string _TagString;
 		private int _Page;
+		private string _BaseUri;
+		private string _Search;
+		private int _TagLimit;
 
 		/// <summary>
-		/// Creates an image downloader for Danbooru.
+		/// Creats an instance of <see cref="BooruImageDownloader{T}"/>.
 		/// </summary>
-		public DanbooruImageDownloader()
+		/// <param name="baseUri">The website to search.</param>
+		/// <param name="search">For some websites to search for a post it's 'posts.json' others it's 'post.json'</param>
+		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
+		public BooruImageDownloader(Uri baseUri, string search, int tagLimit)
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
 			{
@@ -57,29 +64,46 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 				Description = "The page to start from.",
 				DefaultValue = 1, //Start on the first page
 			});
+
+			_BaseUri = baseUri.ToString().TrimEnd('/');
+			_Search = search.Trim('/');
+			_TagLimit = tagLimit;
 		}
 
-		/// <inheritdoc />
-		protected override async Task<List<DanbooruPost>> GatherPostsAsync()
+		/// <summary>
+		/// Generates the search query to get images from.
+		/// </summary>
+		/// <param name="page"></param>
+		/// <returns></returns>
+		protected virtual string GenerateQuery(int page)
 		{
-			var validPosts = new List<DanbooruPost>();
+			//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
+			return $"{_BaseUri}/{_Search}" +
+				$"?utf8=✓" +
+				$"&limit=100" +
+				$"&tags={WebUtility.UrlEncode(TagString)}" +
+				$"&page={page}";
+		}
+		/// <inheritdoc />
+		protected override void WritePostToConsole(T post, int count)
+		{
+			Console.WriteLine($"[#{count}|\u2191{post.Score}] http://danbooru.donmai.us/posts/{post.Id}");
+		}
+		/// <inheritdoc />
+		protected override async Task<List<T>> GatherPostsAsync()
+		{
+			var validPosts = new List<T>();
 			try
 			{
 				//Uses for instead of while to save 2 lines.
 				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
 				{
-					//Limit caps out at 200 per pages, so can't get this all in one iteration. Have to keep incrementing page.
-					var search = $"https://danbooru.donmai.us/posts.json" +
-						$"?utf8=✓" +
-						$"&tags={WebUtility.UrlEncode(TagString)}" +
-						$"&limit={AmountToDownload}" +
-						$"&page={Page + i}";
-
+					var search = GenerateQuery(Page + i);
 					var json = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(search), TimeSpan.FromSeconds(2)).CAF();
 
 					//Deserialize the Json and look through all the posts
 					var finished = false;
-					var posts = JsonConvert.DeserializeObject<List<DanbooruPost>>(json);
+					var posts = JsonConvert.DeserializeObject<List<T>>(json);
 					foreach (var post in posts)
 					{
 						if (post.CreatedAt.ToUniversalTime() < OldestAllowed)
@@ -87,7 +111,7 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 							finished = true;
 							break;
 						}
-						else if (!FitsSizeRequirements(null, post.ImageWidth, post.ImageHeight, out _) || post.Score < MinScore)
+						else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
 						{
 							continue;
 						}
@@ -105,7 +129,7 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 					}
 
 					//Anything less than a full page means everything's been searched
-					if (finished || posts.Count < Math.Min(AmountToDownload, 200))
+					if (finished || posts.Count < Math.Min(AmountToDownload, 100))
 					{
 						break;
 					}
@@ -117,34 +141,29 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 			}
 			finally
 			{
-				Console.WriteLine($"Finished gathering Danbooru posts.");
+				Console.WriteLine($"Finished gathering {typeof(T).Name.FormatTitle()[0]} posts.");
 				Console.WriteLine();
 			}
 			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
 		/// <inheritdoc />
-		protected override void WritePostToConsole(DanbooruPost post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.Score}] http://danbooru.donmai.us/posts/{post.Id}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(DanbooruPost post, Uri uri)
+		protected override FileInfo GenerateFileInfo(T post, Uri uri)
 		{
 			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{post.TagStringArtist}_{post.TagStringCharacter}".Replace(' ', '_');
+			var name = $"{post.Id}_{post.FileUrl.Split('/').Last()}".Replace(' ', '_');
 			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(DanbooruPost post)
+		protected override async Task<ScrapeResult> GatherImagesAsync(T post)
 		{
 			if (!Uri.TryCreate(post.FileUrl, UriKind.Absolute, out var uri))
 			{
-				uri = new Uri($"https://danbooru.donmai.us{post.FileUrl}");
+				uri = new Uri($"{_BaseUri}{post.FileUrl}");
 			}
 			return await Client.ScrapeImagesAsync(uri).CAF();
 		}
 		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(DanbooruPost post, Uri uri, string reason)
+		protected override ContentLink CreateContentLink(T post, Uri uri, string reason)
 		{
 			return new ContentLink(uri, post.Score, reason);
 		}
