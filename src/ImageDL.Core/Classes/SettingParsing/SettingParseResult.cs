@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -39,11 +40,34 @@ namespace ImageDL.Classes.SettingParsing
 		/// <param name="help"></param>
 		public SettingsParseResult(IEnumerable<string> unusedParts, IEnumerable<string> successes, IEnumerable<string> errors, IEnumerable<string> help)
 		{
-			UnusedParts = (unusedParts ?? Enumerable.Empty<string>()).ToImmutableArray();
-			Successes = (successes ?? Enumerable.Empty<string>()).ToImmutableArray();
-			Errors = (errors ?? Enumerable.Empty<string>()).ToImmutableArray();
-			Help = (help ?? Enumerable.Empty<string>()).ToImmutableArray();
+			UnusedParts = (unusedParts ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();
+			Successes = (successes ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();
+			Errors = (errors ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();
+			Help = (help ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();
 			IsSuccess = !UnusedParts.Any() && !Errors.Any();
+		}
+		
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			var responses = new List<string>();
+			if (Help.Any())
+			{
+				responses.Add(String.Join("\n", Help));
+			}
+			if (Successes.Any())
+			{
+				responses.Add(String.Join("\n", Successes));
+			}
+			if (Errors.Any())
+			{
+				responses.Add($"The following errors occurred:\n{String.Join("\n\t", Errors)}");
+			}
+			if (UnusedParts.Any())
+			{
+				responses.Add($"The following parts were extra; was an argument mistyped? '{String.Join("', '", UnusedParts)}'");
+			}
+			return String.Join("\n", responses) + "\n";
 		}
 	}
 }

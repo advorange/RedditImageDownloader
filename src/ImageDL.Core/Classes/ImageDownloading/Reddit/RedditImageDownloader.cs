@@ -23,7 +23,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		public string Subreddit
 		{
 			get => _Subreddit;
-			set => NotifyPropertyChanged(_Subreddit = value);
+			set => _Subreddit = value;
 		}
 
 		private RedditSharp.Reddit _Reddit;

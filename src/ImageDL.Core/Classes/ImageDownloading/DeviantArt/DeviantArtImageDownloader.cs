@@ -27,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public string ClientId
 		{
 			get => _ClientId;
-			set => NotifyPropertyChanged(_ClientId = value);
+			set => _ClientId = value;
 		}
 		/// <summary>
 		/// The redirection website. Must be a valid website supplied in 
@@ -35,7 +35,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public string ClientSecret
 		{
 			get => _ClientSecret;
-			set => NotifyPropertyChanged(_ClientSecret = value);
+			set => _ClientSecret = value;
 		}
 		/// <summary>
 		/// The tags to search for.
@@ -43,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public string TagString
 		{
 			get => _TagString;
-			set => NotifyPropertyChanged(_TagString = value);
+			set => _TagString = value;
 		}
 
 		private string _ClientId;

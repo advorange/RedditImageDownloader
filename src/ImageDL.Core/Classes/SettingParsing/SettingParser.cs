@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 
 namespace ImageDL.Classes.SettingParsing
 {
@@ -21,7 +22,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// Returns true if every setting has been set or is optional.
 		/// </summary>
 		/// <returns></returns>
-		public bool AllSet => !GetNeededSettings().Any();
+		public bool AllSet => !_SettingMap.Values.Any(x => !(x.HasBeenSet || x.IsOptional));
 
 		private readonly Dictionary<string, Guid> _NameMap = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 		private readonly Dictionary<Guid, Setting> _SettingMap = new Dictionary<Guid, Setting>();
@@ -41,10 +42,10 @@ namespace ImageDL.Classes.SettingParsing
 		}
 
 		/// <summary>
-		/// Finds settings and then sets their value. Returns unused parts.
+		/// Finds settings and then sets their value.
 		/// </summary>
-		/// <param name="parts"></param>
-		public SettingsParseResult Parse(IEnumerable<string> parts)
+		/// <param name="input"></param>
+		public SettingsParseResult Parse(string input)
 		{
 			//Try to find the setting, will only use the first match, even if there are multiple matches
 			Setting GetSetting(string part)
@@ -67,10 +68,10 @@ namespace ImageDL.Classes.SettingParsing
 			var successes = new List<string>();
 			var errors = new List<string>();
 			var help = new List<string>();
-			var array = parts.ToArray();
-			for (int i = 0; i < array.Length; ++i)
+			var parts = input.SplitLikeCommandLine();
+			for (int i = 0; i < parts.Length; ++i)
 			{
-				var part = array[i];
+				var part = parts[i];
 				string value;
 				//No setting was gotten, so just skip this part
 				if (!(GetSetting(part) is Setting setting))
@@ -84,9 +85,9 @@ namespace ImageDL.Classes.SettingParsing
 					value = Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
-				else if (array.Length - 1 > i && !(GetSetting(array[i + 1]) is Setting throwaway))
+				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is Setting throwaway))
 				{
-					value = array[++i]; //Make sure to increment i since the part is being used as a setting
+					value = parts[++i]; //Make sure to increment i since the part is being used as a setting
 				}
 				//If help and had argument, would have gone into the above statement.
 				//This means it has gotten to the flag aspect of it, so null can just be passed in.
@@ -117,12 +118,22 @@ namespace ImageDL.Classes.SettingParsing
 			return new SettingsParseResult(unusedParts, successes, errors, help);
 		}
 		/// <summary>
-		/// Returns the needed arguments all put into one string.
+		/// Returns a string asking for unset settings.
 		/// </summary>
 		/// <returns></returns>
-		public IEnumerable<Setting> GetNeededSettings()
+		public string GetNeededSettings()
 		{
-			return _SettingMap.Values.Where(x => !(x.HasBeenSet || x.IsOptional));
+			var unsetArguments = _SettingMap.Values.Where(x => !(x.HasBeenSet || x.IsOptional));
+			if (!unsetArguments.Any())
+			{
+				return $"Every setting which is necessary has been set.";
+			}
+			var sb = new StringBuilder("The following settings need to be set:" + Environment.NewLine);
+			foreach (var setting in unsetArguments)
+			{
+				sb.AppendLine($"\t{setting.ToString()}");
+			}
+			return sb.ToString().Trim() + "\n";
 		}
 		/// <summary>
 		/// Gets the help information associated with this setting name.

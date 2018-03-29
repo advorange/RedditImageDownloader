@@ -1,6 +1,6 @@
 ﻿using ImageDL.Classes;
+using ImageDL.Classes.SettingParsing;
 using System;
-using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,7 +9,7 @@ namespace ImageDL.Interfaces
 	/// <summary>
 	/// Interface for something that can download images.
 	/// </summary>
-	public interface IImageDownloader : INotifyPropertyChanged
+	public interface IImageDownloader
 	{
 		/// <summary>
 		/// The directory to save images to.
@@ -56,10 +56,6 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		bool CompareSavedImages { get; set; }
 		/// <summary>
-		/// Indicates whether or not to print extra information to the console. Such as variables being set.
-		/// </summary>
-		bool Verbose { get; set; }
-		/// <summary>
 		/// Indicates whether or not to create the directory if it does not exist.
 		/// </summary>
 		bool CreateDirectory { get; set; }
@@ -68,33 +64,27 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		bool Start { get; set; }
 		/// <summary>
+		/// The comparer to use for images.
+		/// </summary>
+		IImageComparer ImageComparer { get; set; }
+		/// <summary>
+		/// Used to set arguments via command line.
+		/// </summary>
+		SettingParser SettingParser { get; set; }
+		/// <summary>
 		/// The oldest allowed posts.
 		/// </summary>
 		DateTime OldestAllowed { get; }
 		/// <summary>
-		/// The comparer to use for images.
-		/// </summary>
-		IImageComparer ImageComparer { get; set; }
-
-		/// <summary>
 		/// Indicates that all arguments have been set and that the user wants the downloader to start.
 		/// </summary>
-		/// <returns></returns>
-		bool CanStart();
+		bool CanStart { get; }
+
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
 		/// </summary>
 		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
 		Task StartAsync(CancellationToken token = default);
-		/// <summary>
-		/// Sets values with passed in values parsed from strings.
-		/// </summary>
-		/// <param name="input">The arguments to set.</param>
-		void SetArguments(string input);
-		/// <summary>
-		/// Asks for unset arguments which are necessary for the downloader to start.
-		/// </summary>
-		void AskForArguments();
 	}
 }

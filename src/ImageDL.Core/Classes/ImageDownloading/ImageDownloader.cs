@@ -1,17 +1,13 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
-using ImageDL.Classes.SettingParsing.Converting;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,160 +37,101 @@ namespace ImageDL.Classes.ImageDownloading
 					throw new ArgumentException($"{value} is an invalid directory name.", nameof(Directory));
 				}
 				_Directory = value;
-				NotifyPropertyChanged();
 			}
 		}
 		/// <inheritdoc />
 		public int AmountToDownload
 		{
 			get => _AmountToDownload;
-			set
-			{
-				_AmountToDownload = Math.Max(1, value);
-				NotifyPropertyChanged();
-			}
+			set => _AmountToDownload = Math.Max(1, value);
 		}
 		/// <inheritdoc />
 		public int MinWidth
 		{
 			get => _MinWidth;
-			set
-			{
-				_MinWidth = Math.Max(0, value);
-				NotifyPropertyChanged();
-			}
+			set => _MinWidth = Math.Max(0, value);
 		}
 		/// <inheritdoc />
 		public int MinHeight
 		{
 			get => _MinHeight;
-			set
-			{
-				_MinHeight = Math.Max(0, value);
-				NotifyPropertyChanged();
-			}
+			set => _MinHeight = Math.Max(0, value);
 		}
 		/// <inheritdoc />
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
-			set
-			{
-				_MaxDaysOld = Math.Max(0, value);
-				NotifyPropertyChanged();
-			}
+			set => _MaxDaysOld = Math.Max(0, value);
 		}
 		/// <inheritdoc />
 		public Percentage MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
-			set
-			{
-				_MaxImageSimilarity = value;
-				NotifyPropertyChanged();
-			}
+			set => _MaxImageSimilarity = value;
 		}
 		/// <inheritdoc />
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
-			set
-			{
-				_ImagesCachedPerThread = Math.Max(1, value);
-				NotifyPropertyChanged();
-			}
+			set => _ImagesCachedPerThread = Math.Max(1, value);
 		}
 		/// <inheritdoc />
 		public int MinScore
 		{
 			get => _MinScore;
-			set
-			{
-				_MinScore = Math.Max(0, value);
-				NotifyPropertyChanged();
-			}
+			set => _MinScore = Math.Max(0, value);
 		}
 		/// <inheritdoc />
 		public AspectRatio MinAspectRatio
 		{
 			get => _MinAspectRatio;
-			set
-			{
-				_MinAspectRatio = value;
-				NotifyPropertyChanged();
-			}
+			set => _MinAspectRatio = value;
 		}
 		/// <inheritdoc />
 		public AspectRatio MaxAspectRatio
 		{
 			get => _MaxAspectRatio;
-			set
-			{
-				_MaxAspectRatio = value;
-				NotifyPropertyChanged();
-			}
+			set => _MaxAspectRatio = value;
 		}
 		/// <inheritdoc />
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
-			set
-			{
-				_CompareSavedImages = value;
-				NotifyPropertyChanged();
-			}
-		}
-		/// <inheritdoc />
-		public bool Verbose
-		{
-			get => _Verbose;
-			set
-			{
-				_Verbose = value;
-				NotifyPropertyChanged();
-			}
+			set => _CompareSavedImages = value;
 		}
 		/// <inheritdoc />
 		public bool CreateDirectory
 		{
 			get => _CreateDirectory;
-			set
-			{
-				_CreateDirectory = value;
-				NotifyPropertyChanged();
-			}
+			set => _CreateDirectory = value;
 		}
 		/// <inheritdoc />
 		public bool Start
 		{
 			get => _Start;
-			set
-			{
-				_Start = value;
-				NotifyPropertyChanged();
-			}
+			set => _Start = value;
 		}
-		/// <inheritdoc />
-		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 		/// <inheritdoc />
 		public IImageComparer ImageComparer
 		{
 			get => _ImageComparer;
-			set
-			{
-				_ImageComparer = value;
-				NotifyPropertyChanged();
-			}
+			set => _ImageComparer = value;
 		}
+		/// <inheritdoc />
+		public SettingParser SettingParser
+		{
+			get => _SettingParser;
+			set => _SettingParser = value;
+		}
+		/// <inheritdoc />
+		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
+		/// <inheritdoc />
+		public bool CanStart => Start && SettingParser.AllSet;
 
 		/// <summary>
 		/// Links to content that is animated, failed to download, etc.
 		/// </summary>
 		protected List<ContentLink> Links = new List<ContentLink>();
-		/// <summary>
-		/// Used to set arguments via command line.
-		/// </summary>
-		protected SettingParser SettingParser;
 		/// <summary>
 		/// Used to download files.
 		/// </summary>
@@ -215,22 +152,81 @@ namespace ImageDL.Classes.ImageDownloading
 		private AspectRatio _MinAspectRatio;
 		private AspectRatio _MaxAspectRatio;
 		private bool _CompareSavedImages;
-		private bool _Verbose;
 		private bool _CreateDirectory;
 		private bool _Start;
 		private IImageComparer _ImageComparer;
-
-		/// <summary>
-		/// Indicates when a setting has been set.
-		/// </summary>
-		public event PropertyChangedEventHandler PropertyChanged;
+		private SettingParser _SettingParser;
 
 		/// <summary>
 		/// Creates an image downloader.
 		/// </summary>
 		public ImageDownloader()
 		{
-			SettingParser = GetSettingParser();
+			SettingParser = new SettingParser(new[] { "--", "-", "/" })
+			{
+				new Setting<string>(new[] { nameof(Directory), "dir" }, x => Directory = x)
+				{
+					Description = "The directory to save to.",
+				},
+				new Setting<int>(new[] {nameof(AmountToDownload), "amt"}, x => AmountToDownload = x)
+				{
+					Description = "The amount of images to download.",
+				},
+				new Setting<int>(new[] {nameof(MinWidth), "minw", "mw" }, x => MinWidth = x)
+				{
+					Description = "The minimum width to save an image with.",
+				},
+				new Setting<int>(new[] {nameof(MinHeight), "minh", "mh" }, x => MinHeight = x)
+				{
+					Description = "The minimum height to save an image with.",
+				},
+				new Setting<int>(new[] {nameof(MaxDaysOld), "age" }, x => MaxDaysOld = x)
+				{
+					Description = "The oldest an image can be before it won't be saved.",
+				},
+				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x, Percentage.TryParse)
+				{
+					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
+					DefaultValue = new Percentage(1),
+				},
+				new Setting<int>(new[] {nameof(ImagesCachedPerThread), "icpt" }, x => ImagesCachedPerThread = x)
+				{
+					Description = "How many images to cache on each thread (lower = faster but more CPU).",
+					DefaultValue = 50,
+				},
+				new Setting<int>(new[] {nameof(MinScore), "mins", "ms" }, x => MinScore = x)
+				{
+					Description = "The minimum score for an image to have before being ignored.",
+					IsOptional = true,
+				},
+				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x, AspectRatio.TryParse)
+				{
+					Description = "The minimum aspect ratio for an image to have before being ignored.",
+					DefaultValue = new AspectRatio(0, 1),
+				},
+				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x, AspectRatio.TryParse)
+				{
+					Description = "The maximum aspect ratio for an image to have before being ignored.",
+					DefaultValue = new AspectRatio(1, 0),
+				},
+				new Setting<bool>(new[] {nameof(CompareSavedImages), "csi" }, x => CompareSavedImages = x)
+				{
+					Description = "Whether or not to compare to already saved images.",
+					IsFlag = true,
+					IsOptional = true,
+				},
+				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
+				{
+					Description = "Whether or not to create the directory if it does not exist.",
+					IsFlag = true,
+					IsOptional = true,
+				},
+				new Setting<bool>(new[] {nameof(Start), "s" }, x => Start = x)
+				{
+					Description = "Whether or not to start the downloader. Will not start until all other arguments are provided.",
+					IsFlag = true,
+				},
+			};
 			Client = new ImageDownloaderClient();
 
 			//Save on close in case program is closed while running
@@ -238,30 +234,6 @@ namespace ImageDL.Classes.ImageDownloading
 			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 		}
 
-		/// <summary>
-		/// Returns a file info with a maximum path length of 255 characters.
-		/// </summary>
-		/// <param name="directory"></param>
-		/// <param name="name"></param>
-		/// <param name="extension"></param>
-		/// <returns></returns>
-		public static FileInfo GenerateFileInfo(string directory, string name, string extension)
-		{
-			//Make sure the extension has a period
-			extension = extension.StartsWith(".") ? extension : "." + extension;
-			//Remove any invalid file name path characters
-			name = new string(name.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
-			//Max file name length has to be under 260 for windows, but 256 for some other things, so just go with 255.
-			var nameLen = 255 - directory.Length - 1 - extension.Length; //Subtract extra 1 for / between dir and file
-			//Cut the file name down to its valid length so no length errors occur
-			return new FileInfo(Path.Combine(directory, name.Substring(0, Math.Min(name.Length, nameLen)) + extension));
-		}
-
-		/// <inheritdoc />
-		public bool CanStart()
-		{
-			return Start && SettingParser.AllSet;
-		}
 		/// <inheritdoc />
 		public async Task StartAsync(CancellationToken token = default)
 		{
@@ -315,59 +287,6 @@ namespace ImageDL.Classes.ImageDownloading
 
 			SaveStoredContentLinks();
 			SemaphoreSlim.Release();
-		}
-		/// <inheritdoc />
-		public void SetArguments(string input)
-		{
-			var result = SettingParser.Parse(input.SplitLikeCommandLine());
-			if (!(result.Successes.Any() || result.Errors.Any() || result.UnusedParts.Any() || result.Help.Any()))
-			{
-				return;
-			}
-
-			var wentIntoAny = false;
-			if (result.Help.Any(x => x != null))
-			{
-				Console.WriteLine(String.Join("\n", result.Help));
-				wentIntoAny = true;
-			}
-			if (Verbose && result.Successes.Any(x => x != null))
-			{
-				Console.WriteLine(String.Join("\n", result.Successes));
-				wentIntoAny = true;
-			}
-			if (Verbose && result.Errors.Any(x => x != null))
-			{
-				Console.WriteLine($"The following errors occurred:\n{String.Join("\n\t", result.Errors)}");
-				wentIntoAny = true;
-			}
-			if (Verbose && result.UnusedParts.Any(x => x != null))
-			{
-				Console.WriteLine($"The following parts were extra; was an argument mistyped? '{String.Join("', '", result.UnusedParts)}'");
-				wentIntoAny = true;
-			}
-			if (wentIntoAny)
-			{
-				Console.WriteLine();
-			}
-		}
-		/// <inheritdoc />
-		public void AskForArguments()
-		{
-			var unsetArguments = SettingParser.GetNeededSettings();
-			if (!unsetArguments.Any())
-			{
-				Console.WriteLine($"Every setting which is necessary has been set.");
-				return;
-			}
-
-			var sb = new StringBuilder("The following settings need to be set:" + Environment.NewLine);
-			foreach (var setting in unsetArguments)
-			{
-				sb.AppendLine($"\t{setting.ToString()}");
-			}
-			Console.WriteLine(sb.ToString().Trim());
-			Console.WriteLine();
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
@@ -467,6 +386,24 @@ namespace ImageDL.Classes.ImageDownloading
 			return true;
 		}
 		/// <summary>
+		/// Returns a file info with a maximum path length of 255 characters.
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <param name="name"></param>
+		/// <param name="extension"></param>
+		/// <returns></returns>
+		protected FileInfo GenerateFileInfo(string directory, string name, string extension)
+		{
+			//Make sure the extension has a period
+			extension = extension.StartsWith(".") ? extension : "." + extension;
+			//Remove any invalid file name path characters
+			name = new string(name.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
+			//Max file name length has to be under 260 for windows, but 256 for some other things, so just go with 255.
+			var nameLen = 255 - directory.Length - 1 - extension.Length; //Subtract extra 1 for / between dir and file
+																		 //Cut the file name down to its valid length so no length errors occur
+			return new FileInfo(Path.Combine(directory, name.Substring(0, Math.Min(name.Length, nameLen)) + extension));
+		}
+		/// <summary>
 		/// Saves the stored content links to file.
 		/// </summary>
 		protected void SaveStoredContentLinks()
@@ -513,92 +450,6 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
 			}
-		}
-		/// <summary>
-		/// Invokes <see cref="PropertyChanged"/>.
-		/// </summary>
-		/// <param name="name">The property changed.</param>
-		protected void NotifyPropertyChanged([CallerMemberName] string name = "")
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-		}
-		/// <summary>
-		/// Returns the default options that are used to set values through console input.
-		/// </summary>
-		/// <returns></returns>
-		private SettingParser GetSettingParser()
-		{
-			return new SettingParser(new[] { "--", "-", "/" })
-			{
-				new Setting<string>(new[] { nameof(Directory), "dir" }, x => Directory = x)
-				{
-					Description = "The directory to save to.",
-				},
-				new Setting<int>(new[] {nameof(AmountToDownload), "amt"}, x => AmountToDownload = x)
-				{
-					Description = "The amount of images to download.",
-				},
-				new Setting<int>(new[] {nameof(MinWidth), "minw", "mw" }, x => MinWidth = x)
-				{
-					Description = "The minimum width to save an image with.",
-				},
-				new Setting<int>(new[] {nameof(MinHeight), "minh", "mh" }, x => MinHeight = x)
-				{
-					Description = "The minimum height to save an image with.",
-				},
-				new Setting<int>(new[] {nameof(MaxDaysOld), "age" }, x => MaxDaysOld = x)
-				{
-					Description = "The oldest an image can be before it won't be saved.",
-				},
-				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x, new PercentageConverter())
-				{
-					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
-					DefaultValue = new Percentage(1),
-				},
-				new Setting<int>(new[] {nameof(ImagesCachedPerThread), "icpt" }, x => ImagesCachedPerThread = x)
-				{
-					Description = "How many images to cache on each thread (lower = faster but more CPU).",
-					DefaultValue = 50,
-				},
-				new Setting<int>(new[] {nameof(MinScore), "mins", "ms" }, x => MinScore = x)
-				{
-					Description = "The minimum score for an image to have before being ignored.",
-					IsOptional = true,
-				},
-				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x, new AspectRatioConverter())
-				{
-					Description = "The minimum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(0, 1),
-				},
-				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x, new AspectRatioConverter())
-				{
-					Description = "The maximum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(1, 0),
-				},
-				new Setting<bool>(new[] {nameof(CompareSavedImages), "csi" }, x => CompareSavedImages = x)
-				{
-					Description = "Whether or not to compare to already saved images.",
-					IsFlag = true,
-					IsOptional = true,
-				},
-				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
-				{
-					Description = "Whether or not to create the directory if it does not exist.",
-					IsFlag = true,
-					IsOptional = true,
-				},
-				new Setting<bool>(new[] {nameof(Verbose), "v" }, x => Verbose = x)
-				{
-					Description = "Whether or not to print extra information to the console, such as variables being set.",
-					IsFlag = true,
-					IsOptional = true,
-				},
-				new Setting<bool>(new[] {nameof(Start), "s" }, x => Start = x)
-				{
-					Description = "Whether or not to start the downloader. Will not start until all other arguments are provided.",
-					IsFlag = true,
-				},
-			};
 		}
 
 		/// <summary>

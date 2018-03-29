@@ -29,7 +29,6 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 					throw new ArgumentException("Cannot search for more than two tags.", nameof(TagString));
 				}
 				_TagString = value;
-				NotifyPropertyChanged();
 			}
 		}
 		/// <summary>
@@ -38,11 +37,7 @@ namespace ImageDL.Classes.ImageDownloading.Danbooru
 		public int Page
 		{
 			get => _Page;
-			set
-			{
-				_Page = Math.Min(1, value);
-				NotifyPropertyChanged();
-			}
+			set => _Page = Math.Min(1, value);
 		}
 
 		private string _TagString;

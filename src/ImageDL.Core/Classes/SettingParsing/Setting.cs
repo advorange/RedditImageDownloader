@@ -1,5 +1,4 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.SettingParsing.Converting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -27,8 +26,8 @@ namespace ImageDL.Classes.SettingParsing
 			}
 		}
 
-		private readonly SettingConverter<T> Converter;
-		private readonly Action<T> Setter;
+		private readonly TryParseDelegate<T> _Parser;
+		private readonly Action<T> _Setter;
 		private T _DefaultValue;
 
 		/// <summary>
@@ -36,17 +35,17 @@ namespace ImageDL.Classes.SettingParsing
 		/// </summary>
 		/// <param name="names">The names to use for this option. Must supply at least one name. The first name will be designated the main name.</param>
 		/// <param name="setter">The setter to use for this option.</param>
-		/// <param name="converter">The converter to convert from a string to the value. Can be null if a primitive type.</param>
-		public Setting(IEnumerable<string> names, Action<T> setter, SettingConverter<T> converter = default) : base(names)
+		/// <param name="parser">The converter to convert from a string to the value. Can be null if a primitive type.</param>
+		public Setting(IEnumerable<string> names, Action<T> setter, TryParseDelegate<T> parser = default) : base(names)
 		{
-			Setter = setter ?? throw new ArgumentException("Invalid setter supplied.");
-			Converter = converter ?? PrimitiveSettingConverters.GetConverter<T>();
+			_Setter = setter ?? throw new ArgumentException("Invalid setter supplied.");
+			_Parser = parser ?? GetPrimitiveParser();
 		}
 
 		/// <inheritdoc />
 		public override void SetDefault()
 		{
-			Setter(DefaultValue);
+			_Setter(DefaultValue);
 		}
 		/// <inheritdoc />
 		public override bool TrySetValue(string value, out string response)
@@ -56,8 +55,9 @@ namespace ImageDL.Classes.SettingParsing
 			{
 				result = default;
 			}
-			else if (!Converter.TryConvert(value, out result, out response))
+			else if (!_Parser(value, out result))
 			{
+				response = $"Unable to convert '{value}' to type {typeof(T).Name}.";
 				return false;
 			}
 			else if (result == null && CannotBeNull)
@@ -66,7 +66,7 @@ namespace ImageDL.Classes.SettingParsing
 				return false;
 			}
 
-			Setter(result);
+			_Setter(result);
 			HasBeenSet = true;
 			response = $"Successfully set {Names[0]} to '{result?.ToString() ?? "NULL"}'.";
 			return true;
@@ -82,6 +82,58 @@ namespace ImageDL.Classes.SettingParsing
 		{
 			return $"{Names[0]} ({typeof(T).Name})";
 		}
+
+		private TryParseDelegate<T> GetPrimitiveParser()
+		{
+			bool StringTryParse(string s, out string result)
+			{
+				result = s;
+				return true;
+			}
+
+			switch (typeof(T).Name)
+			{
+				case nameof(SByte):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<sbyte>(sbyte.TryParse);
+				case nameof(Byte):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<byte>(byte.TryParse);
+				case nameof(Int16):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<short>(short.TryParse);
+				case nameof(UInt16):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<ushort>(ushort.TryParse);
+				case nameof(Int32):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<int>(int.TryParse);
+				case nameof(UInt32):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<uint>(uint.TryParse);
+				case nameof(Int64):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<long>(long.TryParse);
+				case nameof(UInt64):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<ulong>(ulong.TryParse);
+				case nameof(Char):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<char>(char.TryParse);
+				case nameof(Single):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<float>(float.TryParse);
+				case nameof(Double):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<double>(double.TryParse);
+				case nameof(Boolean):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<bool>(bool.TryParse);
+				case nameof(Decimal):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<decimal>(decimal.TryParse);
+				case nameof(String):
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<string>(StringTryParse);
+				default:
+					throw new ArgumentException($"Unable to find a primitive converter for the supplied type {typeof(T).Name}.");
+			}
+		}
+
+		/// <summary>
+		/// Delegate used to try parse something.
+		/// </summary>
+		/// <typeparam name="TConvert"></typeparam>
+		/// <param name="s"></param>
+		/// <param name="result"></param>
+		/// <returns></returns>
+		public delegate bool TryParseDelegate<TConvert>(string s, out TConvert result);
 	}
 
 	/// <summary>

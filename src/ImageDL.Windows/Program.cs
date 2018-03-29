@@ -46,10 +46,10 @@ namespace ImageDL.Windows
 		private static async Task Single()
 		{
 			var downloader = CreateDownloader(GetDownloaderType());
-			while (!downloader.CanStart())
+			while (!downloader.CanStart)
 			{
-				downloader.AskForArguments();
-				downloader.SetArguments(Console.ReadLine());
+				Console.WriteLine(downloader.SettingParser.GetNeededSettings());
+				Console.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()));
 			}
 			await downloader.StartAsync().CAF();
 		}
@@ -66,14 +66,14 @@ namespace ImageDL.Windows
 				};
 				if (arguments != null)
 				{
-					downloader.SetArguments(arguments);
+					Console.WriteLine(downloader.SettingParser.Parse(arguments));
 					downloader.Subreddit = dir.Name;
 					downloader.Directory = dir.FullName;
 				}
-				while (!downloader.CanStart())
+				while (!downloader.CanStart)
 				{
-					downloader.AskForArguments();
-					downloader.SetArguments(Console.ReadLine());
+					Console.WriteLine(downloader.SettingParser.GetNeededSettings());
+					Console.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()));
 				}
 				await downloader.StartAsync().CAF();
 			}
