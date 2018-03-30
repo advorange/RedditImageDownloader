@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Net;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 {
@@ -10,6 +12,21 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// <summary>
 		/// Creates an instance of <see cref="DanbooruImageDownloader"/>.
 		/// </summary>
-		public DanbooruImageDownloader() : base(new Uri("https://www.danbooru.donmai.us"), "posts.json", 2) { }
+		public DanbooruImageDownloader() : base(2) { }
+
+		/// <inheritdoc />
+		protected override string GenerateQuery(int page)
+		{
+			return $"https://www.danbooru.donmai.us/posts.json" +
+				$"?utf8=✓" +
+				$"&limit=100" +
+				$"&tags={WebUtility.UrlEncode(Tags)}" +
+				$"&page={page}";
+		}
+		/// <inheritdoc />
+		protected override List<DanbooruPost> Parse(string text)
+		{
+			return JsonConvert.DeserializeObject<List<DanbooruPost>>(text);
+		}
 	}
 }

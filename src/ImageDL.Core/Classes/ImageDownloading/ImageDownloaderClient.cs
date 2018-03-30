@@ -50,7 +50,7 @@ namespace ImageDL.Classes.ImageDownloading
 			Scrapers = GetDefaultScrapers();
 
 			Timeout = TimeSpan.FromMilliseconds(60000);
-			DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36");
+			DefaultRequestHeaders.Add("User-Agent", $"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)");
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
 

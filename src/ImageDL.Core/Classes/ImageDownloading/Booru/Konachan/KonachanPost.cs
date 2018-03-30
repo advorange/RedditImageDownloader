@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
@@ -6,11 +7,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 	/// <summary>
 	/// Json model for a Konachan post.
 	/// </summary>
-	public class KonachanPost : BooruPost
+	public sealed class KonachanPost : BooruPost
 	{
-#pragma warning disable 1591
-		[JsonProperty("tags")]
-		public readonly string Tags;
+#pragma warning disable 1591, 649
 		[JsonProperty("creator_id")]
 		public readonly int CreatorId;
 		[JsonProperty("author")]
@@ -47,10 +46,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		public readonly long JpgFileSize;
 		[JsonProperty("status")]
 		public readonly string Status;
-		[JsonProperty("width")]
-		public override int Width { get; }
-		[JsonProperty("height")]
-		public override int Height { get; }
 		[JsonProperty("is_held")]
 		public readonly bool IsHeld;
 		[JsonProperty("frames_pending_string")]
@@ -61,6 +56,29 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		public readonly string FramesString;
 		[JsonProperty("frames")]
 		public readonly List<Frame> Frames;
+		[JsonProperty("file_size")]
+		public readonly long FileSize;
+		[JsonProperty("width")]
+		private readonly int _Width;
+		[JsonProperty("height")]
+		private readonly int _Height;
+		[JsonProperty("created_at")]
+		private readonly int _CreatedAt;
+		[JsonProperty("tags")]
+		private readonly string _Tags;
+
+		[JsonIgnore]
+		public override string BaseUrl => "https://www.konachan.com";
+		[JsonIgnore]
+		public override string PostUrl => $"{BaseUrl}/post/show/{Id}";
+		[JsonIgnore]
+		public override int Width => _Width;
+		[JsonIgnore]
+		public override int Height => _Height;
+		[JsonIgnore]
+		public override DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_CreatedAt)).ToUniversalTime();
+		[JsonIgnore]
+		public override string Tags => _Tags;
 
 		/// <summary>
 		/// Json model for a frame, whatever that is.
@@ -90,6 +108,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 			[JsonProperty("preview_url")]
 			public readonly string PreviewUrl;
 		}
-#pragma warning restore 1591
+#pragma warning restore 1591, 649
 	}
 }

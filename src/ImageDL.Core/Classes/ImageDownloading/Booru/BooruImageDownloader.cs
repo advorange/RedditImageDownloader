@@ -2,12 +2,13 @@
 using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace ImageDL.Classes.ImageDownloading.Booru
 {
@@ -18,18 +19,18 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 	public abstract class BooruImageDownloader<T> : ImageDownloader<T> where T : BooruPost
 	{
 		/// <summary>
-		/// The terms to search for. Split by spaces. Max allowed is two.
+		/// The terms to search for. Split by spaces.
 		/// </summary>
-		public string TagString
+		public string Tags
 		{
-			get => _TagString;
+			get => _Tags;
 			set
 			{
 				if (value.Split(' ').Length > _TagLimit)
 				{
-					throw new ArgumentException($"Cannot search for more than {_TagLimit} tags.", nameof(TagString));
+					throw new ArgumentException($"Cannot search for more than {_TagLimit} tags.", nameof(Tags));
 				}
-				_TagString = value;
+				_Tags = value;
 			}
 		}
 		/// <summary>
@@ -41,21 +42,19 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			set => _Page = Math.Min(1, value);
 		}
 
-		private string _TagString;
+		private string _Tags;
 		private int _Page;
-		private string _BaseUri;
-		private string _Search;
 		private int _TagLimit;
+		private bool _Json;
 
 		/// <summary>
 		/// Creats an instance of <see cref="BooruImageDownloader{T}"/>.
 		/// </summary>
-		/// <param name="baseUri">The website to search.</param>
-		/// <param name="search">For some websites to search for a post it's 'posts.json' others it's 'post.json'</param>
 		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
-		public BooruImageDownloader(Uri baseUri, string search, int tagLimit)
+		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
+		public BooruImageDownloader(int tagLimit, bool json = true)
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
+			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
 				Description = "The tags to search for.",
 			});
@@ -65,29 +64,27 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 				DefaultValue = 1, //Start on the first page
 			});
 
-			_BaseUri = baseUri.ToString().TrimEnd('/');
-			_Search = search.Trim('/');
 			_TagLimit = tagLimit;
+			_Json = json;
 		}
 
 		/// <summary>
 		/// Generates the search query to get images from.
+		/// Keep the limit to 100 otherwise some logic may not work in <see cref="GatherPostsAsync"/>.
 		/// </summary>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		protected virtual string GenerateQuery(int page)
-		{
-			//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
-			return $"{_BaseUri}/{_Search}" +
-				$"?utf8=✓" +
-				$"&limit=100" +
-				$"&tags={WebUtility.UrlEncode(TagString)}" +
-				$"&page={page}";
-		}
+		protected abstract string GenerateQuery(int page);
+		/// <summary>
+		/// Converts the text into a list of posts.
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		protected abstract List<T> Parse(string text);
 		/// <inheritdoc />
 		protected override void WritePostToConsole(T post, int count)
 		{
-			Console.WriteLine($"[#{count}|\u2191{post.Score}] http://danbooru.donmai.us/posts/{post.Id}");
+			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.PostUrl}");
 		}
 		/// <inheritdoc />
 		protected override async Task<List<T>> GatherPostsAsync()
@@ -98,15 +95,14 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 				//Uses for instead of while to save 2 lines.
 				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
 				{
-					var search = GenerateQuery(Page + i);
-					var json = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(search), TimeSpan.FromSeconds(2)).CAF();
-
-					//Deserialize the Json and look through all the posts
 					var finished = false;
-					var posts = JsonConvert.DeserializeObject<List<T>>(json);
+					//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
+					var text = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i)), TimeSpan.FromSeconds(2)).CAF();
+					//Deserialize the text and look through all the posts
+					var posts = Parse(text);
 					foreach (var post in posts)
 					{
-						if (post.CreatedAt.ToUniversalTime() < OldestAllowed)
+						if (post.CreatedAt < OldestAllowed)
 						{
 							finished = true;
 							break;
@@ -129,7 +125,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 					}
 
 					//Anything less than a full page means everything's been searched
-					if (finished || posts.Count < Math.Min(AmountToDownload, 100))
+					if (finished || posts.Count < 100)
 					{
 						break;
 					}
@@ -141,7 +137,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			}
 			finally
 			{
-				Console.WriteLine($"Finished gathering {typeof(T).Name.FormatTitle()[0]} posts.");
+				Console.WriteLine($"Finished gathering {typeof(T).Name.FormatTitle().Split(' ')[0]} posts.");
 				Console.WriteLine();
 			}
 			return validPosts.OrderByDescending(x => x.Score).ToList();
@@ -156,11 +152,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <inheritdoc />
 		protected override async Task<ScrapeResult> GatherImagesAsync(T post)
 		{
-			if (!Uri.TryCreate(post.FileUrl, UriKind.Absolute, out var uri))
-			{
-				uri = new Uri($"{_BaseUri}{post.FileUrl}");
-			}
-			return await Client.ScrapeImagesAsync(uri).CAF();
+			return await Client.ScrapeImagesAsync(new Uri(post.FileUrl)).CAF();
 		}
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(T post, Uri uri, string reason)

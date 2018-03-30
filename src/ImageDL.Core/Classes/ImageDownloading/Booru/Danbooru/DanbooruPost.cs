@@ -8,23 +8,21 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 	/// <summary>
 	/// Json model for a Danbooru post.
 	/// </summary>
-	public class DanbooruPost : BooruPost
+	public sealed class DanbooruPost : BooruPost
 	{
-#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
+#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 		[JsonProperty("uploader_id")]
 		public readonly int UploaderId;
 		[JsonProperty("approver_id")]
 		public readonly int? ApproverId;
 		[JsonProperty("pixiv_id")]
 		public readonly int? PixivId;
-
 		[JsonProperty("up_score")]
 		public readonly int UpScore;
 		[JsonProperty("down_score")]
 		public readonly int DownScore;
 		[JsonProperty("fav_count")]
 		public readonly int FavCount;
-
 		[JsonProperty("is_note_locked")]
 		public readonly bool IsNoteLocked;
 		[JsonProperty("is_rating_locked")]
@@ -39,29 +37,22 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public readonly bool IsDeleted;
 		[JsonProperty("is_banned")]
 		public readonly bool IsBanned;
-
 		[JsonProperty("md5")]
 		public readonly string Md5;
 		[JsonProperty("file_ext")]
 		public readonly string FileExt;
-		[JsonProperty("image_width")]
-		public override int Width { get; }
-		[JsonProperty("image_height")]
-		public override int Height { get; }
 		[JsonProperty("large_file_url")]
 		public readonly string LargeFileUrl;
 		[JsonProperty("preview_file_url")]
 		public readonly string PreviewFileUrl;
 		[JsonProperty("has_large")]
 		public readonly bool HasLarge;
-
 		[JsonProperty("has_active_children")]
 		public readonly bool HasActiveChildren;
 		[JsonProperty("has_visible_children")]
 		public readonly bool HasVisibleChildren;
 		[JsonProperty("children_ids")]
 		public readonly string ChildrenIdsString;
-
 		[JsonProperty("last_comment_bumped_at")]
 		public readonly DateTime? LastCommentBumpedAt;
 		[JsonProperty("last_noted_at")]
@@ -70,7 +61,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public readonly DateTime? UpdatedAt;
 		[JsonProperty("last_commented_at")]
 		public readonly DateTime? LastCommentedAt;
-
 		[JsonProperty("uploader_name")]
 		public readonly string UploaderName;
 		[JsonProperty("bit_flags")]
@@ -81,8 +71,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public readonly string PoolString;
 		[JsonProperty("keeper_data")]
 		public readonly Dictionary<string, int> KeeperData; //Not sure if this is the correct type
-
-		#region Tags
 		[JsonProperty("tag_string")]
 		public readonly string TagString;
 		[JsonProperty("tag_string_general")]
@@ -95,7 +83,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public readonly string TagStringArtist;
 		[JsonProperty("tag_string_meta")]
 		public readonly string TagStringMeta;
-
 		[JsonProperty("tag_count")]
 		public readonly int TagCount;
 		[JsonProperty("tag_count_general")]
@@ -108,7 +95,29 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public readonly int TagCountArtist;
 		[JsonProperty("tag_count_meta")]
 		public readonly int TagCountMeta;
+		[JsonProperty("file_size")]
+		public readonly long FileSize;
+		[JsonProperty("image_width")]
+		private readonly int _Width;
+		[JsonProperty("image_height")]
+		private readonly int _Height;
+		[JsonProperty("created_at")]
+		private readonly DateTime _CreatedAt;
 
+		[JsonIgnore]
+		public override string BaseUrl => "https://danbooru.donmai.us";
+		[JsonIgnore]
+		public override string PostUrl => $"{BaseUrl}/posts/{Id}";
+		[JsonIgnore]
+		public override int Width => _Width;
+		[JsonIgnore]
+		public override int Height => _Height;
+		[JsonIgnore]
+		public override DateTime CreatedAt => _CreatedAt.ToUniversalTime();
+		[JsonIgnore]
+		public override string Tags => TagString;
+
+		[JsonIgnore]
 		public string[] this[TagType type]
 		{
 			get
@@ -132,8 +141,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 				}
 			}
 		}
-		#endregion
-
 		[JsonIgnore]
 		public int[] ChildrenIds => String.IsNullOrWhiteSpace(ChildrenIdsString)
 			? new int[0] : ChildrenIdsString.Split(' ').Select(x => Convert.ToInt32(x)).ToArray();
@@ -143,7 +150,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		[JsonIgnore]
 		public string[] Pools => String.IsNullOrWhiteSpace(PoolString)
 			? new string[0] : PoolString.Split(' ').Select(x => x.Replace("pool:", "")).ToArray();
-#pragma warning restore 1591
+#pragma warning restore 1591, 649
 
 		/// <summary>
 		/// The type of tags to get.
