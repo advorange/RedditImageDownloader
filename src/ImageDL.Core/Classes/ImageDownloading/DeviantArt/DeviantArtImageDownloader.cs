@@ -72,33 +72,27 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task<List<DeviantArtPost>> GatherPostsAsync()
+		protected override async Task GatherPostsAsync(List<DeviantArtPost> validPosts)
 		{
-			var validPosts = new List<DeviantArtPost>();
 			try
 			{
 				var (token, duration) = await GetTokenAsync().CAF();
 				if (token != null)
 				{
 					Client.UpdateAPIKey(token, duration);
-					validPosts = (await GetPostsThroughApi().CAF()).Select(x => new DeviantArtPost(x)).ToList();
+					await GetPostsThroughApi(validPosts).CAF();
 				}
 				else
 				{
-					validPosts = (await GetPostsThroughScraping().CAF()).Select(x => new DeviantArtPost(x)).ToList();
+					await GetPostsThroughScraping(validPosts).CAF();
 				}
 			}
-			catch (WebException we) when (we.Message.Contains("403")) { } //Eat this error due to not being able to know when to stop
-			catch (Exception e)
-			{
-				e.Write();
-			}
-			finally
-			{
-				Console.WriteLine($"Finished gathering DeviantArt posts.");
-				Console.WriteLine();
-			}
-			return validPosts.GroupBy(x => x.Source).Select(x => x.First()).OrderByDescending(x => x.Favorites).ToList();
+			catch (WebException we) when (we.Message.Contains("403")) { } //Gotten when scraping since don't know when to stop.
+		}
+		/// <inheritdoc />
+		protected override List<DeviantArtPost> OrderAndRemoveDuplicates(List<DeviantArtPost> list)
+		{
+			return list.GroupBy(x => x.Source).Select(x => x.First()).OrderByDescending(x => x.Favorites).ToList();
 		}
 		/// <inheritdoc />
 		protected override void WritePostToConsole(DeviantArtPost post, int count)
@@ -157,9 +151,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return (token, duration);
 		}
-		private async Task<List<ScrapedDeviantArtPost>> GetPostsThroughScraping()
+		private async Task GetPostsThroughScraping(List<DeviantArtPost> validPosts)
 		{
-			var validPosts = new List<ScrapedDeviantArtPost>();
 			for (int i = 0; validPosts.Count < AmountToDownload;)
 			{
 				var search = $"https://www.deviantart.com/newest/" +
@@ -193,7 +186,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 						continue;
 					}
 
-					validPosts.Add(post);
+					validPosts.Add(new DeviantArtPost(post));
 					if (validPosts.Count == AmountToDownload)
 					{
 						finished = true;
@@ -212,11 +205,9 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}
 				i += posts.Count;
 			}
-			return validPosts;
 		}
-		private async Task<List<ApiDeviantArtResults.ApiDeviantArtPost>> GetPostsThroughApi()
+		private async Task GetPostsThroughApi(List<DeviantArtPost> validPosts)
 		{
-			var validPosts = new List<ApiDeviantArtResults.ApiDeviantArtPost>();
 			for (int i = 0; validPosts.Count < AmountToDownload;)
 			{
 				if (Client.APIKeyLastUpdated + Client.APIKeyDuration >= DateTime.UtcNow)
@@ -251,7 +242,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 						continue;
 					}
 
-					validPosts.Add(post);
+					validPosts.Add(new DeviantArtPost(post));
 					if (validPosts.Count == AmountToDownload)
 					{
 						finished = true;
@@ -270,7 +261,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}
 				i += result.Results.Count;
 			}
-			return validPosts;
 		}
 	}
 }

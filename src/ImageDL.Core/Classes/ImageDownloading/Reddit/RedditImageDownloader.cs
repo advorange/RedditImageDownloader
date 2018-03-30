@@ -44,14 +44,13 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task<List<Post>> GatherPostsAsync()
+		protected override async Task GatherPostsAsync(List<Post> validPosts)
 		{
-			var validPosts = new List<Post>();
+			var valid = new CancellationTokenSource();
+			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
 			try
 			{
-				var valid = new CancellationTokenSource();
-				var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
-				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, AmountToDownload).ForEachAsync(post =>
+				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, 1000).ForEachAsync(post =>
 				{
 					if (post.CreatedUTC < OldestAllowed)
 					{
@@ -76,16 +75,11 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 				}, valid.Token).CAF();
 			}
 			catch (OperationCanceledException) { }
-			catch (Exception e)
-			{
-				e.Write();
-			}
-			finally
-			{
-				Console.WriteLine($"Finished gathering reddit posts.");
-				Console.WriteLine();
-			}
-			return validPosts.OrderByDescending(x => x.Score).ToList();
+		}
+		/// <inheritdoc />
+		protected override List<Post> OrderAndRemoveDuplicates(List<Post> list)
+		{
+			return list.OrderByDescending(x => x.Score).ToList();
 		}
 		/// <inheritdoc />
 		protected override void WritePostToConsole(Post post, int count)

@@ -68,79 +68,57 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			_Json = json;
 		}
 
-		/// <summary>
-		/// Generates the search query to get images from.
-		/// Keep the limit to 100 otherwise some logic may not work in <see cref="GatherPostsAsync"/>.
-		/// </summary>
-		/// <param name="page"></param>
-		/// <returns></returns>
-		protected abstract string GenerateQuery(int page);
-		/// <summary>
-		/// Converts the text into a list of posts.
-		/// </summary>
-		/// <param name="text"></param>
-		/// <returns></returns>
-		protected abstract List<T> Parse(string text);
+		/// <inheritdoc />
+		protected override async Task GatherPostsAsync(List<T> validPosts)
+		{
+			//Uses for instead of while to save 2 lines.
+			for (int i = 0; validPosts.Count < AmountToDownload; ++i)
+			{
+				var finished = false;
+				//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
+				var text = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i)), TimeSpan.FromSeconds(2)).CAF();
+				//Deserialize the text and look through all the posts
+				var posts = Parse(text);
+				foreach (var post in posts)
+				{
+					if (post.CreatedAt < OldestAllowed)
+					{
+						finished = true;
+						break;
+					}
+					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
+					{
+						continue;
+					}
+
+					validPosts.Add(post);
+					if (validPosts.Count == AmountToDownload)
+					{
+						finished = true;
+						break;
+					}
+					else if (validPosts.Count % 25 == 0)
+					{
+						Console.WriteLine($"{validPosts.Count} {typeof(T).Name.FormatTitle().Split(' ')[0]} posts found.");
+					}
+				}
+
+				//Anything less than a full page means everything's been searched
+				if (finished || posts.Count < 100)
+				{
+					break;
+				}
+			}
+		}
+		/// <inheritdoc />
+		protected override List<T> OrderAndRemoveDuplicates(List<T> list)
+		{
+			return list.OrderByDescending(x => x.Score).ToList();
+		}
 		/// <inheritdoc />
 		protected override void WritePostToConsole(T post, int count)
 		{
 			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.PostUrl}");
-		}
-		/// <inheritdoc />
-		protected override async Task<List<T>> GatherPostsAsync()
-		{
-			var validPosts = new List<T>();
-			try
-			{
-				//Uses for instead of while to save 2 lines.
-				for (int i = 0; validPosts.Count < AmountToDownload; ++i)
-				{
-					var finished = false;
-					//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
-					var text = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i)), TimeSpan.FromSeconds(2)).CAF();
-					//Deserialize the text and look through all the posts
-					var posts = Parse(text);
-					foreach (var post in posts)
-					{
-						if (post.CreatedAt < OldestAllowed)
-						{
-							finished = true;
-							break;
-						}
-						else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
-						{
-							continue;
-						}
-
-						validPosts.Add(post);
-						if (validPosts.Count == AmountToDownload)
-						{
-							finished = true;
-							break;
-						}
-						else if (validPosts.Count % 25 == 0)
-						{
-							Console.WriteLine($"{validPosts.Count} Danbooru posts found.");
-						}
-					}
-
-					//Anything less than a full page means everything's been searched
-					if (finished || posts.Count < 100)
-					{
-						break;
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				e.Write();
-			}
-			finally
-			{
-				Console.WriteLine($"Finished gathering {typeof(T).Name.FormatTitle().Split(' ')[0]} posts.");
-				Console.WriteLine();
-			}
-			return validPosts.OrderByDescending(x => x.Score).ToList();
 		}
 		/// <inheritdoc />
 		protected override FileInfo GenerateFileInfo(T post, Uri uri)
@@ -159,5 +137,19 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		{
 			return new ContentLink(uri, post.Score, reason);
 		}
+
+		/// <summary>
+		/// Generates the search query to get images from.
+		/// Keep the limit to 100 otherwise some logic may not work in <see cref="GatherPostsAsync"/>.
+		/// </summary>
+		/// <param name="page"></param>
+		/// <returns></returns>
+		protected abstract string GenerateQuery(int page);
+		/// <summary>
+		/// Converts the text into a list of posts.
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		protected abstract List<T> Parse(string text);
 	}
 }

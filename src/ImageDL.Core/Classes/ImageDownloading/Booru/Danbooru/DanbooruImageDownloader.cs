@@ -17,7 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// <inheritdoc />
 		protected override string GenerateQuery(int page)
 		{
-			return $"https://www.danbooru.donmai.us/posts.json" +
+			return $"https://danbooru.donmai.us/posts.json" +
 				$"?utf8=✓" +
 				$"&limit=100" +
 				$"&tags={WebUtility.UrlEncode(Tags)}" +

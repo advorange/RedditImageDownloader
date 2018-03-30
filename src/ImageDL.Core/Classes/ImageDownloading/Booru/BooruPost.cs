@@ -66,7 +66,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			}
 		}
 		/// <summary>
-		/// The base url of the -booru site. E.G.: https://www.danbooru.donmai.us or https://www.konachan.com
+		/// The base url of the -booru site. E.G.: https://danbooru.donmai.us or https://www.konachan.com
 		/// </summary>
 		[JsonIgnore]
 		public abstract string BaseUrl { get; }

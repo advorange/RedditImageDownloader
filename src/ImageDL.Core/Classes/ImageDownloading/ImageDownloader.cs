@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -239,13 +240,29 @@ namespace ImageDL.Classes.ImageDownloading
 		public async Task StartAsync(CancellationToken token = default)
 		{
 			await SemaphoreSlim.WaitAsync(token).CAF();
-
 			Console.WriteLine();
-			var posts = await GatherPostsAsync().CAF();
+
+			var posts = new List<TPost>();
+			try
+			{
+				await GatherPostsAsync(posts).CAF();
+			}
+			catch (Exception e)
+			{
+				e.Write();
+			}
+
+			//Make sure some posts were gotten.
 			if (!posts.Any())
 			{
 				Console.WriteLine("Unable to find any posts matching the search criteria.");
 				return;
+			}
+			else
+			{
+				posts = OrderAndRemoveDuplicates(posts);
+				Console.WriteLine();
+				Console.WriteLine($"Found {posts.Count} posts.");
 			}
 
 			var count = 0;
@@ -306,6 +323,11 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 				return result.Error;
 			}
+			var file = GenerateFileInfo(post, uri);
+			if (File.Exists(file.FullName))
+			{
+				return $"{uri} is already saved as {file}.";
+			}
 
 			HttpResponseMessage resp = null;
 			Stream rs = null;
@@ -323,11 +345,6 @@ namespace ImageDL.Classes.ImageDownloading
 				if (!contentType.Contains("image/"))
 				{
 					return $"{uri} is not an image.";
-				}
-				var file = GenerateFileInfo(post, resp.Headers.Location ?? uri);
-				if (File.Exists(file.FullName))
-				{
-					return $"{uri} is already saved as {file}.";
 				}
 
 				//Need to use a memory stream and copy to it
@@ -456,8 +473,15 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Gathers the posts which match the supplied settings.
 		/// </summary>
+		/// <param name="list">The list to add values to.</param>
 		/// <returns></returns>
-		protected abstract Task<List<TPost>> GatherPostsAsync();
+		protected abstract Task GatherPostsAsync(List<TPost> list);
+		/// <summary>
+		/// Reorders the list and removes duplicate entries.
+		/// </summary>
+		/// <param name="list"></param>
+		/// <returns>The ordered list.</returns>
+		protected abstract List<TPost> OrderAndRemoveDuplicates(List<TPost> list);
 		/// <summary>
 		/// Writes the post to the console indicating it is being downloaded.
 		/// </summary>
