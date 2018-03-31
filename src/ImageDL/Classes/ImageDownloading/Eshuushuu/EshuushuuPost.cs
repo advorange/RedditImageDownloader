@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 {
+#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
-	/// Model for a post from Eshuushuu.
+	/// Json model for a post from Eshuushuu.
 	/// </summary>
 	public sealed class EshuushuuPost
 	{
-#pragma warning disable 1591
 		[JsonProperty("post_url")]
 		public readonly string PostUrl;
 		[JsonProperty("post_id")]
@@ -87,23 +87,17 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		public int Width => Convert.ToInt32(_Dimensions.Split('x', ' ')[0]);
 		[JsonIgnore]
 		public int Height => Convert.ToInt32(_Dimensions.Split('x', ' ')[1]);
-#pragma warning restore 1591
-
-		/// <summary>
-		/// Holds the value and name of a tag.
-		/// </summary>
-		public class Tag
-		{
-			/// <summary>
-			/// The value assigned to a tag from Eshuushuu.
-			/// </summary>
-			[JsonProperty("value")]
-			public readonly int Value;
-			/// <summary>
-			/// The name of a tag.
-			/// </summary>
-			[JsonProperty("name")]
-			public readonly string Name;
-		}
 	}
+
+	/// <summary>
+	/// Holds the value and name of a tag.
+	/// </summary>
+	public struct Tag
+	{
+		[JsonProperty("value")]
+		public readonly int Value;
+		[JsonProperty("name")]
+		public readonly string Name;
+	}
+#pragma warning restore 1591
 }

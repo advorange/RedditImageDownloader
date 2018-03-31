@@ -112,8 +112,9 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="tries"></param>
 		/// <returns></returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
-		public async Task<string> GetMainTextAndRetryIfRateLimitedAsync(Uri uri, TimeSpan wait, int tries = 3)
+		public async Task<MainTextResult> GetMainTextAndRetryIfRateLimitedAsync(Uri uri, TimeSpan wait = default, int tries = 3)
 		{
+			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
 			for (int i = 0; i < tries; ++i)
 			{
@@ -133,12 +134,8 @@ namespace ImageDL.Classes.ImageDownloading
 						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
 						continue;
 					}
-					else if (!resp.IsSuccessStatusCode)
-					{
-						//Just throw at this point since it's most likely irrecoverable
-						resp.EnsureSuccessStatusCode();
-					}
-					return await resp.Content.ReadAsStringAsync().CAF();
+
+					return new MainTextResult(resp.StatusCode, resp.IsSuccessStatusCode, await resp.Content.ReadAsStringAsync().CAF());
 				}
 			}
 			throw new HttpRequestException($"Unable to get the requested text after {tries} tries.");
@@ -190,6 +187,32 @@ namespace ImageDL.Classes.ImageDownloading
 			};
 			req.Headers.Referrer = uri; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
 			return await SendAsync(req).CAF();
+		}
+
+		/// <summary>
+		/// Result of getting the text from a webpage.
+		/// </summary>
+		public struct MainTextResult
+		{
+			/// <summary>
+			/// The http status code for the request.
+			/// </summary>
+			public readonly HttpStatusCode StatusCode;
+			/// <summary>
+			/// Whether or not the request was successful.
+			/// </summary>
+			public readonly bool IsSuccess;
+			/// <summary>
+			/// The text of the request.
+			/// </summary>
+			public readonly string Text;
+
+			internal MainTextResult(HttpStatusCode statusCode, bool isSuccess, string text)
+			{
+				StatusCode = statusCode;
+				IsSuccess = isSuccess;
+				Text = text;
+			}
 		}
 	}
 }

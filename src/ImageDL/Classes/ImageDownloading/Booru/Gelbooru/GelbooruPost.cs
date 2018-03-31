@@ -3,12 +3,12 @@ using System;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 {
+#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model (gotten through the Xml endpoint though) for a Gelbooru post.
 	/// </summary>
 	public sealed class GelbooruPost : BooruPost
 	{
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 		[JsonProperty("change")]
 		public readonly int Change;
 		[JsonProperty("sample_url")]
@@ -53,6 +53,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		public override DateTime CreatedAt => _CreatedAt.ToUniversalTime();
 		[JsonIgnore]
 		public override string Tags => _Tags;
-#pragma warning restore 1591, 649
 	}
+#pragma warning restore 1591, 649
 }

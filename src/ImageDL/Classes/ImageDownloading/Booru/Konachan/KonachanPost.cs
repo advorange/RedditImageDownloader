@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 {
+#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a Konachan post.
 	/// </summary>
 	public sealed class KonachanPost : BooruPost
 	{
-#pragma warning disable 1591, 649
 		[JsonProperty("creator_id")]
 		public readonly int CreatorId;
 		[JsonProperty("author")]
@@ -79,35 +79,35 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		public override DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_CreatedAt)).ToUniversalTime();
 		[JsonIgnore]
 		public override string Tags => _Tags;
-
-		/// <summary>
-		/// Json model for a frame, whatever that is.
-		/// </summary>
-		public class Frame
-		{
-			[JsonProperty("source_left")]
-			public readonly int SourceLeft;
-			[JsonProperty("source_top")]
-			public readonly int SourceTop;
-			[JsonProperty("source_width")]
-			public readonly int SourceWidth;
-			[JsonProperty("source_height")]
-			public readonly int SourceHeight;
-			[JsonProperty("post_id")]
-			public readonly int PostId;
-			[JsonProperty("width")]
-			public readonly int Width;
-			[JsonProperty("height")]
-			public readonly int Height;
-			[JsonProperty("preview_width")]
-			public readonly int PreviewWidth;
-			[JsonProperty("preview_height")]
-			public readonly int PreviewHeight;
-			[JsonProperty("url")]
-			public readonly string Url;
-			[JsonProperty("preview_url")]
-			public readonly string PreviewUrl;
-		}
-#pragma warning restore 1591, 649
 	}
+
+	/// <summary>
+	/// Json model for a frame, whatever that is.
+	/// </summary>
+	public struct Frame
+	{
+		[JsonProperty("source_left")]
+		public readonly int SourceLeft;
+		[JsonProperty("source_top")]
+		public readonly int SourceTop;
+		[JsonProperty("source_width")]
+		public readonly int SourceWidth;
+		[JsonProperty("source_height")]
+		public readonly int SourceHeight;
+		[JsonProperty("post_id")]
+		public readonly int PostId;
+		[JsonProperty("width")]
+		public readonly int Width;
+		[JsonProperty("height")]
+		public readonly int Height;
+		[JsonProperty("preview_width")]
+		public readonly int PreviewWidth;
+		[JsonProperty("preview_height")]
+		public readonly int PreviewHeight;
+		[JsonProperty("url")]
+		public readonly string Url;
+		[JsonProperty("preview_url")]
+		public readonly string PreviewUrl;
+	}
+#pragma warning restore 1591, 649
 }

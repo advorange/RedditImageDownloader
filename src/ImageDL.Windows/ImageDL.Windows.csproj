@@ -238,7 +238,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ImageDL.Core\ImageDL.csproj">
+    <ProjectReference Include="..\ImageDL\ImageDL.csproj">
       <Project>{2d097060-95df-4d63-82c3-d72182ece92f}</Project>
       <Name>ImageDL</Name>
     </ProjectReference>

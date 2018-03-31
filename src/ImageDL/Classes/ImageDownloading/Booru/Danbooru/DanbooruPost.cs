@@ -5,12 +5,12 @@ using System.Linq;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 {
+#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a Danbooru post.
 	/// </summary>
 	public sealed class DanbooruPost : BooruPost
 	{
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 		[JsonProperty("uploader_id")]
 		public readonly int UploaderId;
 		[JsonProperty("approver_id")]
@@ -150,37 +150,37 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		[JsonIgnore]
 		public string[] Pools => String.IsNullOrWhiteSpace(PoolString)
 			? new string[0] : PoolString.Split(' ').Select(x => x.Replace("pool:", "")).ToArray();
-#pragma warning restore 1591, 649
-
-		/// <summary>
-		/// The type of tags to get.
-		/// </summary>
-		public enum TagType
-		{
-			/// <summary>
-			/// Every tag that the image has on it. General, meta, etc.
-			/// </summary>
-			All,
-			/// <summary>
-			/// Tags for what the character is doing or looking like.
-			/// </summary>
-			General,
-			/// <summary>
-			/// Tags for who is in the image.
-			/// </summary>
-			Character,
-			/// <summary>
-			/// Tags for who owns the image.
-			/// </summary>
-			Copyright,
-			/// <summary>
-			/// Tags for who made the image.
-			/// </summary>
-			Artist,
-			/// <summary>
-			/// Tags about the image file. Resolution, official, etc.
-			/// </summary>
-			Meta,
-		}
 	}
+
+	/// <summary>
+	/// The type of tags to get.
+	/// </summary>
+	public enum TagType
+	{
+		/// <summary>
+		/// Every tag that the image has on it. General, meta, etc.
+		/// </summary>
+		All,
+		/// <summary>
+		/// Tags for what the character is doing or looking like.
+		/// </summary>
+		General,
+		/// <summary>
+		/// Tags for who is in the image.
+		/// </summary>
+		Character,
+		/// <summary>
+		/// Tags for who owns the image.
+		/// </summary>
+		Copyright,
+		/// <summary>
+		/// Tags for who made the image.
+		/// </summary>
+		Artist,
+		/// <summary>
+		/// Tags about the image file. Resolution, official, etc.
+		/// </summary>
+		Meta,
+	}
+#pragma warning restore 1591, 649
 }

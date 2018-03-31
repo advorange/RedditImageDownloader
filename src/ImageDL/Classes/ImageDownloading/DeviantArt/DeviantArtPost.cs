@@ -7,7 +7,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Model for similarities between scraped posts and posts gotten through the API.
 	/// </summary>
-	public class DeviantArtPost
+	public sealed class DeviantArtPost
 	{
 		/// <summary>
 		/// Whether or not the post is NSFW.
@@ -50,7 +50,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// </summary>
 		public readonly List<Thumbnail> Thumbnails;
 
-		internal DeviantArtPost(ApiDeviantArtResults.ApiDeviantArtPost api)
+		internal DeviantArtPost(ApiDeviantArtPost api)
 		{
 			IsMature = api.IsMature;
 			PostId = Convert.ToInt32(api.Url.Split('-').Last());
@@ -71,41 +71,41 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			Height = scrape.Height;
 			Favorites = -1;
 			Source = scrape.Source;
-			AuthorUsername = scrape.Author?.Username;
-			AuthorUserIcon = scrape.Author?.UserIcon;
-			AuthorUUID = scrape.Author?.UUID;
+			AuthorUsername = scrape.Author.Username;
+			AuthorUserIcon = scrape.Author.UserIcon;
+			AuthorUUID = scrape.Author.UUID;
 			Thumbnails = scrape.Sizes?.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent))?.ToList() ?? new List<Thumbnail>();
 		}
+	}
 
+	/// <summary>
+	/// Thumbnails for an image.
+	/// </summary>
+	public struct Thumbnail
+	{
 		/// <summary>
-		/// Thumbnails for an image.
+		/// Is the thumbnail see through?
 		/// </summary>
-		public class Thumbnail
-		{
-			/// <summary>
-			/// Is the thumbnail see through?
-			/// </summary>
-			public readonly bool IsTransparent;
-			/// <summary>
-			/// The width of the thumbnail.
-			/// </summary>
-			public readonly int Width;
-			/// <summary>
-			/// The height of the thumbnail.
-			/// </summary>
-			public readonly int Height;
-			/// <summary>
-			/// The link to the thumbnail.
-			/// </summary>
-			public readonly string Source;
+		public readonly bool IsTransparent;
+		/// <summary>
+		/// The width of the thumbnail.
+		/// </summary>
+		public readonly int Width;
+		/// <summary>
+		/// The height of the thumbnail.
+		/// </summary>
+		public readonly int Height;
+		/// <summary>
+		/// The link to the thumbnail.
+		/// </summary>
+		public readonly string Source;
 
-			internal Thumbnail(string source, int width, int height, bool isTransparent)
-			{
-				IsTransparent = isTransparent;
-				Width = width;
-				Height = height;
-				Source = source;
-			}
+		internal Thumbnail(string source, int width, int height, bool isTransparent)
+		{
+			IsTransparent = isTransparent;
+			Width = width;
+			Height = height;
+			Source = source;
 		}
 	}
 }

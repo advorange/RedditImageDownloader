@@ -1,14 +1,11 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
 
 namespace ImageDL.Classes.ImageDownloading.Booru
 {
@@ -69,17 +66,21 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<T> validPosts)
+		protected override async Task GatherPostsAsync(List<T> list)
 		{
 			//Uses for instead of while to save 2 lines.
-			for (int i = 0; validPosts.Count < AmountToDownload; ++i)
+			for (int i = 0; list.Count < AmountToDownload; ++i)
 			{
-				var finished = false;
 				//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
-				var text = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i)), TimeSpan.FromSeconds(2)).CAF();
-				//Deserialize the text and look through all the posts
-				var posts = Parse(text);
-				foreach (var post in posts)
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i))).CAF();
+				if (!result.IsSuccess)
+				{
+					break;
+				}
+
+				var parsed = Parse(result.Text);
+				var finished = false;
+				foreach (var post in parsed)
 				{
 					if (post.CreatedAt < OldestAllowed)
 					{
@@ -91,20 +92,20 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 						continue;
 					}
 
-					validPosts.Add(post);
-					if (validPosts.Count == AmountToDownload)
+					list.Add(post);
+					if (list.Count == AmountToDownload)
 					{
 						finished = true;
 						break;
 					}
-					else if (validPosts.Count % 25 == 0)
+					else if (list.Count % 25 == 0)
 					{
-						Console.WriteLine($"{validPosts.Count} {typeof(T).Name.FormatTitle().Split(' ')[0]} posts found.");
+						Console.WriteLine($"{list.Count} {typeof(T).Name.FormatTitle().Split(' ')[0]} posts found.");
 					}
 				}
 
 				//Anything less than a full page means everything's been searched
-				if (finished || posts.Count < 100)
+				if (finished || parsed.Count < 100)
 				{
 					break;
 				}
@@ -135,6 +136,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <inheritdoc />
 		protected override ContentLink CreateContentLink(T post, Uri uri, string reason)
 		{
+			//If favorites are there then use that, otherwise just use the post id
 			return new ContentLink(uri, post.Score, reason);
 		}
 

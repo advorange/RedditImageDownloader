@@ -43,6 +43,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		[JsonProperty("has_children")]
 		public readonly bool HasChildren;
+		[JsonProperty("file_url")]
+		private readonly string _FileUrl = null;
+
 		/// <summary>
 		/// Where the image is located.
 		/// </summary>
@@ -95,8 +98,5 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		[JsonIgnore]
 		public abstract string Tags { get; }
-
-		[JsonProperty("file_url")]
-		private readonly string _FileUrl = null;
 	}
 }
