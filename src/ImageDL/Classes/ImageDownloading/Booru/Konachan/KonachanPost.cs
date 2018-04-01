@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591, 649
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 {
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a Konachan post.
 	/// </summary>
@@ -109,5 +109,4 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		[JsonProperty("preview_url")]
 		public readonly string PreviewUrl;
 	}
-#pragma warning restore 1591, 649
 }

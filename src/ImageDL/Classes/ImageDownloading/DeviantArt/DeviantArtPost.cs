@@ -76,6 +76,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			AuthorUUID = scrape.Author.UUID;
 			Thumbnails = scrape.Sizes?.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent))?.ToList() ?? new List<Thumbnail>();
 		}
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return PostId.ToString();
+		}
 	}
 
 	/// <summary>

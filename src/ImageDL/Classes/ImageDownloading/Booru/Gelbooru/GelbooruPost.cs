@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591, 649
+using Newtonsoft.Json;
 using System;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 {
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model (gotten through the Xml endpoint though) for a Gelbooru post.
 	/// </summary>
@@ -54,5 +54,4 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		[JsonIgnore]
 		public override string Tags => _Tags;
 	}
-#pragma warning restore 1591, 649
 }

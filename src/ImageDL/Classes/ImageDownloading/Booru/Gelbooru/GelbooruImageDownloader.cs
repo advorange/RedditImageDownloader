@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Xml;
+using Model = ImageDL.Classes.ImageDownloading.Booru.Gelbooru.GelbooruPost;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 {
 	/// <summary>
 	/// Downloads images from Danbooru.
 	/// </summary>
-	public sealed class GelbooruImageDownloader : BooruImageDownloader<GelbooruPost>
+	public sealed class GelbooruImageDownloader : BooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="GelbooruImageDownloader"/>.
@@ -31,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 				$"&pid={page}");
 		}
 		/// <inheritdoc />
-		protected override List<GelbooruPost> Parse(string text)
+		protected override List<Model> Parse(string text)
 		{
 			//Parses through Xml instead of Json since the Json doesn't include some information idk why
 			var doc = new XmlDocument();
@@ -60,7 +61,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 					post[prop.Name.Substring(1)] = prop.Value;
 				}
 			}
-			return posts.ToObject<List<GelbooruPost>>();
+			return posts.ToObject<List<Model>>();
 		}
 	}
 }

@@ -1,10 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591, 649
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for searching for DeviantArt posts through the API.
 	/// </summary>
@@ -64,6 +65,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_PublishedTime)).ToUniversalTime();
+
+		public override string ToString()
+		{
+			return Url.Split('-').Last();
+		}
 	}
 
 	/// <summary>
@@ -108,5 +114,4 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonProperty("src")]
 		public readonly string Source;
 	}
-#pragma warning restore 1591, 649
 }

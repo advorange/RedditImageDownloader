@@ -10,13 +10,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Model = ImageDL.Classes.ImageDownloading.Eshuushuu.EshuushuuPost;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 {
 	/// <summary>
 	/// Downloads images from Eshuushuu.
 	/// </summary>
-	public sealed class EshuushuuImageDownloader : ImageDownloader<EshuushuuPost>
+	public sealed class EshuushuuImageDownloader : ImageDownloader<Model>
 	{
 		/// <summary>
 		/// The terms to search for. Joined by +, must be numbers.
@@ -48,9 +49,9 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<EshuushuuPost> list)
+		protected override async Task GatherPostsAsync(List<Model> list)
 		{
-			var parsed = new List<EshuushuuPost>();
+			var parsed = new List<Model>();
 			var keepGoing = true;
 			//Iterate to get the next page of results
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 15); ++i)
@@ -88,17 +89,17 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			}
 		}
 		/// <inheritdoc />
-		protected override List<EshuushuuPost> OrderAndRemoveDuplicates(List<EshuushuuPost> list)
+		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
 		{
 			return list.OrderByDescending(x => x.Favorites).ToList();
 		}
 		/// <inheritdoc />
-		protected override void WritePostToConsole(EshuushuuPost post, int count)
+		protected override void WritePostToConsole(Model post, int count)
 		{
 			Console.WriteLine($"[#{count}|\u2191{post.Favorites}] {post.PostUrl}");
 		}
 		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(EshuushuuPost post, Uri uri)
+		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
 		{
 			var extension = Path.GetExtension(uri.LocalPath);
 			var name = $"{post.PostId}_" +
@@ -107,12 +108,12 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(EshuushuuPost post)
+		protected override async Task<ScrapeResult> GatherImagesAsync(Model post)
 		{
 			return await Client.ScrapeImagesAsync(new Uri($"http://e-shuushuu.net/images/{post.Filename}")).CAF();
 		}
 		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(EshuushuuPost post, Uri uri, string reason)
+		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
 		{
 			return new ContentLink(uri, post.Favorites, reason);
 		}
@@ -125,7 +126,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				$"&tags={WebUtility.UrlEncode(Tags)}" +
 				$"&page={page}");
 		}
-		private async Task<EshuushuuPost> Parse(int id)
+		private async Task<Model> Parse(int id)
 		{
 			var query = $"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}";
 			var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
@@ -179,7 +180,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					jObj.Add(name, span.First().InnerText);
 				}
 			}
-			return jObj.ToObject<EshuushuuPost>();
+			return jObj.ToObject<Model>();
 		}
 	}
 }

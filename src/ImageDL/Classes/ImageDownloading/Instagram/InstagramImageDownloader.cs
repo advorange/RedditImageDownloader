@@ -1,23 +1,25 @@
 ﻿using AdvorangesUtils;
+using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
+using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
 using ImageDL.Classes.ImageScraping;
+using ImageDL.Classes.SettingParsing;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using System.Linq;
-using Newtonsoft.Json;
 using System.Net;
-using ImageDL.Classes.SettingParsing;
-using HtmlAgilityPack;
-using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
+using Model = ImageDL.Classes.ImageDownloading.Instagram.Models.MediaNode;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram
 {
 	/// <summary>
 	/// Downloads images from Instagram.
 	/// </summary>
-	public class InstagramImageDownloader : ImageDownloader<InstagramPost>
+	public class InstagramImageDownloader : ImageDownloader<Model>
 	{
 		/// <summary>
 		/// The name of the user to search for.
@@ -42,10 +44,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<InstagramPost> list)
+		protected override async Task GatherPostsAsync(List<Model> list)
 		{
 			var userId = 0UL;
-			var parsed = new InstagramResult();
+			var parsed = new MediaTimeline();
 			var keepGoing = true;
 			//Iterate to update the pagination start point
 			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
@@ -74,19 +76,44 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					break;
 				}
 
-				parsed = JObject.Parse(result.Text)["data"]["user"]["edge_owner_to_timeline_media"].ToObject<InstagramResult>();
-				foreach (var node in parsed.Nodes)
+				var sw = new System.Diagnostics.Stopwatch();
+				sw.Start();
+				var p = JsonConvert.DeserializeObject<InstagramResult>(result.Text);
+				var posts = await Task.WhenAll((parsed = p.Data.User.Content).Posts
+					.Select(async x => await Parse(x.Node).CAF())).CAF();
+				sw.Stop();
+				foreach (var post in posts)
 				{
-					if (!(keepGoing = node.Post.CreatedAt >= OldestAllowed))
+					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
 					{
 						break;
 					}
-					else if (!FitsSizeRequirements(null, node.Post.Dimensions.Width, node.Post.Dimensions.Height, out _)
-						|| node.Post.LikeInfo.Count < MinScore)
+					else if (post.LikeInfo.Count < MinScore)
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, node.Post)))
+					else if (post.HasChildren)
+					{
+						//Remove all images that don't meet the size requirements
+						for (int j = post.ChildrenInfo.Nodes.Count - 1; j >= 0; --j)
+						{
+							var image = post.ChildrenInfo.Nodes[j].Child;
+							if (!FitsSizeRequirements(null, image.Dimensions.Width, image.Dimensions.Height, out _))
+							{
+								post.ChildrenInfo.Nodes.RemoveAt(j);
+							}
+						}
+						if (!post.ChildrenInfo.Nodes.Any())
+						{
+							continue;
+						}
+					}
+					//If there are no children, we can check the post's dimensions directly
+					else if (!FitsSizeRequirements(null, post.Dimensions.Width, post.Dimensions.Height, out _))
+					{
+						continue;
+					}
+					if (!(keepGoing = Add(list, post)))
 					{
 						break;
 					}
@@ -94,29 +121,33 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			}
 		}
 		/// <inheritdoc />
-		protected override List<InstagramPost> OrderAndRemoveDuplicates(List<InstagramPost> list)
+		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
 		{
 			return list.OrderByDescending(x => x.LikeInfo.Count).ToList();
 		}
 		/// <inheritdoc />
-		protected override void WritePostToConsole(InstagramPost post, int count)
+		protected override void WritePostToConsole(Model post, int count)
 		{
 			Console.WriteLine($"[#{count}|\u2191{post.LikeInfo.Count}] https://www.instagram.com/p/{post.Shortcode}/");
 		}
 		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(InstagramPost post, Uri uri)
+		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
 		{
 			var extension = Path.GetExtension(uri.LocalPath);
 			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
 			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(InstagramPost post)
+		protected override Task<ScrapeResult> GatherImagesAsync(Model post)
 		{
-			return await Client.ScrapeImagesAsync(new Uri(post.DisplayUrl)).CAF();
+			var postUrl = new Uri($"https://www.instagram.com/p/{post.Shortcode}");
+			var images = post.HasChildren
+				? post.ChildrenInfo.Nodes.Select(x => new Uri(x.Child.DisplayUrl))
+				: new[] { new Uri(post.DisplayUrl) };
+			return Task.FromResult(new ScrapeResult(postUrl, false, new InstagramScraper(), images, null));
 		}
 		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(InstagramPost post, Uri uri, string reason)
+		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
 		{
 			return new ContentLink(uri, post.LikeInfo.Count, reason);
 		}
@@ -126,7 +157,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
 			{
 				{ "id", userId }, //The id of the user to search
-				{ "first", 12 }, //The amount of posts to get?
+				{ "first", 100 }, //The amount of posts to get
 				{ "after", nextPagination ?? "" }, //The position in the pagination
 			});
 			return new Uri("https://www.instagram.com/graphql/query/" +
@@ -168,6 +199,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var queryHash = queryCut.Substring(0, queryCut.IndexOf('"'));
 
 			return (queryHash, Convert.ToUInt64(id));
+		}
+		private async Task<Model> Parse(Model post)
+		{
+			var query = $"https://www.instagram.com/p/{post.Shortcode}/?__a=1";
+			var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
+			if (!result.IsSuccess)
+			{
+				throw new HttpRequestException($"Unable to get all the metadata for {post.Id}.");
+			}
+
+			return JsonConvert.DeserializeObject<GraphqlResult>(result.Text).Graphql.ShortcodeMedia;
 		}
 	}
 }

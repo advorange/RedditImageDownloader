@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,6 @@ using System.Text.RegularExpressions;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 {
-#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a post from Eshuushuu.
 	/// </summary>
@@ -87,6 +87,11 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		public int Width => Convert.ToInt32(_Dimensions.Split('x', ' ')[0]);
 		[JsonIgnore]
 		public int Height => Convert.ToInt32(_Dimensions.Split('x', ' ')[1]);
+
+		public override string ToString()
+		{
+			return PostId.ToString();
+		}
 	}
 
 	/// <summary>
@@ -99,5 +104,4 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		[JsonProperty("name")]
 		public readonly string Name;
 	}
-#pragma warning restore 1591
 }

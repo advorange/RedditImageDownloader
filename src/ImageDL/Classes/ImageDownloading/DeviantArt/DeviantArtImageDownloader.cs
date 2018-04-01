@@ -10,13 +10,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Model = ImageDL.Classes.ImageDownloading.DeviantArt.DeviantArtPost;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
 	/// <summary>
 	/// Downloads images from DeviantArt.
 	/// </summary>
-	public sealed class DeviantArtImageDownloader : ImageDownloader<DeviantArtPost>
+	public sealed class DeviantArtImageDownloader : ImageDownloader<Model>
 	{
 		private const string SEARCH = "https://www.deviantartsupport.com/en/article/are-there-any-tricks-to-narrowing-down-a-search-on-deviantart";
 		private const string API = "https://www.deviantart.com/developers/";
@@ -72,7 +73,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<DeviantArtPost> validPosts)
+		protected override async Task GatherPostsAsync(List<Model> validPosts)
 		{
 			try
 			{
@@ -90,30 +91,30 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			catch (WebException we) when (we.Message.Contains("403")) { } //Gotten when scraping since don't know when to stop.
 		}
 		/// <inheritdoc />
-		protected override List<DeviantArtPost> OrderAndRemoveDuplicates(List<DeviantArtPost> list)
+		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
 		{
 			return list.GroupBy(x => x.Source).Select(x => x.First()).OrderByDescending(x => x.Favorites).ToList();
 		}
 		/// <inheritdoc />
-		protected override void WritePostToConsole(DeviantArtPost post, int count)
+		protected override void WritePostToConsole(Model post, int count)
 		{
 			var postHasScore = post.Favorites > 0 ? $"|\u2191{post.Favorites}" : "";
 			Console.WriteLine($"[#{count}{postHasScore}] {post.Source}");
 		}
 		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(DeviantArtPost post, Uri uri)
+		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
 		{
 			var extension = Path.GetExtension(uri.LocalPath);
 			var name = $"{post.PostId}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
 			return GenerateFileInfo(Directory, name, extension);
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(DeviantArtPost post)
+		protected override async Task<ScrapeResult> GatherImagesAsync(Model post)
 		{
 			return await Client.ScrapeImagesAsync(new Uri(post.Source)).CAF();
 		}
 		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(DeviantArtPost post, Uri uri, string reason)
+		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
 		{
 			//If favorites are there then use that, otherwise just use the post id
 			return new ContentLink(uri, post.Favorites < 0 ? post.PostId : post.Favorites, reason);
@@ -165,7 +166,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return (token, duration);
 		}
-		private async Task GetPostsThroughScraping(List<DeviantArtPost> list)
+		private async Task GetPostsThroughScraping(List<Model> list)
 		{
 			var parsed = new List<DeviantArtScrappedPost>();
 			var keepGoing = true;
@@ -199,14 +200,14 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, new DeviantArtPost(post))))
+					else if (!(keepGoing = Add(list, new Model(post))))
 					{
 						break;
 					}
 				}
 			}
 		}
-		private async Task GetPostsThroughApi(List<DeviantArtPost> list)
+		private async Task GetPostsThroughApi(List<Model> list)
 		{
 			var parsed = new DeviantArtApiResults();
 			var keepGoing = true;
@@ -249,7 +250,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, new DeviantArtPost(post))))
+					else if (!(keepGoing = Add(list, new Model(post))))
 					{
 						break;
 					}

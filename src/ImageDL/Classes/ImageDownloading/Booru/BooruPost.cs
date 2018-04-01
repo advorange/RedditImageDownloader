@@ -98,5 +98,11 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		[JsonIgnore]
 		public abstract string Tags { get; }
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Id.ToString();
+		}
 	}
 }

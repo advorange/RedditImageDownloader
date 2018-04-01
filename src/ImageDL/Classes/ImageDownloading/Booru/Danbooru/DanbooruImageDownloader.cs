@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Model = ImageDL.Classes.ImageDownloading.Booru.Danbooru.DanbooruPost;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 {
 	/// <summary>
 	/// Downloads images from Danbooru.
 	/// </summary>
-	public sealed class DanbooruImageDownloader : BooruImageDownloader<DanbooruPost>
+	public sealed class DanbooruImageDownloader : BooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="DanbooruImageDownloader"/>.
@@ -25,9 +26,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 				$"&page={page}");
 		}
 		/// <inheritdoc />
-		protected override List<DanbooruPost> Parse(string text)
+		protected override List<Model> Parse(string text)
 		{
-			return JsonConvert.DeserializeObject<List<DanbooruPost>>(text);
+			return JsonConvert.DeserializeObject<List<Model>>(text);
 		}
 	}
 }

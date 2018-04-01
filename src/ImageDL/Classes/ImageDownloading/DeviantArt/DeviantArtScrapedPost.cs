@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
-#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via scraping a gallery.
 	/// </summary>
@@ -31,6 +31,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly ScrapedAuthorInfo Author;
 		[JsonProperty("sizing")]
 		public readonly List<ScrapedThumbnail> Sizes;
+
+		public override string ToString()
+		{
+			return Id.ToString();
+		}
 	}
 
 	/// <summary>
@@ -66,5 +71,4 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonProperty("uuid")]
 		public readonly string UUID;
 	}
-#pragma warning restore 1591
 }

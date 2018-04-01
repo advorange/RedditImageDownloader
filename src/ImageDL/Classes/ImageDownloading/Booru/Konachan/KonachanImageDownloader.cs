@@ -2,13 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Model = ImageDL.Classes.ImageDownloading.Booru.Konachan.KonachanPost;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 {
 	/// <summary>
 	/// Downloads images from Konachan.
 	/// </summary>
-	public sealed class KonachanImageDownloader : BooruImageDownloader<KonachanPost>
+	public sealed class KonachanImageDownloader : BooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="KonachanImageDownloader"/>.
@@ -24,9 +25,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 				$"&page={page}");
 		}
 		/// <inheritdoc />
-		protected override List<KonachanPost> Parse(string text)
+		protected override List<Model> Parse(string text)
 		{
-			return JsonConvert.DeserializeObject<List<KonachanPost>>(text);
+			return JsonConvert.DeserializeObject<List<Model>>(text);
 		}
 	}
 }

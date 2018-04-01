@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿#pragma warning disable 1591, 649
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
 {
-#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for a post from Imgur. Inherits from <see cref="ImgurImage"/> because there is a chance the post isn't an album.
 	/// </summary>
@@ -167,5 +167,4 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		[JsonProperty("description_annotations")]
 		public readonly object DescriptionAnnotations; //Not sure what type they are
 	}
-#pragma warning restore 1591, 649
 }
