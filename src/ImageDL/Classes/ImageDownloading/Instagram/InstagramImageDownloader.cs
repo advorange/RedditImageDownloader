@@ -51,24 +51,24 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
-				if (userId == 0)
+				if (String.IsNullOrWhiteSpace(Client[Name]))
 				{
 					var (QueryHash, UserId) = await GetQueryHashAndUserId().CAF();
 					if (QueryHash == null)
 					{
 						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
 					}
-					Client.UpdateAPIKey(QueryHash, TimeSpan.FromDays(1));
+					Client.ApiKeys[Name] = new ApiKey(QueryHash);
 					userId = UserId;
 				}
 
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(userId, Client.APIKey, nextPage)).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(userId, Client[Name], nextPage)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
 					if (result.Text.Contains("query_hash"))
 					{
-						userId = 0;
+						Client.ApiKeys[Name] = new ApiKey(null);
 						continue;
 					}
 					break;

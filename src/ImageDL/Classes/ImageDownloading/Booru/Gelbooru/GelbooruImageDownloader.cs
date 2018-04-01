@@ -19,16 +19,16 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		public GelbooruImageDownloader() : base("Gelbooru", int.MaxValue, false) { }
 
 		/// <inheritdoc />
-		protected override string GenerateQuery(int page)
+		protected override Uri GenerateQuery(int page)
 		{
-			return $"https://gelbooru.com/index.php" +
+			return new Uri($"https://gelbooru.com/index.php" +
 				$"?page=dapi" +
 				$"&s=post" +
 				$"&q=index" +
 				$"&json=0" +
 				$"&limit=100" +
 				$"&tags={WebUtility.UrlEncode(Tags)}" +
-				$"&pid={page}";
+				$"&pid={page}");
 		}
 		/// <inheritdoc />
 		protected override List<GelbooruPost> Parse(string text)

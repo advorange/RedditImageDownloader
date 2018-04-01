@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
-#pragma warning disable 1591 //Disabled since most of these are self explanatory and this is a glorified Json model
+#pragma warning disable 1591, 649 //Disabled since most of these are self explanatory and this is a glorified Json model
 	/// <summary>
 	/// Json model for searching for DeviantArt posts through the API.
 	/// </summary>
@@ -108,5 +108,5 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonProperty("src")]
 		public readonly string Source;
 	}
-#pragma warning restore 1591
+#pragma warning restore 1591, 649
 }

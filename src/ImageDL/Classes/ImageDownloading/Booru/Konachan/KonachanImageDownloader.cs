@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -15,12 +16,12 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		public KonachanImageDownloader() : base("Konachan", 6) { }
 
 		/// <inheritdoc />
-		protected override string GenerateQuery(int page)
+		protected override Uri GenerateQuery(int page)
 		{
-			return $"https://www.konachan.com/post.json" +
+			return new Uri($"https://www.konachan.com/post.json" +
 				$"?limit=100" +
 				$"&tags={WebUtility.UrlEncode(Tags)}" +
-				$"&page={page}";
+				$"&page={page}");
 		}
 		/// <inheritdoc />
 		protected override List<KonachanPost> Parse(string text)

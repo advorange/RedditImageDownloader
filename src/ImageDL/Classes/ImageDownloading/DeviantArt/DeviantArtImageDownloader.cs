@@ -76,10 +76,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		{
 			try
 			{
-				var (token, duration) = await GetTokenAsync().CAF();
-				if (token != null)
+				var (Token, Duration) = await GetTokenAsync().CAF();
+				if (Token != null)
 				{
-					Client.UpdateAPIKey(token, duration);
+					Client.ApiKeys[Name] = new ApiKey(Token, Duration);
 					await GetPostsThroughApi(validPosts).CAF();
 				}
 				else
@@ -134,13 +134,13 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				$"?offset={offset}" +
 				$"&q={GenerateTags()}");
 		}
-		private Uri GenerateApiQuery(int offset)
+		private Uri GenerateApiQuery(string token, int offset)
 		{
 			return new Uri($"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 				$"?offset={offset}" +
 				$"&mature_content=true" +
 				$"&q={GenerateTags()}" +
-				$"&access_token={Client.APIKey}");
+				$"&access_token={token}");
 		}
 		private async Task<(string Token, TimeSpan Duration)> GetTokenAsync()
 		{
@@ -213,23 +213,23 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			//Iterate to get the new offset to start at
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
 			{
-				if (String.IsNullOrWhiteSpace(Client.APIKey))
+				if (String.IsNullOrWhiteSpace(Client[Name]))
 				{
-					var (newToken, duration) = await GetTokenAsync().CAF();
-					if (newToken == null)
+					var (Token, Duration) = await GetTokenAsync().CAF();
+					if (Token == null)
 					{
 						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
 					}
-					Client.UpdateAPIKey(newToken, duration);
+					Client.ApiKeys[Name] = new ApiKey(Token, Duration);
 				}
 
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateApiQuery(i)).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateApiQuery(Client[Name], i)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the access token, try to get another one
 					if (result.Text.Contains("access_token"))
 					{
-						Client.UpdateAPIKey("", TimeSpan.FromDays(1));
+						Client.ApiKeys[Name] = new ApiKey(null);
 						i -= parsed.Results.Count;
 						continue;
 					}

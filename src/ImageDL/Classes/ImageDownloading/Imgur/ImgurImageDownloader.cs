@@ -52,23 +52,23 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
 			{
 				//If the key is empty either this just started or it was reset due to the key becoming invalid
-				if (String.IsNullOrWhiteSpace(Client.APIKey))
+				if (String.IsNullOrWhiteSpace(Client[Name]))
 				{
 					var clientId = await GetClientId().CAF();
 					if (clientId == null)
 					{
 						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
 					}
-					Client.UpdateAPIKey(clientId, TimeSpan.FromDays(1));
+					Client.ApiKeys[Name] = new ApiKey(clientId);
 				}
 
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateGalleryQuery(Client.APIKey, i)).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateGalleryQuery(Client[Name], i)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the api key, try to get another one
 					if (result.Text.Contains("client_id"))
 					{
-						Client.UpdateAPIKey("", TimeSpan.FromDays(1));
+						Client.ApiKeys[Name] = new ApiKey(null);
 						--i;
 						continue;
 					}
@@ -89,7 +89,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					else if (post.IsAlbum)
 					{
 						//Make sure we have all the images
-						await GatherAllImagesAsync(Client.APIKey, post).CAF();
+						await GatherAllImagesAsync(Client[Name], post).CAF();
 					}
 					//Remove all images that don't meet the size requirements
 					for (int j = post.ImagesCount - 1; j >= 0; --j)

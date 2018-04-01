@@ -19,36 +19,36 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Regex for checking if a uri leads to animated content (video, gif, etc).
 		/// </summary>
-		public List<Regex> AnimatedContentDomains { get; set; }
+		public List<Regex> AnimatedContentDomains { get; set; } = new List<Regex>
+		{
+			new Regex(@"\.youtu\.be", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.youtube\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.gfycat\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.streamable\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.v\.redd\.it", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.vimeo\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.dailymotion\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.twitch\.tv", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+			new Regex(@"\.liveleak\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
+		};
 		/// <summary>
 		/// Scrapers for gathering images from websites.
 		/// </summary>
-		public List<WebsiteScraper> Scrapers { get; set; }
+		public List<WebsiteScraper> Scrapers { get; set; } = typeof(IImageDownloader).Assembly.DefinedTypes
+			.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
+			.Select(x => Activator.CreateInstance(x))
+			.Cast<WebsiteScraper>()
+			.ToList();
 		/// <summary>
-		/// The currently used API key. This doesn't lead to any site in specific.
+		/// Holds api keys for specific websites.
 		/// </summary>
-		public string APIKey => _APIKey;
-		/// <summary>
-		/// The last time the API key was updated.
-		/// </summary>
-		public DateTime APIKeyLastUpdated => _APIKeyLastUpdated;
-		/// <summary>
-		/// How long until the API key is invalid.
-		/// </summary>
-		public TimeSpan APIKeyDuration => _APIKeyDuration;
-
-		private string _APIKey;
-		private DateTime _APIKeyLastUpdated;
-		private TimeSpan _APIKeyDuration;
+		public Dictionary<string, ApiKey> ApiKeys { get; set; } = new Dictionary<string, ApiKey>();
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
 		/// </summary>
 		public ImageDownloaderClient() : base(GetDefaultClientHandler())
 		{
-			AnimatedContentDomains = GetDefaultAnimatedContentDomains();
-			Scrapers = GetDefaultScrapers();
-
 			Timeout = TimeSpan.FromMilliseconds(60000);
 			DefaultRequestHeaders.Add("User-Agent", $"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)");
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
@@ -68,41 +68,7 @@ namespace ImageDL.Classes.ImageDownloading
 				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 			};
 		}
-		private static List<Regex> GetDefaultAnimatedContentDomains()
-		{
-			return new List<Regex>
-			{
-				new Regex(@"\.youtu\.be", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.youtube\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.gfycat\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.streamable\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.v\.redd\.it", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.vimeo\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.dailymotion\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.twitch\.tv", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-				new Regex(@"\.liveleak\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			};
-		}
-		private static List<WebsiteScraper> GetDefaultScrapers()
-		{
-			return typeof(IImageDownloader).Assembly.DefinedTypes
-				.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
-				.Select(x => Activator.CreateInstance(x))
-				.Cast<WebsiteScraper>()
-				.ToList();
-		}
 
-		/// <summary>
-		/// Updates the stored API key and the time it needs to reset.
-		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="duration"></param>
-		public void UpdateAPIKey(string key, TimeSpan duration)
-		{
-			_APIKey = key;
-			_APIKeyLastUpdated = DateTime.UtcNow;
-			_APIKeyDuration = duration;
-		}
 		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up/all errors other than 421 and 429.
@@ -190,29 +156,39 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <summary>
-		/// Result of getting the text from a webpage.
+		/// Attempts to get the api key for the specified website.
 		/// </summary>
-		public struct MainTextResult
+		/// <param name="name"></param>
+		/// <returns></returns>
+		public string this[string name]
 		{
-			/// <summary>
-			/// The http status code for the request.
-			/// </summary>
-			public readonly HttpStatusCode StatusCode;
-			/// <summary>
-			/// Whether or not the request was successful.
-			/// </summary>
-			public readonly bool IsSuccess;
-			/// <summary>
-			/// The text of the request.
-			/// </summary>
-			public readonly string Text;
+			get => ApiKeys.TryGetValue(name, out var key) ? key.Key : null;
+		}
+	}
 
-			internal MainTextResult(HttpStatusCode statusCode, bool isSuccess, string text)
-			{
-				StatusCode = statusCode;
-				IsSuccess = isSuccess;
-				Text = text;
-			}
+	/// <summary>
+	/// Result of getting the text from a webpage.
+	/// </summary>
+	public struct MainTextResult
+	{
+		/// <summary>
+		/// The http status code for the request.
+		/// </summary>
+		public readonly HttpStatusCode StatusCode;
+		/// <summary>
+		/// Whether or not the request was successful.
+		/// </summary>
+		public readonly bool IsSuccess;
+		/// <summary>
+		/// The text of the request.
+		/// </summary>
+		public readonly string Text;
+
+		internal MainTextResult(HttpStatusCode statusCode, bool isSuccess, string text)
+		{
+			StatusCode = statusCode;
+			IsSuccess = isSuccess;
+			Text = text;
 		}
 	}
 }
