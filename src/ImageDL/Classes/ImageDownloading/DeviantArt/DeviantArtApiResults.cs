@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
@@ -7,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Json model for searching for DeviantArt posts through the API.
 	/// </summary>
-	public sealed class ApiDeviantArtResults
+	public sealed class DeviantArtApiResults
 	{
 		[JsonProperty("has_more")]
 		public readonly bool HasMore;
@@ -16,13 +17,13 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonProperty("estimated_total")]
 		public readonly int EstimatedTotal;
 		[JsonProperty("results")]
-		public readonly List<ApiDeviantArtPost> Results;
+		public readonly List<DeviantArtApiPost> Results;
 	}
 
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via the API.
 	/// </summary>
-	public sealed class ApiDeviantArtPost
+	public sealed class DeviantArtApiPost
 	{
 		[JsonProperty("is_favourited")]
 		public readonly bool IsFavorited;
@@ -34,8 +35,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly bool IsDownloadable;
 		[JsonProperty("allows_comments")]
 		public readonly bool AllowsComments;
-		[JsonProperty("published_time")]
-		public readonly ulong PublishedTime;
 		[JsonProperty("download_filesize")]
 		public readonly long DownloadFileSize;
 		[JsonProperty("deviationid")]
@@ -60,6 +59,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly ApiThumbnail Content;
 		[JsonProperty("thumbs")]
 		public readonly List<ApiThumbnail> Thumbnails;
+		[JsonProperty("published_time")]
+		private readonly long _PublishedTime;
+
+		[JsonIgnore]
+		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_PublishedTime)).ToUniversalTime();
 	}
 
 	/// <summary>

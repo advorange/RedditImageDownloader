@@ -17,7 +17,7 @@ namespace ImageDL.Windows
 
 		public static Dictionary<string, Type> ImageDownloaders = typeof(IImageDownloader).Assembly.DefinedTypes
 			.Where(x => !x.IsAbstract && typeof(IImageDownloader).IsAssignableFrom(x))
-			.ToDictionary(x => x.Name.FormatTitle().Split(' ')[0], x => x.AsType(), StringComparer.OrdinalIgnoreCase);
+			.ToDictionary(x => ((IImageDownloader)Activator.CreateInstance(x)).Name, x => x.AsType(), StringComparer.OrdinalIgnoreCase);
 		public static List<Func<Task>> Methods = new List<Func<Task>>
 		{
 			Single, UpdateRedditDirectory,

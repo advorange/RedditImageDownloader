@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		/// <summary>
 		/// Creates an instance of <see cref="KonachanImageDownloader"/>.
 		/// </summary>
-		public KonachanImageDownloader() : base(6) { }
+		public KonachanImageDownloader() : base("Konachan", 6) { }
 
 		/// <inheritdoc />
 		protected override string GenerateQuery(int page)

@@ -16,7 +16,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		/// <summary>
 		/// Creates an instance of <see cref="GelbooruImageDownloader"/>.
 		/// </summary>
-		public GelbooruImageDownloader() : base(int.MaxValue, false) { }
+		public GelbooruImageDownloader() : base("Gelbooru", int.MaxValue, false) { }
 
 		/// <inheritdoc />
 		protected override string GenerateQuery(int page)

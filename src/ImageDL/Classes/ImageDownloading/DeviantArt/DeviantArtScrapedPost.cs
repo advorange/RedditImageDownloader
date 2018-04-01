@@ -7,7 +7,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via scraping a gallery.
 	/// </summary>
-	public sealed class ScrapedDeviantArtPost
+	public sealed class DeviantArtScrappedPost
 	{
 		[JsonProperty("mature")]
 		public readonly bool IsMature;

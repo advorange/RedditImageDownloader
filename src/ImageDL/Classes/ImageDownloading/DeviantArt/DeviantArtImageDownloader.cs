@@ -53,7 +53,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.
 		/// </summary>
-		public DeviantArtImageDownloader()
+		public DeviantArtImageDownloader() : base("DeviantArt")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
 			{
@@ -128,19 +128,19 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return query.Trim('+');
 		}
-		private string GenerateScrapingQuery(int offset)
+		private Uri GenerateScrapingQuery(int offset)
 		{
-			return $"https://www.deviantart.com/newest/" +
+			return new Uri($"https://www.deviantart.com/newest/" +
 				$"?offset={offset}" +
-				$"&q={GenerateTags()}";
+				$"&q={GenerateTags()}");
 		}
-		private string GenerateApiQuery(int offset)
+		private Uri GenerateApiQuery(int offset)
 		{
-			return $"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
+			return new Uri($"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 				$"?offset={offset}" +
 				$"&mature_content=true" +
 				$"&q={GenerateTags()}" +
-				$"&access_token={Client.APIKey}";
+				$"&access_token={Client.APIKey}");
 		}
 		private async Task<(string Token, TimeSpan Duration)> GetTokenAsync()
 		{
@@ -165,67 +165,55 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return (token, duration);
 		}
-		private async Task GetPostsThroughScraping(List<DeviantArtPost> validPosts)
+		private async Task GetPostsThroughScraping(List<DeviantArtPost> list)
 		{
-			for (int i = 0; validPosts.Count < AmountToDownload;)
+			var parsed = new List<DeviantArtScrappedPost>();
+			var keepGoing = true;
+			//Iterate to get the new offset to start at
+			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); i += parsed.Count)
 			{
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateScrapingQuery(i))).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateScrapingQuery(i)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
 				}
 
-				var jsonStart = "window.__pageload =";
-				var jsonStartIndex = result.Text.IndexOf(jsonStart) + jsonStart.Length;
-				var jsonEnd = "}}}</script>";
-				var jsonEndIndex = result.Text.IndexOf(jsonEnd) + 3;
-				var json = result.Text.Substring(jsonStartIndex, jsonEndIndex - jsonStartIndex).Trim();
+				var jsonSearch = "window.__pageload =";
+				var jsonCut = result.Text.Substring(result.Text.IndexOf(jsonSearch) + jsonSearch.Length);
 
 				//Now we have all the json, but we only want the artwork json so we have to parse that manually
-				var parsed = JObject.Parse(json)["metadata"].Select(x =>
+				parsed = JObject.Parse(jsonCut.Substring(0, jsonCut.IndexOf("}}}</script>") + 3).Trim())["metadata"].Select(x =>
 				{
 					try
 					{
-						return x.First.ToObject<ScrapedDeviantArtPost>();
+						return x.First.ToObject<DeviantArtScrappedPost>();
 					}
 					catch (JsonSerializationException) //Ignore any serialization exceptions, just don't include them
 					{
 						return null;
 					}
 				}).Where(x => x != null).ToList();
-				var finished = false;
 				foreach (var post in parsed)
 				{
-					if (!FitsSizeRequirements(null, post.Width, post.Height, out _)) //Can't check score/favorites when scraping
+					if (!FitsSizeRequirements(null, post.Width, post.Height, out _)) //Can't check score or time when scraping
 					{
 						continue;
 					}
-
-					validPosts.Add(new DeviantArtPost(post));
-					if (validPosts.Count == AmountToDownload)
+					else if (!(keepGoing = Add(list, new DeviantArtPost(post))))
 					{
-						finished = true;
 						break;
 					}
-					else if (validPosts.Count % 25 == 0)
-					{
-						Console.WriteLine($"{validPosts.Count} DeviantArt posts found.");
-					}
 				}
-
-				//24 is a full page, but for some reason only 20 or so can be gotten usually
-				if (finished || parsed.Count < 20)
-				{
-					break;
-				}
-				i += parsed.Count;
 			}
 		}
-		private async Task GetPostsThroughApi(List<DeviantArtPost> validPosts)
+		private async Task GetPostsThroughApi(List<DeviantArtPost> list)
 		{
-			for (int i = 0; validPosts.Count < AmountToDownload;)
+			var parsed = new DeviantArtApiResults();
+			var keepGoing = true;
+			//Iterate to get the new offset to start at
+			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
 			{
-				if (Client.APIKeyLastUpdated + Client.APIKeyDuration >= DateTime.UtcNow)
+				if (String.IsNullOrWhiteSpace(Client.APIKey))
 				{
 					var (newToken, duration) = await GetTokenAsync().CAF();
 					if (newToken == null)
@@ -235,43 +223,37 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					Client.UpdateAPIKey(newToken, duration);
 				}
 
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateApiQuery(i))).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateApiQuery(i)).CAF();
 				if (!result.IsSuccess)
 				{
+					//If there's an error with the access token, try to get another one
+					if (result.Text.Contains("access_token"))
+					{
+						Client.UpdateAPIKey("", TimeSpan.FromDays(1));
+						i -= parsed.Results.Count;
+						continue;
+					}
 					break;
 				}
 
-				var parsed = JsonConvert.DeserializeObject<ApiDeviantArtResults>(result.Text);
-				var finished = false;
+				parsed = JsonConvert.DeserializeObject<DeviantArtApiResults>(result.Text);
 				foreach (var post in parsed.Results)
 				{
-					if (post.Content.Source == null) //Is a journal or something like that
+					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
 					{
-						continue;
-					}
-					else if (!FitsSizeRequirements(null, post.Content.Width, post.Content.Height, out _) || post.Stats.Favorites < MinScore)
-					{
-						continue;
-					}
-
-					validPosts.Add(new DeviantArtPost(post));
-					if (validPosts.Count == AmountToDownload)
-					{
-						finished = true;
 						break;
 					}
-					else if (validPosts.Count % 25 == 0)
+					else if (post.Content.Source == null //Is a journal or something like that
+						|| !FitsSizeRequirements(null, post.Content.Width, post.Content.Height, out _)
+						|| post.Stats.Favorites < MinScore)
 					{
-						Console.WriteLine($"{validPosts.Count} DeviantArt posts found.");
+						continue;
+					}
+					else if (!(keepGoing = Add(list, new DeviantArtPost(post))))
+					{
+						break;
 					}
 				}
-
-				//Break out if finished or no more are left
-				if (finished || !parsed.HasMore)
-				{
-					break;
-				}
-				i += parsed.Results.Count;
 			}
 		}
 	}

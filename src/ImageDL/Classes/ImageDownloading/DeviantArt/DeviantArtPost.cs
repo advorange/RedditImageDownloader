@@ -50,7 +50,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// </summary>
 		public readonly List<Thumbnail> Thumbnails;
 
-		internal DeviantArtPost(ApiDeviantArtPost api)
+		internal DeviantArtPost(DeviantArtApiPost api)
 		{
 			IsMature = api.IsMature;
 			PostId = Convert.ToInt32(api.Url.Split('-').Last());
@@ -63,7 +63,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			AuthorUUID = api.Author.UUID;
 			Thumbnails = api.Thumbnails?.Select(x => new Thumbnail(x.Source, x.Width, x.Height, x.IsTransparent))?.ToList() ?? new List<Thumbnail>();
 		}
-		internal DeviantArtPost(ScrapedDeviantArtPost scrape)
+		internal DeviantArtPost(DeviantArtScrappedPost scrape)
 		{
 			IsMature = scrape.IsMature;
 			PostId = scrape.Id;

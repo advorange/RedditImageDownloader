@@ -32,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <summary>
 		/// Creates an image downloader for reddit.
 		/// </summary>
-		public RedditImageDownloader()
+		public RedditImageDownloader() : base("reddit")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{
@@ -44,13 +44,13 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Post> validPosts)
+		protected override async Task GatherPostsAsync(List<Post> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
 			try
 			{
-				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, 1000).ForEachAsync(post =>
+				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, int.MaxValue).ForEachAsync(post =>
 				{
 					if (post.CreatedUTC < OldestAllowed)
 					{
@@ -61,16 +61,10 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 					{
 						return;
 					}
-
-					validPosts.Add(post);
-					if (validPosts.Count == AmountToDownload)
+					else if (!Add(list, post))
 					{
 						valid.Cancel();
 						valid.Token.ThrowIfCancellationRequested();
-					}
-					else if (validPosts.Count % 25 == 0)
-					{
-						Console.WriteLine($"{validPosts.Count} reddit posts found.");
 					}
 				}, valid.Token).CAF();
 			}

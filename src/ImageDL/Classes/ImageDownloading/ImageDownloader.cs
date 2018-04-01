@@ -41,10 +41,10 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 		}
 		/// <inheritdoc />
-		public int AmountToDownload
+		public int AmountOfPostsToGather
 		{
-			get => _AmountToDownload;
-			set => _AmountToDownload = Math.Max(1, value);
+			get => _AmountOfPostsToGather;
+			set => _AmountOfPostsToGather = Math.Max(1, value);
 		}
 		/// <inheritdoc />
 		public int MinWidth
@@ -128,6 +128,8 @@ namespace ImageDL.Classes.ImageDownloading
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
+		/// <inheritdoc />
+		public string Name => _Name;
 
 		/// <summary>
 		/// Links to content that is animated, failed to download, etc.
@@ -143,7 +145,7 @@ namespace ImageDL.Classes.ImageDownloading
 		protected SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
 		private string _Directory;
-		private int _AmountToDownload;
+		private int _AmountOfPostsToGather;
 		private int _MinWidth;
 		private int _MinHeight;
 		private int _MaxDaysOld;
@@ -157,11 +159,13 @@ namespace ImageDL.Classes.ImageDownloading
 		private bool _Start;
 		private ImageComparer _ImageComparer;
 		private SettingParser _SettingParser;
+		private string _Name;
 
 		/// <summary>
 		/// Creates an image downloader.
 		/// </summary>
-		public ImageDownloader()
+		/// <param name="name">The name of the website.</param>
+		public ImageDownloader(string name)
 		{
 			SettingParser = new SettingParser(new[] { "--", "-", "/" })
 			{
@@ -169,7 +173,7 @@ namespace ImageDL.Classes.ImageDownloading
 				{
 					Description = "The directory to save to.",
 				},
-				new Setting<int>(new[] {nameof(AmountToDownload), "amt"}, x => AmountToDownload = x)
+				new Setting<int>(new[] {nameof(AmountOfPostsToGather), "amt" }, x => AmountOfPostsToGather = x)
 				{
 					Description = "The amount of images to download.",
 				},
@@ -229,6 +233,7 @@ namespace ImageDL.Classes.ImageDownloading
 				},
 			};
 			Client = new ImageDownloaderClient();
+			_Name = name;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
@@ -467,6 +472,21 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
 			}
+		}
+		/// <summary>
+		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
+		/// </summary>
+		/// <param name="list"></param>
+		/// <param name="obj"></param>
+		/// <returns></returns>
+		protected bool Add(List<TPost> list, TPost obj)
+		{
+			list.Add(obj);
+			if (list.Count % 25 == 0)
+			{
+				Console.WriteLine($"{list.Count} {Name} posts found.");
+			}
+			return list.Count < AmountOfPostsToGather;
 		}
 
 		/// <summary>

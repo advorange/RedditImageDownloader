@@ -33,7 +33,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramImageDownloader"/>.
 		/// </summary>
-		public InstagramImageDownloader()
+		public InstagramImageDownloader() : base("Instagram")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -45,8 +45,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		protected override async Task GatherPostsAsync(List<InstagramPost> list)
 		{
 			var userId = 0UL;
-			var nextPagination = "";
-			for (int i = 0; list.Count < AmountToDownload; ++i)
+			var parsed = new InstagramResult();
+			var keepGoing = true;
+			//Iterate to update the pagination start point
+			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
 				if (userId == 0)
@@ -60,30 +62,23 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					userId = UserId;
 				}
 
-				var query = GenerateQuery(userId, Client.APIKey, nextPagination);
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(userId, Client.APIKey, nextPage)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
 					if (result.Text.Contains("query_hash"))
 					{
 						userId = 0;
-						--i;
 						continue;
 					}
-					else
-					{
-						break;
-					}
+					break;
 				}
 
-				var parsed = JObject.Parse(result.Text)["data"]["user"]["edge_owner_to_timeline_media"].ToObject<InstagramResult>();
-				var finished = false;
+				parsed = JObject.Parse(result.Text)["data"]["user"]["edge_owner_to_timeline_media"].ToObject<InstagramResult>();
 				foreach (var node in parsed.Nodes)
 				{
-					if (node.Post.CreatedAt < OldestAllowed)
+					if (!(keepGoing = node.Post.CreatedAt >= OldestAllowed))
 					{
-						finished = true;
 						break;
 					}
 					else if (!FitsSizeRequirements(null, node.Post.Dimensions.Width, node.Post.Dimensions.Height, out _)
@@ -91,25 +86,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						continue;
 					}
-
-					list.Add(node.Post);
-					if (list.Count == AmountToDownload)
+					else if (!(keepGoing = Add(list, node.Post)))
 					{
-						finished = true;
 						break;
 					}
-					else if (list.Count % 25 == 0)
-					{
-						Console.WriteLine($"{list.Count} Instagram posts found.");
-					}
 				}
-
-				if (finished || !parsed.PageInfo.HasNextPage)
-				{
-					break;
-				}
-				//Set the next pagination to start at the current cursor end position
-				nextPagination = parsed.PageInfo.EndCursor;
 			}
 		}
 		/// <inheritdoc />
@@ -140,7 +121,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			return new ContentLink(uri, post.LikeInfo.Count, reason);
 		}
 
-		private string GenerateQuery(ulong userId, string queryHash, string nextPagination)
+		private Uri GenerateQuery(ulong userId, string queryHash, string nextPagination)
 		{
 			var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
 			{
@@ -148,9 +129,9 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				{ "first", 12 }, //The amount of posts to get?
 				{ "after", nextPagination ?? "" }, //The position in the pagination
 			});
-			return "https://www.instagram.com/graphql/query/" +
+			return new Uri("https://www.instagram.com/graphql/query/" +
 				$"?query_hash={queryHash}" +
-				$"&variables={WebUtility.UrlEncode(variables)}";
+				$"&variables={WebUtility.UrlEncode(variables)}");
 		}
 		private async Task<(string QueryHash, ulong UserId)> GetQueryHashAndUserId()
 		{
@@ -174,7 +155,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			//Find the direct link to ProfilePageContainer.js
 			var jsLink = doc.DocumentNode.Descendants("link")
 				.Select(x => x.GetAttributeValue("href", null))
-				.FirstOrDefault(x => (x ?? "").Contains("ProfilePageContainer.js"));
+				.First(x => (x ?? "").Contains("ProfilePageContainer.js"));
 			var jsResult = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri($"https://www.instagram.com{jsLink}")).CAF();
 			if (!jsResult.IsSuccess)
 			{

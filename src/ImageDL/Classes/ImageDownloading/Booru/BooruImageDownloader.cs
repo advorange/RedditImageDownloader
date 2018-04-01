@@ -47,9 +47,10 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <summary>
 		/// Creats an instance of <see cref="BooruImageDownloader{T}"/>.
 		/// </summary>
+		/// <param name="name">The name of the website.</param>
 		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
 		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
-		public BooruImageDownloader(int tagLimit, bool json = true)
+		public BooruImageDownloader(string name, int tagLimit, bool json = true) : base(name)
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -68,46 +69,31 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(List<T> list)
 		{
-			//Uses for instead of while to save 2 lines.
-			for (int i = 0; list.Count < AmountToDownload; ++i)
+			var parsed = new List<T>();
+			var keepGoing = true;
+			//Iterate because there's a limit of around 100 per request
+			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
-				//Limit caps out at 100 per pages, so can't get this all in one iteration. Have to keep incrementing page.
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(Page + i))).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(Page + i)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
 				}
 
-				var parsed = Parse(result.Text);
-				var finished = false;
-				foreach (var post in parsed)
+				foreach (var post in (parsed = Parse(result.Text)))
 				{
-					if (post.CreatedAt < OldestAllowed)
+					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
 					{
-						finished = true;
 						break;
 					}
 					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
-
-					list.Add(post);
-					if (list.Count == AmountToDownload)
+					else if (!(keepGoing = Add(list, post)))
 					{
-						finished = true;
 						break;
 					}
-					else if (list.Count % 25 == 0)
-					{
-						Console.WriteLine($"{list.Count} {typeof(T).Name.FormatTitle().Split(' ')[0]} posts found.");
-					}
-				}
-
-				//Anything less than a full page means everything's been searched
-				if (finished || parsed.Count < 100)
-				{
-					break;
 				}
 			}
 		}
@@ -146,7 +132,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		protected abstract string GenerateQuery(int page);
+		protected abstract Uri GenerateQuery(int page);
 		/// <summary>
 		/// Converts the text into a list of posts.
 		/// </summary>

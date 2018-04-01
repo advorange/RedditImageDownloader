@@ -39,7 +39,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <summary>
 		/// Creates an instance of <see cref="EshuushuuImageDownloader"/>.
 		/// </summary>
-		public EshuushuuImageDownloader()
+		public EshuushuuImageDownloader() : base("Eshuushuu")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -50,54 +50,40 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(List<EshuushuuPost> list)
 		{
-			//Uses for instead of while to save 2 lines.
-			for (int i = 0; list.Count < AmountToDownload; ++i)
+			var parsed = new List<EshuushuuPost>();
+			var keepGoing = true;
+			//Iterate to get the next page of results
+			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 15); ++i)
 			{
-				//Cap of 15 per page, keep incrementing to get more
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(GenerateQuery(i))).CAF();
+				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(i)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
 				}
 
-				//Parse each post from the html
 				var doc = new HtmlDocument();
 				doc.LoadHtml(result.Text);
-				var results = doc.DocumentNode.Descendants("div").Where(x => x.GetAttributeValue("class", null) == "display");
-				var ids = results.Select(x => x.Id.TrimStart('i'))
+
+				parsed = (await Task.WhenAll(doc.DocumentNode.Descendants("div")
+					.Where(x => x.GetAttributeValue("class", null) == "display")
+					.Select(x => x.Id.TrimStart('i'))
 					.Where(x => !String.IsNullOrWhiteSpace(x))
-					.Select(x => Convert.ToInt32(x))
-					.Distinct();
-				var finished = false;
-				foreach (var id in ids)
+					.Distinct()
+					.Select(async x => await Parse(Convert.ToInt32(x)).CAF())).CAF()).ToList();
+				foreach (var post in parsed)
 				{
-					var post = await Parse(id).CAF();
-					if (post.SubmittedOn < OldestAllowed)
+					if (!(keepGoing = post.SubmittedOn >= OldestAllowed))
 					{
-						finished = true;
 						break;
 					}
 					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Favorites < MinScore)
 					{
 						continue;
 					}
-
-					list.Add(post);
-					if (list.Count == AmountToDownload)
+					else if (!(keepGoing = Add(list, post)))
 					{
-						finished = true;
 						break;
 					}
-					else if (list.Count % 25 == 0)
-					{
-						Console.WriteLine($"{list.Count} Eshuushuu posts found.");
-					}
-				}
-
-				//Anything less than a full page means everything's been searched
-				if (finished || ids.Count() < 15)
-				{
-					break;
 				}
 			}
 		}
@@ -131,13 +117,13 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			return new ContentLink(uri, post.Favorites, reason);
 		}
 
-		private string GenerateQuery(int page)
+		private Uri GenerateQuery(int page)
 		{
-			return "http://e-shuushuu.net/search/results/" +
+			return new Uri("http://e-shuushuu.net/search/results/" +
 				"?thumbs=1" +
 				"&hide_disabled=1" +
 				$"&tags={WebUtility.UrlEncode(Tags)}" +
-				$"&page={page}";
+				$"&page={page}");
 		}
 		private async Task<EshuushuuPost> Parse(int id)
 		{

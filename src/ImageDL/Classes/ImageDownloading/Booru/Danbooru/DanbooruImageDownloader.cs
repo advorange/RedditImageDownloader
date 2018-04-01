@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// <summary>
 		/// Creates an instance of <see cref="DanbooruImageDownloader"/>.
 		/// </summary>
-		public DanbooruImageDownloader() : base(2) { }
+		public DanbooruImageDownloader() : base("Danbooru", 2) { }
 
 		/// <inheritdoc />
 		protected override string GenerateQuery(int page)
