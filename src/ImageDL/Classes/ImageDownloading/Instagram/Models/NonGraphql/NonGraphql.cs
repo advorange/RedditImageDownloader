@@ -53,5 +53,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	{
 		[JsonProperty("node")]
 		public readonly MediaNode Node;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Node.ToString();
+		}
 	}
 }

@@ -30,5 +30,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly bool IsVerified;
 		[JsonProperty("requested_by_viewer")]
 		public readonly bool RequestedByViewer;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Username} ({Id})";
+		}
 	}
 }

@@ -8,9 +8,15 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	/// </summary>
 	public struct Dimensions
 	{
-		[JsonProperty("height")]
-		public readonly int Height;
 		[JsonProperty("width")]
 		public readonly int Width;
+		[JsonProperty("height")]
+		public readonly int Height;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 }

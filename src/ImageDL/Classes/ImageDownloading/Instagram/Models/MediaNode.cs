@@ -49,7 +49,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		[JsonProperty("edge_media_to_sponsor_user")]
 		public readonly SponsorInfo SponsorInfo;
 		[JsonProperty("location")]
-		public readonly object Location;
+		public readonly Location Location;
 		[JsonProperty("viewer_has_liked")]
 		public readonly bool ViewerHasLiked;
 		[JsonProperty("viewer_has_saved")]
@@ -70,6 +70,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		[JsonIgnore]
 		public bool HasChildren => Typename == "GraphSidecar";
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return $"{Shortcode} ({Typename})";

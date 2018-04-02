@@ -66,9 +66,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_PublishedTime)).ToUniversalTime();
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return Url.Split('-').Last();
+			return $"{Url.Split('-').Last()} ({Content.Width}x{Content.Height})";
 		}
 	}
 
@@ -85,6 +86,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly string UserIcon;
 		[JsonProperty("type")]
 		public readonly string Type;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Username;
+		}
 	}
 
 	/// <summary>
@@ -113,5 +120,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly long FileSize;
 		[JsonProperty("src")]
 		public readonly string Source;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 }

@@ -102,7 +102,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return Id.ToString();
+			return $"{Id} ({Width}x{Height})";
 		}
 	}
 }

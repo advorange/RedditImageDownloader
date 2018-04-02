@@ -25,6 +25,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	{
 		[JsonProperty("node")]
 		public readonly Comment Comment;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Comment.ToString();
+		}
 	}
 
 	/// <summary>
@@ -43,5 +49,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(CreatedAtTimestamp)).ToUniversalTime();
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Owner} ({CreatedAt})";
+		}
 	}
 }

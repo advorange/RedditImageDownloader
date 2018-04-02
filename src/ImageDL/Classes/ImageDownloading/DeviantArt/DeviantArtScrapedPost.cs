@@ -32,9 +32,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		[JsonProperty("sizing")]
 		public readonly List<ScrapedThumbnail> Sizes;
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return Id.ToString();
+			return $"{Id} ({Width}x{Height})";
 		}
 	}
 
@@ -51,6 +52,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly int Height;
 		[JsonProperty("src")]
 		public readonly string Source;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 
 	/// <summary>
@@ -70,5 +77,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public readonly string UserIcon;
 		[JsonProperty("uuid")]
 		public readonly string UUID;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Username} ({UserId})";
+		}
 	}
 }

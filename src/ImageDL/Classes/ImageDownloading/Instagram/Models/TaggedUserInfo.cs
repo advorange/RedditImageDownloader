@@ -20,6 +20,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	{
 		[JsonProperty("node")]
 		public readonly TaggedUser TaggedUser;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return TaggedUser.ToString();
+		}
 	}
 
 	/// <summary>
@@ -33,5 +39,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly double X;
 		[JsonProperty("y")]
 		public readonly double Y;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return User.ToString();
+		}
 	}
 }

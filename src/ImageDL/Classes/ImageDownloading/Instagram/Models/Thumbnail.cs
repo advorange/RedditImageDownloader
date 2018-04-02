@@ -14,5 +14,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly int Width;
 		[JsonProperty("config_height")]
 		public readonly int Height;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 }

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -232,7 +233,7 @@ namespace ImageDL.Classes.ImageDownloading
 					IsFlag = true,
 				},
 			};
-			Client = new ImageDownloaderClient();
+			Client = new ImageDownloaderClient(new CookieContainer());
 			_Name = name;
 
 			//Save on close in case program is closed while running

@@ -76,44 +76,40 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					break;
 				}
 
-				var sw = new System.Diagnostics.Stopwatch();
-				sw.Start();
-				var p = JsonConvert.DeserializeObject<InstagramResult>(result.Text);
-				var posts = await Task.WhenAll((parsed = p.Data.User.Content).Posts
-					.Select(async x => await Parse(x.Node).CAF())).CAF();
-				sw.Stop();
-				foreach (var post in posts)
+				var insta = JsonConvert.DeserializeObject<InstagramResult>(result.Text);
+				foreach (var post in (parsed = insta.Data.User.Content).Posts)
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					var p = await Parse(post.Node).CAF();
+					if (!(keepGoing = p.CreatedAt >= OldestAllowed))
 					{
 						break;
 					}
-					else if (post.LikeInfo.Count < MinScore)
+					else if (p.LikeInfo.Count < MinScore)
 					{
 						continue;
 					}
-					else if (post.HasChildren)
+					else if (p.HasChildren)
 					{
 						//Remove all images that don't meet the size requirements
-						for (int j = post.ChildrenInfo.Nodes.Count - 1; j >= 0; --j)
+						for (int j = p.ChildrenInfo.Nodes.Count - 1; j >= 0; --j)
 						{
-							var image = post.ChildrenInfo.Nodes[j].Child;
+							var image = p.ChildrenInfo.Nodes[j].Child;
 							if (!FitsSizeRequirements(null, image.Dimensions.Width, image.Dimensions.Height, out _))
 							{
-								post.ChildrenInfo.Nodes.RemoveAt(j);
+								p.ChildrenInfo.Nodes.RemoveAt(j);
 							}
 						}
-						if (!post.ChildrenInfo.Nodes.Any())
+						if (!p.ChildrenInfo.Nodes.Any())
 						{
 							continue;
 						}
 					}
 					//If there are no children, we can check the post's dimensions directly
-					else if (!FitsSizeRequirements(null, post.Dimensions.Width, post.Dimensions.Height, out _))
+					else if (!FitsSizeRequirements(null, p.Dimensions.Width, p.Dimensions.Height, out _))
 					{
 						continue;
 					}
-					if (!(keepGoing = Add(list, post)))
+					if (!(keepGoing = Add(list, p)))
 					{
 						break;
 					}

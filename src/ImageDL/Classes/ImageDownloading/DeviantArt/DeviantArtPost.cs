@@ -80,7 +80,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return PostId.ToString();
+			return $"{PostId} ({Width}x{Height})";
 		}
 	}
 
@@ -112,6 +112,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			Width = width;
 			Height = height;
 			Source = source;
+		}
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
 		}
 	}
 }

@@ -22,6 +22,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	{
 		[JsonProperty("node")]
 		public readonly Like Like;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Like.ToString();
+		}
 	}
 
 	/// <summary>
@@ -35,5 +41,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly string ProfilePicUrl;
 		[JsonProperty("username")]
 		public readonly string Username;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Username;
+		}
 	}
 }

@@ -35,6 +35,12 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 
 		[JsonIgnore]
 		public List<ImgurImage> Images => _Images ?? (_Images = new List<ImgurImage>() { this, });
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Id} ({Images.Count})";
+		}
 	}
 
 	/// <summary>
@@ -58,6 +64,12 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		public readonly bool IsInGallery;
 		[JsonProperty("has_sound")]
 		public readonly bool HasSound;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Id} ({Width}x{Height})";
+		}
 	}
 
 	/// <summary>
@@ -125,6 +137,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		[JsonIgnore]
 		public string ImageLink => Mp4Link ?? Link;
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
 			return Id;
@@ -166,5 +179,11 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		public readonly string LogoDestinationUrl;
 		[JsonProperty("description_annotations")]
 		public readonly object DescriptionAnnotations; //Not sure what type they are
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 }

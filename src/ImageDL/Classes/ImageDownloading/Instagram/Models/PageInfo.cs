@@ -12,5 +12,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly bool HasNextPage;
 		[JsonProperty("end_cursor")]
 		public readonly string EndCursor;
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return EndCursor;
+		}
 	}
 }

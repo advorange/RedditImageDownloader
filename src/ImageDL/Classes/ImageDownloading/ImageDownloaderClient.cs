@@ -43,28 +43,32 @@ namespace ImageDL.Classes.ImageDownloading
 		/// Holds api keys for specific websites.
 		/// </summary>
 		public Dictionary<string, ApiKey> ApiKeys { get; set; } = new Dictionary<string, ApiKey>();
+		/// <summary>
+		/// Holds the cookies for the client.
+		/// </summary>
+		public CookieContainer Cookies { get; private set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
 		/// </summary>
-		public ImageDownloaderClient() : base(GetDefaultClientHandler())
+		public ImageDownloaderClient(CookieContainer cookies) : base(GetDefaultClientHandler(cookies))
 		{
+			Cookies = cookies;
 			Timeout = TimeSpan.FromMilliseconds(60000);
 			DefaultRequestHeaders.Add("User-Agent", $"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)");
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
 
-		private static HttpClientHandler GetDefaultClientHandler()
+		private static HttpClientHandler GetDefaultClientHandler(CookieContainer cookies)
 		{
-			var cookieContainer = new CookieContainer();
-			cookieContainer.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
+			cookies.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
 
 			return new HttpClientHandler
 			{
 				AllowAutoRedirect = true, //So Imgur can redirect to correct webpages
 				Credentials = CredentialCache.DefaultCredentials,
 				Proxy = new WebProxy(), //One of my computers throws an exception if the proxy is null
-				CookieContainer = cookieContainer,
+				CookieContainer = cookies,
 				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 			};
 		}

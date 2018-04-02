@@ -88,9 +88,10 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		[JsonIgnore]
 		public int Height => Convert.ToInt32(_Dimensions.Split('x', ' ')[1]);
 
+		/// <inheritdoc />
 		public override string ToString()
 		{
-			return PostId.ToString();
+			return $"{PostId} ({Width}x{Height})";
 		}
 	}
 
