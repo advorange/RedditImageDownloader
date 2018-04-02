@@ -69,7 +69,12 @@ namespace ImageDL.Classes.ImageScraping
 		/// <returns></returns>
 		private async Task<ScrapeResult> ScrapeMediumAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
-			var imageContainer = doc.DocumentNode.Descendants("div").Where(x => x.HasClass("img-container"));
+			var imageContainer = doc.DocumentNode.Descendants("div")
+				.Where(x => x.HasClass("img-container") && !x.InnerText.CaseInsContains("doesn't support"));
+			if (!imageContainer.Any())
+			{
+				return new ScrapeResult(uri, true, this, new[] { uri }, $"{uri} is animated content (gif/video).");
+			}
 			var image = imageContainer.SelectMany(x => x.Descendants("img")).SingleOrDefault();
 			var iteratedUri = EditUri(new Uri(image.GetAttributeValue("src", null)));
 

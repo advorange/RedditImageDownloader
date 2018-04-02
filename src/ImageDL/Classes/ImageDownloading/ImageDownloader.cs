@@ -23,6 +23,8 @@ namespace ImageDL.Classes.ImageDownloading
 	{
 		private const string ANIMATED_CONTENT = "Animated Content";
 		private const string FAILED_DOWNLOADS = "Failed Downloads";
+		private static readonly string NL = Environment.NewLine;
+		private static readonly string NLT = NL + "\t";
 
 		/// <inheritdoc />
 		public string Directory
@@ -277,12 +279,25 @@ namespace ImageDL.Classes.ImageDownloading
 				WritePostToConsole(post, ++count);
 
 				var gatherer = await GatherImagesAsync(post).CAF();
-				foreach (var imageUri in gatherer.ImageUris)
+				//If the gatherer had any errors simply log them once and then be done with it
+				if (!String.IsNullOrWhiteSpace(gatherer.Error))
 				{
-					await Task.Delay(100).CAF();
+					if (gatherer.IsAnimated)
+					{
+						Links.AddRange(gatherer.ImageUris.Select(x => CreateContentLink(post, x, ANIMATED_CONTENT)));
+					}
+					WriteInColor($"\t{gatherer.Error.Replace(NL, NLT)}", ConsoleColor.Yellow);
+					continue;
+				}
+
+				for (int i = 0; i < gatherer.ImageUris.Length; ++i)
+				{
+					var imageUri = gatherer.ImageUris[i];
 					try
 					{
-						Console.WriteLine($"\t{await DownloadImageAsync(gatherer, post, imageUri).CAF()}");
+						var (Response, IsSuccess) = await DownloadImageAsync(gatherer, post, imageUri).CAF();
+						var text = $"\t[#{i + 1}] {Response.Replace(NL, NLT)}";
+						WriteInColor(text, IsSuccess ? Console.ForegroundColor : ConsoleColor.Yellow);
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
@@ -308,7 +323,7 @@ namespace ImageDL.Classes.ImageDownloading
 				Console.WriteLine();
 			}
 
-			SaveStoredContentLinks();
+			Console.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
 			SemaphoreSlim.Release();
 		}
 		/// <summary>
@@ -318,20 +333,12 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		protected async Task<string> DownloadImageAsync(ScrapeResult result, TPost post, Uri uri)
+		protected async Task<(string Response, bool IsSuccess)> DownloadImageAsync(ScrapeResult result, TPost post, Uri uri)
 		{
-			if (!String.IsNullOrWhiteSpace(result.Error))
-			{
-				if (result.IsAnimated)
-				{
-					Links.Add(CreateContentLink(post, result.OriginalUri, ANIMATED_CONTENT));
-				}
-				return result.Error;
-			}
 			var file = GenerateFileInfo(post, uri);
 			if (File.Exists(file.FullName))
 			{
-				return $"{uri} is already saved as {file}.";
+				return ($"{uri} is already saved as {file}.", false);
 			}
 
 			HttpResponseMessage resp = null;
@@ -341,15 +348,20 @@ namespace ImageDL.Classes.ImageDownloading
 			try
 			{
 				resp = await Client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
+				if (!resp.IsSuccessStatusCode)
+				{
+					Links.Add(CreateContentLink(post, result.OriginalUri, $"HTTP error: {resp.StatusCode.ToString()}"));
+					return ($"{uri} received the error: {resp.ToString()}", false);
+				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
 					Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
-					return $"{uri} is animated content (gif/video).";
+					return ($"{uri} is animated content (gif/video).", false);
 				}
 				if (!contentType.Contains("image/"))
 				{
-					return $"{uri} is not an image.";
+					return ($"{uri} is not an image.", false);
 				}
 
 				//Need to use a memory stream and copy to it
@@ -361,18 +373,18 @@ namespace ImageDL.Classes.ImageDownloading
 				var (width, height) = ms.GetImageSize();
 				if (!FitsSizeRequirements(uri, width, height, out var sizeError))
 				{
-					return sizeError;
+					return (sizeError, false);
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (ImageComparer != null && !ImageComparer.TryStore(uri, file, ms, width, height, out var cachingError))
 				{
-					return cachingError;
+					return (cachingError, false);
 				}
 
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).CAF();
-				return $"Saved {uri} to {file}.";
+				return ($"Saved {uri} to {file}.", true);
 			}
 			finally
 			{
@@ -428,51 +440,44 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 		/// <summary>
 		/// Saves the stored content links to file.
+		/// Returns the amount of links put into the file.
 		/// </summary>
-		protected void SaveStoredContentLinks()
+		protected int SaveStoredContentLinks()
 		{
-			foreach (var kvp in Links.GroupBy(x => x.Reason))
+			var file = new FileInfo(Path.Combine(Directory, "Links.txt"));
+			var links = Links.GroupBy(x => x.Uri).Select(x => x.First()).ToList();
+			//Only read once, make sure no duplicate uris will be added
+			if (file.Exists)
 			{
-				//Only save links which are not already in the text document
-				var file = new FileInfo(Path.Combine(Directory, $"{kvp.Key}.txt"));
-				var unsavedContent = new List<ContentLink>();
-				if (file.Exists)
+				using (var reader = new StreamReader(file.OpenRead()))
 				{
-					using (var reader = new StreamReader(file.OpenRead()))
+					var text = reader.ReadToEnd();
+					for (int i = links.Count - 1; i >= 0; --i)
 					{
-						var text = reader.ReadToEnd();
-						foreach (var anim in kvp)
+						if (text.Contains(links[i].Uri.ToString()))
 						{
-							if (text.Contains(anim.Uri.ToString()))
-							{
-								continue;
-							}
-
-							unsavedContent.Add(anim);
+							links.RemoveAt(i);
 						}
 					}
 				}
-				else
-				{
-					unsavedContent = kvp.ToList();
-				}
-				if (!unsavedContent.Any())
-				{
-					continue;
-				}
-
-				//Save all the links then say how many were saved
-				var len = unsavedContent.Max(x => x.AssociatedNumber).ToString().Length;
-				var format = unsavedContent.OrderByDescending(x => x.AssociatedNumber)
-					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
-				using (var writer = file.AppendText())
-				{
-					writer.WriteLine($"{kvp.Key.FormatTitle()} - {Formatting.ToSaving()}");
-					writer.WriteLine(String.Join(Environment.NewLine, format));
-					writer.WriteLine();
-				}
-				Console.WriteLine($"Added {unsavedContent.Count()} links to {file}.");
 			}
+			//Put all of the links with the same reasons together, ordered by score
+			var groups = links.GroupBy(x => x.Reason).Select(g =>
+			{
+				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
+				var format = g.OrderByDescending(x => x.AssociatedNumber)
+					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
+				return $"{g.Key.FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
+			});
+			//Only write for a short time
+			using (var writer = file.AppendText())
+			{
+				foreach (var line in groups)
+				{
+					writer.WriteLine(line);
+				}
+			}
+			return links.Count;
 		}
 		/// <summary>
 		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
@@ -488,6 +493,20 @@ namespace ImageDL.Classes.ImageDownloading
 				Console.WriteLine($"{list.Count} {Name} posts found.");
 			}
 			return list.Count < AmountOfPostsToGather;
+		}
+		private void WriteInColor(string text, ConsoleColor color)
+		{
+			if (Console.ForegroundColor == color)
+			{
+				Console.WriteLine(text);
+			}
+			else
+			{
+				var oldColor = Console.ForegroundColor;
+				Console.ForegroundColor = color;
+				Console.WriteLine(text);
+				Console.ForegroundColor = oldColor;
+			}
 		}
 
 		/// <summary>

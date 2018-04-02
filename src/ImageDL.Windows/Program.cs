@@ -1,5 +1,6 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Reddit;
+using ImageDL.Classes.ImageScraping;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;

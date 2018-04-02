@@ -37,7 +37,6 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{
 				Description = "The subreddit to download images from.",
-				IsFlag = true,
 			});
 
 			_Reddit = new RedditSharp.Reddit(new WebAgent(), false);
@@ -78,7 +77,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <inheritdoc />
 		protected override void WritePostToConsole(Post post, int count)
 		{
-			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.Url}");
+			Console.WriteLine($"[#{count}|\u2191{post.Score}] https://www.reddit.com/{post.Id} ({post.Url})");
 		}
 		/// <inheritdoc />
 		protected override FileInfo GenerateFileInfo(Post post, Uri uri)

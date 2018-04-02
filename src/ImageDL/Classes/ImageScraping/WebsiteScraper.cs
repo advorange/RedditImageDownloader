@@ -32,24 +32,22 @@ namespace ImageDL.Classes.ImageScraping
 		/// <param name="client"></param>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		public async Task<ScrapeResult> ScrapeAsync(ImageDownloaderClient client, Uri uri)
+		public virtual async Task<ScrapeResult> ScrapeAsync(ImageDownloaderClient client, Uri uri)
 		{
 			HttpResponseMessage resp = null;
 			Stream s = null;
 			try
 			{
 				resp = await client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
-				s = await resp.Content.ReadAsStreamAsync().CAF();
+				if (!resp.IsSuccessStatusCode)
+				{
+					return new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), resp.ToString());
+				}
 
 				var doc = new HtmlDocument();
-				doc.Load(s);
+				doc.Load(s = await resp.Content.ReadAsStreamAsync().CAF());
 
 				return await ProtectedScrapeAsync(client, uri, doc).CAF();
-			}
-			catch (WebException e)
-			{
-				e.Write();
-				return new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), e.Message);
 			}
 			finally
 			{
