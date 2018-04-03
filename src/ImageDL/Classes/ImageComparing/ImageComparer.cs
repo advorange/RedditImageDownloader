@@ -114,7 +114,7 @@ namespace ImageDL.Classes.ImageComparing
 					{
 						if (!TryCreateImageDetailsFromFile(file, ThumbnailSize, out var md5hash, out var details))
 						{
-							Console.WriteLine($"Failed to create a cached object of {file}.");
+							ConsoleUtils.WriteLine($"Failed to create a cached object of {file}.");
 						}
 						//If the file is already in there, delete whichever is worse
 						else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
@@ -123,18 +123,18 @@ namespace ImageDL.Classes.ImageComparing
 						}
 						else if (!Images.TryAdd(md5hash, details))
 						{
-							Console.WriteLine($"Failed to cache {file}.");
+							ConsoleUtils.WriteLine($"Failed to cache {file}.");
 						}
 					}
 					catch (ArgumentException)
 					{
-						Console.WriteLine($"{file} is not a valid image.");
+						ConsoleUtils.WriteLine($"{file} is not a valid image.");
 					}
 
 					var c = Interlocked.Increment(ref count);
 					if (c % 25 == 0 || c == len)
 					{
-						Console.WriteLine($"{Math.Min(c, len)}/{len} images cached.");
+						ConsoleUtils.WriteLine($"{Math.Min(c, len)}/{len} images cached.");
 					}
 				}
 			}, token));
@@ -155,7 +155,7 @@ namespace ImageDL.Classes.ImageComparing
 			{
 				if (i % 25 == 0 || i == kvpCount - 1)
 				{
-					Console.WriteLine($"{i} image(s) left to check for duplicates.");
+					ConsoleUtils.WriteLine($"{i} image(s) left to check for duplicates.");
 				}
 
 				var iVal = kvps[i];
@@ -177,14 +177,14 @@ namespace ImageDL.Classes.ImageComparing
 					}
 
 					var detailsToDelete = iVal.DetermineWhichToDelete(jVal);
-					Console.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Will delete {detailsToDelete.File.Name}.");
+					ConsoleUtils.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Will delete {detailsToDelete.File.Name}.");
 					kvps.Remove(detailsToDelete);
 					filesToDelete.Add(detailsToDelete.File);
 				}
 			}
 
 			RecyclingUtils.MoveFiles(filesToDelete);
-			Console.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
+			ConsoleUtils.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
 		/// <summary>
 		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.

@@ -14,7 +14,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		/// <summary>
 		/// Creates an instance of <see cref="KonachanImageDownloader"/>.
 		/// </summary>
-		public KonachanImageDownloader() : base("Konachan", 6) { }
+		/// <param name="client">The client to download images with.</param>
+		public KonachanImageDownloader(ImageDownloaderClient client) : base(client, new Uri("http://konachan.com"), 6) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(int page)

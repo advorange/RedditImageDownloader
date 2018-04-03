@@ -34,10 +34,10 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Scrapers for gathering images from websites.
 		/// </summary>
-		public List<WebsiteScraper> Scrapers { get; set; } = typeof(IImageDownloader).Assembly.DefinedTypes
-			.Where(x => x.IsSubclassOf(typeof(WebsiteScraper)))
+		public List<IWebsiteScraper> Scrapers { get; set; } = typeof(IWebsiteScraper).Assembly.DefinedTypes
+			.Where(x => x.IsSubclassOf(typeof(IWebsiteScraper)))
 			.Select(x => Activator.CreateInstance(x))
-			.Cast<WebsiteScraper>()
+			.Cast<IWebsiteScraper>()
 			.ToList();
 		/// <summary>
 		/// Holds api keys for specific websites.
@@ -101,7 +101,7 @@ namespace ImageDL.Classes.ImageDownloading
 					{
 						//Wait longer on each failure
 						nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i)));
-						Console.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
+						ConsoleUtils.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
 						continue;
 					}
 
@@ -109,38 +109,6 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 			}
 			throw new HttpRequestException($"Unable to get the requested text after {tries} tries.");
-		}
-		/// <summary>
-		/// Gathers images from <paramref name="uri"/>.
-		/// </summary>
-		/// <param name="uri">The location to get images from.</param>
-		/// <returns>A <see cref="ScrapeResult"/> which contains any images gathered and any errors which occurred.</returns>
-		public async Task<ScrapeResult> ScrapeImagesAsync(Uri uri)
-		{
-			var scraper = Scrapers.SingleOrDefault(x => x.IsFromWebsite(uri));
-			var isAnimated = AnimatedContentDomains.Any(x => x.IsMatch(uri.ToString()));
-			var editedUri = scraper == null ? uri : scraper.EditUri(uri);
-
-			//If the link goes directly to an image, just use that
-			if (editedUri.ToString().IsImagePath())
-			{
-				return new ScrapeResult(uri, isAnimated, null, new[] { editedUri }, null);
-			}
-			//If the link is animated, return nothing and give an error
-			else if (isAnimated)
-			{
-				return new ScrapeResult(uri, isAnimated, null, new[] { editedUri }, $"{editedUri} is animated content (gif/video).");
-			}
-			//If the scraper isn't null and the uri requires scraping, scrape it
-			else if (scraper != null && scraper.RequiresScraping(uri))
-			{
-				return await scraper.ScrapeAsync(this, uri).CAF();
-			}
-			//Otherwise, just return the uri and hope for the best.
-			else
-			{
-				return new ScrapeResult(uri, isAnimated, scraper, new[] { editedUri }, null);
-			}
 		}
 		/// <summary>
 		/// Sends a request to the uri with the specified method and the referer as itself.

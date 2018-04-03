@@ -36,7 +36,7 @@ namespace ImageDL.Classes
 		{
 			if (double.TryParse(s, out var d))
 			{
-				result = new AspectRatio(d);
+				result = new AspectRatio(new Percentage(d).Value);
 				return true;
 			}
 

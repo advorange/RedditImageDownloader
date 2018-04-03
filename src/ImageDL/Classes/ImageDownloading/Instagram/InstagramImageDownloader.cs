@@ -2,12 +2,10 @@
 using HtmlAgilityPack;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -35,7 +33,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramImageDownloader"/>.
 		/// </summary>
-		public InstagramImageDownloader() : base("Instagram")
+		/// <param name="client">The client to download images with.</param>
+		public InstagramImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://www.instagram.com"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -115,37 +114,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					}
 				}
 			}
-		}
-		/// <inheritdoc />
-		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
-		{
-			return list.OrderByDescending(x => x.LikeInfo.Count).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(Model post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.LikeInfo.Count}] https://www.instagram.com/p/{post.Shortcode}/");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override Task<ScrapeResult> GatherImagesAsync(Model post)
-		{
-			var postUrl = new Uri($"https://www.instagram.com/p/{post.Shortcode}");
-			var images = post.HasChildren
-				? post.ChildrenInfo.Nodes.Select(x => new Uri(x.Child.DisplayUrl))
-				: new[] { new Uri(post.DisplayUrl) };
-			return Task.FromResult(new ScrapeResult(postUrl, false, new InstagramScraper(), images, null));
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
-		{
-			return new ContentLink(uri, post.LikeInfo.Count, reason);
 		}
 
 		private Uri GenerateQuery(ulong userId, string queryHash, string nextPagination)

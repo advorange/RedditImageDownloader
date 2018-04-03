@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageDL.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -20,7 +21,7 @@ namespace ImageDL.Classes.ImageScraping
 		/// <summary>
 		/// The scraper used for the domain.
 		/// </summary>
-		public readonly WebsiteScraper Scraper;
+		public readonly IWebsiteScraper Scraper;
 		/// <summary>
 		/// The images to download.
 		/// </summary>
@@ -38,7 +39,7 @@ namespace ImageDL.Classes.ImageScraping
 		/// <param name="scraper"></param>
 		/// <param name="gatheredUris"></param>
 		/// <param name="error"></param>
-		public ScrapeResult(Uri originalUri, bool isAnimated, WebsiteScraper scraper, IEnumerable<Uri> gatheredUris, string error)
+		public ScrapeResult(Uri originalUri, bool isAnimated, IWebsiteScraper scraper, IEnumerable<Uri> gatheredUris, string error)
 		{
 			OriginalUri = originalUri;
 			IsAnimated = isAnimated;

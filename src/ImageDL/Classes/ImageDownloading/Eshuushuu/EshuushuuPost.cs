@@ -10,20 +10,14 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	/// <summary>
 	/// Json model for a post from Eshuushuu.
 	/// </summary>
-	public sealed class EshuushuuPost
+	public sealed class EshuushuuPost : Post
 	{
-		[JsonProperty("post_url")]
-		public readonly string PostUrl;
-		[JsonProperty("post_id")]
-		public readonly int PostId;
 		[JsonProperty("submitted_by")]
 		public readonly string SubmittedBy;
 		[JsonProperty("filename")]
 		public readonly string Filename;
 		[JsonProperty("original_filename")]
 		public readonly string OriginalFilename;
-		[JsonProperty("favorites")]
-		public readonly int Favorites;
 		[JsonProperty("tags")]
 		public readonly List<Tag> Tags;
 		[JsonProperty("source")]
@@ -32,15 +26,28 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		public readonly List<Tag> Characters;
 		[JsonProperty("artist")]
 		public readonly List<Tag> Artist;
-		[JsonProperty("image_rating")]
-		private readonly string _ImageRating = null;
-		[JsonProperty("submitted_on")]
-		private readonly string _SubmittedOn = null;
-		[JsonProperty("file_size")]
-		private readonly string _FileSize = null;
-		[JsonProperty("dimensions")]
-		private readonly string _Dimensions = null;
 
+		[JsonProperty("image_rating")]
+		private readonly string _ImageRating;
+		[JsonProperty("submitted_on")]
+		private readonly string _SubmittedOn;
+		[JsonProperty("file_size")]
+		private readonly string _FileSize;
+		[JsonProperty("dimensions")]
+		private readonly string _Dimensions;
+		[JsonProperty("post_url")]
+		private readonly string _PostUrl;
+		[JsonProperty("post_id")]
+		private readonly int _PostId;
+		[JsonProperty("favorites")]
+		private readonly int _Favorites;
+
+		[JsonIgnore]
+		public override string Link => _PostUrl;
+		[JsonIgnore]
+		public override string Id => _PostId.ToString();
+		[JsonIgnore]
+		public override int Score => _Favorites;
 		[JsonIgnore]
 		public string ImageRating => new string(_ImageRating.Where(x => !Char.IsWhiteSpace(x)).ToArray());
 		[JsonIgnore]
@@ -91,7 +98,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return $"{PostId} ({Width}x{Height})";
+			return $"{Id} ({Width}x{Height})";
 		}
 	}
 

@@ -1,21 +1,19 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using RedditSharp;
-using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Model = ImageDL.Classes.ImageDownloading.Reddit.RedditPost;
 
 namespace ImageDL.Classes.ImageDownloading.Reddit
 {
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public sealed class RedditImageDownloader : ImageDownloader<Post>
+	public sealed class RedditImageDownloader : ImageDownloader<Model>
 	{
 		/// <summary>
 		/// The subreddit to download images from.
@@ -32,7 +30,8 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <summary>
 		/// Creates an image downloader for reddit.
 		/// </summary>
-		public RedditImageDownloader() : base("reddit")
+		/// <param name="client">The client to download images with.</param>
+		public RedditImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://www.reddit.com"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{
@@ -43,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Post> list)
+		protected override async Task GatherPostsAsync(List<Model> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
@@ -60,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 					{
 						return;
 					}
-					else if (!Add(list, post))
+					else if (!Add(list, new Model(post)))
 					{
 						valid.Cancel();
 						valid.Token.ThrowIfCancellationRequested();
@@ -68,33 +67,6 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 				}, valid.Token).CAF();
 			}
 			catch (OperationCanceledException) { }
-		}
-		/// <inheritdoc />
-		protected override List<Post> OrderAndRemoveDuplicates(List<Post> list)
-		{
-			return list.OrderByDescending(x => x.Score).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(Post post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.Score}] https://www.reddit.com/{post.Id} ({post.Url})");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Post post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(Post post)
-		{
-			return await Client.ScrapeImagesAsync(post.Url).CAF();
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(Post post, Uri uri, string reason)
-		{
-			return new ContentLink(uri, post.Score, reason);
 		}
 	}
 }

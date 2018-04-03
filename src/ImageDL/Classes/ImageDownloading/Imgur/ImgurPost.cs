@@ -75,10 +75,8 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// <summary>
 	/// Json model for a post/image from Imgur.
 	/// </summary>
-	public abstract class ImgurThing
+	public abstract class ImgurThing : Post
 	{
-		[JsonProperty("id")]
-		public readonly string Id;
 		[JsonProperty("title")]
 		public readonly string Title;
 		[JsonProperty("description")]
@@ -91,8 +89,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		public readonly int? UpScore;
 		[JsonProperty("downs")]
 		public readonly int? DownScore;
-		[JsonProperty("score")]
-		public readonly int? Score;
 		[JsonProperty("points")]
 		public readonly int? Points;
 		[JsonProperty("comment_count")]
@@ -127,11 +123,22 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		public readonly string Mp4Link;
 		[JsonProperty("gifv")]
 		public readonly string GifvLink;
-		[JsonProperty("link")]
-		public readonly string Link;
 		[JsonProperty("datetime")]
 		private readonly long _DateTime;
 
+		[JsonProperty("link")]
+		private readonly string _Link;
+		[JsonProperty("id")]
+		private readonly string _Id;
+		[JsonProperty("score")]
+		private readonly int? _Score;
+
+		[JsonIgnore]
+		public override string Link => _Link;
+		[JsonIgnore]
+		public override string Id => _Id;
+		[JsonIgnore]
+		public override int Score => _Score ?? 0;
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(_DateTime)).ToUniversalTime();
 		[JsonIgnore]

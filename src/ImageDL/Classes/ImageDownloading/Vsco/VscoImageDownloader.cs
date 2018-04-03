@@ -1,22 +1,20 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
+using Model = ImageDL.Classes.ImageDownloading.Vsco.VscoPost;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco
 {
 	/// <summary>
 	/// Downloads images from Vsco.
 	/// </summary>
-	public sealed class VscoImageDownloader : ImageDownloader<VscoPost>
+	public sealed class VscoImageDownloader : ImageDownloader<Model>
 	{
 		/// <summary>
 		/// The name of the user to download images from.
@@ -32,7 +30,8 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <summary>
 		/// Creates an instance of <see cref="VscoImageDownloader"/>.
 		/// </summary>
-		public VscoImageDownloader() : base("Vsco")
+		/// <param name="client">The client to download images with.</param>
+		public VscoImageDownloader(ImageDownloaderClient client) : base(client, new Uri("http://vsco.co"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -41,10 +40,10 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<VscoPost> list)
+		protected override async Task GatherPostsAsync(List<Model> list)
 		{
 			var userId = 0;
-			var parsed = new List<VscoPost>();
+			var parsed = new List<Model>();
 			var keepGoing = true;
 			//Iterate because the results are in pages
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
@@ -91,33 +90,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 				}
 			}
 		}
-		/// <inheritdoc />
-		protected override List<VscoPost> OrderAndRemoveDuplicates(List<VscoPost> list)
-		{
-			return list.OrderBy(x => x.UploadedAt).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(VscoPost post, int count)
-		{
-			Console.WriteLine($"[#{count}] {post.Permalink}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(VscoPost post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override Task<ScrapeResult> GatherImagesAsync(VscoPost post)
-		{
-			return Client.ScrapeImagesAsync(new Uri($"https://{post.ResponsiveUrl}"));
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(VscoPost post, Uri uri, string reason)
-		{
-			return new ContentLink(uri, 0, reason);
-		}
 
 		private async Task<(string Key, int UserId)> GetKeyAndId()
 		{
@@ -140,7 +112,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			var id = JsonConvert.DeserializeObject<VscoUserResults>(idResult.Text).Users.Single().Id;
 			return (key, id);
 		}
-
 		private Uri GenerateQuery(string key, int userId, int page)
 		{
 			return new Uri($"http://vsco.co/ajxp/{key}/2.0/medias" +

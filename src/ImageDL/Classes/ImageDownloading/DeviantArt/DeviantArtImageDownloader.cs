@@ -1,11 +1,9 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -54,7 +52,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.
 		/// </summary>
-		public DeviantArtImageDownloader() : base("DeviantArt")
+		/// <param name="client">The client to download images with.</param>
+		public DeviantArtImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://www.deviantart.com"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
 			{
@@ -89,35 +88,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}
 			}
 			catch (WebException we) when (we.Message.Contains("403")) { } //Gotten when scraping since don't know when to stop.
-		}
-		/// <inheritdoc />
-		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
-		{
-			return list.GroupBy(x => x.Source).Select(x => x.First()).OrderByDescending(x => x.Favorites).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(Model post, int count)
-		{
-			var postHasScore = post.Favorites > 0 ? $"|\u2191{post.Favorites}" : "";
-			Console.WriteLine($"[#{count}{postHasScore}] {post.Source}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.PostId}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(Model post)
-		{
-			return await Client.ScrapeImagesAsync(new Uri(post.Source)).CAF();
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
-		{
-			//If favorites are there then use that, otherwise just use the post id
-			return new ContentLink(uri, post.Favorites < 0 ? post.PostId : post.Favorites, reason);
 		}
 
 		private string GenerateTags()

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageScraping
 {
+	/*
 	/// <summary>
 	/// Scrapes images from a website.
 	/// </summary>
@@ -90,5 +91,5 @@ namespace ImageDL.Classes.ImageScraping
 		{
 			return uris.Select(x => EditUri(new Uri(x))).Where(x => x != null);
 		}
-	}
+	}*/
 }

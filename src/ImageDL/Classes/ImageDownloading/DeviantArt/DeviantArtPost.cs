@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
@@ -7,16 +6,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Model for similarities between scraped posts and posts gotten through the API.
 	/// </summary>
-	public sealed class DeviantArtPost
+	public sealed class DeviantArtPost : Post
 	{
 		/// <summary>
 		/// Whether or not the post is NSFW.
 		/// </summary>
 		public readonly bool IsMature;
-		/// <summary>
-		/// The xth posted Deviation. This is not the UUID.
-		/// </summary>
-		public readonly int PostId;
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
@@ -25,10 +20,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// The height of the image.
 		/// </summary>
 		public readonly int Height;
-		/// <summary>
-		/// How many people have favorited it.
-		/// </summary>
-		public readonly int Favorites;
 		/// <summary>
 		/// The direct image link.
 		/// </summary>
@@ -50,13 +41,23 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// </summary>
 		public readonly List<Thumbnail> Thumbnails;
 
+		private readonly string _PostId;
+		private readonly int _Favorites;
+
+		/// <inheritdoc />
+		public override string Link => $"https://www.fav.me/{Id}";
+		/// <inheritdoc />
+		public override string Id => _PostId;
+		/// <inheritdoc />
+		public override int Score => _Favorites;
+
 		internal DeviantArtPost(DeviantArtApiPost api)
 		{
 			IsMature = api.IsMature;
-			PostId = Convert.ToInt32(api.Url.Split('-').Last());
+			_PostId = api.Url.Split('-').Last();
 			Width = api.Content.Width;
 			Height = api.Content.Height;
-			Favorites = api.Stats.Favorites;
+			_Favorites = api.Stats.Favorites;
 			Source = api.Content.Source;
 			AuthorUsername = api.Author.Username;
 			AuthorUserIcon = api.Author.UserIcon;
@@ -66,10 +67,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		internal DeviantArtPost(DeviantArtScrappedPost scrape)
 		{
 			IsMature = scrape.IsMature;
-			PostId = scrape.Id;
+			_PostId = scrape.Id.ToString();
 			Width = scrape.Width;
 			Height = scrape.Height;
-			Favorites = -1;
+			_Favorites = -1;
 			Source = scrape.Source;
 			AuthorUsername = scrape.Author.Username;
 			AuthorUserIcon = scrape.Author.UserIcon;
@@ -80,7 +81,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return $"{PostId} ({Width}x{Height})";
+			return $"{Id} ({Width}x{Height})";
 		}
 	}
 

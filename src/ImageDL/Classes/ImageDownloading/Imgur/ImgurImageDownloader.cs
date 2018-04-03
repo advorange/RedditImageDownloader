@@ -1,11 +1,9 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -35,7 +33,8 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <summary>
 		/// Creates an instance of <see cref="ImgurImageDownloader"/>.
 		/// </summary>
-		public ImgurImageDownloader() : base("Imgur")
+		/// <param name="client">The client to download images with.</param>
+		public ImgurImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://i.imgur.com"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags) }, x => Tags = x)
 			{
@@ -110,34 +109,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					}
 				}
 			}
-		}
-		/// <inheritdoc />
-		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
-		{
-			return list.OrderByDescending(x => x.Score).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(Model post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.FavoriteCount}] {post.ImageLink}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override Task<ScrapeResult> GatherImagesAsync(Model post)
-		{
-			var images = post.Images.Select(x => new Uri(x.ImageLink));
-			return Task.FromResult(new ScrapeResult(new Uri(post.Link), false, new ImgurScraper(), images, null));
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
-		{
-			return new ContentLink(uri, post.FavoriteCount ?? 0, reason);
 		}
 
 		private Uri GenerateGalleryQuery(string clientId, int page)

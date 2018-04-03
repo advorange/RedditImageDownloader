@@ -6,23 +6,13 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 	/// <summary>
 	/// Base Json model for a post from a -booru site.
 	/// </summary>
-	public abstract class BooruPost
+	public abstract class BooruPost : Post
 	{
-		/// <summary>
-		/// The id of the post.
-		/// </summary>
-		[JsonProperty("id")]
-		public readonly int Id;
 		/// <summary>
 		/// The source of the image. Can be empty/null if no source is provided.
 		/// </summary>
 		[JsonProperty("source")]
 		public readonly string Source;
-		/// <summary>
-		/// The score of the post.
-		/// </summary>
-		[JsonProperty("score")]
-		public readonly int Score;
 		/// <summary>
 		/// The rating of the image. Safe, questionable, or explicit.
 		/// </summary>
@@ -43,9 +33,20 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		[JsonProperty("has_children")]
 		public readonly bool HasChildren;
+
 		[JsonProperty("file_url")]
 		private readonly string _FileUrl = null;
+		[JsonProperty("id")]
+		private readonly int _Id;
+		[JsonProperty("score")]
+		private readonly int _Score;
 
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override string Id => _Id.ToString();
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override int Score => _Score;
 		/// <summary>
 		/// Where the image is located.
 		/// </summary>
@@ -73,11 +74,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// </summary>
 		[JsonIgnore]
 		public abstract string BaseUrl { get; }
-		/// <summary>
-		/// The url leading to this post.
-		/// </summary>
-		[JsonIgnore]
-		public abstract string PostUrl { get; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>

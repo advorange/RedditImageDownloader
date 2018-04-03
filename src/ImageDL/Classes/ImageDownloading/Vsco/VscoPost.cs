@@ -23,10 +23,8 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	/// <summary>
 	/// Json model for a post from Vsco.
 	/// </summary>
-	public sealed class VscoPost
+	public sealed class VscoPost : Post
 	{
-		[JsonProperty("_id")]
-		public readonly string Id;
 		[JsonProperty("grid_name")]
 		public readonly string GridName;
 		[JsonProperty("adaptive_base")]
@@ -53,8 +51,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		public readonly string PermaDomain;
 		[JsonProperty("perma_subdomain")]
 		public readonly string PermaSubdomain;
-		[JsonProperty("permalink")]
-		public readonly string Permalink;
 		[JsonProperty("share_link")]
 		public readonly string ShareLink;
 		[JsonProperty("responsive_url")]
@@ -71,6 +67,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		public readonly int Height;
 		[JsonProperty("width")]
 		public readonly int Width;
+
 		[JsonProperty("capture_date")]
 		private readonly long _CaptureDate;
 		[JsonProperty("capture_date_ms")]
@@ -79,13 +76,32 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		private readonly long _UploadDate;
 		[JsonProperty("last_updated")]
 		private readonly long _LastUpdated;
+		[JsonProperty("_id")]
+		private readonly string _Id;
+		[JsonProperty("permalink")]
+		private readonly string _Permalink;
 
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override string Link => _Permalink;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override string Id => _Id;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override int Score => -1;
 		[JsonIgnore]
 		public DateTime CapturedAt => (new DateTime(1970, 1, 1).AddSeconds(_CaptureDate / 1000)).ToUniversalTime();
 		[JsonIgnore]
 		public DateTime UploadedAt => (new DateTime(1970, 1, 1).AddSeconds(_UploadDate / 1000)).ToUniversalTime();
 		[JsonIgnore]
 		public DateTime LastUpdatedAt => (new DateTime(1970, 1, 1).AddSeconds(_LastUpdated / 1000)).ToUniversalTime();
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return $"{Id} ({Width}x{Height})";
+		}
 	}
 
 	/// <summary>

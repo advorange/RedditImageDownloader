@@ -26,22 +26,28 @@ namespace ImageDL.Windows
 
 		public static async Task Main(string[] args)
 		{
+			ConsoleUtils.LogTimeAndCaller = false;
+			ConsoleUtils.RemoveMarkdown = false;
+			ConsoleUtils.RemoveDuplicateNewLines = true;
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
-			Console.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
-			do
+			ConsoleUtils.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
+
+			while (true)
 			{
 				var line = Console.ReadLine().Trim();
-				if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<Task> t)
+				if (line == EXIT)
+				{
+					break;
+				}
+				else if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<Task> t)
 				{
 					await t().CAF();
-					Console.WriteLine($"Method finished. Type '{EXIT}' to exit the program, otherwise type anything else to run it again.");
+					ConsoleUtils.WriteLine($"Method finished. Type '{EXIT}' to exit the program, otherwise type anything else to run it again.");
+					continue;
 				}
-				else
-				{
-					Console.WriteLine($"Invalid method. Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
-				}
-			} while (Console.ReadLine() != EXIT);
+				ConsoleUtils.WriteLine($"Invalid method. Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
+			}
 		}
 
 		private static async Task Single()
@@ -49,14 +55,14 @@ namespace ImageDL.Windows
 			var downloader = CreateDownloader(GetDownloaderType());
 			while (!downloader.CanStart)
 			{
-				Console.WriteLine(downloader.SettingParser.GetNeededSettings());
-				Console.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()));
+				ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
+				ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 			}
 			await downloader.StartAsync().CAF();
 		}
 		private static async Task UpdateRedditDirectory()
 		{
-			Console.WriteLine("Provide the arguments to use for each directory:");
+			ConsoleUtils.WriteLine("Provide the arguments to use for each directory:");
 			var arguments = Console.ReadLine();
 
 			foreach (var dir in GetDirectory().GetDirectories())
@@ -67,14 +73,14 @@ namespace ImageDL.Windows
 				};
 				if (arguments != null)
 				{
-					Console.WriteLine(downloader.SettingParser.Parse(arguments));
+					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(arguments).ToString());
 					downloader.Subreddit = dir.Name;
 					downloader.Directory = dir.FullName;
 				}
 				while (!downloader.CanStart)
 				{
-					Console.WriteLine(downloader.SettingParser.GetNeededSettings());
-					Console.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()));
+					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
+					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
 				await downloader.StartAsync().CAF();
 			}
@@ -82,15 +88,14 @@ namespace ImageDL.Windows
 
 		private static Type GetDownloaderType()
 		{
-			Console.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
+			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
 			while (true)
 			{
-				if (!ImageDownloaders.TryGetValue(Console.ReadLine().Trim(), out var downloaderType))
+				if (ImageDownloaders.TryGetValue(Console.ReadLine().Trim(), out var downloaderType))
 				{
-					Console.WriteLine($"Invalid downloader; pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
-					continue;
+					return downloaderType;
 				}
-				return downloaderType;
+				ConsoleUtils.WriteLine($"Invalid downloader; pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
 			}
 		}
 		private static IImageDownloader CreateDownloader(Type t)
@@ -101,20 +106,20 @@ namespace ImageDL.Windows
 		}
 		private static DirectoryInfo GetDirectory()
 		{
-			Console.WriteLine("Enter a valid directory:");
-			DirectoryInfo directory = null;
-			while (!Directory.Exists(directory?.FullName))
+			ConsoleUtils.WriteLine("Enter a valid directory:");
+			while (true)
 			{
 				try
 				{
-					directory = new DirectoryInfo(Console.ReadLine());
+					var directory = new DirectoryInfo(Console.ReadLine());
+					if (directory.Exists)
+					{
+						return directory;
+					}
 				}
-				catch
-				{
-					Console.WriteLine("Invalid directory provided.");
-				}
+				catch { }
+				ConsoleUtils.WriteLine("Invalid directory provided.");
 			}
-			return directory;
 		}
 	}
 }

@@ -1,11 +1,9 @@
 ﻿using AdvorangesUtils;
 using HtmlAgilityPack;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -40,7 +38,8 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <summary>
 		/// Creates an instance of <see cref="EshuushuuImageDownloader"/>.
 		/// </summary>
-		public EshuushuuImageDownloader() : base("Eshuushuu")
+		/// <param name="client">The client to download images with.</param>
+		public EshuushuuImageDownloader(ImageDownloaderClient client) : base(client, new Uri("http://e-shuushuu.net"))
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -77,7 +76,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					{
 						break;
 					}
-					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Favorites < MinScore)
+					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
@@ -87,35 +86,6 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					}
 				}
 			}
-		}
-		/// <inheritdoc />
-		protected override List<Model> OrderAndRemoveDuplicates(List<Model> list)
-		{
-			return list.OrderByDescending(x => x.Favorites).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(Model post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.Favorites}] {post.PostUrl}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(Model post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.PostId}_" +
-				$"{String.Join("_", post.Artist.Select(x => x.Name))}_" +
-				$"{String.Join("_", post.Characters.Select(x => x.Name))}".Replace(' ', '_');
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(Model post)
-		{
-			return await Client.ScrapeImagesAsync(new Uri($"http://e-shuushuu.net/images/{post.Filename}")).CAF();
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(Model post, Uri uri, string reason)
-		{
-			return new ContentLink(uri, post.Favorites, reason);
 		}
 
 		private Uri GenerateQuery(int page)

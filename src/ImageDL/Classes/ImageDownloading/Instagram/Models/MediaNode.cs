@@ -8,12 +8,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	/// <summary>
 	/// Holds information about media. Not all of it will be populated, depending on where it was found in the Json.
 	/// </summary>
-	public struct MediaNode
+	public sealed class MediaNode : Post
 	{
 		[JsonProperty("__typename")]
 		public readonly string Typename;
-		[JsonProperty("id")]
-		public readonly string Id;
 		[JsonProperty("shortcode")]
 		public readonly string Shortcode;
 		[JsonProperty("dimensions")]
@@ -64,7 +62,15 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly RelatedMediaInfo RelatedMediaInfo;
 		[JsonProperty("edge_sidecar_to_children")]
 		public readonly ChildrenInfo ChildrenInfo;
+		[JsonProperty("id")]
+		private readonly string _Id;
 
+		[JsonIgnore]
+		public override string Link => $"https://www.instagram.com/p/{Shortcode}";
+		[JsonIgnore]
+		public override string Id => _Id;
+		[JsonIgnore]
+		public override int Score => LikeInfo.Count;
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(TakenAtTimestamp)).ToUniversalTime();
 		[JsonIgnore]

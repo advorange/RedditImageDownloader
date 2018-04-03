@@ -1,10 +1,7 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageDownloading.Booru
@@ -47,10 +44,11 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <summary>
 		/// Creats an instance of <see cref="BooruImageDownloader{T}"/>.
 		/// </summary>
-		/// <param name="name">The name of the website.</param>
+		/// <param name="client">The client to download images with.</param>
+		/// <param name="uri">The name of the website.</param>
 		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
 		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
-		public BooruImageDownloader(string name, int tagLimit, bool json = true) : base(name)
+		public BooruImageDownloader(ImageDownloaderClient client, Uri uri, int tagLimit, bool json = true) : base(client, uri)
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -96,34 +94,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 					}
 				}
 			}
-		}
-		/// <inheritdoc />
-		protected override List<T> OrderAndRemoveDuplicates(List<T> list)
-		{
-			return list.OrderByDescending(x => x.Score).ToList();
-		}
-		/// <inheritdoc />
-		protected override void WritePostToConsole(T post, int count)
-		{
-			Console.WriteLine($"[#{count}|\u2191{post.Score}] {post.PostUrl}");
-		}
-		/// <inheritdoc />
-		protected override FileInfo GenerateFileInfo(T post, Uri uri)
-		{
-			var extension = Path.GetExtension(uri.LocalPath);
-			var name = $"{post.Id}_{post.FileUrl.Split('/').Last()}".Replace(' ', '_');
-			return GenerateFileInfo(Directory, name, extension);
-		}
-		/// <inheritdoc />
-		protected override async Task<ScrapeResult> GatherImagesAsync(T post)
-		{
-			return await Client.ScrapeImagesAsync(new Uri(post.FileUrl)).CAF();
-		}
-		/// <inheritdoc />
-		protected override ContentLink CreateContentLink(T post, Uri uri, string reason)
-		{
-			//If favorites are there then use that, otherwise just use the post id
-			return new ContentLink(uri, post.Score, reason);
 		}
 
 		/// <summary>

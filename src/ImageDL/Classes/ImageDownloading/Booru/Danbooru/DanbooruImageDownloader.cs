@@ -14,7 +14,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// <summary>
 		/// Creates an instance of <see cref="DanbooruImageDownloader"/>.
 		/// </summary>
-		public DanbooruImageDownloader() : base("Danbooru", 2) { }
+		/// <param name="client">The client to download images with.</param>
+		public DanbooruImageDownloader(ImageDownloaderClient client) : base(client, new Uri("http://danbooru.donmai.us"), 2) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(int page)

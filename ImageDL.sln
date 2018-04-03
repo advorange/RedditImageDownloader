@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageDL", "src\ImageDL\Imag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.Windows", "src\ImageDL.Windows\ImageDL.Windows.csproj", "{895DEFB0-35D6-46F1-8C8B-987380A79D28}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.Tests", "tests\ImageDL.Tests\ImageDL.Tests\ImageDL.Tests.csproj", "{3B21A859-3618-4CBF-BF51-6E82ABE7034F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{895DEFB0-35D6-46F1-8C8B-987380A79D28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{895DEFB0-35D6-46F1-8C8B-987380A79D28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{895DEFB0-35D6-46F1-8C8B-987380A79D28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B21A859-3618-4CBF-BF51-6E82ABE7034F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B21A859-3618-4CBF-BF51-6E82ABE7034F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B21A859-3618-4CBF-BF51-6E82ABE7034F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B21A859-3618-4CBF-BF51-6E82ABE7034F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

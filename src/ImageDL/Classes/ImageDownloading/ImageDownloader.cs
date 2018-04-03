@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using HtmlAgilityPack;
 using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageScraping;
 using ImageDL.Classes.SettingParsing;
@@ -19,7 +20,7 @@ namespace ImageDL.Classes.ImageDownloading
 	/// Downloads images from a site.
 	/// </summary>
 	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
-	public abstract class ImageDownloader<TPost> : IImageDownloader
+	public abstract class ImageDownloader<TPost> : IImageDownloader, IWebsiteScraper where TPost : Post
 	{
 		private const string ANIMATED_CONTENT = "Animated Content";
 		private const string FAILED_DOWNLOADS = "Failed Downloads";
@@ -132,7 +133,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
 		/// <inheritdoc />
-		public string Name => _Name;
+		public string Name => _Domain.Host.Split('.')[1];
 
 		/// <summary>
 		/// Links to content that is animated, failed to download, etc.
@@ -162,13 +163,14 @@ namespace ImageDL.Classes.ImageDownloading
 		private bool _Start;
 		private ImageComparer _ImageComparer;
 		private SettingParser _SettingParser;
-		private string _Name;
+		private Uri _Domain;
 
 		/// <summary>
 		/// Creates an image downloader.
 		/// </summary>
-		/// <param name="name">The name of the website.</param>
-		public ImageDownloader(string name)
+		/// <param name="client">The client to download images with.</param>
+		/// <param name="domain">The name of the website.</param>
+		public ImageDownloader(ImageDownloaderClient client, Uri domain)
 		{
 			SettingParser = new SettingParser(new[] { "--", "-", "/" })
 			{
@@ -235,8 +237,8 @@ namespace ImageDL.Classes.ImageDownloading
 					IsFlag = true,
 				},
 			};
-			Client = new ImageDownloaderClient(new CookieContainer());
-			_Name = name;
+			Client = client;
+			_Domain = domain;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
@@ -244,10 +246,57 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <inheritdoc />
+		public Uri RemoveQuery(Uri uri)
+		{
+			var u = uri.ToString();
+			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : uri;
+		}
+		/// <inheritdoc />
+		public virtual async Task<ScrapeResult> ScrapeAsync(ImageDownloaderClient client, Uri uri)
+		{
+			HttpResponseMessage resp = null;
+			Stream s = null;
+			try
+			{
+				resp = await client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
+				if (!resp.IsSuccessStatusCode)
+				{
+					return new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), resp.ToString());
+				}
+
+				var doc = new HtmlDocument();
+				doc.Load(s = await resp.Content.ReadAsStreamAsync().CAF());
+
+				return await ProtectedScrapeAsync(client, uri, doc).CAF();
+			}
+			finally
+			{
+				resp?.Dispose();
+				s?.Dispose();
+			}
+		}
+		/// <inheritdoc />
+		public bool IsFromWebsite(Uri uri)
+		{
+			//TODO: better way to check this?
+			return _Domain.Host.Split('.')[1] == uri.Host.Split('.')[1];
+		}
+		/// <inheritdoc />
+		public abstract Uri EditUri(Uri uri);
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="uri"></param>
+		/// <param name="doc"></param>
+		/// <returns></returns>
+		protected abstract Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc);
+
+		/// <inheritdoc />
 		public async Task StartAsync(CancellationToken token = default)
 		{
 			await SemaphoreSlim.WaitAsync(token).CAF();
-			Console.WriteLine();
+			ConsoleUtils.WriteLine("");
 
 			var posts = new List<TPost>();
 			try
@@ -262,31 +311,30 @@ namespace ImageDL.Classes.ImageDownloading
 			//Make sure some posts were gotten.
 			if (!posts.Any())
 			{
-				Console.WriteLine("Unable to find any posts matching the search criteria.");
+				ConsoleUtils.WriteLine("Unable to find any posts matching the search criteria.");
 				return;
 			}
 			else
 			{
-				posts = OrderAndRemoveDuplicates(posts);
-				Console.WriteLine();
-				Console.WriteLine($"Found {posts.Count} posts.");
+				posts = posts.GroupBy(x => x.Link).First().OrderByDescending(x => x.Score).ToList();
+				ConsoleUtils.WriteLine($"{Environment.NewLine}Found {posts.Count} posts.");
 			}
 
 			var count = 0;
 			foreach (var post in posts)
 			{
 				token.ThrowIfCancellationRequested();
-				WritePostToConsole(post, ++count);
+				ConsoleUtils.WriteLine(post.ToString(++count));
 
-				var gatherer = await GatherImagesAsync(post).CAF();
+				var gatherer = await post.GatherImagesAsync(Client).CAF();
 				//If the gatherer had any errors simply log them once and then be done with it
 				if (!String.IsNullOrWhiteSpace(gatherer.Error))
 				{
 					if (gatherer.IsAnimated)
 					{
-						Links.AddRange(gatherer.ImageUris.Select(x => CreateContentLink(post, x, ANIMATED_CONTENT)));
+						Links.AddRange(gatherer.ImageUris.Select(x => post.CreateContentLink(x, ANIMATED_CONTENT)));
 					}
-					WriteInColor($"\t{gatherer.Error.Replace(NL, NLT)}", ConsoleColor.Yellow);
+					ConsoleUtils.WriteLine($"\t{gatherer.Error.Replace(NL, NLT)}", ConsoleColor.Yellow);
 					continue;
 				}
 
@@ -297,13 +345,13 @@ namespace ImageDL.Classes.ImageDownloading
 					{
 						var (Response, IsSuccess) = await DownloadImageAsync(gatherer, post, imageUri).CAF();
 						var text = $"\t[#{i + 1}] {Response.Replace(NL, NLT)}";
-						WriteInColor(text, IsSuccess ? Console.ForegroundColor : ConsoleColor.Yellow);
+						ConsoleUtils.WriteLine(text, IsSuccess ? Console.ForegroundColor : ConsoleColor.Yellow);
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(CreateContentLink(post, imageUri, FAILED_DOWNLOADS));
+						Links.Add(post.CreateContentLink(imageUri, FAILED_DOWNLOADS));
 					}
 				}
 			}
@@ -315,15 +363,15 @@ namespace ImageDL.Classes.ImageDownloading
 			{
 				if (CompareSavedImages)
 				{
-					Console.WriteLine();
+					ConsoleUtils.WriteLine("");
 					await ImageComparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread, token);
 				}
-				Console.WriteLine();
+				ConsoleUtils.WriteLine("");
 				ImageComparer.DeleteDuplicates(MaxImageSimilarity);
-				Console.WriteLine();
+				ConsoleUtils.WriteLine("");
 			}
 
-			Console.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
+			ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
 			SemaphoreSlim.Release();
 		}
 		/// <summary>
@@ -335,7 +383,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <returns>A text response indicating what happened to the uri.</returns>
 		protected async Task<(string Response, bool IsSuccess)> DownloadImageAsync(ScrapeResult result, TPost post, Uri uri)
 		{
-			var file = GenerateFileInfo(post, uri);
+			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), uri);
 			if (File.Exists(file.FullName))
 			{
 				return ($"{uri} is already saved as {file}.", false);
@@ -350,13 +398,13 @@ namespace ImageDL.Classes.ImageDownloading
 				resp = await Client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
-					Links.Add(CreateContentLink(post, result.OriginalUri, $"HTTP error: {resp.StatusCode.ToString()}"));
+					Links.Add(post.CreateContentLink(result.OriginalUri, $"HTTP error: {resp.StatusCode.ToString()}"));
 					return ($"{uri} received the error: {resp.ToString()}", false);
 				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
-					Links.Add(CreateContentLink(post, uri, ANIMATED_CONTENT));
+					Links.Add(post.CreateContentLink(uri, ANIMATED_CONTENT));
 					return ($"{uri} is animated content (gif/video).", false);
 				}
 				if (!contentType.Contains("image/"))
@@ -421,24 +469,6 @@ namespace ImageDL.Classes.ImageDownloading
 			return true;
 		}
 		/// <summary>
-		/// Returns a file info with a maximum path length of 255 characters.
-		/// </summary>
-		/// <param name="directory"></param>
-		/// <param name="name"></param>
-		/// <param name="extension"></param>
-		/// <returns></returns>
-		protected FileInfo GenerateFileInfo(string directory, string name, string extension)
-		{
-			//Make sure the extension has a period
-			extension = extension.StartsWith(".") ? extension : "." + extension;
-			//Remove any invalid file name path characters
-			name = new string(name.Where(x => !Path.GetInvalidFileNameChars().Contains(x)).ToArray());
-			//Max file name length has to be under 260 for windows, but 256 for some other things, so just go with 255.
-			var nameLen = 255 - directory.Length - 1 - extension.Length; //Subtract extra 1 for / between dir and file
-																		 //Cut the file name down to its valid length so no length errors occur
-			return new FileInfo(Path.Combine(directory, name.Substring(0, Math.Min(name.Length, nameLen)) + extension));
-		}
-		/// <summary>
 		/// Saves the stored content links to file.
 		/// Returns the amount of links put into the file.
 		/// </summary>
@@ -483,30 +513,16 @@ namespace ImageDL.Classes.ImageDownloading
 		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
 		/// </summary>
 		/// <param name="list"></param>
-		/// <param name="obj"></param>
+		/// <param name="post"></param>
 		/// <returns></returns>
-		protected bool Add(List<TPost> list, TPost obj)
+		protected bool Add(List<TPost> list, TPost post)
 		{
-			list.Add(obj);
+			list.Add(post);
 			if (list.Count % 25 == 0)
 			{
-				Console.WriteLine($"{list.Count} {Name} posts found.");
+				ConsoleUtils.WriteLine($"{list.Count} {Name} posts found.");
 			}
 			return list.Count < AmountOfPostsToGather;
-		}
-		private void WriteInColor(string text, ConsoleColor color)
-		{
-			if (Console.ForegroundColor == color)
-			{
-				Console.WriteLine(text);
-			}
-			else
-			{
-				var oldColor = Console.ForegroundColor;
-				Console.ForegroundColor = color;
-				Console.WriteLine(text);
-				Console.ForegroundColor = oldColor;
-			}
 		}
 
 		/// <summary>
@@ -515,38 +531,5 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="list">The list to add values to.</param>
 		/// <returns></returns>
 		protected abstract Task GatherPostsAsync(List<TPost> list);
-		/// <summary>
-		/// Reorders the list and removes duplicate entries.
-		/// </summary>
-		/// <param name="list"></param>
-		/// <returns>The ordered list.</returns>
-		protected abstract List<TPost> OrderAndRemoveDuplicates(List<TPost> list);
-		/// <summary>
-		/// Writes the post to the console indicating it is being downloaded.
-		/// </summary>
-		/// <param name="post"></param>
-		/// <param name="count"></param>
-		protected abstract void WritePostToConsole(TPost post, int count);
-		/// <summary>
-		/// Generate a filename to save an image with.
-		/// </summary>
-		/// <param name="post"></param>
-		/// <param name="uri"></param>
-		/// <returns></returns>
-		protected abstract FileInfo GenerateFileInfo(TPost post, Uri uri);
-		/// <summary>
-		/// Scrape images from a post.
-		/// </summary>
-		/// <param name="post"></param>
-		/// <returns></returns>
-		protected abstract Task<ScrapeResult> GatherImagesAsync(TPost post);
-		/// <summary>
-		/// Store information about an image from a post.
-		/// </summary>
-		/// <param name="post"></param>
-		/// <param name="uri"></param>
-		/// <param name="reason"></param>
-		/// <returns></returns>
-		protected abstract ContentLink CreateContentLink(TPost post, Uri uri, string reason);
 	}
 }
