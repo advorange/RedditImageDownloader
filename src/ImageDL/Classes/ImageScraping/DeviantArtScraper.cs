@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageScraping
 {
+	/*
 	/// <summary>
 	/// Scrapes images from deviantart.com.
 	/// </summary>
@@ -31,7 +32,7 @@ namespace ImageDL.Classes.ImageScraping
 			return RemoveQuery(uri);
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
+		protected override Task<ImagesResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//18+ filter (shouldn't be reached since the cookies are set)
 			if (doc.DocumentNode.Descendants("div").Any(x => x.HasClass("dev-content-mature")))
@@ -52,12 +53,12 @@ namespace ImageDL.Classes.ImageScraping
 				});
 
 				var error = img.Any() ? null : "this deviantart post is locked behind mature content";
-				return Task.FromResult(new ScrapeResult(uri, false, this, Convert(img), error));
+				return Task.FromResult(new ImagesResult(uri, false, this, Convert(img), error));
 			}
 
 			var images = doc.DocumentNode.Descendants("img");
 			var deviations = images.Where(x => x.GetAttributeValue("data-embed-type", null) == "deviation");
-			return Task.FromResult(new ScrapeResult(uri, false, this, Convert(deviations.Select(x => x.GetAttributeValue("src", null))), null));
+			return Task.FromResult(new ImagesResult(uri, false, this, Convert(deviations.Select(x => x.GetAttributeValue("src", null))), null));
 		}
-	}
+	}*/
 }

@@ -1,4 +1,4 @@
-﻿#pragma warning disable 1591
+﻿#pragma warning disable 1591, 649
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,8 +20,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly object GatingInfo;
 		[JsonProperty("media_preview")]
 		public readonly object MediaPreview;
-		[JsonProperty("display_url")]
-		public readonly string DisplayUrl;
 		[JsonProperty("display_resources")]
 		public readonly List<Thumbnail> Thumbnails;
 		[JsonProperty("is_video")]
@@ -62,13 +60,22 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public readonly RelatedMediaInfo RelatedMediaInfo;
 		[JsonProperty("edge_sidecar_to_children")]
 		public readonly ChildrenInfo ChildrenInfo;
+
 		[JsonProperty("id")]
 		private readonly string _Id;
+		[JsonProperty("display_url")]
+		private readonly string _DisplayUrl;
 
+		/// <inheritdoc />
 		[JsonIgnore]
-		public override string Link => $"https://www.instagram.com/p/{Shortcode}";
+		public override string PostUrl => $"https://www.instagram.com/p/{Shortcode}";
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override string ContentUrl => _DisplayUrl;
+		/// <inheritdoc />
 		[JsonIgnore]
 		public override string Id => _Id;
+		/// <inheritdoc />
 		[JsonIgnore]
 		public override int Score => LikeInfo.Count;
 		[JsonIgnore]

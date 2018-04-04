@@ -1,5 +1,5 @@
 ﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageScraping;
+using HtmlAgilityPack;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -34,20 +34,24 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Scrapers for gathering images from websites.
 		/// </summary>
-		public List<IWebsiteScraper> Scrapers { get; set; } = typeof(IWebsiteScraper).Assembly.DefinedTypes
-			.Where(x => x.IsSubclassOf(typeof(IWebsiteScraper)))
+		public List<IImageGatherer> Gatherers { get; set; } = typeof(IImageGatherer).Assembly.DefinedTypes
+			.Where(x => x.IsSubclassOf(typeof(IImageGatherer)))
 			.Select(x => Activator.CreateInstance(x))
-			.Cast<IWebsiteScraper>()
+			.Cast<IImageGatherer>()
 			.ToList();
 		/// <summary>
 		/// Holds api keys for specific websites.
 		/// </summary>
-		public Dictionary<string, ApiKey> ApiKeys { get; set; } = new Dictionary<string, ApiKey>();
+		public Dictionary<Type, ApiKey> ApiKeys { get; set; } = new Dictionary<Type, ApiKey>();
 		/// <summary>
 		/// Holds the cookies for the client.
 		/// </summary>
 		public CookieContainer Cookies { get; private set; }
 
+		/// <summary>
+		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
+		/// </summary>
+		public ImageDownloaderClient() : this(new CookieContainer()) { }
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
 		/// </summary>
@@ -74,6 +78,22 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <summary>
+		/// Sends a request to the uri with the specified method and the referer as itself.
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <param name="method"></param>
+		/// <returns></returns>
+		public async Task<HttpResponseMessage> SendWithRefererAsync(Uri uri, HttpMethod method)
+		{
+			var req = new HttpRequestMessage
+			{
+				RequestUri = uri,
+				Method = method,
+			};
+			req.Headers.Referrer = uri; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
+			return await SendAsync(req).CAF();
+		}
+		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up/all errors other than 421 and 429.
 		/// </summary>
@@ -82,7 +102,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="tries"></param>
 		/// <returns></returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
-		public async Task<MainTextResult> GetMainTextAndRetryIfRateLimitedAsync(Uri uri, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<string>> GetText(Uri uri, TimeSpan wait = default, int tries = 3)
 		{
 			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
@@ -105,44 +125,53 @@ namespace ImageDL.Classes.ImageDownloading
 						continue;
 					}
 
-					return new MainTextResult(resp.StatusCode, resp.IsSuccessStatusCode, await resp.Content.ReadAsStringAsync().CAF());
+					return new ClientResult<string>(await resp.Content.ReadAsStringAsync().CAF(), resp.StatusCode, resp.IsSuccessStatusCode);
 				}
 			}
-			throw new HttpRequestException($"Unable to get the requested text after {tries} tries.");
+			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
 		}
 		/// <summary>
-		/// Sends a request to the uri with the specified method and the referer as itself.
+		/// Gets the Html of a webpage.
 		/// </summary>
 		/// <param name="uri"></param>
-		/// <param name="method"></param>
-		/// <returns></returns>
-		public async Task<HttpResponseMessage> SendWithRefererAsync(Uri uri, HttpMethod method)
+		/// <param name="wait">The amount of time to wait between retries. This will be doubled each retry.</param>
+		/// <param name="tries"></param>
+		/// /// <returns></returns>
+		public async Task<ClientResult<HtmlDocument>> GetHtml(Uri uri, TimeSpan wait = default, int tries = 3)
 		{
-			var req = new HttpRequestMessage
+			var result = await GetText(uri).CAF();
+			if (result.IsSuccess)
 			{
-				RequestUri = uri,
-				Method = method,
-			};
-			req.Headers.Referrer = uri; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
-			return await SendAsync(req).CAF();
+				var doc = new HtmlDocument();
+				doc.LoadHtml(result.Value);
+				return new ClientResult<HtmlDocument>(doc, result.StatusCode, result.IsSuccess);
+			}
+			else
+			{
+				return new ClientResult<HtmlDocument>(null, result.StatusCode, result.IsSuccess);
+			}
 		}
-
 		/// <summary>
-		/// Attempts to get the api key for the specified website.
+		/// Removes query parameters from a url.
 		/// </summary>
-		/// <param name="name"></param>
+		/// <param name="uri"></param>
 		/// <returns></returns>
-		public string this[string name]
+		public Uri RemoveQuery(Uri uri)
 		{
-			get => ApiKeys.TryGetValue(name, out var key) ? key.Key : null;
+			var u = uri.ToString();
+			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : uri;
 		}
 	}
 
 	/// <summary>
 	/// Result of getting the text from a webpage.
 	/// </summary>
-	public struct MainTextResult
+	public struct ClientResult<T>
 	{
+		/// <summary>
+		/// The value of the request.
+		/// </summary>
+		public readonly T Value;
 		/// <summary>
 		/// The http status code for the request.
 		/// </summary>
@@ -151,16 +180,12 @@ namespace ImageDL.Classes.ImageDownloading
 		/// Whether or not the request was successful.
 		/// </summary>
 		public readonly bool IsSuccess;
-		/// <summary>
-		/// The text of the request.
-		/// </summary>
-		public readonly string Text;
 
-		internal MainTextResult(HttpStatusCode statusCode, bool isSuccess, string text)
+		internal ClientResult(T value, HttpStatusCode statusCode, bool isSuccess)
 		{
+			Value = value;
 			StatusCode = statusCode;
 			IsSuccess = isSuccess;
-			Text = text;
 		}
 	}
 }

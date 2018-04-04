@@ -16,7 +16,11 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// The link to the post.
 		/// </summary>
-		public abstract string Link { get; }
+		public abstract string PostUrl { get; }
+		/// <summary>
+		/// The link to the content.
+		/// </summary>
+		public abstract string ContentUrl { get; }
 		/// <summary>
 		/// The id of the post.
 		/// </summary>
@@ -56,39 +60,6 @@ namespace ImageDL.Classes
 		{
 			return new ContentLink(uri, Score, reason);
 		}
-		/// <summary>
-		/// Gathers the images from the post.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <returns></returns>
-		public virtual async Task<ScrapeResult> GatherImagesAsync(ImageDownloaderClient client)
-		{
-			var uri = new Uri(Link);
-			var scraper = client.Scrapers.SingleOrDefault(x => x.IsFromWebsite(uri));
-			var isAnimated = client.AnimatedContentDomains.Any(x => x.IsMatch(uri.ToString()));
-			var editedUri = scraper == null ? uri : scraper.EditUri(uri);
-
-			//If the link goes directly to an image, just use that
-			if (editedUri.ToString().IsImagePath())
-			{
-				return new ScrapeResult(uri, isAnimated, null, new[] { editedUri }, null);
-			}
-			//If the link is animated, return nothing and give an error
-			else if (isAnimated)
-			{
-				return new ScrapeResult(uri, isAnimated, null, new[] { editedUri }, $"{editedUri} is animated content (gif/video).");
-			}
-			//If the scraper isn't null and the uri requires scraping, scrape it
-			else if (scraper != null)
-			{
-				return await scraper.ScrapeAsync(this, uri).CAF();
-			}
-			//Otherwise, just return the uri and hope for the best.
-			else
-			{
-				return new ScrapeResult(uri, isAnimated, scraper, new[] { editedUri }, null);
-			}
-		}
 
 		/// <summary>
 		/// 
@@ -97,12 +68,12 @@ namespace ImageDL.Classes
 		/// <returns></returns>
 		public string ToString(int count)
 		{
-			return $"[#{count}|\u2191{(Score >= 0 ? $"|\u2191{Score}" : "")}] {Link}";
+			return $"[#{count}|\u2191{(Score >= 0 ? $"|\u2191{Score}" : "")}] {PostUrl}";
 		}
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return Link;
+			return PostUrl;
 		}
 	}
 }

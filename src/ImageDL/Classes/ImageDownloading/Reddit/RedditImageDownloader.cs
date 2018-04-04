@@ -30,8 +30,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <summary>
 		/// Creates an image downloader for reddit.
 		/// </summary>
-		/// <param name="client">The client to download images with.</param>
-		public RedditImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://www.reddit.com"))
+		public RedditImageDownloader() : base("Reddit")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{
@@ -42,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Model> list)
+		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();

@@ -27,9 +27,15 @@ namespace ImageDL.Classes
 		/// <param name="validFor"></param>
 		public ApiKey(string key, TimeSpan? validFor = null)
 		{
-			Key = key;
+			Key = key ?? throw new ArgumentException("The api key cannot be null.", nameof(key));
 			CreatedAt = DateTime.UtcNow;
 			ValidFor = validFor ?? TimeSpan.FromSeconds(-1);
+		}
+
+		/// <inheritdoc />
+		public override string ToString()
+		{
+			return Key;
 		}
 	}
 }

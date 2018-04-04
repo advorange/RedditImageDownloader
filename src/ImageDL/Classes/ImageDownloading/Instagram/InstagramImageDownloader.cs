@@ -33,8 +33,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramImageDownloader"/>.
 		/// </summary>
-		/// <param name="client">The client to download images with.</param>
-		public InstagramImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://www.instagram.com"))
+		public InstagramImageDownloader() : base("Instagram")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -43,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Model> list)
+		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
 		{
 			var userId = 0UL;
 			var parsed = new MediaTimeline();
@@ -52,33 +51,36 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
-				if (String.IsNullOrWhiteSpace(Client[Name]))
+				if (userId == 0UL)
 				{
-					var (QueryHash, UserId) = await GetQueryHashAndUserId().CAF();
-					if (QueryHash == null)
-					{
-						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
-					}
-					Client.ApiKeys[Name] = new ApiKey(QueryHash);
-					userId = UserId;
+					userId = await GetUserIdAsync(client, Username).CAF();
 				}
 
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(userId, Client[Name], nextPage)).CAF();
+				var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
+				{
+					{ "id", userId }, //The id of the user to search
+					{ "first", 100 }, //The amount of posts to get
+					{ "after", nextPage ?? "" }, //The position in the pagination
+				});
+				var query = new Uri("https://www.instagram.com/graphql/query/" +
+					$"?query_hash={await GetApiKeyAsync(client).CAF()}" +
+					$"&variables={WebUtility.UrlEncode(variables)}");
+				var result = await client.GetText(query).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
-					if (result.Text.Contains("query_hash"))
+					if (result.Value.Contains("query_hash"))
 					{
-						Client.ApiKeys[Name] = new ApiKey(null);
+						client.ApiKeys.Remove(typeof(InstagramImageDownloader));
 						continue;
 					}
 					break;
 				}
 
-				var insta = JsonConvert.DeserializeObject<InstagramResult>(result.Text);
+				var insta = JsonConvert.DeserializeObject<InstagramResult>(result.Value);
 				foreach (var post in (parsed = insta.Data.User.Content).Posts)
 				{
-					var p = await Parse(post.Node).CAF();
+					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
 					if (!(keepGoing = p.CreatedAt >= OldestAllowed))
 					{
 						break;
@@ -93,7 +95,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 						for (int j = p.ChildrenInfo.Nodes.Count - 1; j >= 0; --j)
 						{
 							var image = p.ChildrenInfo.Nodes[j].Child;
-							if (!FitsSizeRequirements(null, image.Dimensions.Width, image.Dimensions.Height, out _))
+							if (!HasValidSize(null, image.Dimensions.Width, image.Dimensions.Height, out _))
 							{
 								p.ChildrenInfo.Nodes.RemoveAt(j);
 							}
@@ -104,7 +106,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 						}
 					}
 					//If there are no children, we can check the post's dimensions directly
-					else if (!FitsSizeRequirements(null, p.Dimensions.Width, p.Dimensions.Height, out _))
+					else if (!HasValidSize(null, p.Dimensions.Width, p.Dimensions.Height, out _))
 					{
 						continue;
 					}
@@ -116,64 +118,75 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			}
 		}
 
-		private Uri GenerateQuery(ulong userId, string queryHash, string nextPagination)
+		/// <summary>
+		/// Gets an api key for Instagram.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <returns></returns>
+		public static async Task<ApiKey> GetApiKeyAsync(ImageDownloaderClient client)
 		{
-			var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
+			if (client.ApiKeys.TryGetValue(typeof(InstagramImageDownloader), out var key))
 			{
-				{ "id", userId }, //The id of the user to search
-				{ "first", 100 }, //The amount of posts to get
-				{ "after", nextPagination ?? "" }, //The position in the pagination
-			});
-			return new Uri("https://www.instagram.com/graphql/query/" +
-				$"?query_hash={queryHash}" +
-				$"&variables={WebUtility.UrlEncode(variables)}");
-		}
-		private async Task<(string QueryHash, ulong UserId)> GetQueryHashAndUserId()
-		{
+				return key;
+			}
+
 			//Load the page regularly first so we can get some data from it
-			var fLink = $"https://www.instagram.com/{Username}/?hl=en";
-			var fResult = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(fLink)).CAF();
-			if (!fResult.IsSuccess)
+			var query = $"https://www.instagram.com/instagram/?hl=en";
+			var result = await client.GetHtml(new Uri(query)).CAF();
+			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
 			}
 
-			//Put it in a doc so we can actually parse it
-			var doc = new HtmlDocument();
-			doc.LoadHtml(fResult.Text);
-
-			//Since we already used the text, we can now cut it to get the userid
-			var idSearch = "owner\":{\"id\":\"";
-			var idCut = fResult.Text.Substring(fResult.Text.IndexOf(idSearch) + idSearch.Length);
-			var id = idCut.Substring(0, idCut.IndexOf('"'));
-
 			//Find the direct link to ProfilePageContainer.js
-			var jsLink = doc.DocumentNode.Descendants("link")
+			var jsLink = result.Value.DocumentNode.Descendants("link")
 				.Select(x => x.GetAttributeValue("href", null))
 				.First(x => (x ?? "").Contains("ProfilePageContainer.js"));
-			var jsResult = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri($"https://www.instagram.com{jsLink}")).CAF();
+			var jsResult = await client.GetText(new Uri($"https://www.instagram.com{jsLink}")).CAF();
 			if (!jsResult.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the query hash.");
 			}
 
 			//Read ProfilePageContainer.js and find the query hash
-			var querySearch = "e.profilePosts.byUserId.get(t))?o.pagination:o},queryId:\"";
-			var queryCut = jsResult.Text.Substring(jsResult.Text.IndexOf(querySearch) + querySearch.Length);
-			var queryHash = queryCut.Substring(0, queryCut.IndexOf('"'));
-
-			return (queryHash, Convert.ToUInt64(id));
+			var qSearch = "e.profilePosts.byUserId.get(t))?o.pagination:o},queryId:\"";
+			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
+			return (client.ApiKeys[typeof(InstagramImageDownloader)] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
 		}
-		private async Task<Model> Parse(Model post)
+		/// <summary>
+		/// Gets the id of the Instagram user.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="username"></param>
+		/// <returns></returns>
+		public static async Task<ulong> GetUserIdAsync(ImageDownloaderClient client, string username)
 		{
-			var query = $"https://www.instagram.com/p/{post.Shortcode}/?__a=1";
-			var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
+			var query = $"https://www.instagram.com/{username}/?hl=en";
+			var result = await client.GetText(new Uri(query)).CAF();
 			if (!result.IsSuccess)
 			{
-				throw new HttpRequestException($"Unable to get all the metadata for {post.Id}.");
+				throw new HttpRequestException("Unable to get the first request to the user's account.");
 			}
 
-			return JsonConvert.DeserializeObject<GraphqlResult>(result.Text).Graphql.ShortcodeMedia;
+			var idSearch = "owner\":{\"id\":\"";
+			var idCut = result.Value.Substring(result.Value.IndexOf(idSearch) + idSearch.Length);
+			return Convert.ToUInt64(idCut.Substring(0, idCut.IndexOf('"')));
+		}
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetInstagramPostAsync(ImageDownloaderClient client, string id)
+		{
+			var query = $"https://www.instagram.com/p/{id}/?__a=1";
+			var result = await client.GetText(new Uri(query)).CAF();
+			if (!result.IsSuccess)
+			{
+				return null;
+			}
+			return JsonConvert.DeserializeObject<GraphqlResult>(result.Value).Graphql.ShortcodeMedia;
 		}
 	}
 }

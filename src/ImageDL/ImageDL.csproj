@@ -22,4 +22,9 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Classes\ImageDownloading\Pixiv\" />
+    <Folder Include="Classes\ImageDownloading\Tumblr\" />
+  </ItemGroup>
+
 </Project>

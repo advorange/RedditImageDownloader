@@ -12,6 +12,7 @@ using System.Web;
 
 namespace ImageDL.Classes.ImageScraping
 {
+	/*
 	/// <summary>
 	/// Scrapes images from pixiv.net.
 	/// </summary>
@@ -40,12 +41,12 @@ namespace ImageDL.Classes.ImageScraping
 			return new Uri(_Mode.Replace(_RemoveC.Replace(uri.ToString(), "/"), "mode=manga&"));
 		}
 		/// <inheritdoc />
-		protected override async Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
+		protected override async Task<ImagesResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants("p").Any(x => x.HasClass("title") && x.InnerText.Contains("R-18")))
 			{
-				return new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), "this pixiv post is locked behind the R-18 filter");
+				return new ImagesResult(uri, false, this, Enumerable.Empty<Uri>(), "this pixiv post is locked behind the R-18 filter");
 			}
 
 			var mode = HttpUtility.ParseQueryString(uri.Query)["mode"];
@@ -67,13 +68,13 @@ namespace ImageDL.Classes.ImageScraping
 		/// <param name="uri"></param>
 		/// <param name="doc"></param>
 		/// <returns></returns>
-		private async Task<ScrapeResult> ScrapeMediumAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
+		private async Task<ImagesResult> ScrapeMediumAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			var imageContainer = doc.DocumentNode.Descendants("div")
 				.Where(x => x.HasClass("img-container") && !x.InnerText.CaseInsContains("doesn't support"));
 			if (!imageContainer.Any())
 			{
-				return new ScrapeResult(uri, true, this, new[] { uri }, $"{uri} is animated content (gif/video).");
+				return new ImagesResult(uri, true, this, new[] { uri }, $"{uri} is animated content (gif/video).");
 			}
 			var image = imageContainer.SelectMany(x => x.Descendants("img")).SingleOrDefault();
 			var iteratedUri = EditUri(new Uri(image.GetAttributeValue("src", null)));
@@ -100,7 +101,7 @@ namespace ImageDL.Classes.ImageScraping
 					break;
 				}
 			}
-			return new ScrapeResult(uri, false, this, Convert(validUris), null);
+			return new ImagesResult(uri, false, this, Convert(validUris), null);
 		}
 		/// <summary>
 		/// Scrapes images from a pixiv uri with mode=manga. Able to get all the image uris right away.
@@ -108,11 +109,11 @@ namespace ImageDL.Classes.ImageScraping
 		/// <param name="uri"></param>
 		/// <param name="doc"></param>
 		/// <returns></returns>
-		private ScrapeResult ScrapeManga(Uri uri, HtmlDocument doc)
+		private ImagesResult ScrapeManga(Uri uri, HtmlDocument doc)
 		{
 			var images = doc.DocumentNode.Descendants("img");
 			var mangaImages = images.Where(x => x.GetAttributeValue("data-filter", null) == "manga-image");
-			return new ScrapeResult(uri, false, this, Convert(mangaImages.Select(x => x.GetAttributeValue("data-src", null))), null);
+			return new ImagesResult(uri, false, this, Convert(mangaImages.Select(x => x.GetAttributeValue("data-src", null))), null);
 		}
-	}
+	}*/
 }

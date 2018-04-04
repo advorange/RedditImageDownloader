@@ -1,14 +1,13 @@
 ﻿using AdvorangesUtils;
-using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Model = ImageDL.Classes.ImageDownloading.Eshuushuu.EshuushuuPost;
+using Model = ImageDL.Classes.ImageDownloading.Eshuushuu.Models.EshuushuuPost;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 {
@@ -38,8 +37,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <summary>
 		/// Creates an instance of <see cref="EshuushuuImageDownloader"/>.
 		/// </summary>
-		/// <param name="client">The client to download images with.</param>
-		public EshuushuuImageDownloader(ImageDownloaderClient client) : base(client, new Uri("http://e-shuushuu.net"))
+		public EshuushuuImageDownloader() : base("E-shuushuu")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -48,35 +46,37 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Model> list)
+		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
 			var keepGoing = true;
 			//Iterate to get the next page of results
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 15); ++i)
 			{
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateQuery(i)).CAF();
+				var query = new Uri("http://e-shuushuu.net/search/results/" +
+					$"?thumbs=1" +
+					$"&hide_disabled=1" +
+					$"&tags={WebUtility.UrlEncode(Tags)}" +
+					$"&page={i}");
+				var result = await client.GetHtml(query).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
 				}
 
-				var doc = new HtmlDocument();
-				doc.LoadHtml(result.Text);
-
-				parsed = (await Task.WhenAll(doc.DocumentNode.Descendants("div")
+				parsed = (await Task.WhenAll(result.Value.DocumentNode.Descendants("div")
 					.Where(x => x.GetAttributeValue("class", null) == "display")
 					.Select(x => x.Id.TrimStart('i'))
 					.Where(x => !String.IsNullOrWhiteSpace(x))
 					.Distinct()
-					.Select(async x => await Parse(Convert.ToInt32(x)).CAF())).CAF()).ToList();
+					.Select(async x => await GetEshuushuuPostAsync(client, x).CAF())).CAF()).ToList();
 				foreach (var post in parsed)
 				{
 					if (!(keepGoing = post.SubmittedOn >= OldestAllowed))
 					{
 						break;
 					}
-					else if (!FitsSizeRequirements(null, post.Width, post.Height, out _) || post.Score < MinScore)
+					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
@@ -88,36 +88,30 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			}
 		}
 
-		private Uri GenerateQuery(int page)
-		{
-			return new Uri("http://e-shuushuu.net/search/results/" +
-				"?thumbs=1" +
-				"&hide_disabled=1" +
-				$"&tags={WebUtility.UrlEncode(Tags)}" +
-				$"&page={page}");
-		}
-		private async Task<Model> Parse(int id)
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetEshuushuuPostAsync(ImageDownloaderClient client, string id)
 		{
 			var query = $"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}";
-			var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
+			var result = await client.GetHtml(new Uri(query)).CAF();
 			if (!result.IsSuccess)
 			{
-				throw new HttpRequestException($"Unable to parse the Eshuushuu post {id}");
+				return null;
 			}
-
-			var doc = new HtmlDocument();
-			doc.LoadHtml(result.Text);
 
 			var jObj = new JObject
 			{
-				{ "post_url", $"http://e-shuushuu.net/image/{id}/" },
 				{ "post_id", id }
 			};
 
 			//dt is the name (datatype?) dd is the value (datadata?)
 			//They should always have the same count of each
-			var dt = doc.DocumentNode.Descendants("dt").ToArray();
-			var dd = doc.DocumentNode.Descendants("dd").ToArray();
+			var dt = result.Value.DocumentNode.Descendants("dt").ToArray();
+			var dd = result.Value.DocumentNode.Descendants("dd").ToArray();
 			for (int i = 0; i < dt.Count(); ++i)
 			{
 				var t = dt[i];
@@ -140,8 +134,8 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					{
 						return new JObject
 						{
-							{ nameof(Tag.Value).ToLower(), x.Descendants("a").Single().GetAttributeValue("href", null).Replace("/tags/", "") },
-							{ nameof(Tag.Name).ToLower(), x.InnerText.Replace("\"", "") },
+							{ nameof(EshuushuuTag.Value).ToLower(), x.Descendants("a").Single().GetAttributeValue("href", null).Replace("/tags/", "") },
+							{ nameof(EshuushuuTag.Name).ToLower(), x.InnerText.Replace("\"", "") },
 						};
 					}).ToArray()));
 				}

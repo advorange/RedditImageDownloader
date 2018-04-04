@@ -1,5 +1,6 @@
 ﻿using ImageDL.Classes;
 using ImageDL.Classes.ImageComparing;
+using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.SettingParsing;
 using System;
 using System.Threading;
@@ -65,10 +66,6 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		bool Start { get; set; }
 		/// <summary>
-		/// The comparer to use for images.
-		/// </summary>
-		ImageComparer ImageComparer { get; set; }
-		/// <summary>
 		/// Used to set arguments via command line.
 		/// </summary>
 		SettingParser SettingParser { get; set; }
@@ -81,15 +78,17 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		bool CanStart { get; }
 		/// <summary>
-		/// The name of the downloader.
+		/// The domain name the downloader works for.
 		/// </summary>
 		string Name { get; }
 
 		/// <summary>
 		/// Downloads all the images that match the supplied arguments then saves all the found animated content links.
 		/// </summary>
+		/// <param name="client">The client to download images with.</param>
+		/// <param name="comparer">The comparer to compare images with.</param>
 		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
-		Task StartAsync(CancellationToken token = default);
+		Task StartAsync(ImageDownloaderClient client, ImageComparer comparer, CancellationToken token = default);
 	}
 }

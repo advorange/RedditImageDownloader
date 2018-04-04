@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageScraping
 {
+	/*
 	/// <summary>
 	/// Scrapes images from tumblr.com.
 	/// </summary>
@@ -32,17 +33,17 @@ namespace ImageDL.Classes.ImageScraping
 			return new Uri(RemoveQuery(uri).ToString().Replace("/post/", "/image/"));
 		}
 		/// <inheritdoc />
-		protected override Task<ScrapeResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
+		protected override Task<ImagesResult> ProtectedScrapeAsync(ImageDownloaderClient client, Uri uri, HtmlDocument doc)
 		{
 			//18+ filter
 			if (doc.DocumentNode.Descendants().Any(x => x.GetAttributeValue("id", null) == "safemode_actions_display"))
 			{
-				return Task.FromResult(new ScrapeResult(uri, false, this, Enumerable.Empty<Uri>(), "this tumblr post is locked behind safemode"));
+				return Task.FromResult(new ImagesResult(uri, false, this, Enumerable.Empty<Uri>(), "this tumblr post is locked behind safemode"));
 			}
 
 			var meta = doc.DocumentNode.Descendants("meta");
 			var images = meta.Where(x => x.GetAttributeValue("property", null) == "og:image");
-			return Task.FromResult(new ScrapeResult(uri, false, this, Convert(images.Select(x => x.GetAttributeValue("content", null))), null));
+			return Task.FromResult(new ImagesResult(uri, false, this, Convert(images.Select(x => x.GetAttributeValue("content", null))), null));
 		}
-	}
+	}*/
 }

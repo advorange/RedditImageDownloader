@@ -1,5 +1,5 @@
 ﻿using AdvorangesUtils;
-using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloading.Imgur.Models;
 using ImageDL.Classes.SettingParsing;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Model = ImageDL.Classes.ImageDownloading.Imgur.ImgurPost;
+using Model = ImageDL.Classes.ImageDownloading.Imgur.Models.ImgurPost;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
 {
@@ -17,8 +17,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// </summary>
 	public sealed class ImgurImageDownloader : ImageDownloader<Model>
 	{
-		private const string TAGS = "https://apidocs.imgur.com/#3c981acf-47aa-488f-b068-269f65aee3ce";
-
 		/// <summary>
 		/// The tags to search for posts with.
 		/// </summary>
@@ -33,48 +31,39 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <summary>
 		/// Creates an instance of <see cref="ImgurImageDownloader"/>.
 		/// </summary>
-		/// <param name="client">The client to download images with.</param>
-		public ImgurImageDownloader(ImageDownloaderClient client) : base(client, new Uri("https://i.imgur.com"))
+		public ImgurImageDownloader() : base("Imgur")
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags) }, x => Tags = x)
 			{
-				Description = $"The tags to search for. For help see {TAGS}.",
+				Description = $"The tags to search for. For help see https://apidocs.imgur.com/#3c981acf-47aa-488f-b068-269f65aee3ce.",
 			});
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(List<Model> list)
+		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
 			var keepGoing = true;
 			//Iterate to get the next page of results
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
 			{
-				//If the key is empty either this just started or it was reset due to the key becoming invalid
-				if (String.IsNullOrWhiteSpace(Client[Name]))
-				{
-					var clientId = await GetClientId().CAF();
-					if (clientId == null)
-					{
-						throw new InvalidOperationException("Unable to keep gathering due to being unable to generate a new API token.");
-					}
-					Client.ApiKeys[Name] = new ApiKey(clientId);
-				}
-
-				var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(GenerateGalleryQuery(Client[Name], i)).CAF();
+				var query = $"https://api.imgur.com/3/gallery/search/time/all/{i}/" +
+					$"?client_id={await GetApiKeyAsync(client).CAF()}" +
+					$"&q={WebUtility.UrlEncode(Tags)}";
+				var result = await client.GetText(new Uri(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the api key, try to get another one
-					if (result.Text.Contains("client_id"))
+					if (result.Value.Contains("client_id"))
 					{
-						Client.ApiKeys[Name] = new ApiKey(null);
+						client.ApiKeys.Remove(typeof(ImgurImageDownloader));
 						--i;
 						continue;
 					}
 					break;
 				}
 
-				parsed = JObject.Parse(result.Text)["data"].ToObject<List<Model>>();
+				parsed = JObject.Parse(result.Value)["data"].ToObject<List<Model>>();
 				foreach (var post in parsed)
 				{
 					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
@@ -85,16 +74,23 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						continue;
 					}
-					else if (post.IsAlbum)
+					else if (post.IsAlbum && post.ImagesCount != post.Images?.Count)
 					{
 						//Make sure we have all the images
-						await GatherAllImagesAsync(Client[Name], post).CAF();
+						var images = await GetImagesAsync(client, post.Id).CAF();
+						foreach (var image in images)
+						{
+							if (!post.Images.Select(x => x.Id).Contains(image.Id))
+							{
+								post.Images.Add(image);
+							}
+						}
 					}
 					//Remove all images that don't meet the size requirements
 					for (int j = post.ImagesCount - 1; j >= 0; --j)
 					{
 						var image = post.Images[j];
-						if (!FitsSizeRequirements(null, image.Width, image.Height, out _))
+						if (!HasValidSize(null, image.Width, image.Height, out _))
 						{
 							post.Images.RemoveAt(j);
 						}
@@ -111,63 +107,62 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			}
 		}
 
-		private Uri GenerateGalleryQuery(string clientId, int page)
+		/// <summary>
+		/// Gets an api key for imgur.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <returns></returns>
+		public static async Task<ApiKey> GetApiKeyAsync(ImageDownloaderClient client)
 		{
-			return new Uri($"https://api.imgur.com/3/gallery/search/time/all/{page}/" +
-				$"?client_id={clientId}" +
-				$"&q={WebUtility.UrlEncode(Tags)}");
-		}
-		private async Task<string> GetClientId()
-		{
+			if (client.ApiKeys.TryGetValue(typeof(ImgurImageDownloader), out var key))
+			{
+				return key;
+			}
 			//Load the page regularly first so we can get some data from it
-			var fLink = $"https://imgur.com/t/{WebUtility.UrlEncode(Tags)}";
-			var fResult = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(fLink)).CAF();
-			if (!fResult.IsSuccess)
+			var query = $"https://imgur.com/t/dogs";
+			var result = await client.GetHtml(new Uri(query)).CAF();
+			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the tags page.");
 			}
-
-			//Put it in a doc so we can actually parse it
-			var doc = new HtmlDocument();
-			doc.LoadHtml(fResult.Text);
-
 			//Find the direct link to main.gibberish.js
-			var jsLink = doc.DocumentNode.Descendants("script")
+			var jsQuery = result.Value.DocumentNode.Descendants("script")
 				.Select(x => x.GetAttributeValue("src", null))
 				.First(x => (x ?? "").Contains("/main."));
-			var jsResult = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(jsLink)).CAF();
+			var jsResult = await client.GetText(new Uri(jsQuery)).CAF();
 			if (!jsResult.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the client id.");
 			}
-
 			//Read main.gibberish.js and find the client id
 			var idSearch = "apiClientId:\"";
-			var idCut = jsResult.Text.Substring(jsResult.Text.IndexOf(idSearch) + idSearch.Length);
-			return idCut.Substring(0, idCut.IndexOf('"'));
+			var idCut = jsResult.Value.Substring(jsResult.Value.IndexOf(idSearch) + idSearch.Length);
+			return (client.ApiKeys[typeof(ImgurImageDownloader)] = new ApiKey(idCut.Substring(0, idCut.IndexOf('"'))));
 		}
-		private async Task GatherAllImagesAsync(string clientId, Model post)
+		/// <summary>
+		/// Gets the images from the supplied album id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<List<ImgurImage>> GetImagesAsync(ImageDownloaderClient client, string id)
 		{
-			//Only bother checking if there is a difference between the stated count and the gathered count
-			if (!(post.ImagesCount != post.Images?.Count))
+			while (true)
 			{
-				return;
-			}
-
-			var query = $"https://api.imgur.com/3/album/{post.Id}/images?client_id={clientId}";
-			var result = await Client.GetMainTextAndRetryIfRateLimitedAsync(new Uri(query)).CAF();
-			if (!result.IsSuccess)
-			{
-				throw new HttpRequestException($"Unable to get all the images for {post.Id}.");
-			}
-
-			foreach (var image in JObject.Parse(result.Text)["data"].ToObject<List<ImgurImage>>())
-			{
-				if (post.Images.Select(x => x.Id).Contains(image.Id))
+				var key = await GetApiKeyAsync(client).CAF();
+				var query = new Uri($"https://api.imgur.com/3/album/{id}/images?client_id={key}");
+				var result = await client.GetText(query).CAF();
+				if (!result.IsSuccess)
 				{
-					continue;
+					//If there's an error with the api key, try to get another one
+					if (result.Value.Contains("client_id"))
+					{
+						client.ApiKeys.Remove(typeof(ImgurImageDownloader));
+						continue;
+					}
+					return new List<ImgurImage>();
 				}
-				post.Images.Add(image);
+				return JObject.Parse(result.Value)["data"].ToObject<List<ImgurImage>>();
 			}
 		}
 	}

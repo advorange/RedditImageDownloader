@@ -1,4 +1,6 @@
-﻿namespace ImageDL.Classes.ImageDownloading.Reddit
+﻿using System;
+
+namespace ImageDL.Classes.ImageDownloading.Reddit
 {
 	/// <summary>
 	/// Holds the gotten post for reddit.
@@ -11,7 +13,9 @@
 		public readonly RedditSharp.Things.Post Post;
 
 		/// <inheritdoc />
-		public override string Link => $"https://www.reddit.com/{Id}";
+		public override string PostUrl => $"https://www.reddit.com/{Id}";
+		/// <inheritdoc />
+		public override string ContentUrl => Post.Url.ToString();
 		/// <inheritdoc />
 		public override string Id => Post.Id;
 		/// <inheritdoc />
