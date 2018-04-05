@@ -1,4 +1,5 @@
 ﻿using ImageDL.Classes.ImageComparing;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace ImageDL.Windows
 		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
 
 		/// <inheritdoc />
-		public override IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
+		protected override IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 

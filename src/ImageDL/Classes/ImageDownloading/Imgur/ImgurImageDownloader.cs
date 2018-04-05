@@ -1,6 +1,7 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Imgur.Models;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
 			var keepGoing = true;
@@ -112,7 +113,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKeyAsync(ImageDownloaderClient client)
+		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(ImgurImageDownloader), out var key))
 			{
@@ -145,7 +146,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<List<ImgurImage>> GetImagesAsync(ImageDownloaderClient client, string id)
+		public static async Task<List<ImgurImage>> GetImagesAsync(IImageDownloaderClient client, string id)
 		{
 			while (true)
 			{

@@ -1,12 +1,15 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageDL.Windows
@@ -19,7 +22,7 @@ namespace ImageDL.Windows
 		public static Dictionary<string, Type> ImageDownloaders = typeof(IImageDownloader).Assembly.DefinedTypes
 			.Where(x => !x.IsAbstract && typeof(IImageDownloader).IsAssignableFrom(x))
 			.ToDictionary(x => ((IImageDownloader)Activator.CreateInstance(x)).Name, x => x.AsType(), StringComparer.OrdinalIgnoreCase);
-		public static List<Func<ImageDownloaderClient, Task>> Methods = new List<Func<ImageDownloaderClient, Task>>
+		public static List<Func<IServiceProvider, Task>> Methods = new List<Func<IServiceProvider, Task>>
 		{
 			Single, UpdateRedditDirectory,
 		};
@@ -32,8 +35,12 @@ namespace ImageDL.Windows
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
 
+			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
+			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
+				.AddSingleton(new SemaphoreSlim(1))
+				.AddSingleton<IImageDownloaderClient, ImageDownloaderClient>()
+				.AddTransient<IImageComparer, WindowsImageComparer>());
 			ConsoleUtils.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");
-			var client = new ImageDownloaderClient();
 			while (true)
 			{
 				var line = Console.ReadLine().Trim();
@@ -41,9 +48,9 @@ namespace ImageDL.Windows
 				{
 					break;
 				}
-				else if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<ImageDownloaderClient, Task> t)
+				else if (Methods.SingleOrDefault(x => x.Method.Name.CaseInsEquals(line)) is Func<IServiceProvider, Task> t)
 				{
-					await t(client).CAF();
+					await t(services).CAF();
 					ConsoleUtils.WriteLine($"Method finished. Type '{EXIT}' to exit the program, otherwise type anything else to run it again.");
 					continue;
 				}
@@ -51,7 +58,7 @@ namespace ImageDL.Windows
 			}
 		}
 
-		private static async Task Single(ImageDownloaderClient client)
+		private static async Task Single(IServiceProvider services)
 		{
 			var downloader = (IImageDownloader)Activator.CreateInstance(GetDownloaderType());
 			while (!downloader.CanStart)
@@ -59,9 +66,9 @@ namespace ImageDL.Windows
 				ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
 				ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 			}
-			await downloader.StartAsync(client, new WindowsImageComparer()).CAF();
+			await downloader.StartAsync(services).CAF();
 		}
-		private static async Task UpdateRedditDirectory(ImageDownloaderClient client)
+		private static async Task UpdateRedditDirectory(IServiceProvider services)
 		{
 			ConsoleUtils.WriteLine("Provide the arguments to use for each directory:");
 			var arguments = Console.ReadLine();
@@ -80,7 +87,7 @@ namespace ImageDL.Windows
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await downloader.StartAsync(client, new WindowsImageComparer()).CAF();
+				await downloader.StartAsync(services).CAF();
 			}
 		}
 

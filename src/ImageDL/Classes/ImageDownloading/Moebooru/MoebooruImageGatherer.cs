@@ -35,18 +35,18 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 			return uri.Host.CaseInsContains(_Name);
 		}
 		/// <inheritdoc />
-		public async Task<ImagesResult> GetImagesAsync(ImageDownloaderClient client, Uri uri)
+		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri uri)
 		{
-			var u = client.RemoveQuery(uri).ToString();
+			var u = ImageDownloaderClient.RemoveQuery(uri).ToString();
 			if (u.CaseInsIndexOf(_Search, out var index))
 			{
 				var id = u.Substring(index + _Search.Length).Split('/').First();
 				var post = await _Func(client, id).CAF();
 				return post == null
-					? ImagesResult.FromNotFound(uri)
-					: ImagesResult.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
+					? GatheredImagesResponse.FromNotFound(uri)
+					: GatheredImagesResponse.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
 			}
-			return ImagesResult.FromMisc(uri);
+			return GatheredImagesResponse.FromUnknown(uri);
 		}
 	}
 }

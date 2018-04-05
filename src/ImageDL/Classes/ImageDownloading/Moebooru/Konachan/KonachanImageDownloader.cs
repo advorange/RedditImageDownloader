@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetKonachanPost(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetKonachanPost(IImageDownloaderClient client, string id)
 		{
 			var result = await client.GetText(GenerateKonachanQuery($"id:{id}", 0)).CAF();
 			return result.IsSuccess ? ParseKonachanPosts(result.Value)[0] : null;

@@ -43,11 +43,11 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		[JsonProperty("show_location")]
 		public readonly int ShowLocation;
 		[JsonProperty("image_status")]
-		public readonly ImageStatus ImageStatus;
+		public readonly VscoImageStatus ImageStatus;
 		[JsonProperty("image_meta")]
-		public readonly ImageMeta ImageMeta;
+		public readonly VscoImageMeta ImageMeta;
 		[JsonProperty("preset")]
-		public readonly Preset Preset;
+		public readonly VscoPreset Preset;
 		[JsonProperty("height")]
 		public readonly int Height;
 		[JsonProperty("width")]

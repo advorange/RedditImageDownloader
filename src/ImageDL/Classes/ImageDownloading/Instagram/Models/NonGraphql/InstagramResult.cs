@@ -9,7 +9,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	public sealed class InstagramResult
 	{
 		[JsonProperty("data")]
-		public readonly Data Data;
+		public readonly InstagramData Data;
 		[JsonProperty("status")]
 		public readonly string Status;
 	}

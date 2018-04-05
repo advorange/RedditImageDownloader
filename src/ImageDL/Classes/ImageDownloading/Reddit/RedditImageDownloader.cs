@@ -1,12 +1,13 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using RedditSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Model = ImageDL.Classes.ImageDownloading.Reddit.RedditPost;
+using Model = ImageDL.Classes.ImageDownloading.Reddit.Models.RedditPost;
 
 namespace ImageDL.Classes.ImageDownloading.Reddit
 {
@@ -41,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();

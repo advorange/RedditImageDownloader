@@ -13,15 +13,11 @@ namespace ImageDL.Classes.ImageComparing
 	/// <summary>
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
-	public abstract class ImageComparer
+	public abstract class ImageComparer : IImageComparer
 	{
-		/// <summary>
-		/// The amount of images the comparer currently has stored.
-		/// </summary>
+		/// <inheritdoc />
 		public int StoredImages => Images.Count;
-		/// <summary>
-		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
-		/// </summary>
+		/// <inheritdoc />
 		public int ThumbnailSize { get; set; } = 32;
 
 		/// <summary>
@@ -29,16 +25,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// </summary>
 		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
 
-		/// <summary>
-		/// Attempts to cache the image.
-		/// </summary>
-		/// <param name="uri">The location of the image.</param>
-		/// <param name="file">The file the image is saved to or will be saved to.</param>
-		/// <param name="stream">The image's data.</param>
-		/// <param name="width">The width of the original image.</param>
-		/// <param name="height">The height of the original image.</param>
-		/// <param name="error">If there are any problems with trying to cache the file.</param>
-		/// <returns></returns>
+		/// <inheritdoc />
 		public bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
@@ -59,39 +46,7 @@ namespace ImageDL.Classes.ImageComparing
 				return false;
 			}
 		}
-		/// <summary>
-		/// Attempts to create image details from a file.
-		/// </summary>
-		/// <param name="file">The file to cache.</param>
-		/// <param name="thumbnailSize">The size to create the thumbnail.</param>
-		/// <param name="md5Hash">The hash of the image's stream.</param>
-		/// <param name="details">The details of the image.</param>
-		/// <returns></returns>
-		public bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
-		{
-			//The second check is because for some reason file.Exists will be true when the file does NOT exist
-			if (!file.FullName.IsImagePath() || !File.Exists(file.FullName))
-			{
-				md5Hash = null;
-				details = default;
-				return false;
-			}
-
-			using (var fs = file.OpenRead())
-			{
-				md5Hash = fs.GetMD5Hash();
-				var (width, height) = fs.GetImageSize();
-				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, thumbnailSize));
-				return true;
-			}
-		}
-		/// <summary>
-		/// Attempts to cache files which have already been saved.
-		/// </summary>
-		/// <param name="directory">The directory to cache files from.</param>
-		/// <param name="imagesPerThread">How many images to cache per thread. Lower = faster, but more CPU/Disk usage</param>
-		/// <param name="token">The token used to cancel caching files.</param>
-		/// <returns></returns>
+		/// <inheritdoc />
 		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default)
 		{
 			//Don't cache files which have already been cached
@@ -140,10 +95,7 @@ namespace ImageDL.Classes.ImageComparing
 			}, token));
 			await Task.WhenAll(tasks).CAF();
 		}
-		/// <summary>
-		/// Checks each image against every other image in order to detect duplicates.
-		/// </summary>
-		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
+		/// <inheritdoc />
 		public void DeleteDuplicates(Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
@@ -192,6 +144,32 @@ namespace ImageDL.Classes.ImageComparing
 		/// <param name="s">The image's data.</param>
 		/// <param name="thumbnailSize">The size to make the image.</param>
 		/// <returns>The image's hash.</returns>
-		public abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
+		protected abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
+		/// <summary>
+		/// Attempts to create image details from a file.
+		/// </summary>
+		/// <param name="file">The file to cache.</param>
+		/// <param name="thumbnailSize">The size to create the thumbnail.</param>
+		/// <param name="md5Hash">The hash of the image's stream.</param>
+		/// <param name="details">The details of the image.</param>
+		/// <returns></returns>
+		private bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
+		{
+			//The second check is because for some reason file.Exists will be true when the file does NOT exist
+			if (!file.FullName.IsImagePath() || !File.Exists(file.FullName))
+			{
+				md5Hash = null;
+				details = default;
+				return false;
+			}
+
+			using (var fs = file.OpenRead())
+			{
+				md5Hash = fs.GetMD5Hash();
+				var (width, height) = fs.GetImageSize();
+				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, thumbnailSize));
+				return true;
+			}
+		}
 	}
 }

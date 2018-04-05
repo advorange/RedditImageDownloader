@@ -1,6 +1,7 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Vsco.Models;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -41,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var userId = 0;
 			var parsed = new List<Model>();
@@ -94,7 +95,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKeyAsync(ImageDownloaderClient client)
+		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(VscoImageDownloader), out var key))
 			{
@@ -116,7 +117,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		public static async Task<int> GetUserIdAsync(ImageDownloaderClient client, string username)
+		public static async Task<int> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = $"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/sites?subdomain={username}";
 			var result = await client.GetText(new Uri(query)).CAF();
@@ -132,7 +133,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetVscoPostAsync(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetVscoPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = $"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/medias/{id}";
 			var result = await client.GetText(new Uri(query)).CAF();

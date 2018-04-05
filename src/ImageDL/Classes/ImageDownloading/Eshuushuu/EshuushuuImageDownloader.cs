@@ -1,6 +1,7 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
 			var keepGoing = true;
@@ -94,7 +95,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetEshuushuuPostAsync(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetEshuushuuPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = $"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}";
 			var result = await client.GetHtml(new Uri(query)).CAF();

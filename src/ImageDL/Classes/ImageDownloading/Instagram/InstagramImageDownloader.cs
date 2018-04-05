@@ -1,8 +1,8 @@
 ﻿using AdvorangesUtils;
-using HtmlAgilityPack;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Model = ImageDL.Classes.ImageDownloading.Instagram.Models.MediaNode;
+using Model = ImageDL.Classes.ImageDownloading.Instagram.Models.InstagramMediaNode;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram
 {
@@ -42,10 +42,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var userId = 0UL;
-			var parsed = new MediaTimeline();
+			var parsed = new InstagramMediaTimeline();
 			var keepGoing = true;
 			//Iterate to update the pagination start point
 			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
@@ -123,7 +123,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKeyAsync(ImageDownloaderClient client)
+		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(InstagramImageDownloader), out var key))
 			{
@@ -159,7 +159,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		public static async Task<ulong> GetUserIdAsync(ImageDownloaderClient client, string username)
+		public static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = $"https://www.instagram.com/{username}/?hl=en";
 			var result = await client.GetText(new Uri(query)).CAF();
@@ -178,7 +178,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetInstagramPostAsync(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetInstagramPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = $"https://www.instagram.com/p/{id}/?__a=1";
 			var result = await client.GetText(new Uri(query)).CAF();
@@ -186,7 +186,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			{
 				return null;
 			}
-			return JsonConvert.DeserializeObject<GraphqlResult>(result.Value).Graphql.ShortcodeMedia;
+			return JsonConvert.DeserializeObject<InstagramGraphqlResult>(result.Value).Graphql.ShortcodeMedia;
 		}
 	}
 }

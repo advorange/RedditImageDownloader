@@ -1,6 +1,7 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -9,21 +10,22 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL.Classes.ImageDownloading
 {
 	/// <summary>
 	/// Downloads images from a site.
 	/// </summary>
-	/// <typeparam name="TPost">The type of each post. Some might be uris, some might be specified classes.</typeparam>
-	public abstract class ImageDownloader<TPost> : IImageDownloader where TPost : Post
+	/// <typeparam name="T">The type of each post. Some might be uris, some might be specified classes.</typeparam>
+	public abstract class ImageDownloader<T> : IImageDownloader where T : IPost
 	{
-		private const string ANIMATED_CONTENT = "Animated Content";
-		private const string FAILED_DOWNLOADS = "Failed Downloads";
 		private static readonly string NL = Environment.NewLine;
 		private static readonly string NLT = NL + "\t";
 
-		/// <inheritdoc />
+		/// <summary>
+		/// The directory to save images to.
+		/// </summary>
 		public string Directory
 		{
 			get => _Directory;
@@ -40,86 +42,108 @@ namespace ImageDL.Classes.ImageDownloading
 				_Directory = value;
 			}
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The amount of posts to look through.
+		/// </summary>
 		public int AmountOfPostsToGather
 		{
 			get => _AmountOfPostsToGather;
 			set => _AmountOfPostsToGather = Math.Max(1, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The minimum width an image can have before it won't be downloaded.
+		/// </summary>
 		public int MinWidth
 		{
 			get => _MinWidth;
 			set => _MinWidth = Math.Max(0, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The minimum height an image can have before it won't be downloaded.
+		/// </summary>
 		public int MinHeight
 		{
 			get => _MinHeight;
 			set => _MinHeight = Math.Max(0, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The maximum age an image can have before it won't be downloaded.
+		/// </summary>
 		public int MaxDaysOld
 		{
 			get => _MaxDaysOld;
 			set => _MaxDaysOld = Math.Max(0, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The maximum allowed image similarity before an image is considered a duplicate.
+		/// </summary>
 		public Percentage MaxImageSimilarity
 		{
 			get => _MaxImageSimilarity;
 			set => _MaxImageSimilarity = value;
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// How many images to cache per thread. Lower = faster, but more CPU.
+		/// </summary>
 		public int ImagesCachedPerThread
 		{
 			get => _ImagesCachedPerThread;
 			set => _ImagesCachedPerThread = Math.Max(1, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The minimum score an image can have before it won't be downloaded. Not every site uses this.
+		/// </summary>
 		public int MinScore
 		{
 			get => _MinScore;
 			set => _MinScore = Math.Max(0, value);
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The minimum aspect ratio an image can have.
+		/// </summary>
 		public AspectRatio MinAspectRatio
 		{
 			get => _MinAspectRatio;
 			set => _MinAspectRatio = value;
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The maximum aspect ratio an image can have.
+		/// </summary>
 		public AspectRatio MaxAspectRatio
 		{
 			get => _MaxAspectRatio;
 			set => _MaxAspectRatio = value;
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Indicates whether or not to add already saved images to the cache before downloading images.
+		/// </summary>
 		public bool CompareSavedImages
 		{
 			get => _CompareSavedImages;
 			set => _CompareSavedImages = value;
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Indicates whether or not to create the directory if it does not exist.
+		/// </summary>
 		public bool CreateDirectory
 		{
 			get => _CreateDirectory;
 			set => _CreateDirectory = value;
 		}
-		/// <inheritdoc />
+		/// <summary>
+		/// Indicates the user wants the downloader to start.
+		/// </summary>
 		public bool Start
 		{
 			get => _Start;
 			set => _Start = value;
 		}
-		/// <inheritdoc />
-		public SettingParser SettingParser
-		{
-			get => _SettingParser;
-			set => _SettingParser = value;
-		}
-		/// <inheritdoc />
+		/// <summary>
+		/// The datetime of the oldest allowed posts. Is simply <see cref="DateTime.UtcNow"/> minus the amount of days.
+		/// </summary>
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
+		/// <inheritdoc />
+		public SettingParser SettingParser => _SettingParser;
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
 		/// <inheritdoc />
@@ -129,10 +153,6 @@ namespace ImageDL.Classes.ImageDownloading
 		/// Links to content that is animated, failed to download, etc.
 		/// </summary>
 		protected List<ContentLink> Links = new List<ContentLink>();
-		/// <summary>
-		/// To make sure only one instance is running at a time.
-		/// </summary>
-		protected SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1);
 
 		private string _Directory;
 		private int _AmountOfPostsToGather;
@@ -151,12 +171,12 @@ namespace ImageDL.Classes.ImageDownloading
 		private string _Name;
 
 		/// <summary>
-		/// Creates an image downloader.
+		/// Creates an instance of <see cref="ImageDownloader{TPost}"/>.
 		/// </summary>
 		/// <param name="name">The name of the website.</param>
 		public ImageDownloader(string name)
 		{
-			SettingParser = new SettingParser(new[] { "--", "-", "/" })
+			_SettingParser = new SettingParser(new[] { "--", "-", "/" })
 			{
 				new Setting<string>(new[] { nameof(Directory), "dir" }, x => Directory = x)
 				{
@@ -229,14 +249,23 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <inheritdoc />
-		public async Task StartAsync(ImageDownloaderClient client, ImageComparer comparer, CancellationToken token = default)
+		public async Task StartAsync(IServiceProvider provider, CancellationToken token = default)
 		{
-			await SemaphoreSlim.WaitAsync(token).CAF();
-			ConsoleUtils.WriteLine("");
+			//Client should NOT be null
+			var client = provider.GetRequiredService<IImageDownloaderClient>();
+			//Comparer can be null
+			var comparer = provider.GetService<IImageComparer>();
+			//Semaphore can also be null
+			var semaphore = provider.GetService<SemaphoreSlim>();
+			if (semaphore != null)
+			{
+				await semaphore.WaitAsync(token).CAF();
+			}
 
-			var posts = new List<TPost>();
+			var posts = new List<T>();
 			try
 			{
+				ConsoleUtils.WriteLine("");
 				await GatherPostsAsync(client, posts).CAF();
 			}
 			catch (Exception e)
@@ -244,33 +273,24 @@ namespace ImageDL.Classes.ImageDownloading
 				e.Write();
 			}
 
-			//Make sure some posts were gotten.
+			ConsoleUtils.WriteLine($"{Environment.NewLine}Found {posts.Count} posts.");
 			if (!posts.Any())
 			{
-				ConsoleUtils.WriteLine("Unable to find any posts matching the search criteria.");
 				return;
-			}
-			else
-			{
-				posts = posts.GroupBy(x => x.PostUrl).First().OrderByDescending(x => x.Score).ToList();
-				ConsoleUtils.WriteLine($"{Environment.NewLine}Found {posts.Count} posts.");
 			}
 
 			var count = 0;
-			foreach (var post in posts)
+			foreach (var post in posts.GroupBy(x => x.PostUrl).Select(x => x.First()).OrderByDescending(x => x.Score))
 			{
 				token.ThrowIfCancellationRequested();
-				ConsoleUtils.WriteLine(post.ToString(++count));
+				ConsoleUtils.WriteLine(PostUtils.Format(post, ++count));
 
-				var images = await GetImagesAsync(client, post).CAF();
+				var images = await client.GetImagesAsync(post).CAF();
 				//If the gatherer had any errors simply log them once and then be done with it
-				if (!String.IsNullOrWhiteSpace(images.Error))
+				if (images.Reason != FailureReason.Success)
 				{
-					if (images.IsAnimated)
-					{
-						Links.AddRange(images.ImageUris.Select(x => post.CreateContentLink(x, ANIMATED_CONTENT)));
-					}
-					ConsoleUtils.WriteLine($"\t{images.Error.Replace(NL, NLT)}", ConsoleColor.Yellow);
+					Links.AddRange(images.ImageUris.Select(x => PostUtils.CreateContentLink(post, x, images.Reason)));
+					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
 					continue;
 				}
 
@@ -278,23 +298,28 @@ namespace ImageDL.Classes.ImageDownloading
 				{
 					try
 					{
-						var (Response, IsSuccess) = await DownloadImageAsync(client, comparer, post, images.ImageUris[i]).CAF();
-						var text = $"\t[#{i + 1}] {Response.Replace(NL, NLT)}";
-						ConsoleUtils.WriteLine(text, IsSuccess ? Console.ForegroundColor : ConsoleColor.Yellow);
+						var result = await DownloadImageAsync(client, comparer, post, images.ImageUris[i]).CAF();
+						var text = $"\t[#{i + 1}] {result.Text.Replace(NL, NLT)}";
+						if (result.IsSuccess)
+						{
+							ConsoleUtils.WriteLine(text);
+						}
+						else
+						{
+							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
+							Links.Add(PostUtils.CreateContentLink(post, images.ImageUris[i], result.Reason));
+						}
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(post.CreateContentLink(images.ImageUris[i], FAILED_DOWNLOADS));
+						Links.Add(PostUtils.CreateContentLink(post, images.ImageUris[i], FailureReason.Exception));
 					}
 				}
 			}
 
-			//No point in trying to cache images or delete duplicates if
-			//a) image comparer doesn't exist to do that
-			//b) nothing new was saved
-			if (comparer?.StoredImages > 0)
+			if (comparer != null && comparer.StoredImages > 0)
 			{
 				if (CompareSavedImages)
 				{
@@ -305,45 +330,12 @@ namespace ImageDL.Classes.ImageDownloading
 				comparer.DeleteDuplicates(MaxImageSimilarity);
 				ConsoleUtils.WriteLine("");
 			}
+			if (semaphore != null)
+			{
+				semaphore.Release();
+			}
 
 			ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
-			SemaphoreSlim.Release();
-		}
-		/// <summary>
-		/// Gets the images from the post.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="post"></param>
-		/// <returns></returns>
-		protected async Task<ImagesResult> GetImagesAsync(ImageDownloaderClient client, TPost post)
-		{
-			var uri = new Uri(post.ContentUrl);
-			if (post.ContentUrl.IsImagePath())
-			{
-				return ImagesResult.FromImage(uri);
-			}
-			//If the link is animated, return nothing and give an error
-			else if (client.AnimatedContentDomains.Any(x => x.IsMatch(uri.ToString())))
-			{
-				return ImagesResult.FromAnimated(uri);
-			}
-			//If there is a gatherer, use it
-			else if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(uri)) is IImageGatherer gatherer)
-			{
-				try
-				{
-					return await gatherer.GetImagesAsync(client, uri).CAF();
-				}
-				catch (Exception e)
-				{
-					return ImagesResult.FromException(uri, e);
-				}
-			}
-			//Otherwise, just return the uri and hope for the best
-			else
-			{
-				return ImagesResult.FromMisc(uri);
-			}
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
@@ -353,12 +345,12 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="post">The post to save from.</param>
 		/// <param name="uri">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		protected async Task<(string Response, bool IsSuccess)> DownloadImageAsync(ImageDownloaderClient client, ImageComparer comparer, TPost post, Uri uri)
+		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, T post, Uri uri)
 		{
-			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), uri);
+			var file = PostUtils.GenerateFileInfo(post, new DirectoryInfo(Directory), uri);
 			if (File.Exists(file.FullName))
 			{
-				return ($"{uri} is already saved as {file}.", false);
+				return new Response(FailureReason.AlreadyDownloaded, $"{uri} is already saved as {file}.");
 			}
 
 			HttpResponseMessage resp = null;
@@ -370,18 +362,16 @@ namespace ImageDL.Classes.ImageDownloading
 				resp = await client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
-					Links.Add(post.CreateContentLink(uri, $"HTTP error: {resp.StatusCode.ToString()}"));
-					return ($"{uri} received the error: {resp.ToString()}", false);
+					return new Response(FailureReason.Exception, $"{uri} had the error: {resp.ToString()}");
 				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
-					Links.Add(post.CreateContentLink(uri, ANIMATED_CONTENT));
-					return ($"{uri} is animated content (gif/video).", false);
+					return new Response(FailureReason.AnimatedContent, $"{uri} is animated content.");
 				}
 				if (!contentType.Contains("image/"))
 				{
-					return ($"{uri} is not an image.", false);
+					return new Response(FailureReason.NotFound, $"{uri} is not an image.");
 				}
 
 				//Need to use a memory stream and copy to it
@@ -393,18 +383,18 @@ namespace ImageDL.Classes.ImageDownloading
 				var (width, height) = ms.GetImageSize();
 				if (!HasValidSize(uri, width, height, out var sizeError))
 				{
-					return (sizeError, false);
+					return new Response(FailureReason.DoesNotFitSizeRequirements, $"{uri} does not fit the size requirements ({width}x{height}).");
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (comparer != null && !comparer.TryStore(uri, file, ms, width, height, out var cachingError))
 				{
-					return (cachingError, false);
+					return new Response(FailureReason.Misc, $"{uri} is unable to be cached.");
 				}
 
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).CAF();
-				return ($"Saved {uri} to {file}.", true);
+				return new Response(FailureReason.Success, $"Successfully saved {uri} to {file}.");
 			}
 			finally
 			{
@@ -467,7 +457,7 @@ namespace ImageDL.Classes.ImageDownloading
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
 					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
-				return $"{g.Key.FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
+				return $"{g.Key.ToString().FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
 			});
 			//Only write for a short time
 			using (var writer = file.AppendText())
@@ -485,7 +475,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="list"></param>
 		/// <param name="post"></param>
 		/// <returns></returns>
-		protected bool Add(List<TPost> list, TPost post)
+		protected bool Add(List<T> list, T post)
 		{
 			list.Add(post);
 			if (list.Count % 25 == 0)
@@ -494,13 +484,12 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			return list.Count < AmountOfPostsToGather;
 		}
-
 		/// <summary>
 		/// Gathers the posts which match the supplied settings.
 		/// </summary>
 		/// <param name="client">The client to gather posts with.</param>
 		/// <param name="list">The list to add values to.</param>
 		/// <returns></returns>
-		protected abstract Task GatherPostsAsync(ImageDownloaderClient client, List<TPost> list);
+		protected abstract Task GatherPostsAsync(IImageDownloaderClient client, List<T> list);
 	}
 }

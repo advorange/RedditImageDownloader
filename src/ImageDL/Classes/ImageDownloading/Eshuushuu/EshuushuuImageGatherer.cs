@@ -17,19 +17,19 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			return uri.Host.CaseInsContains("e-shuushuu.net");
 		}
 		/// <inheritdoc />
-		public async Task<ImagesResult> GetImagesAsync(ImageDownloaderClient client, Uri uri)
+		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri uri)
 		{
-			var u = client.RemoveQuery(uri).ToString();
+			var u = ImageDownloaderClient.RemoveQuery(uri).ToString();
 			var search = "/image/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var id = u.Substring(index + search.Length).Split('/').First();
 				var post = await EshuushuuImageDownloader.GetEshuushuuPostAsync(client, id).CAF();
 				return post == null
-					? ImagesResult.FromNotFound(uri)
-					: ImagesResult.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
+					? GatheredImagesResponse.FromNotFound(uri)
+					: GatheredImagesResponse.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
 			}
-			return ImagesResult.FromMisc(uri);
+			return GatheredImagesResponse.FromUnknown(uri);
 		}
 	}
 }

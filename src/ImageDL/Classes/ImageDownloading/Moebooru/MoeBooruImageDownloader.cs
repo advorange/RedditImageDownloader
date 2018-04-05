@@ -1,6 +1,7 @@
 ﻿using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<T> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<T> list)
 		{
 			var parsed = new List<T>();
 			var keepGoing = true;

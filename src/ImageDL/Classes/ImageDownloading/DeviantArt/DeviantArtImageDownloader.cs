@@ -2,6 +2,7 @@
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -72,7 +73,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(ImageDownloaderClient client, List<Model> validPosts)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> validPosts)
 		{
 			try
 			{
@@ -95,7 +96,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <param name="clientId"></param>
 		/// <param name="clientSecret"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKey(ImageDownloaderClient client, string clientId, string clientSecret)
+		public static async Task<ApiKey> GetApiKey(IImageDownloaderClient client, string clientId, string clientSecret)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(DeviantArtImageDownloader), out var key))
 			{
@@ -127,7 +128,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return query.Trim('+');
 		}
-		private async Task GetPostsThroughScraping(ImageDownloaderClient client, List<Model> list)
+		private async Task GetPostsThroughScraping(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<DeviantArtScrapedPost>();
 			var keepGoing = true;
@@ -171,7 +172,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}
 			}
 		}
-		private async Task GetPostsThroughApi(ImageDownloaderClient client, List<Model> list)
+		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new DeviantArtApiResults();
 			var keepGoing = true;

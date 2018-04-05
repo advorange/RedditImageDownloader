@@ -1,45 +1,60 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading;
-using ImageDL.Classes.ImageScraping;
+﻿using ImageDL.Enums;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ImageDL.Classes
 {
 	/// <summary>
-	/// Abstract class for a post.
+	/// Interface for a post.
 	/// </summary>
-	public abstract class Post
+	public interface IPost
 	{
-		/// <summary>
-		/// The link to the post.
-		/// </summary>
-		public abstract string PostUrl { get; }
-		/// <summary>
-		/// The link to the content.
-		/// </summary>
-		public abstract string ContentUrl { get; }
 		/// <summary>
 		/// The id of the post.
 		/// </summary>
-		public abstract string Id { get; }
+		string Id { get; }
 		/// <summary>
-		/// The score of the post.
+		/// The direct link to the post.
 		/// </summary>
-		public abstract int Score { get; }
+		string PostUrl { get; }
+		/// <summary>
+		/// The links to the images in the post.
+		/// </summary>
+		IEnumerable<string> ContentUrls { get; }
+		/// <summary>
+		/// The score of the post. (Not necessarily always score, e.g. Tumblr returns note count)
+		/// </summary>
+		int Score { get; }
+		/// <summary>
+		/// The time the post was created at.
+		/// </summary>
+		DateTime CreatedAt { get; }
 
+		/// <summary>
+		/// Returns a string representing the post.
+		/// </summary>
+		/// <returns></returns>
+		string ToString();
+	}
+
+	/// <summary>
+	/// Utilities for <see cref="IPost"/>.
+	/// </summary>
+	public static class PostUtils
+	{
 		/// <summary>
 		/// Generates the file to use for this uri.
 		/// </summary>
+		/// <param name="post"></param>
 		/// <param name="dir"></param>
 		/// <param name="uri"></param>
 		/// <returns></returns>
-		public virtual FileInfo GenerateFileInfo(DirectoryInfo dir, Uri uri)
+		public static FileInfo GenerateFileInfo(IPost post, DirectoryInfo dir, Uri uri)
 		{
 			var directory = dir.ToString();
-			var name = $"{Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
+			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(uri.LocalPath)}";
 			var extension = Path.GetExtension(uri.LocalPath);
 
 			//Make sure the extension has a period
@@ -53,27 +68,23 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// Creates a content link of the object.
 		/// </summary>
+		/// <param name="post"></param>
 		/// <param name="uri"></param>
 		/// <param name="reason"></param>
 		/// <returns></returns>
-		public virtual ContentLink CreateContentLink(Uri uri, string reason)
+		public static ContentLink CreateContentLink(IPost post, Uri uri, FailureReason reason)
 		{
-			return new ContentLink(uri, Score, reason);
+			return new ContentLink(uri, post.Score, reason);
 		}
-
 		/// <summary>
-		/// 
+		/// Returns the count, the score, and the ToString() of the post.
 		/// </summary>
+		/// <param name="post"></param>
 		/// <param name="count"></param>
 		/// <returns></returns>
-		public string ToString(int count)
+		public static string Format(IPost post, int count)
 		{
-			return $"[#{count}|\u2191{(Score >= 0 ? $"|\u2191{Score}" : "")}] {PostUrl}";
-		}
-		/// <inheritdoc />
-		public override string ToString()
-		{
-			return PostUrl;
+			return $"[#{count}|\u2191{(post.Score >= 0 ? $"|\u2191{post.Score}" : "")}] {post.ToString()}";
 		}
 	}
 }

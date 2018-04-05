@@ -18,13 +18,9 @@
     <PackageReference Include="AdvorangesUtils" Version="1.0.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.7.2" />
     <PackageReference Include="MetadataExtractor" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
     <PackageReference Include="RedditSharp" Version="2.0.0-CI00063" />
     <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Classes\ImageDownloading\Pixiv\" />
-    <Folder Include="Classes\ImageDownloading\Tumblr\" />
   </ItemGroup>
 
 </Project>
