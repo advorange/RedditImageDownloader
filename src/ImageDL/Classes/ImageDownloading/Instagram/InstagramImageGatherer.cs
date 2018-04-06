@@ -1,8 +1,8 @@
-﻿using AdvorangesUtils;
-using ImageDL.Interfaces;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram
 {
@@ -12,24 +12,24 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	public sealed class InstagramImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri uri)
+		public bool IsFromWebsite(Uri url)
 		{
-			return uri.Host.CaseInsContains("instagram.com");
+			return url.Host.CaseInsContains("instagram.com");
 		}
 		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri uri)
+		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url)
 		{
-			var u = ImageDownloaderClient.RemoveQuery(uri).ToString();
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
 			var search = "/p/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var id = u.Substring(index + search.Length).Split('/').First();
 				var post = await InstagramImageDownloader.GetInstagramPostAsync(client, id).CAF();
 				return post == null
-					? GatheredImagesResponse.FromNotFound(uri)
-					: GatheredImagesResponse.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
+					? GatheredImagesResponse.FromNotFound(url)
+					: GatheredImagesResponse.FromGatherer(url, post.ContentUrls.ToArray());
 			}
-			return GatheredImagesResponse.FromUnknown(uri);
+			return GatheredImagesResponse.FromUnknown(url);
 		}
 	}
 }

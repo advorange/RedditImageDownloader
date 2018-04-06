@@ -1,15 +1,15 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
-using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Interfaces;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
+using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using Newtonsoft.Json;
 using Model = ImageDL.Classes.ImageDownloading.Instagram.Models.InstagramMediaNode;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram
@@ -27,8 +27,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			get => _Username;
 			set => _Username = value;
 		}
+		/// <summary>
+		/// The id of the user to seach for.
+		/// </summary>
+		public ulong UserId
+		{
+			get => _UserId;
+			set => _UserId = value;
+		}
 
 		private string _Username;
+		private ulong _UserId;
 
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramImageDownloader"/>.
@@ -38,6 +47,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
 				Description = "The name of the user to search for.",
+			});
+			SettingParser.Add(new Setting<ulong>(new[] { nameof(UserId), "id" }, x => UserId = x)
+			{
+				Description = "The id of the user to search for. This should only be used if the account is age restricted because the downloader can't get the id.",
 			});
 		}
 
@@ -89,7 +102,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						continue;
 					}
-					else if (p.HasChildren)
+					else if (p.ChildrenInfo.Nodes?.Any() ?? false) //Only go into this statment if there are any children
 					{
 						//Remove all images that don't meet the size requirements
 						for (int j = p.ChildrenInfo.Nodes.Count - 1; j >= 0; --j)
@@ -166,6 +179,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
+			}
+			if (result.Value.Contains("You must be 18 years old or over to see this profile"))
+			{
+				throw new HttpRequestException("Unable to access this profile due to age restrictions.");
 			}
 
 			var idSearch = "owner\":{\"id\":\"";

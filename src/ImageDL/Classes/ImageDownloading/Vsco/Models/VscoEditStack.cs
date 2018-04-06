@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591, 649, 169
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 {
@@ -8,6 +7,9 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// </summary>
 	public struct VscoEditStack
 	{
+		/// <summary>
+		/// The key of the preset.
+		/// </summary>
 		[JsonProperty("key")]
 		public readonly string Key;
 	}

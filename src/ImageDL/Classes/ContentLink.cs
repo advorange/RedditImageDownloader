@@ -1,5 +1,5 @@
-﻿using ImageDL.Enums;
-using System;
+﻿using System;
+using ImageDL.Enums;
 
 namespace ImageDL.Classes
 {
@@ -11,7 +11,7 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// The uri to the content.
 		/// </summary>
-		public readonly Uri Uri;
+		public readonly Uri Url;
 		/// <summary>
 		/// The number to associate with this content. Can be score, id, etc.
 		/// </summary>
@@ -22,14 +22,14 @@ namespace ImageDL.Classes
 		public readonly FailureReason Reason;
 		
 		/// <summary>
-		/// Creates a content link, which stores a uri, number (score, etc), and the reason for creating it.
+		/// Creates a content link, which stores a url, number (score, etc), and the reason for creating it.
 		/// </summary>
-		/// <param name="uri"></param>
+		/// <param name="url"></param>
 		/// <param name="associatedNumber"></param>
 		/// <param name="reason"></param>
-		public ContentLink(Uri uri, int associatedNumber, FailureReason reason)
+		public ContentLink(Uri url, int associatedNumber, FailureReason reason)
 		{
-			Uri = uri;
+			Url = url;
 			AssociatedNumber = associatedNumber;
 			Reason = reason;
 		}
@@ -40,7 +40,7 @@ namespace ImageDL.Classes
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return $"{AssociatedNumber} {Uri}";
+			return $"{AssociatedNumber} {Url}";
 		}
 	}
 }

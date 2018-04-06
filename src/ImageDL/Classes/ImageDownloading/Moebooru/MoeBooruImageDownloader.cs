@@ -1,10 +1,10 @@
-﻿using AdvorangesUtils;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru
 {

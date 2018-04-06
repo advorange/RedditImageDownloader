@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 {
@@ -8,12 +7,21 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	/// </summary>
 	public struct InstagramImageDimensions
 	{
+		/// <summary>
+		/// The width of the image.
+		/// </summary>
 		[JsonProperty("width")]
 		public readonly int Width;
+		/// <summary>
+		/// The height of the image.
+		/// </summary>
 		[JsonProperty("height")]
 		public readonly int Height;
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Returns the width and height.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return $"{Width}x{Height}";

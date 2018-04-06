@@ -1,16 +1,16 @@
-﻿using AdvorangesUtils;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Model = ImageDL.Classes.ImageDownloading.DeviantArt.Models.DeviantArtPost;
+using Model = ImageDL.Interfaces.IPost;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
@@ -165,7 +165,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, new Model(post))))
+					else if (!(keepGoing = Add(list, post)))
 					{
 						break;
 					}
@@ -210,7 +210,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, new Model(post))))
+					else if (!(keepGoing = Add(list, post)))
 					{
 						break;
 					}

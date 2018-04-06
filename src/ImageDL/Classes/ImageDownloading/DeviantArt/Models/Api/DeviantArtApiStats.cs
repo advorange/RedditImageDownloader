@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591, 649
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 {
@@ -8,8 +7,14 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 	/// </summary>
 	public struct DeviantArtApiStats
 	{
+		/// <summary>
+		/// How many comments this post has.
+		/// </summary>
 		[JsonProperty("comments")]
 		public readonly int Comments;
+		/// <summary>
+		/// How many favorites this post has.
+		/// </summary>
 		[JsonProperty("favourites")]
 		public readonly int Favorites;
 	}

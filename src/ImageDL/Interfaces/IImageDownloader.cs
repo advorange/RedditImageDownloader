@@ -1,7 +1,7 @@
-﻿using ImageDL.Classes.SettingParsing;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ImageDL.Classes.SettingParsing;
 
 namespace ImageDL.Interfaces
 {

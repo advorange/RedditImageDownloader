@@ -1,12 +1,12 @@
-﻿using AdvorangesUtils;
-using ImageDL.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageComparing
 {
@@ -26,19 +26,19 @@ namespace ImageDL.Classes.ImageComparing
 		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
 
 		/// <inheritdoc />
-		public bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error)
+		public bool TryStore(Uri url, FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
 			if (Images.TryGetValue(hash, out var value))
 			{
-				error = $"{uri} had a matching hash with {value.File}.";
+				error = $"{url} had a matching hash with {value.File}.";
 				return false;
 			}
 
 			try
 			{
 				error = null;
-				return Images.TryAdd(hash, new ImageDetails(uri, file, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
+				return Images.TryAdd(hash, new ImageDetails(url, file, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
 			}
 			catch (Exception e)
 			{

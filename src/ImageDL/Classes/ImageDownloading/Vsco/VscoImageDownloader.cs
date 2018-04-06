@@ -1,15 +1,15 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Vsco.Models;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Interfaces;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading.Vsco.Models;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Model = ImageDL.Classes.ImageDownloading.Vsco.Models.VscoPost;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco
@@ -74,7 +74,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 				var page = JsonConvert.DeserializeObject<VscoPage>(result.Value);
 				foreach (var post in (parsed = page.Posts))
 				{
-					if (!(keepGoing = post.UploadedAt >= OldestAllowed))
+					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
 					{
 						break;
 					}

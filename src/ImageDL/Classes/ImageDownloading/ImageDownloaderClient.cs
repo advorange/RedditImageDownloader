@@ -1,13 +1,13 @@
-﻿using AdvorangesUtils;
-using HtmlAgilityPack;
-using ImageDL.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using HtmlAgilityPack;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading
 {
@@ -70,18 +70,18 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <inheritdoc />
-		public async Task<HttpResponseMessage> SendWithRefererAsync(Uri uri, HttpMethod method)
+		public async Task<HttpResponseMessage> SendWithRefererAsync(Uri url, HttpMethod method)
 		{
 			var req = new HttpRequestMessage
 			{
-				RequestUri = uri,
+				RequestUri = url,
 				Method = method,
 			};
-			req.Headers.Referrer = uri; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
+			req.Headers.Referrer = url; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
 			return await SendAsync(req).CAF();
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<string>> GetText(Uri uri, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<string>> GetText(Uri url, TimeSpan wait = default, int tries = 3)
 		{
 			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
@@ -93,7 +93,7 @@ namespace ImageDL.Classes.ImageDownloading
 					await Task.Delay(diff).CAF();
 				}
 
-				using (var resp = await SendWithRefererAsync(uri, HttpMethod.Get).CAF())
+				using (var resp = await SendWithRefererAsync(url, HttpMethod.Get).CAF())
 				{
 					var code = (int)resp.StatusCode;
 					if (code == 421 || code == 429) //Rate limit error codes
@@ -110,9 +110,9 @@ namespace ImageDL.Classes.ImageDownloading
 			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<HtmlDocument>> GetHtml(Uri uri, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<HtmlDocument>> GetHtml(Uri url, TimeSpan wait = default, int tries = 3)
 		{
-			var result = await GetText(uri).CAF();
+			var result = await GetText(url).CAF();
 			if (result.IsSuccess)
 			{
 				var doc = new HtmlDocument();
@@ -125,44 +125,46 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 		}
 		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(Uri uri)
+		public async Task<GatheredImagesResponse> GetImagesAsync(IPost post)
 		{
-			if (uri.ToString().IsImagePath())
+			//TODO: decide whether to use post uri or content uris
+			var url = post.PostUrl;
+			if (url.ToString().IsImagePath())
 			{
-				return GatheredImagesResponse.FromImage(uri);
+				return GatheredImagesResponse.FromImage(url);
 			}
 			//If the link is animated, return nothing and give an error
-			else if (AnimatedContentDomains.Any(x => x.IsMatch(uri.ToString())))
+			else if (AnimatedContentDomains.Any(x => x.IsMatch(url.ToString())))
 			{
-				return GatheredImagesResponse.FromAnimated(uri);
+				return GatheredImagesResponse.FromAnimated(url);
 			}
 			//If there is a gatherer, use it
-			else if (Gatherers.SingleOrDefault(x => x.IsFromWebsite(uri)) is IImageGatherer gatherer)
+			else if (Gatherers.SingleOrDefault(x => x.IsFromWebsite(url)) is IImageGatherer gatherer)
 			{
 				try
 				{
-					return await gatherer.GetImagesAsync(this, uri).CAF();
+					return await gatherer.GetImagesAsync(this, url).CAF();
 				}
 				catch (Exception e)
 				{
-					return GatheredImagesResponse.FromException(uri, e);
+					return GatheredImagesResponse.FromException(url, e);
 				}
 			}
 			//Otherwise, just return the uri and hope for the best
 			else
 			{
-				return GatheredImagesResponse.FromUnknown(uri);
+				return GatheredImagesResponse.FromUnknown(url);
 			}
 		}
 		/// <summary>
 		/// Removes query parameters from a url.
 		/// </summary>
-		/// <param name="uri"></param>
+		/// <param name="url"></param>
 		/// <returns></returns>
-		public static Uri RemoveQuery(Uri uri)
+		public static Uri RemoveQuery(Uri url)
 		{
-			var u = uri.ToString();
-			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : uri;
+			var u = url.ToString();
+			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : url;
 		}
 	}
 

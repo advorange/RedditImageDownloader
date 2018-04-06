@@ -1,9 +1,8 @@
-﻿using ImageDL.Classes.ImageComparing;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
+using ImageDL.Classes.ImageComparing;
 using Media = System.Windows.Media;
 
 namespace ImageDL.Windows

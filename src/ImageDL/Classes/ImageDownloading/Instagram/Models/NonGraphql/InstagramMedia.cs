@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 {
@@ -8,10 +7,16 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	/// </summary>
 	public sealed class InstagramMedia
 	{
+		/// <summary>
+		/// The media.
+		/// </summary>
 		[JsonProperty("node")]
 		public readonly InstagramMediaNode Node;
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Returns the media as a string.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return Node.ToString();

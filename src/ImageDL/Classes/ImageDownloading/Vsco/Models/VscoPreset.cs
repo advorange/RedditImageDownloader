@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591, 649, 169
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 {
@@ -8,10 +7,19 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// </summary>
 	public struct VscoPreset
 	{
+		/// <summary>
+		/// The color applied with this preset.
+		/// </summary>
 		[JsonProperty("color")]
 		public readonly string Color;
+		/// <summary>
+		/// The key for this preset.
+		/// </summary>
 		[JsonProperty("key")]
 		public readonly string Key;
+		/// <summary>
+		/// Name representing the preset. Generally is just the key but in all capitals.
+		/// </summary>
 		[JsonProperty("short_name")]
 		public readonly string ShortName;
 	}

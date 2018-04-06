@@ -1,6 +1,5 @@
-﻿#pragma warning disable 1591, 649, 169
+﻿using System;
 using Newtonsoft.Json;
-using System;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 {
@@ -9,12 +8,20 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// </summary>
 	public struct VscoImageStatus
 	{
+		/// <summary>
+		/// Status code. Presumably HTTP status code.
+		/// </summary>
 		[JsonProperty("code")]
 		public readonly int Code;
+		/// <summary>
+		/// The unix timestamp in milliseconds.
+		/// </summary>
 		[JsonProperty("time")]
-		private readonly long _Time;
+		public readonly long Timestamp;
 
-		[JsonIgnore]
-		public DateTime Time => (new DateTime(1970, 1, 1).AddSeconds(_Time / 1000)).ToUniversalTime();
+		/// <summary>
+		/// When the status was last changed.
+		/// </summary>
+		public DateTime Time => (new DateTime(1970, 1, 1).AddSeconds(Timestamp / 1000)).ToUniversalTime();
 	}
 }

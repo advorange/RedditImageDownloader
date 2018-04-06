@@ -1,14 +1,16 @@
-﻿#pragma warning disable 649
+﻿using System;
+using System.Collections.Generic;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
-using System;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 {
 	/// <summary>
 	/// Base Json model for a post from a Moebooru site.
 	/// </summary>
-	public abstract class MoebooruPost : Post
+	public abstract class MoebooruPost : IPost
 	{
+		#region Json
 		/// <summary>
 		/// The source of the image. Can be empty/null if no source is provided.
 		/// </summary>
@@ -34,67 +36,71 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 		/// </summary>
 		[JsonProperty("has_children")]
 		public readonly bool HasChildren;
-
+		/// <summary>
+		/// The location of the file for this post. May be missing http/https.
+		/// </summary>
 		[JsonProperty("file_url")]
-		private readonly string _FileUrl = null;
+		public readonly string FileUrl;
+		/// <summary>
+		/// The id of the post.
+		/// </summary>
 		[JsonProperty("id")]
-		private readonly int _Id;
+		private readonly string _Id = null;
+		/// <summary>
+		/// The score of the post.
+		/// </summary>
 		[JsonProperty("score")]
-		private readonly int _Score;
+		private readonly int _Score = -1;
+		#endregion
 
 		/// <inheritdoc />
-		[JsonIgnore]
-		public override string Id => _Id.ToString();
+		public string Id => _Id.ToString();
+		/// <inhertitdoc />
+		public abstract Uri PostUrl { get; }
 		/// <inheritdoc />
-		[JsonIgnore]
-		public override int Score => _Score;
-		/// <inheritdoc />
-		[JsonIgnore]
-		public override string ContentUrl
+		public IEnumerable<Uri> ContentUrls
 		{
 			get
 			{
-				if (Uri.TryCreate(_FileUrl, UriKind.Absolute, out _))
+				if (Uri.TryCreate(FileUrl, UriKind.Absolute, out _))
 				{
-					return _FileUrl;
+					return new[] { new Uri(FileUrl) };
 				}
-				else if (Uri.TryCreate($"{BaseUrl}{_FileUrl}", UriKind.Absolute, out _))
+				else if (Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out _))
 				{
-					return $"{BaseUrl}{_FileUrl}";
+					return new[] { new Uri($"{BaseUrl}{FileUrl}") };
 				}
 				else
 				{
-					throw new ArgumentException($"Unable to generate an absolute uri with {_FileUrl}.");
+					throw new ArgumentException($"Unable to generate an absolute url with {FileUrl}.");
 				}
 			}
 		}
+		/// <inheritdoc />
+		public int Score => _Score;
+		/// <inheritdoc />
+		public abstract DateTime CreatedAt { get; }
 		/// <summary>
-		/// The base uri of the -booru site. E.G.: https://danbooru.donmai.us or https://www.konachan.com
+		/// The base url of the -booru site. E.G.: https://danbooru.donmai.us or https://www.konachan.com
 		/// </summary>
-		[JsonIgnore]
-		public abstract string BaseUrl { get; }
+		public abstract Uri BaseUrl { get; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
-		[JsonIgnore]
 		public abstract int Width { get; }
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
-		[JsonIgnore]
 		public abstract int Height { get; }
-		/// <summary>
-		/// The time the post was created at.
-		/// </summary>
-		[JsonIgnore]
-		public abstract DateTime CreatedAt { get; }
 		/// <summary>
 		/// The tags for this image.
 		/// </summary>
-		[JsonIgnore]
 		public abstract string Tags { get; }
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Returns the id, width, and height.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return $"{Id} ({Width}x{Height})";

@@ -1,13 +1,13 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Interfaces;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using Newtonsoft.Json.Linq;
 using Model = ImageDL.Classes.ImageDownloading.Eshuushuu.Models.EshuushuuPost;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
@@ -73,7 +73,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					.Select(async x => await GetEshuushuuPostAsync(client, x).CAF())).CAF()).ToList();
 				foreach (var post in parsed)
 				{
-					if (!(keepGoing = post.SubmittedOn >= OldestAllowed))
+					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
 					{
 						break;
 					}
@@ -106,7 +106,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 
 			var jObj = new JObject
 			{
-				{ "post_id", id }
+				{ nameof(Model.Id), id }
 			};
 
 			//dt is the name (datatype?) dd is the value (datadata?)

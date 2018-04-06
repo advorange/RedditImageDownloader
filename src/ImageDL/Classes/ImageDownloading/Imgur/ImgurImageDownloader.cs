@@ -1,14 +1,14 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Imgur.Models;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Interfaces;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading.Imgur.Models;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using Newtonsoft.Json.Linq;
 using Model = ImageDL.Classes.ImageDownloading.Imgur.Models.ImgurPost;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
@@ -75,27 +75,10 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						continue;
 					}
-					else if (post.IsAlbum && post.ImagesCount != post.Images?.Count)
-					{
-						//Make sure we have all the images
-						var images = await GetImagesAsync(client, post.Id).CAF();
-						foreach (var image in images)
-						{
-							if (!post.Images.Select(x => x.Id).Contains(image.Id))
-							{
-								post.Images.Add(image);
-							}
-						}
-					}
+					//Make sure we have all the images.
+					await post.SetAllImages(client).CAF();
 					//Remove all images that don't meet the size requirements
-					for (int j = post.ImagesCount - 1; j >= 0; --j)
-					{
-						var image = post.Images[j];
-						if (!HasValidSize(null, image.Width, image.Height, out _))
-						{
-							post.Images.RemoveAt(j);
-						}
-					}
+					post.Images.RemoveAll(x => !HasValidSize(null, x.Width, x.Height, out _));
 					if (!post.Images.Any())
 					{
 						continue;
@@ -144,14 +127,13 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// Gets the images from the supplied album id.
 		/// </summary>
 		/// <param name="client"></param>
-		/// <param name="id"></param>
+		/// <param name="code"></param>
 		/// <returns></returns>
-		public static async Task<List<ImgurImage>> GetImagesAsync(IImageDownloaderClient client, string id)
+		public static async Task<List<ImgurImage>> GetImagesAsync(IImageDownloaderClient client, string code)
 		{
 			while (true)
 			{
-				var key = await GetApiKeyAsync(client).CAF();
-				var query = new Uri($"https://api.imgur.com/3/album/{id}/images?client_id={key}");
+				var query = new Uri($"https://api.imgur.com/3/album/{code}/images?client_id={await GetApiKeyAsync(client).CAF()}");
 				var result = await client.GetText(query).CAF();
 				if (!result.IsSuccess)
 				{

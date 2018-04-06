@@ -1,6 +1,5 @@
-﻿#pragma warning disable 1591
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 {
@@ -9,6 +8,9 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// </summary>
 	public class VscoUserResults
 	{
+		/// <summary>
+		/// The gathered users.
+		/// </summary>
 		[JsonProperty("sites")]
 		public readonly List<VscoUserInfo> Users;
 	}

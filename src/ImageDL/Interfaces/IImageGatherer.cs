@@ -1,7 +1,7 @@
-﻿using ImageDL.Classes;
-using ImageDL.Classes.ImageDownloading;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using ImageDL.Classes;
+using ImageDL.Classes.ImageDownloading;
 
 namespace ImageDL.Interfaces
 {
@@ -13,15 +13,15 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// Returns true if the uri is from the website.
 		/// </summary>
-		/// <param name="uri"></param>
+		/// <param name="url"></param>
 		/// <returns></returns>
-		bool IsFromWebsite(Uri uri);
+		bool IsFromWebsite(Uri url);
 		/// <summary>
 		/// Attempts to get images from a uri.
 		/// </summary>
 		/// <param name="client"></param>
-		/// <param name="uri"></param>
+		/// <param name="url"></param>
 		/// <returns></returns>
-		Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri uri);
+		Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url);
 	}
 }

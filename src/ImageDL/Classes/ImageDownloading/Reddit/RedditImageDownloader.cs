@@ -1,12 +1,12 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Interfaces;
-using RedditSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using RedditSharp;
 using Model = ImageDL.Classes.ImageDownloading.Reddit.Models.RedditPost;
 
 namespace ImageDL.Classes.ImageDownloading.Reddit

@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 {
@@ -8,8 +7,14 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	/// </summary>
 	public sealed class InstagramResult
 	{
+		/// <summary>
+		/// All the information from a user's page.
+		/// </summary>
 		[JsonProperty("data")]
 		public readonly InstagramData Data;
+		/// <summary>
+		/// HTTP status response.
+		/// </summary>
 		[JsonProperty("status")]
 		public readonly string Status;
 	}

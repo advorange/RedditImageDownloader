@@ -1,8 +1,8 @@
-﻿using ImageDL.Classes;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using ImageDL.Classes;
 
 namespace ImageDL.Interfaces
 {
@@ -23,14 +23,14 @@ namespace ImageDL.Interfaces
 		/// <summary>
 		/// Attempts to cache the image.
 		/// </summary>
-		/// <param name="uri">The location of the image.</param>
+		/// <param name="url">The location of the image.</param>
 		/// <param name="file">The file the image is saved to or will be saved to.</param>
 		/// <param name="stream">The image's data.</param>
 		/// <param name="width">The width of the original image.</param>
 		/// <param name="height">The height of the original image.</param>
 		/// <param name="error">If there are any problems with trying to cache the file.</param>
 		/// <returns></returns>
-		bool TryStore(Uri uri, FileInfo file, Stream stream, int width, int height, out string error);
+		bool TryStore(Uri url, FileInfo file, Stream stream, int width, int height, out string error);
 		/// <summary>
 		/// Attempts to cache files which have already been saved.
 		/// </summary>

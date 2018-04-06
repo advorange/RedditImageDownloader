@@ -1,31 +1,42 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 {
+	/// <summary>
+	/// Json model for a tumblr Photo.
+	/// </summary>
 	public class TumblrPhoto
 	{
+		/// <summary>
+		/// The offset of an image if it was in a post with more than one image.
+		/// </summary>
 		[JsonProperty("offset")]
 		public readonly string Offset;
+		/// <summary>
+		/// The caption of the image.
+		/// </summary>
 		[JsonProperty("caption")]
 		public readonly string Caption;
+		/// <summary>
+		/// The image's width.
+		/// </summary>
 		[JsonProperty("width")]
 		public readonly int Width;
+		/// <summary>
+		/// The image's height.
+		/// </summary>
 		[JsonProperty("height")]
 		public readonly int Height;
+		/// <summary>
+		/// The link to the image.
+		/// </summary>
 		[JsonProperty("photo-url-1280")]
-		public readonly string PhotoUrl1280;
-		[JsonProperty("photo-url-500")]
-		public readonly string PhotoUrl500;
-		[JsonProperty("photo-url-400")]
-		public readonly string PhotoUrl400;
-		[JsonProperty("photo-url-250")]
-		public readonly string PhotoUrl250;
-		[JsonProperty("photo-url-100")]
-		public readonly string PhotoUrl100;
-		[JsonProperty("photo-url-75")]
-		public readonly string PhotoUrl75;
+		private readonly string _PhotoUrl = null;
+
+		/// <summary>
+		/// Returns the full size image url.
+		/// </summary>
+		public Uri PhotoUrl => TumblrImageGatherer.GetFullSizeImage(new Uri(_PhotoUrl));
 	}
 }

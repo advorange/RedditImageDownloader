@@ -1,5 +1,4 @@
-﻿#pragma warning disable 1591, 649
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 {
@@ -8,16 +7,31 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 	/// </summary>
 	public struct DeviantArtApiAuthorInfo
 	{
+		/// <summary>
+		/// The guid of the user.
+		/// </summary>
 		[JsonProperty("userid")]
 		public readonly string UUID;
+		/// <summary>
+		/// The user's name.
+		/// </summary>
 		[JsonProperty("username")]
 		public readonly string Username;
+		/// <summary>
+		/// The link to the user's profile picture.
+		/// </summary>
 		[JsonProperty("usericon")]
 		public readonly string UserIcon;
+		/// <summary>
+		/// Not sure.
+		/// </summary>
 		[JsonProperty("type")]
 		public readonly string Type;
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Returns the user's name.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return Username;

@@ -1,9 +1,13 @@
-﻿namespace ImageDL.Classes.ImageDownloading.Reddit.Models
+﻿using System;
+using System.Collections.Generic;
+using ImageDL.Interfaces;
+
+namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 {
 	/// <summary>
 	/// Holds the gotten post for reddit.
 	/// </summary>
-	public sealed class RedditPost : Post
+	public sealed class RedditPost : IPost
 	{
 		/// <summary>
 		/// The post holding all of the information.
@@ -11,13 +15,15 @@
 		public readonly RedditSharp.Things.Post Post;
 
 		/// <inheritdoc />
-		public override string PostUrl => $"https://www.reddit.com/{Id}";
+		public string Id => Post.Id;
 		/// <inheritdoc />
-		public override string ContentUrl => Post.Url.ToString();
+		public Uri PostUrl => new Uri($"https://www.reddit.com/{Id}");
 		/// <inheritdoc />
-		public override string Id => Post.Id;
+		public IEnumerable<Uri> ContentUrls => new[] { Post.Url };
 		/// <inheritdoc />
-		public override int Score => Post.Score;
+		public int Score => Post.Score;
+		/// <inheritdoc />
+		public DateTime CreatedAt => Post.CreatedUTC;
 
 		/// <summary>
 		/// Creates an instance of <see cref="RedditPost"/>.

@@ -1,15 +1,14 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageComparing;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Enums;
-using ImageDL.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
+using ImageDL.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL.Classes.ImageDownloading
@@ -289,16 +288,16 @@ namespace ImageDL.Classes.ImageDownloading
 				//If the gatherer had any errors simply log them once and then be done with it
 				if (images.Reason != FailureReason.Success)
 				{
-					Links.AddRange(images.ImageUris.Select(x => PostUtils.CreateContentLink(post, x, images.Reason)));
+					Links.AddRange(images.ImageUrls.Select(x => PostUtils.CreateContentLink(post, x, images.Reason)));
 					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
 					continue;
 				}
 
-				for (int i = 0; i < images.ImageUris.Length; ++i)
+				for (int i = 0; i < images.ImageUrls.Length; ++i)
 				{
 					try
 					{
-						var result = await DownloadImageAsync(client, comparer, post, images.ImageUris[i]).CAF();
+						var result = await DownloadImageAsync(client, comparer, post, images.ImageUrls[i]).CAF();
 						var text = $"\t[#{i + 1}] {result.Text.Replace(NL, NLT)}";
 						if (result.IsSuccess)
 						{
@@ -307,14 +306,14 @@ namespace ImageDL.Classes.ImageDownloading
 						else
 						{
 							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(PostUtils.CreateContentLink(post, images.ImageUris[i], result.Reason));
+							Links.Add(PostUtils.CreateContentLink(post, images.ImageUrls[i], result.Reason));
 						}
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(PostUtils.CreateContentLink(post, images.ImageUris[i], FailureReason.Exception));
+						Links.Add(PostUtils.CreateContentLink(post, images.ImageUrls[i], FailureReason.Exception));
 					}
 				}
 			}
@@ -338,19 +337,19 @@ namespace ImageDL.Classes.ImageDownloading
 			ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
 		}
 		/// <summary>
-		/// Downloads an image from <paramref name="uri"/> and saves it. Returns a text response.
+		/// Downloads an image from <paramref name="url"/> and saves it. Returns a text response.
 		/// </summary>
 		/// <param name="client">The client to download with.</param>
 		/// <param name="comparer">The comparer to use.</param>
 		/// <param name="post">The post to save from.</param>
-		/// <param name="uri">The location to the file to save.</param>
+		/// <param name="url">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, T post, Uri uri)
+		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, T post, Uri url)
 		{
-			var file = PostUtils.GenerateFileInfo(post, new DirectoryInfo(Directory), uri);
+			var file = PostUtils.GenerateFileInfo(post, new DirectoryInfo(Directory), url);
 			if (File.Exists(file.FullName))
 			{
-				return new Response(FailureReason.AlreadyDownloaded, $"{uri} is already saved as {file}.");
+				return new Response(FailureReason.AlreadyDownloaded, $"{url} is already saved as {file}.");
 			}
 
 			HttpResponseMessage resp = null;
@@ -359,19 +358,19 @@ namespace ImageDL.Classes.ImageDownloading
 			FileStream fs = null;
 			try
 			{
-				resp = await client.SendWithRefererAsync(uri, HttpMethod.Get).CAF();
+				resp = await client.SendWithRefererAsync(url, HttpMethod.Get).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
-					return new Response(FailureReason.Exception, $"{uri} had the error: {resp.ToString()}");
+					return new Response(FailureReason.Exception, $"{url} had the error: {resp.ToString()}");
 				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
-					return new Response(FailureReason.AnimatedContent, $"{uri} is animated content.");
+					return new Response(FailureReason.AnimatedContent, $"{url} is animated content.");
 				}
 				if (!contentType.Contains("image/"))
 				{
-					return new Response(FailureReason.NotFound, $"{uri} is not an image.");
+					return new Response(FailureReason.NotFound, $"{url} is not an image.");
 				}
 
 				//Need to use a memory stream and copy to it
@@ -381,20 +380,20 @@ namespace ImageDL.Classes.ImageDownloading
 
 				//If image is too small, don't bother saving
 				var (width, height) = ms.GetImageSize();
-				if (!HasValidSize(uri, width, height, out var sizeError))
+				if (!HasValidSize(url, width, height, out var sizeError))
 				{
-					return new Response(FailureReason.DoesNotFitSizeRequirements, $"{uri} does not fit the size requirements ({width}x{height}).");
+					return new Response(FailureReason.DoesNotFitSizeRequirements, $"{url} does not fit the size requirements ({width}x{height}).");
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
-				if (comparer != null && !comparer.TryStore(uri, file, ms, width, height, out var cachingError))
+				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
 				{
-					return new Response(FailureReason.Misc, $"{uri} is unable to be cached.");
+					return new Response(FailureReason.Misc, $"{url} is unable to be cached.");
 				}
 
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).CAF();
-				return new Response(FailureReason.Success, $"Successfully saved {uri} to {file}.");
+				return new Response(FailureReason.Success, $"Successfully saved {url} to {file}.");
 			}
 			finally
 			{
@@ -407,22 +406,22 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Checks min width, min height, and the min/max aspect ratios.
 		/// </summary>
-		/// <param name="uri"></param>
+		/// <param name="url"></param>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
 		/// <param name="error"></param>
 		/// <returns></returns>
-		protected bool HasValidSize(Uri uri, int width, int height, out string error)
+		protected bool HasValidSize(Uri url, int width, int height, out string error)
 		{
 			if (width < MinWidth || height < MinHeight)
 			{
-				error = $"{uri} is too small ({width}x{height}).";
+				error = $"{url} is too small ({width}x{height}).";
 				return false;
 			}
 			var aspectRatio = width / (double)height;
 			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
 			{
-				error = $"{uri} does not fit in the aspect ratio restrictions ({width}x{height}).";
+				error = $"{url} does not fit in the aspect ratio restrictions ({width}x{height}).";
 				return false;
 			}
 			error = null;
@@ -435,7 +434,7 @@ namespace ImageDL.Classes.ImageDownloading
 		protected int SaveStoredContentLinks()
 		{
 			var file = new FileInfo(Path.Combine(Directory, "Links.txt"));
-			var links = Links.GroupBy(x => x.Uri).Select(x => x.First()).ToList();
+			var links = Links.GroupBy(x => x.Url).Select(x => x.First()).ToList();
 			//Only read once, make sure no duplicate uris will be added
 			if (file.Exists)
 			{
@@ -444,7 +443,7 @@ namespace ImageDL.Classes.ImageDownloading
 					var text = reader.ReadToEnd();
 					for (int i = links.Count - 1; i >= 0; --i)
 					{
-						if (text.Contains(links[i].Uri.ToString()))
+						if (text.Contains(links[i].Url.ToString()))
 						{
 							links.RemoveAt(i);
 						}
@@ -456,7 +455,7 @@ namespace ImageDL.Classes.ImageDownloading
 			{
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
-					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Uri}");
+					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Url}");
 				return $"{g.Key.ToString().FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
 			});
 			//Only write for a short time

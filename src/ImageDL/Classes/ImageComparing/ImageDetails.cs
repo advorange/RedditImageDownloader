@@ -13,7 +13,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <summary>
 		/// The location of the source of the image.
 		/// </summary>
-		public Uri Uri { get; private set; }
+		public Uri Url { get; private set; }
 		/// <summary>
 		/// The location the image was saved to.
 		/// </summary>
@@ -35,9 +35,9 @@ namespace ImageDL.Classes.ImageComparing
 		/// </summary>
 		public int ThumbnailSize { get; private set; }
 
-		internal ImageDetails(Uri uri, FileInfo file, int width, int height, IEnumerable<bool> hashedThumbnail)
+		internal ImageDetails(Uri url, FileInfo file, int width, int height, IEnumerable<bool> hashedThumbnail)
 		{
-			Uri = uri;
+			Url = url;
 			File = file;
 			Width = width;
 			Height = height;

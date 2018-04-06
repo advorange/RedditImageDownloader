@@ -1,6 +1,5 @@
-﻿#pragma warning disable 1591
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 {
@@ -9,10 +8,19 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	/// </summary>
 	public sealed class InstagramMediaTimeline
 	{
+		/// <summary>
+		/// How many posts the users has made.
+		/// </summary>
 		[JsonProperty("count")]
 		public readonly int Count;
+		/// <summary>
+		/// For paginating through the posts.
+		/// </summary>
 		[JsonProperty("page_info")]
 		public readonly InstagramPageInfo PageInfo;
+		/// <summary>
+		/// The posts a user has made.
+		/// </summary>
 		[JsonProperty("edges")]
 		public readonly List<InstagramMedia> Posts;
 	}

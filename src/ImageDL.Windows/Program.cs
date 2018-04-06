@@ -1,16 +1,15 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageComparing;
-using ImageDL.Classes.ImageDownloading;
-using ImageDL.Classes.ImageDownloading.Reddit;
-using ImageDL.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading;
+using ImageDL.Classes.ImageDownloading.Reddit;
+using ImageDL.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL.Windows
 {

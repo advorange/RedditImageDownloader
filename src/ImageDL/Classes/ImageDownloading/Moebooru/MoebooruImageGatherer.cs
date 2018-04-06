@@ -1,9 +1,9 @@
-﻿using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Moebooru.Models;
-using ImageDL.Interfaces;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes.ImageDownloading.Moebooru.Models;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru
 {
@@ -30,23 +30,23 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		}
 
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri uri)
+		public bool IsFromWebsite(Uri url)
 		{
-			return uri.Host.CaseInsContains(_Name);
+			return url.Host.CaseInsContains(_Name);
 		}
 		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri uri)
+		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url)
 		{
-			var u = ImageDownloaderClient.RemoveQuery(uri).ToString();
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
 			if (u.CaseInsIndexOf(_Search, out var index))
 			{
 				var id = u.Substring(index + _Search.Length).Split('/').First();
 				var post = await _Func(client, id).CAF();
 				return post == null
-					? GatheredImagesResponse.FromNotFound(uri)
-					: GatheredImagesResponse.FromGatherer(uri, new[] { new Uri(post.ContentUrl) });
+					? GatheredImagesResponse.FromNotFound(url)
+					: GatheredImagesResponse.FromGatherer(url, post.ContentUrls.ToArray());
 			}
-			return GatheredImagesResponse.FromUnknown(uri);
+			return GatheredImagesResponse.FromUnknown(url);
 		}
 	}
 }
