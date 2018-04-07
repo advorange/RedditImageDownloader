@@ -11,57 +11,57 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The user's id.
 		/// </summary>
 		[JsonProperty("id")]
-		public readonly string Id;
+		public string Id { get; private set; }
 		/// <summary>
 		/// The link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("profile_pic_url")]
-		public readonly string ProfilePicUrl;
+		public string ProfilePicUrl { get; private set; }
 		/// <summary>
 		/// The user's name.
 		/// </summary>
 		[JsonProperty("username")]
-		public readonly string Username;
+		public string Username { get; private set; }
 		/// <summary>
 		/// If you have blocked the user. This will always be false because we're not logged in.
 		/// </summary>
 		[JsonProperty("blocked_by_viewer")]
-		public readonly bool BlockedByViewer;
+		public bool BlockedByViewer { get; private set; }
 		/// <summary>
 		/// If you have followed the user. This will always be false because we're not logged in.
 		/// </summary>
 		[JsonProperty("followed_by_viewer")]
-		public readonly bool FollowedByViewer;
+		public bool FollowedByViewer { get; private set; }
 		/// <summary>
 		/// The user's full name.
 		/// </summary>
 		[JsonProperty("full_name")]
-		public readonly string FullName;
+		public string FullName { get; private set; }
 		/// <summary>
 		/// If you have been blocked by the user. This will always be false because we're not logged in.
 		/// </summary>
 		[JsonProperty("has_blocked_viewer")]
-		public readonly bool HasBlockedViewer;
+		public bool HasBlockedViewer { get; private set; }
 		/// <summary>
 		/// Whether the user is private meaning you have to be following them to see posts.
 		/// </summary>
 		[JsonProperty("is_private")]
-		public readonly bool IsPrivate;
+		public bool IsPrivate { get; private set; }
 		/// <summary>
 		/// Whether the user deleted their account.
 		/// </summary>
 		[JsonProperty("is_unpublished")]
-		public readonly bool IsUnpublished;
+		public bool IsUnpublished { get; private set; }
 		/// <summary>
 		/// Whether the user is verified to be who they claim to be.
 		/// </summary>
 		[JsonProperty("is_verified")]
-		public readonly bool IsVerified;
+		public bool IsVerified { get; private set; }
 		/// <summary>
 		/// If you have requested to follow the user. This will always be false because we're not logged in.
 		/// </summary>
 		[JsonProperty("requested_by_viewer")]
-		public readonly bool RequestedByViewer;
+		public bool RequestedByViewer { get; private set; }
 
 		/// <summary>
 		/// Returns the username and user id.

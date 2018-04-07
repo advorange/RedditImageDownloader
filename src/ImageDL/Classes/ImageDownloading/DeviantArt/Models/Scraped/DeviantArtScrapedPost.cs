@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -10,75 +12,74 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 	/// </summary>
 	public sealed class DeviantArtScrapedPost : IPost
 	{
-		#region Json
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+		/// <inheritdoc />
+		[JsonIgnore]
+		public Uri PostUrl => new Uri($"https://www.fav.me/{Id}");
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Score => -1;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public DateTime CreatedAt => new DateTime(1970, 1, 1);
 		/// <summary>
 		/// Whether the post requires a user to agree to view mature content.
 		/// </summary>
 		[JsonProperty("mature")]
-		public readonly bool IsMature;
+		public bool IsMature { get; private set; }
 		/// <summary>
 		/// If you have favorited the post. This will always be false because we're not signed in.
 		/// </summary>
 		[JsonProperty("faved")]
-		public readonly bool IsFavorited;
+		public bool IsFavorited { get; private set; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The row the image is in in the gallery.
 		/// </summary>
 		[JsonProperty("row")]
-		public readonly int Row;
+		public int Row { get; private set; }
 		/// <summary>
 		/// The type of post this is, e.g. journal, etc.
 		/// </summary>
 		[JsonProperty("type")]
-		public readonly string Type;
+		public string Type { get; private set; }
 		/// <summary>
 		/// Other text associated with the image.
 		/// </summary>
 		[JsonProperty("alt")]
-		public readonly string AltText;
+		public string AltText { get; private set; }
 		/// <summary>
 		/// Information about the author.
 		/// </summary>
 		[JsonProperty("author")]
-		public readonly DeviantArtScrapedAuthorInfo Author;
+		public DeviantArtScrapedAuthorInfo Author { get; private set; }
 		/// <summary>
 		/// The thumbnails of the image.
 		/// </summary>
 		[JsonProperty("sizing")]
-		public readonly List<DeviantArtScrapedThumbnail> Thumbnails;
-		/// <summary>
-		/// The id of the image.
-		/// </summary>
-		[JsonProperty("id")]
-		private readonly string _Id = null;
+		public List<DeviantArtScrapedThumbnail> Thumbnails { get; private set; }
 		/// <summary>
 		/// The direct link to the image.
 		/// </summary>
 		[JsonProperty("src", Required = Required.Always)]
-		private readonly string _Source = null;
-		#endregion
+		public Uri Source { get; private set; }
 
 		/// <inheritdoc />
-		public string Id => _Id;
-		/// <inheritdoc />
-		public Uri PostUrl => new Uri($"https://www.fav.me/{Id}");
-		/// <inheritdoc />
-		public IEnumerable<Uri> ContentUrls => new[] { new Uri(_Source) };
-		/// <inheritdoc />
-		public int Score => -1;
-		/// <inheritdoc />
-		public DateTime CreatedAt => new DateTime(1970, 1, 1);
-
+		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			return Task.FromResult(new ImageResponse(FailureReason.Success, null, new[] { Source }));
+		}
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>

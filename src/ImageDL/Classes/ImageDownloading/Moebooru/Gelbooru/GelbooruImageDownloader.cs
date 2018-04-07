@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Xml;
 using AdvorangesUtils;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Model = ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models.GelbooruPost;
@@ -91,9 +92,10 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetGelbooruPostAsync(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetGelbooruPostAsync(IImageDownloaderClient client, string id)
 		{
-			var result = await client.GetText(GenerateGelbooruQuery($"id:{id}", 0)).CAF();
+			var query = GenerateGelbooruQuery($"id:{id}", 0);
+			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseGelbooruPosts(result.Value)[0] : null;
 		}
 	}

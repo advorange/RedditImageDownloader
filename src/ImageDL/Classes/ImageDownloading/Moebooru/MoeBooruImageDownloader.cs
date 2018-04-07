@@ -73,7 +73,8 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 			//Iterate because there's a limit of around 100 per request
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
-				var result = await client.GetText(GenerateQuery(Tags, Page + i)).CAF();
+				var query = GenerateQuery(Tags, Page + i);
+				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;

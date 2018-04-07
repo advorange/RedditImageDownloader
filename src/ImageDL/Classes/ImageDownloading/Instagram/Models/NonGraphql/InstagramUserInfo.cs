@@ -11,6 +11,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// The posts a user has made.
 		/// </summary>
 		[JsonProperty("edge_owner_to_timeline_media")]
-		public readonly InstagramMediaTimeline Content;
+		public InstagramMediaTimeline Content { get; private set; }
 	}
 }

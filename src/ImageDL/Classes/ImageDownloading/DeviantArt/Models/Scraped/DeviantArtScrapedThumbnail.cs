@@ -11,22 +11,22 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// Whether or not the thumbnail is transparent.
 		/// </summary>
 		[JsonProperty("transparent")]
-		public readonly bool IsTransparent;
+		public bool IsTransparent { get; private set; }
 		/// <summary>
 		/// The width of the thumbnail.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The height of the thumbnail.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The direct link to the thumbnail.
 		/// </summary>
 		[JsonProperty("src")]
-		public readonly string Source;
+		public string Source { get; private set; }
 
 		/// <summary>
 		/// Returns the width and height.

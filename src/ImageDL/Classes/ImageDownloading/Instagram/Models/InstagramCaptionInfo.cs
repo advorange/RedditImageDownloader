@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The captions of a post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<InstagramCaptionNode> Nodes;
+		public List<InstagramCaptionNode> Nodes { get; private set; }
 	}
 
 	/// <summary>
@@ -24,7 +24,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The caption.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramCaption Caption;
+		public InstagramCaption Caption { get; private set; }
 
 		/// <summary>
 		/// Returns the caption as a string.
@@ -45,7 +45,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The text of the caption.
 		/// </summary>
 		[JsonProperty("text")]
-		public readonly string Text;
+		public string Text { get; private set; }
 
 		/// <summary>
 		/// Returns the text.

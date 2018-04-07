@@ -59,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					$"&hide_disabled=1" +
 					$"&tags={WebUtility.UrlEncode(Tags)}" +
 					$"&page={i}");
-				var result = await client.GetHtml(query).CAF();
+				var result = await client.GetHtml(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
@@ -97,8 +97,8 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <returns></returns>
 		public static async Task<Model> GetEshuushuuPostAsync(IImageDownloaderClient client, string id)
 		{
-			var query = $"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}";
-			var result = await client.GetHtml(new Uri(query)).CAF();
+			var query = new Uri($"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}");
+			var result = await client.GetHtml(client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				return null;
@@ -124,7 +124,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				//If no span children then it's just pure text
 				if (!span.Any())
 				{
-					jObj.Add(name, d.InnerText);
+					jObj.Add(name, d.InnerText.Trim());
 					continue;
 				}
 
@@ -142,7 +142,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				}
 				else //If no tags then it's most likely whoever submitted it
 				{
-					jObj.Add(name, span.First().InnerText);
+					jObj.Add(name, span.First().InnerText.Trim());
 				}
 			}
 			return jObj.ToObject<Model>();

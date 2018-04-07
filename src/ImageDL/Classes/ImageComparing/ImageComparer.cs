@@ -107,7 +107,7 @@ namespace ImageDL.Classes.ImageComparing
 			{
 				if (i % 25 == 0 || i == kvpCount - 1)
 				{
-					ConsoleUtils.WriteLine($"{i} image(s) left to check for duplicates.");
+					ConsoleUtils.WriteLine($"{i + 1} image(s) left to check for duplicates.");
 				}
 
 				var iVal = kvps[i];

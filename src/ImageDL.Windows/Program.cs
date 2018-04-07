@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading;
@@ -36,7 +35,6 @@ namespace ImageDL.Windows
 
 			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
-				.AddSingleton(new SemaphoreSlim(1))
 				.AddSingleton<IImageDownloaderClient, ImageDownloaderClient>()
 				.AddTransient<IImageComparer, WindowsImageComparer>());
 			ConsoleUtils.WriteLine($"Pick from one of the following methods: '{String.Join("', '", Methods.Select(x => x.Method.Name))}'");

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
@@ -17,7 +18,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			return url.Host.CaseInsContains("e-shuushuu.net");
 		}
 		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
 			var search = "/image/";
@@ -25,11 +26,13 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			{
 				var id = u.Substring(index + search.Length).Split('/').First();
 				var post = await EshuushuuImageDownloader.GetEshuushuuPostAsync(client, id).CAF();
-				return post == null
-					? GatheredImagesResponse.FromNotFound(url)
-					: GatheredImagesResponse.FromGatherer(url, post.ContentUrls.ToArray());
+				if (post != null)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+				return new ImageResponse(FailureReason.NotFound, $"Unable to find any images for {url}.", url);
 			}
-			return GatheredImagesResponse.FromUnknown(url);
+			return new ImageResponse(FailureReason.Misc, null, url);
 		}
 	}
 }

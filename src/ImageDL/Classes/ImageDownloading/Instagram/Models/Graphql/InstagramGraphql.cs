@@ -11,7 +11,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql
 		/// The information of a user's page.
 		/// </summary>
 		[JsonProperty("shortcode_media")]
-		public readonly InstagramMediaNode ShortcodeMedia;
+		public InstagramMediaNode ShortcodeMedia { get; private set; }
 
 		/// <inheritdoc />
 		public override string ToString()

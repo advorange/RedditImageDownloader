@@ -13,17 +13,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// How many comments the post has.
 		/// </summary>
 		[JsonProperty("count")]
-		public int Count;
+		public int Count { get; private set; }
 		/// <summary>
 		/// Used for paginating through the comments.
 		/// </summary>
 		[JsonProperty("page_info")]
-		public InstagramPageInfo PageInfo;
+		public InstagramPageInfo PageInfo { get; private set; }
 		/// <summary>
 		/// Who has commented.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramCommentNode> Nodes;
+		public List<InstagramCommentNode> Nodes { get; private set; }
 	}
 
 	/// <summary>
@@ -35,7 +35,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The user who commented.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramComment Comment;
+		public InstagramComment Comment { get; private set; }
 
 		/// <summary>
 		/// Returns the comment as a string.
@@ -56,26 +56,26 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The id of the comment.
 		/// </summary>
 		[JsonProperty("id")]
-		public readonly string Id;
+		public string Id { get; private set; }
 		/// <summary>
 		/// The text of the comment.
 		/// </summary>
 		[JsonProperty("text")]
-		public readonly string Text;
+		public string Text { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds of when the comment was made.
 		/// </summary>
 		[JsonProperty("created_at")]
-		public readonly long CreatedAtTimestamp;
+		public long CreatedAtTimestamp { get; private set; }
 		/// <summary>
 		/// Who made the comment.
 		/// </summary>
 		[JsonProperty("owner")]
-		public readonly InstagramUser Owner;
-
+		public InstagramUser Owner { get; private set; }
 		/// <summary>
 		/// When the comment was made.
 		/// </summary>
+		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(CreatedAtTimestamp)).ToUniversalTime();
 
 		/// <summary>

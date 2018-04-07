@@ -9,6 +9,7 @@ using AdvorangesUtils;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
+using ImageDL.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL.Classes.ImageDownloading
@@ -254,17 +255,11 @@ namespace ImageDL.Classes.ImageDownloading
 			var client = provider.GetRequiredService<IImageDownloaderClient>();
 			//Comparer can be null
 			var comparer = provider.GetService<IImageComparer>();
-			//Semaphore can also be null
-			var semaphore = provider.GetService<SemaphoreSlim>();
-			if (semaphore != null)
-			{
-				await semaphore.WaitAsync(token).CAF();
-			}
 
 			var posts = new List<T>();
 			try
 			{
-				ConsoleUtils.WriteLine("");
+				ConsoleUtils.WriteLine($"Starting to find posts.");
 				await GatherPostsAsync(client, posts).CAF();
 			}
 			catch (Exception e)
@@ -272,7 +267,7 @@ namespace ImageDL.Classes.ImageDownloading
 				e.Write();
 			}
 
-			ConsoleUtils.WriteLine($"{Environment.NewLine}Found {posts.Count} posts.");
+			ConsoleUtils.WriteLine($"{NL}Found {posts.Count} posts.");
 			if (!posts.Any())
 			{
 				return;
@@ -282,15 +277,19 @@ namespace ImageDL.Classes.ImageDownloading
 			foreach (var post in posts.GroupBy(x => x.PostUrl).Select(x => x.First()).OrderByDescending(x => x.Score))
 			{
 				token.ThrowIfCancellationRequested();
-				ConsoleUtils.WriteLine(PostUtils.Format(post, ++count));
+				ConsoleUtils.WriteLine(post.Format(++count));
 
-				var images = await client.GetImagesAsync(post).CAF();
+				var images = await post.GetImagesAsync(client).CAF();
 				//If the gatherer had any errors simply log them once and then be done with it
-				if (images.Reason != FailureReason.Success)
+				switch (images.Reason)
 				{
-					Links.AddRange(images.ImageUrls.Select(x => PostUtils.CreateContentLink(post, x, images.Reason)));
-					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
-					continue;
+					case FailureReason.Success: //Obvious why this one continues
+					case FailureReason.Misc: //This one continues because we can't be certain if it's invalid
+						break;
+					default:
+						Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images.Reason)));
+						ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
+						continue;
 				}
 
 				for (int i = 0; i < images.ImageUrls.Length; ++i)
@@ -306,14 +305,14 @@ namespace ImageDL.Classes.ImageDownloading
 						else
 						{
 							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(PostUtils.CreateContentLink(post, images.ImageUrls[i], result.Reason));
+							Links.Add(post.CreateContentLink(images.ImageUrls[i], result.Reason));
 						}
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(PostUtils.CreateContentLink(post, images.ImageUrls[i], FailureReason.Exception));
+						Links.Add(post.CreateContentLink(images.ImageUrls[i], FailureReason.Exception));
 					}
 				}
 			}
@@ -329,12 +328,11 @@ namespace ImageDL.Classes.ImageDownloading
 				comparer.DeleteDuplicates(MaxImageSimilarity);
 				ConsoleUtils.WriteLine("");
 			}
-			if (semaphore != null)
+			Links.RemoveAll(x => x.Reason == FailureReason.AlreadyDownloaded);
+			if (Links.Any())
 			{
-				semaphore.Release();
+				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
 			}
-
-			ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="url"/> and saves it. Returns a text response.
@@ -346,7 +344,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <returns>A text response indicating what happened to the uri.</returns>
 		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, T post, Uri url)
 		{
-			var file = PostUtils.GenerateFileInfo(post, new DirectoryInfo(Directory), url);
+			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), url);
 			if (File.Exists(file.FullName))
 			{
 				return new Response(FailureReason.AlreadyDownloaded, $"{url} is already saved as {file}.");
@@ -358,7 +356,7 @@ namespace ImageDL.Classes.ImageDownloading
 			FileStream fs = null;
 			try
 			{
-				resp = await client.SendWithRefererAsync(url, HttpMethod.Get).CAF();
+				resp = await client.SendAsync(client.GetReq(url)).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
 					return new Response(FailureReason.Exception, $"{url} had the error: {resp.ToString()}");

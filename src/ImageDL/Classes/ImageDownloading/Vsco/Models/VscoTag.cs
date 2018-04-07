@@ -11,11 +11,11 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The name of the tag.
 		/// </summary>
 		[JsonProperty("text")]
-		public readonly string Text;
+		public string Text { get; private set; }
 		/// <summary>
 		/// The value of the tag.
 		/// </summary>
 		[JsonProperty("slug")]
-		public readonly string Slug;
+		public string Slug { get; private set; }
 	}
 }

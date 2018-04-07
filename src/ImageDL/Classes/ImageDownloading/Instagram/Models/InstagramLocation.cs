@@ -11,22 +11,22 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The id of the location.
 		/// </summary>
 		[JsonProperty("id")]
-		public readonly string Id;
+		public string Id { get; private set; }
 		/// <summary>
 		/// Whether the location has a page dedicated to it.
 		/// </summary>
 		[JsonProperty("has_public_page")]
-		public readonly bool HasPublicPage;
+		public bool HasPublicPage { get; private set; }
 		/// <summary>
 		/// The name of the location.
 		/// </summary>
 		[JsonProperty("name")]
-		public readonly string Name;
+		public string Name { get; private set; }
 		/// <summary>
 		/// The part of the url used to get to the page dedicated to this location.
 		/// </summary>
 		[JsonProperty("slug")]
-		public readonly string Slug;
+		public string Slug { get; private set; }
 
 		/// <summary>
 		/// Returns the name and id.

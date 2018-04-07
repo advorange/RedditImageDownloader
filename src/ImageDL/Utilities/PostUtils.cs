@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Classes;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 
-namespace ImageDL.Classes
+namespace ImageDL.Utilities
 {
 	/// <summary>
 	/// Utilities for <see cref="IPost"/>.
@@ -18,7 +21,7 @@ namespace ImageDL.Classes
 		/// <param name="dir"></param>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		public static FileInfo GenerateFileInfo(IPost post, DirectoryInfo dir, Uri url)
+		public static FileInfo GenerateFileInfo(this IPost post, DirectoryInfo dir, Uri url)
 		{
 			var directory = dir.ToString();
 			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(url.LocalPath)}";
@@ -39,7 +42,7 @@ namespace ImageDL.Classes
 		/// <param name="url"></param>
 		/// <param name="reason"></param>
 		/// <returns></returns>
-		public static ContentLink CreateContentLink(IPost post, Uri url, FailureReason reason)
+		public static ContentLink CreateContentLink(this IPost post, Uri url, FailureReason reason)
 		{
 			return new ContentLink(url, post.Score, reason);
 		}
@@ -49,9 +52,9 @@ namespace ImageDL.Classes
 		/// <param name="post"></param>
 		/// <param name="count"></param>
 		/// <returns></returns>
-		public static string Format(IPost post, int count)
+		public static string Format(this IPost post, int count)
 		{
-			return $"[#{count}|\u2191{(post.Score >= 0 ? $"|\u2191{post.Score}" : "")}] {post.ToString()}";
+			return $"[#{count}{(post.Score >= 0 ? $"|\u2191{post.Score}" : "")}] {post.PostUrl}";
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The users who were tagged.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<InstagramTaggedUserNode> Nodes;
+		public List<InstagramTaggedUserNode> Nodes { get; private set; }
 	}
 
 	/// <summary>
@@ -24,7 +24,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The user who was tagged.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramTaggedUser TaggedUser;
+		public InstagramTaggedUser TaggedUser { get; private set; }
 
 		/// <summary>
 		/// Returns the user as a string.
@@ -45,17 +45,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The user's name.
 		/// </summary>
 		[JsonProperty("user")]
-		public readonly InstagramUser User;
+		public InstagramUser User { get; private set; }
 		/// <summary>
 		/// The x-coord of where they were tagged.
 		/// </summary>
 		[JsonProperty("x")]
-		public readonly double X;
+		public double X { get; private set; }
 		/// <summary>
 		/// The y-coord of where they were tagged.
 		/// </summary>
 		[JsonProperty("y")]
-		public readonly double Y;
+		public double Y { get; private set; }
 
 		/// <summary>
 		/// Returns the user as a string.

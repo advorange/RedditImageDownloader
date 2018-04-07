@@ -12,16 +12,16 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// How many posts the users has made.
 		/// </summary>
 		[JsonProperty("count")]
-		public readonly int Count;
+		public int Count { get; private set; }
 		/// <summary>
 		/// For paginating through the posts.
 		/// </summary>
 		[JsonProperty("page_info")]
-		public readonly InstagramPageInfo PageInfo;
+		public InstagramPageInfo PageInfo { get; private set; }
 		/// <summary>
 		/// The posts a user has made.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<InstagramMedia> Posts;
+		public List<InstagramMedia> Posts { get; private set; }
 	}
 }

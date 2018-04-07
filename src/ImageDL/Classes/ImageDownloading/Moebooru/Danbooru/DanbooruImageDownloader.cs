@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Model = ImageDL.Classes.ImageDownloading.Moebooru.Danbooru.Models.DanbooruPost;
 
@@ -58,9 +59,10 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetDanbooruPostAsync(ImageDownloaderClient client, string id)
+		public static async Task<Model> GetDanbooruPostAsync(IImageDownloaderClient client, string id)
 		{
-			var result = await client.GetText(GenerateDanbooruQuery($"id:{id}", 0)).CAF();
+			var query = GenerateDanbooruQuery($"id:{id}", 0);
+			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseDanbooruPosts(result.Value)[0] : null;
 		}
 	}

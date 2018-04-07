@@ -11,6 +11,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The key of the preset.
 		/// </summary>
 		[JsonProperty("key")]
-		public readonly string Key;
+		public string Key { get; private set; }
 	}
 }

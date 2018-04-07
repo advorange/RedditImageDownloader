@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -12,83 +14,17 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 	/// </summary>
 	public sealed class EshuushuuPost : IPost
 	{
-		#region Json
-		/// <summary>
-		/// Who the post was submitted by.
-		/// </summary>
-		[JsonProperty("submitted_by")]
-		public readonly string SubmittedBy;
-		/// <summary>
-		/// The name of the image's file.
-		/// </summary>
-		[JsonProperty("filename")]
-		public readonly string Filename;
-		/// <summary>
-		/// The file name that was originally uploaded.
-		/// </summary>
-		[JsonProperty("original_filename")]
-		public readonly string OriginalFilename;
-		/// <summary>
-		/// The tags on the image (not source, character, or artist tags).
-		/// </summary>
-		[JsonProperty("tags")]
-		public readonly List<EshuushuuTag> Tags;
-		/// <summary>
-		/// Tags on where the characters are from.
-		/// </summary>
-		[JsonProperty("source")]
-		public readonly List<EshuushuuTag> Source;
-		/// <summary>
-		/// Tags on the characters in the image.
-		/// </summary>
-		[JsonProperty("characters")]
-		public readonly List<EshuushuuTag> Characters;
-		/// <summary>
-		/// Tags on who made the image.
-		/// </summary>
-		[JsonProperty("artist")]
-		public readonly List<EshuushuuTag> Artist;
-		/// <summary>
-		/// When the image was submitted. This string is not friendly to convert from.
-		/// </summary>
-		[JsonProperty("submitted_on")]
-		public readonly string SubmittedOnString;
-		/// <summary>
-		/// The size of the file. This string is not friendly to convert from.
-		/// </summary>
-		[JsonProperty("file_size")]
-		public readonly string FileSizeString;
-		/// <summary>
-		/// The dimensions of the image. This string is not friendly to convert from.
-		/// </summary>
-		[JsonProperty("dimensions")]
-		public readonly string DimensionsString;
-		/// <summary>
-		/// How many people favorited the image.
-		/// </summary>
-		[JsonProperty("favorites")]
-		public readonly int Favorites;
-		/// <summary>
-		/// The id of th post.
-		/// </summary>
+		/// <inheritdoc />
 		[JsonProperty(nameof(Id))]
-		private readonly string _Id = null;
-		/// <summary>
-		/// The rating of the image.
-		/// </summary>
-		[JsonProperty("image_rating")]
-		private readonly string _ImageRating = null;
-		#endregion
-
+		public string Id { get; private set; }
 		/// <inheritdoc />
-		public string Id => _Id;
-		/// <inheritdoc />
+		[JsonIgnore]
 		public Uri PostUrl => new Uri($"http://e-shuushuu.net/image/{Id}");
 		/// <inheritdoc />
-		public IEnumerable<Uri> ContentUrls => new[] { new Uri($"http://e-shuushuu.net/images/{Filename}") };
+		[JsonProperty("favorites")]
+		public int Score { get; private set; }
 		/// <inheritdoc />
-		public int Score => Favorites;
-		/// <inheritdoc />
+		[JsonIgnore]
 		public DateTime CreatedAt
 		{
 			get
@@ -109,12 +45,9 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 			}
 		}
 		/// <summary>
-		/// Not sure since I haven't seen anything that's not N/A, but I assume it's similar to Moebooru's ratings (questionable, etc).
-		/// </summary>
-		public string ImageRating => new string(_ImageRating.Where(x => !Char.IsWhiteSpace(x)).ToArray());
-		/// <summary>
 		/// The size of the file in bytes.
 		/// </summary>
+		[JsonIgnore]
 		public long FileSize
 		{
 			get
@@ -137,13 +70,79 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
+		[JsonIgnore]
 		public int Width => Convert.ToInt32(DimensionsString.Split('x', ' ')[0]);
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
+		[JsonIgnore]
 		public int Height => Convert.ToInt32(DimensionsString.Split('x', ' ')[1]);
+		/// <summary>
+		/// Who the post was submitted by.
+		/// </summary>
+		[JsonProperty("submitted_by")]
+		public string SubmittedBy { get; private set; }
+		/// <summary>
+		/// The name of the image's file.
+		/// </summary>
+		[JsonProperty("filename")]
+		public string Filename { get; private set; }
+		/// <summary>
+		/// The file name that was originally uploaded.
+		/// </summary>
+		[JsonProperty("original_filename")]
+		public string OriginalFilename { get; private set; }
+		/// <summary>
+		/// The tags on the image (not source, character, or artist tags).
+		/// </summary>
+		[JsonProperty("tags")]
+		public List<EshuushuuTag> Tags { get; private set; }
+		/// <summary>
+		/// Tags on where the characters are from.
+		/// </summary>
+		[JsonProperty("source")]
+		public List<EshuushuuTag> Source { get; private set; }
+		/// <summary>
+		/// Tags on the characters in the image.
+		/// </summary>
+		[JsonProperty("characters")]
+		public List<EshuushuuTag> Characters { get; private set; }
+		/// <summary>
+		/// Tags on who made the image.
+		/// </summary>
+		[JsonProperty("artist")]
+		public List<EshuushuuTag> Artist { get; private set; }
+		/// <summary>
+		/// When the image was submitted. This string is not friendly to convert from.
+		/// </summary>
+		[JsonProperty("submitted_on")]
+		public string SubmittedOnString { get; private set; }
+		/// <summary>
+		/// The size of the file. This string is not friendly to convert from.
+		/// </summary>
+		[JsonProperty("file_size")]
+		public string FileSizeString { get; private set; }
+		/// <summary>
+		/// The dimensions of the image. This string is not friendly to convert from.
+		/// </summary>
+		[JsonProperty("dimensions")]
+		public string DimensionsString { get; private set; }
+		/// <summary>
+		/// The rating of the image.
+		/// </summary>
+		[JsonProperty("image_rating")]
+		public string ImageRating { get; private set; }
 
 		/// <inheritdoc />
+		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			var images = new[] { new Uri($"http://e-shuushuu.net/images/{Filename}") };
+			return Task.FromResult(new ImageResponse(FailureReason.Success, null, images));
+		}
+		/// <summary>
+		/// Returns the id, width, and height.
+		/// </summary>
+		/// <returns></returns>
 		public override string ToString()
 		{
 			return $"{Id} ({Width}x{Height})";

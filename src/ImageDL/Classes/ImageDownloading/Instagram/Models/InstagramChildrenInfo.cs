@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The children of a post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<InstagramChildNode> Nodes;
+		public List<InstagramChildNode> Nodes { get; private set; }
 	}
 
 	/// <summary>
@@ -24,7 +24,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The child.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramMediaNode Child;
+		public InstagramMediaNode Child { get; private set; }
 
 		/// <summary>
 		/// Returns the image as a string.

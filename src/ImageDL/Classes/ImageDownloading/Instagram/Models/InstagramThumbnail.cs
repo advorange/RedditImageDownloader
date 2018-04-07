@@ -11,17 +11,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The source of the image.
 		/// </summary>
 		[JsonProperty("src")]
-		public readonly string Source;
+		public string Source { get; private set; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
 		[JsonProperty("config_width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
 		[JsonProperty("config_height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 
 		/// <summary>
 		/// Returns the width and height.

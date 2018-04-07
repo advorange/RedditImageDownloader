@@ -12,16 +12,16 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// Status code. Presumably HTTP status code.
 		/// </summary>
 		[JsonProperty("code")]
-		public readonly int Code;
+		public int Code { get; private set; }
 		/// <summary>
 		/// The unix timestamp in milliseconds.
 		/// </summary>
 		[JsonProperty("time")]
-		public readonly long Timestamp;
-
+		public long Timestamp { get; private set; }
 		/// <summary>
 		/// When the status was last changed.
 		/// </summary>
-		public DateTime Time => (new DateTime(1970, 1, 1).AddSeconds(Timestamp / 1000)).ToUniversalTime();
+		[JsonIgnore]
+		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(Timestamp / 1000)).ToUniversalTime();
 	}
 }

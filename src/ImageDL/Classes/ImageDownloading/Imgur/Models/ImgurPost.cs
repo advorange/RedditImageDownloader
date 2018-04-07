@@ -1,4 +1,5 @@
 ﻿using AdvorangesUtils;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using System;
@@ -13,78 +14,66 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 	/// </summary>
 	public sealed class ImgurPost : ImgurImage
 	{
-		#region Json
+		/// <summary>
+		/// Returns the images in the album.
+		/// </summary>
+		[JsonIgnore]
+		public List<ImgurImage> Images => _Images ?? new List<ImgurImage>() { this, };
 		/// <summary>
 		/// The id of the first image in the post.
 		/// </summary>
 		[JsonProperty("cover")]
-		public readonly string Cover;
+		public string Cover { get; private set; }
 		/// <summary>
 		/// The width of the cover.
 		/// </summary>
 		[JsonProperty("cover_width")]
-		public readonly int CoverWidth;
+		public int CoverWidth { get; private set; }
 		/// <summary>
 		/// The height of the cover.
 		/// </summary>
 		[JsonProperty("cover_height")]
-		public readonly int CoverHeight;
+		public int CoverHeight { get; private set; }
 		/// <summary>
 		/// The privacy setting for this post, e.g. public, etc.
 		/// </summary>
 		[JsonProperty("privacy")]
-		public readonly string Privacy;
+		public string Privacy { get; private set; }
 		/// <summary>
 		/// The layout style for this post.
 		/// </summary>
 		[JsonProperty("layout")]
-		public readonly string Layout;
+		public string Layout { get; private set; }
 		/// <summary>
 		/// The topic of the post. Usually is 'No Topic'.
 		/// </summary>
 		[JsonProperty("topic")]
-		public readonly string Topic;
+		public string Topic { get; private set; }
 		/// <summary>
 		/// The id of the topic.
 		/// </summary>
 		[JsonProperty("topic_id")]
-		public readonly int TopicId;
+		public int TopicId { get; private set; }
 		/// <summary>
 		/// Whether the post has more than one image.
 		/// </summary>
 		[JsonProperty("is_album")]
-		public readonly bool IsAlbum;
+		public bool IsAlbum { get; private set; }
 		/// <summary>
 		/// Whether the post is in the public gallery.
 		/// </summary>
 		[JsonProperty("is_gallery")]
-		public readonly bool IsGallery;
+		public bool IsGallery { get; private set; }
 		/// <summary>
 		/// The amount of images in the post.
 		/// </summary>
 		[JsonProperty("images_count")]
-		public readonly int ImagesCount;
+		public int ImagesCount { get; private set; }
+		/// <summary>
+		/// Backing field for Images.
+		/// </summary>
 		[JsonProperty("images")]
 		private List<ImgurImage> _Images = null;
-		#endregion
-
-		/// <inheritdoc />
-		public override IEnumerable<Uri> ContentUrls
-		{
-			get
-			{
-				var list = new List<Uri> { Mp4Link == null ? PostUrl : new Uri(Mp4Link), };
-				if (_Images != null)
-				{
-					list.AddRange(_Images.SelectMany(x => x.ContentUrls));
-				}
-				return list;
-			}
-		}
-		/// <summary>
-		/// Returns the images in the album.
-		/// </summary>
-		public List<ImgurImage> Images => _Images ?? (_Images = new List<ImgurImage>() { this, });
 
 		/// <summary>
 		/// Makes sure this post has all the images.
@@ -98,9 +87,23 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 				return;
 			}
 			Images.Clear();
-			Images.AddRange(await ImgurImageDownloader.GetImagesAsync(client, Id).CAF());
+			Images.AddRange(await ImgurImageDownloader.GetImagesFromApi(client, Id).CAF());
 		}
-
+		/// <inheritdoc />
+		public override async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			Uri[] urls;
+			if (IsAlbum)
+			{
+				var tasks = Images.Select(async x => await x.GetImagesAsync(client).CAF());
+				urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+			}
+			else
+			{
+				urls = new[] { Mp4Link ?? PostUrl };
+			}
+			return new ImageResponse(FailureReason.Success, null, urls);
+		}
 		/// <summary>
 		/// Returns the id and image count.
 		/// </summary>

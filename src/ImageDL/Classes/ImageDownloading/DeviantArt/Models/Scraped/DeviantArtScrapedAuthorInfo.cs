@@ -11,32 +11,32 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// The id of the user. This is not their UUID.
 		/// </summary>
 		[JsonProperty("userid")]
-		public readonly int UserId;
+		public int UserId { get; private set; }
 		/// <summary>
 		/// Any attributes associated with the user.
 		/// </summary>
 		[JsonProperty("attributes")]
-		public readonly long Attributes;
+		public long Attributes { get; private set; }
 		/// <summary>
 		/// Not sure.
 		/// </summary>
 		[JsonProperty("symbol")]
-		public readonly string Symbol;
+		public string Symbol { get; private set; }
 		/// <summary>
 		/// Their name.
 		/// </summary>
 		[JsonProperty("username")]
-		public readonly string Username;
+		public string Username { get; private set; }
 		/// <summary>
 		/// The link to their profile picture.
 		/// </summary>
 		[JsonProperty("usericon")]
-		public readonly string UserIcon;
+		public string UserIcon { get; private set; }
 		/// <summary>
 		/// The guid of the user.
 		/// </summary>
 		[JsonProperty("uuid")]
-		public readonly string UUID;
+		public string UUID { get; private set; }
 
 		/// <summary>
 		/// Returns the username and user id.

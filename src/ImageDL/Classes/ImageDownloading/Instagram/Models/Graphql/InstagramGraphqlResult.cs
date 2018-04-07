@@ -11,6 +11,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql
 		/// Holds the information.
 		/// </summary>
 		[JsonProperty("graphql")]
-		public readonly InstagramGraphql Graphql;
+		public InstagramGraphql Graphql { get; private set; }
 	}
 }

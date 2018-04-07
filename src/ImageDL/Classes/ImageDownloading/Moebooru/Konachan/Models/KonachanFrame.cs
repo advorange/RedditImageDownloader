@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 {
@@ -11,56 +12,56 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The left most part of the frame.
 		/// </summary>
 		[JsonProperty("source_left")]
-		public readonly int SourceLeft;
+		public int SourceLeft { get; private set; }
 		/// <summary>
 		/// The top most part of the frame.
 		/// </summary>
 		[JsonProperty("source_top")]
-		public readonly int SourceTop;
+		public int SourceTop { get; private set; }
 		/// <summary>
 		/// The width of the frame.
 		/// </summary>
 		[JsonProperty("source_width")]
-		public readonly int SourceWidth;
+		public int SourceWidth { get; private set; }
 		/// <summary>
 		/// The height of the frame.
 		/// </summary>
 		[JsonProperty("source_height")]
-		public readonly int SourceHeight;
+		public int SourceHeight { get; private set; }
 		/// <summary>
 		/// The id of the post this belongs to.
 		/// </summary>
 		[JsonProperty("post_id")]
-		public readonly int PostId;
+		public int PostId { get; private set; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The preview width.
 		/// </summary>
 		[JsonProperty("preview_width")]
-		public readonly int PreviewWidth;
+		public int PreviewWidth { get; private set; }
 		/// <summary>
 		/// The preview height.
 		/// </summary>
 		[JsonProperty("preview_height")]
-		public readonly int PreviewHeight;
+		public int PreviewHeight { get; private set; }
 		/// <summary>
 		/// The url to the frame.
 		/// </summary>
 		[JsonProperty("url")]
-		public readonly string Url;
+		public Uri Url { get; private set; }
 		/// <summary>
 		/// The url to the preview.
 		/// </summary>
 		[JsonProperty("preview_url")]
-		public readonly string PreviewUrl;
+		public Uri PreviewUrl { get; private set; }
 	}
 }

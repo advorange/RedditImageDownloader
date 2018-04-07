@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 {
@@ -11,31 +12,31 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The title of the user's page.
 		/// </summary>
 		[JsonProperty("title")]
-		public string Title;
+		public string Title { get; private set; }
 		/// <summary>
 		/// The name of the user.
 		/// </summary>
 		[JsonProperty("name")]
-		public string Name;
+		public string Name { get; private set; }
 		/// <summary>
 		/// Whether the user has a custom domain.
 		/// </summary>
 		[JsonProperty("cname")]
-		public bool Cname;
+		public bool Cname { get; private set; }
 		/// <summary>
 		/// A link to the user's page.
 		/// </summary>
 		[JsonProperty("url")]
-		public string Url;
+		public Uri Url { get; private set; }
 		/// <summary>
 		/// The timezone the user is in.
 		/// </summary>
 		[JsonProperty("timezone")]
-		public string Timezone;
+		public string Timezone { get; private set; }
 		/// <summary>
 		/// A link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("avatar_url_512")]
-		public string AvatarUrl;
+		public Uri AvatarUrl { get; private set; }
 	}
 }

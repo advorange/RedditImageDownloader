@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using ImageDL.Classes;
 
 namespace ImageDL.Interfaces
 {
@@ -17,10 +18,6 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		Uri PostUrl { get; }
 		/// <summary>
-		/// The links to the images in the post.
-		/// </summary>
-		IEnumerable<Uri> ContentUrls { get; }
-		/// <summary>
 		/// The score of the post. (Not necessarily always score, e.g. Tumblr returns note count)
 		/// </summary>
 		int Score { get; }
@@ -29,6 +26,11 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		DateTime CreatedAt { get; }
 
+		/// <summary>
+		/// Returns all the images from the post.
+		/// </summary>
+		/// <returns></returns>
+		Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client);
 		/// <summary>
 		/// Returns a string representing the post.
 		/// </summary>

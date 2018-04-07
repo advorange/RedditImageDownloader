@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 {
@@ -11,27 +12,27 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// Whether or not the thumbnail is transparent.
 		/// </summary>
 		[JsonProperty("transparency")]
-		public readonly bool IsTransparent;
+		public bool IsTransparent { get; private set; }
 		/// <summary>
 		/// The thumbnail's width.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The thumbnail's height.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The size of the thumbnail in bytes.
 		/// </summary>
 		[JsonProperty("filesize")]
-		public readonly long FileSize;
+		public long FileSize { get; private set; }
 		/// <summary>
 		/// The direct link to the thumbnail.
 		/// </summary>
 		[JsonProperty("src")]
-		public readonly string Source;
+		public Uri Source { get; private set; }
 
 		/// <summary>
 		/// Returns with width and height.

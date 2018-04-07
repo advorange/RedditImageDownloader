@@ -11,7 +11,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// The media.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramMediaNode Node;
+		public InstagramMediaNode Node { get; private set; }
 
 		/// <summary>
 		/// Returns the media as a string.

@@ -104,11 +104,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			if (clientId != null && clientSecret != null)
 			{
-				var query = $"https://www.deviantart.com/oauth2/token" +
+				var query = new Uri($"https://www.deviantart.com/oauth2/token" +
 					$"?grant_type=client_credentials" +
 					$"&client_id={clientId}" +
-					$"&client_secret={clientSecret}";
-				var result = await client.GetText(new Uri(query)).CAF();
+					$"&client_secret={clientSecret}");
+				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (result.IsSuccess)
 				{
 					var jObj = JObject.Parse(result.Value);
@@ -135,10 +135,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			//Iterate to get the new offset to start at
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); i += parsed.Count)
 			{
-				var query = $"https://www.deviantart.com/newest/" +
+				var query = new Uri($"https://www.deviantart.com/newest/" +
 					$"?offset={i}" +
-					$"&q={GenerateTags()}";
-				var result = await client.GetText(new Uri(query)).CAF();
+					$"&q={GenerateTags()}");
+				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					break;
@@ -179,12 +179,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			//Iterate to get the new offset to start at
 			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
 			{
-				var query = $"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
+				var query = new Uri($"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 					$"?offset={i}" +
 					$"&mature_content=true" +
 					$"&q={GenerateTags()}" +
-					$"&access_token={await GetApiKey(client, ClientId, ClientSecret)}";
-				var result = await client.GetText(new Uri(query)).CAF();
+					$"&access_token={await GetApiKey(client, ClientId, ClientSecret)}");
+				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the access token, try to get another one

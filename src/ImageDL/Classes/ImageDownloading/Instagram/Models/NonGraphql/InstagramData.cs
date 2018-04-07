@@ -11,6 +11,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// Information about a user.
 		/// </summary>
 		[JsonProperty("user")]
-		public readonly InstagramUserInfo User;
+		public InstagramUserInfo User { get; private set; }
 	}
 }

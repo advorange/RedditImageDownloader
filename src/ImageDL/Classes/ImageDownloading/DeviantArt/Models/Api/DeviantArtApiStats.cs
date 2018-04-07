@@ -11,11 +11,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// How many comments this post has.
 		/// </summary>
 		[JsonProperty("comments")]
-		public readonly int Comments;
+		public int Comments { get; private set; }
 		/// <summary>
 		/// How many favorites this post has.
 		/// </summary>
 		[JsonProperty("favourites")]
-		public readonly int Favorites;
+		public int Favorites { get; private set; }
 	}
 }

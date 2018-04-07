@@ -9,83 +9,87 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 	/// </summary>
 	public sealed class GelbooruPost : MoebooruPost
 	{
-		#region Json
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override Uri BaseUrl => new Uri("https://gelbooru.com");
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override Uri PostUrl => new Uri($"{BaseUrl}/index.php?page=post&s=view&id={Id}");
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override DateTime CreatedAt => _CreatedAt;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override int Width => _Width;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override int Height => _Height;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public override string Tags => _Tags;
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("change")]
-		public readonly int Change;
+		public int Change { get; private set; }
 		/// <summary>
 		/// Scaled down version of the file.
 		/// </summary>
 		[JsonProperty("sample_url")]
-		public readonly string SampleUrl;
+		public string SampleUrl { get; private set; }
 		/// <summary>
 		/// The width of the sample url.
 		/// </summary>
 		[JsonProperty("sample_width")]
-		public readonly int SampleWidth;
+		public int SampleWidth { get; private set; }
 		/// <summary>
 		/// The height of the sample url.
 		/// </summary>
 		[JsonProperty("sample_height")]
-		public readonly int SampleHeight;
+		public int SampleHeight { get; private set; }
 		/// <summary>
 		/// Scaled down version of the file to 150px as the biggest side.
 		/// </summary>
 		[JsonProperty("preview_url")]
-		public readonly string PreviewUrl;
+		public string PreviewUrl { get; private set; }
 		/// <summary>
 		/// The width of the preview url.
 		/// </summary>
 		[JsonProperty("preview_width")]
-		public readonly int PreviewWidth;
+		public int PreviewWidth { get; private set; }
 		/// <summary>
 		/// The height of the preview url.
 		/// </summary>
 		[JsonProperty("preview_height")]
-		public readonly int PreviewHeight;
+		public int PreviewHeight { get; private set; }
 		/// <summary>
 		/// Whether the post has any notes.
 		/// </summary>
 		[JsonProperty("has_notes")]
-		public readonly bool HasNotes;
+		public bool HasNotes { get; private set; }
 		/// <summary>
 		/// Whether the post has any comments.
 		/// </summary>
 		[JsonProperty("has_comments")]
-		public readonly bool HasComments;
+		public bool HasComments { get; private set; }
 		/// <summary>
 		/// The status of the image, e.g. active, etc.
 		/// </summary>
 		[JsonProperty("status")]
-		public readonly string Status;
+		public string Status { get; private set; }
 		/// <summary>
 		/// The id of the person who submitted it.
 		/// </summary>
 		[JsonProperty("creator_id")]
-		public readonly int CreatorId;
-		[JsonProperty("width")]
-		private readonly int _Width = -1;
-		[JsonProperty("height")]
-		private readonly int _Height = -1;
-		[JsonProperty("created_at")]
-		private readonly DateTime _CreatedAt = new DateTime(1970, 1, 1);
-		[JsonProperty("tags")]
-		private readonly string _Tags = null;
-		#endregion
+		public int CreatorId { get; private set; }
 
-		/// <inheritdoc />
-		public override Uri BaseUrl => new Uri("https://gelbooru.com");
-		/// <inheritdoc />
-		public override Uri PostUrl => new Uri($"{BaseUrl}/index.php?page=post&s=view&id={Id}");
-		/// <inheritdoc />
-		public override DateTime CreatedAt => _CreatedAt.ToUniversalTime();
-		/// <inheritdoc />
-		public override int Width => _Width;
-		/// <inheritdoc />
-		public override int Height => _Height;
-		/// <inheritdoc />
-		public override string Tags => _Tags;
+		[JsonProperty("created_at")]
+		private DateTime _CreatedAt = default;
+		[JsonProperty("width")]
+		private int _Width = -1;
+		[JsonProperty("height")]
+		private int _Height = -1;
+		[JsonProperty("tags")]
+		private string _Tags = null;
 	}
 }

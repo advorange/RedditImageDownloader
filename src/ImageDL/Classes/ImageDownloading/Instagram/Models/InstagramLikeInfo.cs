@@ -12,12 +12,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The amount of likes a post has.
 		/// </summary>
 		[JsonProperty("count")]
-		public readonly int Count;
+		public int Count { get; private set; }
 		/// <summary>
 		/// Who has liked the post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<InstagramLikeNode> Nodes;
+		public List<InstagramLikeNode> Nodes { get; private set; }
 	}
 
 	/// <summary>
@@ -29,7 +29,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The user who liked the post.
 		/// </summary>
 		[JsonProperty("node")]
-		public readonly InstagramLike Like;
+		public InstagramLike Like { get; private set; }
 
 		/// <summary>
 		/// Returns the like as a string.
@@ -50,17 +50,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The id of the like.
 		/// </summary>
 		[JsonProperty("id")]
-		public readonly string Id;
+		public string Id { get; private set; }
 		/// <summary>
 		/// The link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("profile_pic_url")]
-		public readonly string ProfilePicUrl;
+		public string ProfilePicUrl { get; private set; }
 		/// <summary>
 		/// The name of the user.
 		/// </summary>
 		[JsonProperty("username")]
-		public readonly string Username;
+		public string Username { get; private set; }
 
 		/// <summary>
 		/// Returns the username and id.

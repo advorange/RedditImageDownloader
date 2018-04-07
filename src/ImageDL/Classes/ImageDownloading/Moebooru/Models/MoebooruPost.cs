@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -10,74 +12,8 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 	/// </summary>
 	public abstract class MoebooruPost : IPost
 	{
-		#region Json
-		/// <summary>
-		/// The source of the image. Can be empty/null if no source is provided.
-		/// </summary>
-		[JsonProperty("source")]
-		public readonly string Source;
-		/// <summary>
-		/// The rating of the image. Safe, questionable, or explicit.
-		/// </summary>
-		[JsonProperty("rating")]
-		public readonly char Rating;
-		/// <summary>
-		/// The id of the parent post to this post if there is one.
-		/// </summary>
-		[JsonProperty("parent_id")]
-		public readonly int? ParentId;
-		/// <summary>
-		/// The hash of the image.
-		/// </summary>
-		[JsonProperty("md5")]
-		public readonly string MD5;
-		/// <summary>
-		/// Whether or not the post has children.
-		/// </summary>
-		[JsonProperty("has_children")]
-		public readonly bool HasChildren;
-		/// <summary>
-		/// The location of the file for this post. May be missing http/https.
-		/// </summary>
-		[JsonProperty("file_url")]
-		public readonly string FileUrl;
-		/// <summary>
-		/// The id of the post.
-		/// </summary>
-		[JsonProperty("id")]
-		private readonly string _Id = null;
-		/// <summary>
-		/// The score of the post.
-		/// </summary>
-		[JsonProperty("score")]
-		private readonly int _Score = -1;
-		#endregion
-
-		/// <inheritdoc />
-		public string Id => _Id.ToString();
 		/// <inhertitdoc />
 		public abstract Uri PostUrl { get; }
-		/// <inheritdoc />
-		public IEnumerable<Uri> ContentUrls
-		{
-			get
-			{
-				if (Uri.TryCreate(FileUrl, UriKind.Absolute, out _))
-				{
-					return new[] { new Uri(FileUrl) };
-				}
-				else if (Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out _))
-				{
-					return new[] { new Uri($"{BaseUrl}{FileUrl}") };
-				}
-				else
-				{
-					throw new ArgumentException($"Unable to generate an absolute url with {FileUrl}.");
-				}
-			}
-		}
-		/// <inheritdoc />
-		public int Score => _Score;
 		/// <inheritdoc />
 		public abstract DateTime CreatedAt { get; }
 		/// <summary>
@@ -96,7 +32,53 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 		/// The tags for this image.
 		/// </summary>
 		public abstract string Tags { get; }
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("score")]
+		public int Score { get; private set; } = -1;
+		/// <summary>
+		/// The source of the image. Can be empty/null if no source is provided.
+		/// </summary>
+		[JsonProperty("source")]
+		public string Source { get; private set; }
+		/// <summary>
+		/// The rating of the image. Safe, questionable, or explicit.
+		/// </summary>
+		[JsonProperty("rating")]
+		public char Rating { get; private set; }
+		/// <summary>
+		/// The id of the parent post to this post if there is one.
+		/// </summary>
+		[JsonProperty("parent_id")]
+		public int? ParentId { get; private set; }
+		/// <summary>
+		/// The hash of the image.
+		/// </summary>
+		[JsonProperty("md5")]
+		public string MD5 { get; private set; }
+		/// <summary>
+		/// Whether or not the post has children.
+		/// </summary>
+		[JsonProperty("has_children")]
+		public bool HasChildren { get; private set; }
+		/// <summary>
+		/// The location of the file for this post. May be missing http/https.
+		/// </summary>
+		[JsonProperty("file_url")]
+		public string FileUrl { get; private set; }
 
+		/// <inheritdoc />
+		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			if (!Uri.TryCreate(FileUrl, UriKind.Absolute, out var url) &&
+				!Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out url))
+			{
+				throw new ArgumentException($"Unable to generate an absolute url with {FileUrl}.");
+			}
+			return Task.FromResult(new ImageResponse(FailureReason.Success, null, url));
+		}
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>

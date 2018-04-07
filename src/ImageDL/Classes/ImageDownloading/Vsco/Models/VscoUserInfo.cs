@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 {
@@ -11,126 +12,126 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// Link to the user's images.
 		/// </summary>
 		[JsonProperty("collection_share_link")]
-		public readonly string CollectionShareLink;
+		public string CollectionShareLink { get; private set; }
 		/// <summary>
 		/// Description of the user's page.
 		/// </summary>
 		[JsonProperty("description")]
-		public readonly string Description;
+		public string Description { get; private set; }
 		/// <summary>
 		/// The domain leading to the user's page.
 		/// </summary>
 		[JsonProperty("domain")]
-		public readonly string Domain;
+		public string Domain { get; private set; }
 		/// <summary>
 		/// Link to a different website.
 		/// </summary>
 		[JsonProperty("externalLink")]
-		public readonly string ExternalLink;
+		public string ExternalLink { get; private set; }
 		/// <summary>
 		/// The text displayed for the external link.
 		/// </summary>
 		[JsonProperty("externalLinkDisplayText")]
-		public readonly string ExternalLinkDisplayText;
+		public string ExternalLinkDisplayText { get; private set; }
 		/// <summary>
 		/// Hash id of the users's gallery.
 		/// </summary>
 		[JsonProperty("grid_album_id")]
-		public readonly string GridAlbumId;
+		public string GridAlbumId { get; private set; }
 		/// <summary>
 		/// User has journal entries.
 		/// </summary>
 		[JsonProperty("has_article")]
-		public readonly bool HasArticle;
+		public bool HasArticle { get; private set; }
 		/// <summary>
 		/// User has collection, which is sharing other people's images.
 		/// </summary>
 		[JsonProperty("has_collection")]
-		public readonly bool HasCollection;
+		public bool HasCollection { get; private set; }
 		/// <summary>
 		/// User has the standard image grid.
 		/// </summary>
 		[JsonProperty("has_grid")]
-		public readonly bool HasGrid;
+		public bool HasGrid { get; private set; }
 		/// <summary>
 		/// The page's id.
 		/// </summary>
 		[JsonProperty("id")]
-		public readonly int Id;
+		public int Id { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("is_brand")]
-		public readonly bool IsBrand;
+		public bool IsBrand { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("internal_site")]
-		public readonly bool InternalSite;
+		public bool InternalSite { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("museum")]
-		public readonly bool Museum;
+		public bool Museum { get; private set; }
 		/// <summary>
 		/// The user's name.
 		/// </summary>
 		[JsonProperty("name")]
-		public readonly string Name;
+		public string Name { get; private set; }
 		/// <summary>
 		/// This is kind of weird this is a field. No clue what it does. Hopefully this isn't anything sensitive.
 		/// </summary>
 		[JsonProperty("password")]
-		public readonly object Password;
+		public object Password { get; private set; }
 		/// <summary>
 		/// Link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("profile_image")]
-		public readonly string ProfileImage;
+		public string ProfileImage { get; private set; }
 		/// <summary>
 		/// Hash of the profile picture.
 		/// </summary>
 		[JsonProperty("profile_image_id")]
-		public readonly string ProfileImageId;
+		public string ProfileImageId { get; private set; }
 		/// <summary>
 		/// Most recently published image.
 		/// </summary>
 		[JsonProperty("recently_published")]
-		public readonly string RecentlyPublished;
+		public string RecentlyPublished { get; private set; }
 		/// <summary>
 		/// Short host url.
 		/// </summary>
 		[JsonProperty("responsive_url")]
-		public readonly string ResponsiveUrl;
+		public string ResponsiveUrl { get; private set; }
 		/// <summary>
 		/// Link to share the gallery.
 		/// </summary>
 		[JsonProperty("share_link")]
-		public readonly string ShareLink;
+		public Uri ShareLink { get; private set; }
 		/// <summary>
 		/// Hash id of the site collection.
 		/// </summary>
 		[JsonProperty("site_collection_id")]
-		public readonly string SiteCollectionId;
+		public string SiteCollectionId { get; private set; }
 		/// <summary>
 		/// The collection's status, e.g. draft, published, etc.
 		/// </summary>
 		[JsonProperty("status")]
-		public readonly string Status;
+		public string Status { get; private set; }
 		/// <summary>
 		/// Generally the user's username again.
 		/// </summary>
 		[JsonProperty("subdomain")]
-		public readonly string Subdomain;
+		public string Subdomain { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("type")]
-		public readonly int Type;
+		public int Type { get; private set; }
 		/// <summary>
 		/// The user's id.
 		/// </summary>
 		[JsonProperty("user_id")]
-		public readonly int UserId;
+		public int UserId { get; private set; }
 	}
 }

@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -11,155 +14,174 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	/// </summary>
 	public sealed class InstagramMediaNode : IPost
 	{
-		#region Json
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+		/// <inheritdoc />
+		[JsonIgnore]
+		public Uri PostUrl => new Uri($"https://www.instagram.com/p/{Shortcode}");
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Score => LikeInfo.Count;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(TakenAtTimestamp)).ToUniversalTime();
 		/// <summary>
 		/// The type of post this is. Video, single image, multi image, etc.
 		/// </summary>
 		[JsonProperty("__typename")]
-		public readonly string Typename;
+		public string Typename { get; private set; }
 		/// <summary>
 		/// The shortcode to this post.
 		/// </summary>
 		[JsonProperty("shortcode")]
-		public readonly string Shortcode;
+		public string Shortcode { get; private set; }
 		/// <summary>
 		/// The size of the image.
 		/// </summary>
 		[JsonProperty("dimensions")]
-		public readonly InstagramImageDimensions Dimensions;
+		public InstagramImageDimensions Dimensions { get; private set; }
 		/// <summary>
 		/// Not sure what this is, not even age gated accounts have this field.
 		/// </summary>
 		[JsonProperty("gating_info")]
-		public readonly object GatingInfo;
+		public object GatingInfo { get; private set; }
 		/// <summary>
 		/// A long string of gibberish if the post is a video.
 		/// </summary>
 		[JsonProperty("media_preview")]
-		public readonly string MediaPreview;
+		public string MediaPreview { get; private set; }
 		/// <summary>
 		/// The thumbnails of each image in the post.
 		/// </summary>
 		[JsonProperty("display_resources")]
-		public readonly List<InstagramThumbnail> Thumbnails;
+		public List<InstagramThumbnail> Thumbnails { get; private set; }
+		/// <summary>
+		/// The url to the video if there is one.
+		/// </summary>
+		[JsonProperty("video_url")]
+		public Uri VideoUrl { get; private set; }
+		/// <summary>
+		/// The amount of views a video has, if there is one.
+		/// </summary>
+		[JsonProperty("video_view_count")]
+		public int VideoViewCount { get; private set; }
 		/// <summary>
 		/// Whether or not the post is a video.
 		/// </summary>
 		[JsonProperty("is_video")]
-		public readonly bool IsVideo;
+		public bool IsVideo { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("should_log_client_event")]
-		public readonly bool ShouldLogClientEvent;
+		public bool ShouldLogClientEvent { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("tracking_token")]
-		public readonly string TrackingToken;
+		public string TrackingToken { get; private set; }
 		/// <summary>
 		/// The users who were mentioned in a post.
 		/// </summary>
 		[JsonProperty("edge_media_to_tagged_user")]
-		public readonly InstagramTaggedUserInfo TaggedUserInfo;
+		public InstagramTaggedUserInfo TaggedUserInfo { get; private set; }
 		/// <summary>
 		/// The captions on images.
 		/// </summary>
 		[JsonProperty("edge_media_to_caption")]
-		public readonly InstagramCaptionInfo CaptionInfo;
+		public InstagramCaptionInfo CaptionInfo { get; private set; }
 		/// <summary>
 		/// If the caption has been edited.
 		/// </summary>
 		[JsonProperty("caption_is_edited")]
-		public readonly bool CaptionIsEdited;
+		public bool CaptionIsEdited { get; private set; }
 		/// <summary>
 		/// How many comments the post has, and who commented on it.
 		/// </summary>
 		[JsonProperty("edge_media_to_comment")]
-		public readonly InstagramCommentInfo CommentInfo;
+		public InstagramCommentInfo CommentInfo { get; private set; }
 		/// <summary>
 		/// Whether or not comments are disabled on this post.
 		/// </summary>
 		[JsonProperty("comments_disabled")]
-		public readonly bool CommentsDisabled;
+		public bool CommentsDisabled { get; private set; }
 		/// <summary>
 		/// How many likes the post has, and who liked it.
 		/// </summary>
 		[JsonProperty("edge_media_preview_like")]
-		public readonly InstagramLikeInfo LikeInfo;
+		public InstagramLikeInfo LikeInfo { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("edge_media_to_sponsor_user")]
-		public readonly InstagramSponsorInfo SponsorInfo;
+		public InstagramSponsorInfo SponsorInfo { get; private set; }
 		/// <summary>
 		/// The location the photos were taken at.
 		/// </summary>
 		[JsonProperty("location")]
-		public readonly InstagramLocation Location;
+		public InstagramLocation Location { get; private set; }
 		/// <summary>
 		/// If you have liked the post. This will always be false since we're not logged in.
 		/// </summary>
 		[JsonProperty("viewer_has_liked")]
-		public readonly bool ViewerHasLiked;
+		public bool ViewerHasLiked { get; private set; }
 		/// <summary>
 		/// If you have saved the post. This will always be false since we're not logged in.
 		/// </summary>
 		[JsonProperty("viewer_has_saved")]
-		public readonly bool ViewerHasSaved;
+		public bool ViewerHasSaved { get; private set; }
 		/// <summary>
 		/// If you have saved the post to your collection. This will always be false since we're not logged in.
 		/// </summary>
 		[JsonProperty("viewer_has_saved_to_collection")]
-		public readonly bool ViewerHasSavedToCollection;
+		public bool ViewerHasSavedToCollection { get; private set; }
 		/// <summary>
 		/// Who posted the post.
 		/// </summary>
 		[JsonProperty("owner")]
-		public readonly InstagramUser Owner;
+		public InstagramUser Owner { get; private set; }
 		/// <summary>
 		/// Whether or not this post is an advertisement.
 		/// </summary>
 		[JsonProperty("is_ad")]
-		public readonly bool IsAd;
+		public bool IsAd { get; private set; }
 		/// <summary>
 		/// Related media, usually empty so not sure what it actually stores.
 		/// </summary>
 		[JsonProperty("edge_web_media_to_related_media")]
-		public readonly InstagramRelatedMediaInfo RelatedMediaInfo;
+		public InstagramRelatedMediaInfo RelatedMediaInfo { get; private set; }
 		/// <summary>
 		/// The children of the post.
 		/// </summary>
 		[JsonProperty("edge_sidecar_to_children")]
-		public readonly InstagramChildrenInfo ChildrenInfo;
+		public InstagramChildrenInfo ChildrenInfo { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was taken.
 		/// </summary>
 		[JsonProperty("taken_at_timestamp")]
-		public readonly long TakenAtTimestamp;
-		/// <summary>
-		/// The id of the post.
-		/// </summary>
-		[JsonProperty("id")]
-		private readonly string _Id = null;
+		public long TakenAtTimestamp { get; private set; }
 		/// <summary>
 		/// The link to the post.
 		/// </summary>
 		[JsonProperty("display_url")]
-		private readonly string _DisplayUrl = null;
-		#endregion
+		public Uri DisplayUrl { get; private set; }
 
 		/// <inheritdoc />
-		public string Id => _Id;
-		/// <inheritdoc />
-		public Uri PostUrl => new Uri($"https://www.instagram.com/p/{Shortcode}");
-		/// <inheritdoc />
-		public IEnumerable<Uri> ContentUrls => ChildrenInfo.Nodes?.SelectMany(x => x.Child.ContentUrls) ?? new[] { new Uri(_DisplayUrl) };
-		/// <inheritdoc />
-		public int Score => LikeInfo.Count;
-		/// <inheritdoc />
-		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(TakenAtTimestamp)).ToUniversalTime();
-
+		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			Uri[] urls;
+			if (ChildrenInfo.Nodes != null)
+			{
+				var tasks = ChildrenInfo.Nodes.Select(async x => await x.Child.GetImagesAsync(client).CAF());
+				urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+			}
+			else
+			{
+				urls = new[] { VideoUrl ?? DisplayUrl };
+			}
+			return new ImageResponse(FailureReason.Success, null, urls);
+		}
 		/// <summary>
 		/// Returns the shortcode and type name.
 		/// </summary>

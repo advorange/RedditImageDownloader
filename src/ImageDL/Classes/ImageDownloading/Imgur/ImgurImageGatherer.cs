@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
@@ -17,26 +18,21 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			return url.Host.CaseInsContains("imgur.com");
 		}
 		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
-			var code = u.Split('/').Last();
-			//Galleries may be albums, and we can tell if their code is 5 letters long
-			if ((u.CaseInsContains("/a/") || u.CaseInsContains("/gallery/")))
+			if (u.IsImagePath())
 			{
-				if (code.Length == 5)
-				{
-					var images = await ImgurImageDownloader.GetImagesAsync(client, code).CAF();
-					return images.Any()
-						? GatheredImagesResponse.FromGatherer(url, images.SelectMany(x => x.ContentUrls).ToArray())
-						: GatheredImagesResponse.FromNotFound(url);
-				}
-				else if (code.Length == 7)
-				{
-					return GatheredImagesResponse.FromImage(new Uri($"https://i.imgur.com/{code}.png"));
-				}
+				return new ImageResponse(FailureReason.Success, null, new Uri(u));
 			}
-			return GatheredImagesResponse.FromUnknown(url);
+			var images = await ImgurImageDownloader.GetImagesFromApi(client, u.Split('/').Last()).CAF();
+			if (images.Any())
+			{
+				var tasks = images.Select(async x => await x.GetImagesAsync(client).CAF());
+				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				return new ImageResponse(FailureReason.Success, null, urls);
+			}
+			return new ImageResponse(FailureReason.NotFound, $"Unable to find any images for {url}.", url);
 		}
 	}
 }

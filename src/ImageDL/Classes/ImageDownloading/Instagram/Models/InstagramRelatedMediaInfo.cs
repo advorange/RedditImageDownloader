@@ -12,6 +12,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Not sure.
 		/// </summary>
 		[JsonProperty("edges")]
-		public readonly List<object> Nodes;
+		public List<object> Nodes { get; private set; }
 	}
 }

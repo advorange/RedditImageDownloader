@@ -11,12 +11,12 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// The value to search with.
 		/// </summary>
 		[JsonProperty("value")]
-		public readonly int Value;
+		public int Value { get; private set; }
 		/// <summary>
 		/// The name associated with the value.
 		/// </summary>
 		[JsonProperty("name")]
-		public readonly string Name;
+		public string Name { get; private set; }
 
 		/// <summary>
 		/// Returns the name and value.

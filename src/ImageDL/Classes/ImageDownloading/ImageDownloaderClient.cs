@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using HtmlAgilityPack;
@@ -17,28 +16,11 @@ namespace ImageDL.Classes.ImageDownloading
 	public class ImageDownloaderClient : HttpClient, IImageDownloaderClient
 	{
 		/// <inheritdoc />
-		public List<Regex> AnimatedContentDomains { get; set; } = new List<Regex>
-		{
-			new Regex(@"\.youtu\.be", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.youtube\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.gfycat\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.streamable\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.v\.redd\.it", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.vimeo\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.dailymotion\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.twitch\.tv", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-			new Regex(@"\.liveleak\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase),
-		};
+		public List<IImageGatherer> Gatherers { get; }
 		/// <inheritdoc />
-		public List<IImageGatherer> Gatherers { get; set; } = typeof(IImageGatherer).Assembly.DefinedTypes
-			.Where(x => x.IsSubclassOf(typeof(IImageGatherer)))
-			.Select(x => Activator.CreateInstance(x))
-			.Cast<IImageGatherer>()
-			.ToList();
+		public Dictionary<Type, ApiKey> ApiKeys { get; }
 		/// <inheritdoc />
-		public Dictionary<Type, ApiKey> ApiKeys { get; set; } = new Dictionary<Type, ApiKey>();
-		/// <inheritdoc />
-		public CookieContainer Cookies { get; private set; }
+		public CookieContainer Cookies { get; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloaderClient"/>.
@@ -49,6 +31,12 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		public ImageDownloaderClient(CookieContainer cookies) : base(GetDefaultClientHandler(cookies))
 		{
+			Gatherers = typeof(IImageGatherer).Assembly.DefinedTypes
+				.Where(x => x.IsSubclassOf(typeof(IImageGatherer)))
+				.Select(x => Activator.CreateInstance(x))
+				.Cast<IImageGatherer>()
+				.ToList();
+			ApiKeys = new Dictionary<Type, ApiKey>();
 			Cookies = cookies;
 			Timeout = TimeSpan.FromMilliseconds(60000);
 			DefaultRequestHeaders.Add("User-Agent", $"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)");
@@ -58,6 +46,7 @@ namespace ImageDL.Classes.ImageDownloading
 		private static HttpClientHandler GetDefaultClientHandler(CookieContainer cookies)
 		{
 			cookies.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
+			cookies.Add(new Cookie("ig_pr", "1", "/", "www.instagram.com")); //Otherwise Instagram gives 403 errors
 
 			return new HttpClientHandler
 			{
@@ -70,18 +59,18 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <inheritdoc />
-		public async Task<HttpResponseMessage> SendWithRefererAsync(Uri url, HttpMethod method)
+		public HttpRequestMessage GetReq(Uri url, HttpMethod method = default)
 		{
 			var req = new HttpRequestMessage
 			{
 				RequestUri = url,
-				Method = method,
+				Method = method ?? HttpMethod.Get,
 			};
 			req.Headers.Referrer = url; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
-			return await SendAsync(req).CAF();
+			return req;
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<string>> GetText(Uri url, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<string>> GetText(HttpRequestMessage req, TimeSpan wait = default, int tries = 3)
 		{
 			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
@@ -93,7 +82,7 @@ namespace ImageDL.Classes.ImageDownloading
 					await Task.Delay(diff).CAF();
 				}
 
-				using (var resp = await SendWithRefererAsync(url, HttpMethod.Get).CAF())
+				using (var resp = await SendAsync(req).CAF())
 				{
 					var code = (int)resp.StatusCode;
 					if (code == 421 || code == 429) //Rate limit error codes
@@ -110,9 +99,9 @@ namespace ImageDL.Classes.ImageDownloading
 			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<HtmlDocument>> GetHtml(Uri url, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<HtmlDocument>> GetHtml(HttpRequestMessage req, TimeSpan wait = default, int tries = 3)
 		{
-			var result = await GetText(url).CAF();
+			var result = await GetText(req, wait, tries).CAF();
 			if (result.IsSuccess)
 			{
 				var doc = new HtmlDocument();
@@ -124,38 +113,6 @@ namespace ImageDL.Classes.ImageDownloading
 				return new ClientResult<HtmlDocument>(null, result.StatusCode, result.IsSuccess);
 			}
 		}
-		/// <inheritdoc />
-		public async Task<GatheredImagesResponse> GetImagesAsync(IPost post)
-		{
-			//TODO: decide whether to use post uri or content uris
-			var url = post.PostUrl;
-			if (url.ToString().IsImagePath())
-			{
-				return GatheredImagesResponse.FromImage(url);
-			}
-			//If the link is animated, return nothing and give an error
-			else if (AnimatedContentDomains.Any(x => x.IsMatch(url.ToString())))
-			{
-				return GatheredImagesResponse.FromAnimated(url);
-			}
-			//If there is a gatherer, use it
-			else if (Gatherers.SingleOrDefault(x => x.IsFromWebsite(url)) is IImageGatherer gatherer)
-			{
-				try
-				{
-					return await gatherer.GetImagesAsync(this, url).CAF();
-				}
-				catch (Exception e)
-				{
-					return GatheredImagesResponse.FromException(url, e);
-				}
-			}
-			//Otherwise, just return the uri and hope for the best
-			else
-			{
-				return GatheredImagesResponse.FromUnknown(url);
-			}
-		}
 		/// <summary>
 		/// Removes query parameters from a url.
 		/// </summary>
@@ -165,38 +122,6 @@ namespace ImageDL.Classes.ImageDownloading
 		{
 			var u = url.ToString();
 			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : url;
-		}
-	}
-
-	/// <summary>
-	/// Result of getting the text from a webpage.
-	/// </summary>
-	public struct ClientResult<T>
-	{
-		/// <summary>
-		/// The value of the request.
-		/// </summary>
-		public readonly T Value;
-		/// <summary>
-		/// The http status code for the request.
-		/// </summary>
-		public readonly HttpStatusCode StatusCode;
-		/// <summary>
-		/// Whether or not the request was successful.
-		/// </summary>
-		public readonly bool IsSuccess;
-
-		/// <summary>
-		/// Creates an instance of <see cref="ClientResult{T}"/>.
-		/// </summary>
-		/// <param name="value"></param>
-		/// <param name="statusCode"></param>
-		/// <param name="isSuccess"></param>
-		public ClientResult(T value, HttpStatusCode statusCode, bool isSuccess)
-		{
-			Value = value;
-			StatusCode = statusCode;
-			IsSuccess = isSuccess;
 		}
 	}
 }

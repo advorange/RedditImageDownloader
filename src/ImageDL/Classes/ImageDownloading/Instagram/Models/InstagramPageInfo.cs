@@ -11,12 +11,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Whether there's more to paginate.
 		/// </summary>
 		[JsonProperty("has_next_page")]
-		public readonly bool HasNextPage;
+		public bool HasNextPage { get; private set; }
 		/// <summary>
 		/// Where to start off the next pagination.
 		/// </summary>
 		[JsonProperty("end_cursor")]
-		public readonly string EndCursor;
+		public string EndCursor { get; private set; }
 
 		/// <summary>
 		/// Returns the end position.

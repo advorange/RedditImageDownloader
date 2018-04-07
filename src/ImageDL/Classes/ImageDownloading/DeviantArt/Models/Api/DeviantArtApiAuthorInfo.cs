@@ -11,22 +11,22 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// The guid of the user.
 		/// </summary>
 		[JsonProperty("userid")]
-		public readonly string UUID;
+		public string UUID { get; private set; }
 		/// <summary>
 		/// The user's name.
 		/// </summary>
 		[JsonProperty("username")]
-		public readonly string Username;
+		public string Username { get; private set; }
 		/// <summary>
 		/// The link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("usericon")]
-		public readonly string UserIcon;
+		public string UserIcon { get; private set; }
 		/// <summary>
 		/// Not sure.
 		/// </summary>
 		[JsonProperty("type")]
-		public readonly string Type;
+		public string Type { get; private set; }
 
 		/// <summary>
 		/// Returns the user's name.

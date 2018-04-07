@@ -1,8 +1,10 @@
-﻿using ImageDL.Interfaces;
+﻿using ImageDL.Enums;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 {
@@ -11,184 +13,187 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 	/// </summary>
 	public class TumblrPost : IPost
 	{
-		#region Json
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("url")]
+		public Uri PostUrl { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("note-count")]
+		public int Score { get; private set; } = -1;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(UnixTimestamp)).ToUniversalTime();
 		/// <summary>
 		/// The full url.
 		/// </summary>
 		[JsonProperty("url-with-slug")]
-		public readonly string UrlWithSlug;
+		public Uri UrlWithSlug { get; private set; }
 		/// <summary>
 		/// The type of post.
 		/// </summary>
 		[JsonProperty("type")]
-		public readonly string Type;
+		public string Type { get; private set; }
 		/// <summary>
 		/// Indicates whether this was created from Tumblr bookmarklet.
 		/// </summary>
 		[JsonProperty("bookmarklet")]
-		public readonly int Bookmarklet;
+		public int Bookmarklet { get; private set; }
 		/// <summary>
 		/// Indicates whether this was created from mobile.
 		/// </summary>
 		[JsonProperty("mobile")]
-		public readonly int Mobile;
+		public int Mobile { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("feed-item")]
-		public readonly string FeedItem;
+		public string FeedItem { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>
 		[JsonProperty("from-feed-id")]
-		public readonly int FromFeedId;
+		public int FromFeedId { get; private set; }
 		/// <summary>
 		/// Post format, html or markdown.
 		/// </summary>
 		[JsonProperty("format")]
-		public readonly string Format;
+		public string Format { get; private set; }
 		/// <summary>
 		/// How to reblog the post via the api.
 		/// </summary>
 		[JsonProperty("reblog-key")]
-		public readonly string ReblogKey;
+		public string ReblogKey { get; private set; }
 		/// <summary>
 		/// The extra unnecessary info from the full url.
 		/// </summary>
 		[JsonProperty("slug")]
-		public readonly string Slug;
+		public string Slug { get; private set; }
 		/// <summary>
 		/// Whether this is the original post.
 		/// </summary>
 		[JsonProperty("is-submission")]
-		public readonly bool IsSubmission;
+		public bool IsSubmission { get; private set; }
 		/// <summary>
 		/// Html element for the button to like.
 		/// </summary>
 		[JsonProperty("like-button")]
-		public readonly string LikeButton;
+		public string LikeButton { get; private set; }
 		/// <summary>
 		/// Html element for the button to reblog.
 		/// </summary>
 		[JsonProperty("reblog-button")]
-		public readonly string ReblogButton;
+		public string ReblogButton { get; private set; }
 		/// <summary>
 		/// Link to the post this was reblogged from.
 		/// </summary>
 		[JsonProperty("reblogged-from-url")]
-		public readonly string RebloggedFromUrl;
+		public Uri RebloggedFromUrl { get; private set; }
 		/// <summary>
 		/// Name of the subdomain this was reblogged from.
 		/// </summary>
 		[JsonProperty("reblogged-from-name")]
-		public readonly string RebloggedFromName;
+		public string RebloggedFromName { get; private set; }
 		/// <summary>
 		/// Title of the subdomain this was reblogged from.
 		/// </summary>
 		[JsonProperty("reblogged-from-title")]
-		public readonly string RebloggedFromTitle;
+		public string RebloggedFromTitle { get; private set; }
 		/// <summary>
 		/// Profile picture of the person this was reblogged from.
 		/// </summary>
 		[JsonProperty("reblogged_from_avatar_url_512")]
-		public readonly string RebloggedFromAvatarUrl;
+		public Uri RebloggedFromAvatarUrl { get; private set; }
 		/// <summary>
 		/// Link to the post this was originally from.
 		/// </summary>
 		[JsonProperty("reblogged-root-url")]
-		public readonly string RebloggedRootUrl;
+		public Uri RebloggedRootUrl { get; private set; }
 		/// <summary>
 		/// Name of the subdomain this was originally from.
 		/// </summary>
 		[JsonProperty("reblogged-root-name")]
-		public readonly string RebloggedRootName;
+		public string RebloggedRootName { get; private set; }
 		/// <summary>
 		/// Title of the subdomain this was originally from.
 		/// </summary>
 		[JsonProperty("reblogged-root-title")]
-		public readonly string RebloggedRootTitle;
+		public string RebloggedRootTitle { get; private set; }
 		/// <summary>
 		/// Profile picture of the person this was originally from.
 		/// </summary>
 		[JsonProperty("reblogged_root_avatar_url_512")]
-		public readonly string RebloggedRootAvatarUrl;
+		public Uri RebloggedRootAvatarUrl { get; private set; }
 		/// <summary>
 		/// The owner of the post.
 		/// </summary>
 		[JsonProperty("tumblelog")]
-		public readonly TumblrPostOwner Tumblelog;
+		public TumblrPostOwner Tumblelog { get; private set; }
 		/// <summary>
 		/// The caption of the post.
 		/// </summary>
 		[JsonProperty("photo-caption")]
-		public readonly string PhotoCaption;
+		public string PhotoCaption { get; private set; }
 		/// <summary>
 		/// The source of the photo.
 		/// </summary>
 		[JsonProperty("photo-link-url")]
-		public readonly string PhotoLinkUrl;
+		public Uri PhotoLinkUrl { get; private set; }
 		/// <summary>
 		/// The width of the photo.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The height of the photo.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The photos of the post if this is a multiphoto post.
 		/// </summary>
 		[JsonProperty("photos")]
-		public readonly List<TumblrPhoto> Photos;
+		public List<TumblrPhoto> Photos { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds for when this post was posted.
 		/// </summary>
 		[JsonProperty("unix-timestamp")]
-		public readonly int UnixTimestamp;
+		public int UnixTimestamp { get; private set; }
 		/// <summary>
 		/// String representing when the post was posted in gmt.
 		/// </summary>
 		[JsonProperty("date-gmt")]
-		public readonly string GmtDateString;
+		public string GmtDateString { get; private set; }
 		/// <summary>
 		/// String representing when the post was posted.
 		/// </summary>
 		[JsonProperty("date")]
-		public readonly string DateString;
-		/// <summary>
-		/// How many notes the post has gotten.
-		/// </summary>
-		[JsonProperty("note-count")]
-		private readonly int _NoteCount = -1;
-		/// <summary>
-		/// The id of the post.
-		/// </summary>
-		[JsonProperty("id")]
-		private readonly string _Id = null;
-		/// <summary>
-		/// The url leading to the post.
-		/// </summary>
-		[JsonProperty("url")]
-		private readonly string _Url = null;
+		public string DateString { get; private set; }
 		/// <summary>
 		/// The link to the image.
 		/// </summary>
 		[JsonProperty("photo-url-1280")]
-		private readonly string _PhotoUrl = null;
-		#endregion
+		public Uri RegularImageUrl { get; private set; }
+		/// <summary>
+		/// The link to the raw image.
+		/// </summary>
+		[JsonIgnore]
+		public Uri FullSizeImageUrl => TumblrImageGatherer.GetFullSizeImage(RegularImageUrl);
 
 		/// <inheritdoc />
-		public string Id => _Id;
-		/// <inheritdoc />
-		public Uri PostUrl => new Uri(_Url);
-		/// <inheritdoc />
-		public IEnumerable<Uri> ContentUrls => Photos?.Select(x => x.PhotoUrl)
-			?? new[] { TumblrImageGatherer.GetFullSizeImage(new Uri(_PhotoUrl)) };
-		/// <inheritdoc />
-		public int Score => _NoteCount;
-		/// <inheritdoc />
-		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(UnixTimestamp)).ToUniversalTime();
+		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		{
+			var images = (Photos?.Select(x => x.FullSizeImageUrl) ?? new[] { FullSizeImageUrl }).ToArray();
+			return Task.FromResult(new ImageResponse(FailureReason.Success, null, images));
+		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Id;
+		}
 	}
 }

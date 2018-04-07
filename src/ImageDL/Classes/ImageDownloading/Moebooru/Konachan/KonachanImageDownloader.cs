@@ -60,7 +60,8 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 		/// <returns></returns>
 		public static async Task<Model> GetKonachanPost(IImageDownloaderClient client, string id)
 		{
-			var result = await client.GetText(GenerateKonachanQuery($"id:{id}", 0)).CAF();
+			var query = GenerateKonachanQuery($"id:{id}", 0);
+			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseKonachanPosts(result.Value)[0] : null;
 		}
 	}

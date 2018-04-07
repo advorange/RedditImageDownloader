@@ -12,21 +12,21 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// Whether or not there are more posts.
 		/// </summary>
 		[JsonProperty("has_more")]
-		public readonly bool HasMore;
+		public bool HasMore { get; private set; }
 		/// <summary>
 		/// The next offset to start at.
 		/// </summary>
 		[JsonProperty("next_offset")]
-		public readonly int? NextOffset;
+		public int? NextOffset { get; private set; }
 		/// <summary>
 		/// How many posts the user has submitted in total.
 		/// </summary>
 		[JsonProperty("estimated_total")]
-		public readonly int EstimatedTotal;
+		public int EstimatedTotal { get; private set; }
 		/// <summary>
 		/// The posts gathered this query.
 		/// </summary>
 		[JsonProperty("results")]
-		public readonly List<DeviantArtApiPost> Results;
+		public List<DeviantArtApiPost> Results { get; private set; }
 	}
 }

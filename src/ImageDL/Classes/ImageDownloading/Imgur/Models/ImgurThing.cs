@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -10,7 +11,18 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 	/// </summary>
 	public abstract class ImgurThing : IPost
 	{
-		#region Json
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("link")]
+		public Uri PostUrl { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("score", NullValueHandling = NullValueHandling.Ignore)]
+		public int Score { get; private set; } = -1;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(DateTimeTimestamp)).ToUniversalTime();
 		/// <summary>
 		/// Title of the post.
 		/// </summary>
@@ -120,45 +132,20 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// The link to the mp4 file if this is an mp4.
 		/// </summary>
 		[JsonProperty("mp4")]
-		public readonly string Mp4Link;
+		public readonly Uri Mp4Link;
 		/// <summary>
 		/// The link to the gifv, which is a wrapper of <see cref="Mp4Link"/>.
 		/// </summary>
 		[JsonProperty("gifv")]
-		public readonly string GifvLink;
+		public readonly Uri GifvLink;
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was created.
 		/// </summary>
 		[JsonProperty("datetime")]
 		public readonly long DateTimeTimestamp;
-		/// <summary>
-		/// The id of the post.
-		/// </summary>
-		[JsonProperty("id")]
-		private readonly string _Id = null;
-		/// <summary>
-		/// The link to the post.
-		/// </summary>
-		[JsonProperty("link")]
-		private readonly string _Link = null;
-		/// <summary>
-		/// The score of the post.
-		/// </summary>
-		[JsonProperty("score")]
-		private readonly int? _Score = null;
-		#endregion
 
 		/// <inheritdoc />
-		public string Id => _Id;
-		/// <inheritdoc />
-		public Uri PostUrl => new Uri(_Link);
-		/// <inheritdoc />
-		public abstract IEnumerable<Uri> ContentUrls { get; }
-		/// <inheritdoc />
-		public int Score => _Score ?? -1;
-		/// <inheritdoc />
-		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(DateTimeTimestamp)).ToUniversalTime();
-
+		public abstract Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client);
 		/// <summary>
 		/// Returns the id.
 		/// </summary>

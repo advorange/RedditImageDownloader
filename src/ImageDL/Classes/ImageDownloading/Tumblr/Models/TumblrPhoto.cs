@@ -12,31 +12,31 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The offset of an image if it was in a post with more than one image.
 		/// </summary>
 		[JsonProperty("offset")]
-		public readonly string Offset;
+		public string Offset { get; private set; }
 		/// <summary>
 		/// The caption of the image.
 		/// </summary>
 		[JsonProperty("caption")]
-		public readonly string Caption;
+		public string Caption { get; private set; }
 		/// <summary>
 		/// The image's width.
 		/// </summary>
 		[JsonProperty("width")]
-		public readonly int Width;
+		public int Width { get; private set; }
 		/// <summary>
 		/// The image's height.
 		/// </summary>
 		[JsonProperty("height")]
-		public readonly int Height;
+		public int Height { get; private set; }
 		/// <summary>
 		/// The link to the image.
 		/// </summary>
 		[JsonProperty("photo-url-1280")]
-		private readonly string _PhotoUrl = null;
-
+		public Uri RegularImageUrl { get; private set; }
 		/// <summary>
-		/// Returns the full size image url.
+		/// The link to the raw image.
 		/// </summary>
-		public Uri PhotoUrl => TumblrImageGatherer.GetFullSizeImage(new Uri(_PhotoUrl));
+		[JsonIgnore]
+		public Uri FullSizeImageUrl => TumblrImageGatherer.GetFullSizeImage(RegularImageUrl);
 	}
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using ImageDL.Classes;
-using ImageDL.Classes.ImageDownloading;
 
 namespace ImageDL.Interfaces
 {
@@ -22,6 +21,6 @@ namespace ImageDL.Interfaces
 		/// <param name="client"></param>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		Task<GatheredImagesResponse> GetImagesAsync(ImageDownloaderClient client, Uri url);
+		Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url);
 	}
 }
