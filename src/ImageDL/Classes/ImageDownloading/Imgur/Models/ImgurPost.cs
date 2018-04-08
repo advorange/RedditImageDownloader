@@ -1,11 +1,9 @@
-﻿using AdvorangesUtils;
-using ImageDL.Enums;
-using ImageDL.Interfaces;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 {
@@ -92,17 +90,15 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// <inheritdoc />
 		public override async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			Uri[] urls;
 			if (IsAlbum)
 			{
 				var tasks = Images.Select(async x => await x.GetImagesAsync(client).CAF());
-				urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				return ImageResponse.FromImages(urls);
 			}
-			else
-			{
-				urls = new[] { Mp4Link ?? PostUrl };
-			}
-			return new ImageResponse(FailureReason.Success, null, urls);
+			return Mp4Url != null
+				? ImageResponse.FromAnimated(Mp4Url)
+				: ImageResponse.FromUrl(PostUrl);
 		}
 		/// <summary>
 		/// Returns the id and image count.

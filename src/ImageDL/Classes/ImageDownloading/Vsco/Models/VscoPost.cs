@@ -169,8 +169,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			var images = new[] { new Uri($"https://{ResponsiveUrl}") };
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, images));
+			return Task.FromResult(ImageResponse.FromUrl(new Uri($"https://{ResponsiveUrl}")));
 		}
 		/// <summary>
 		/// Returns the id, width, and height.

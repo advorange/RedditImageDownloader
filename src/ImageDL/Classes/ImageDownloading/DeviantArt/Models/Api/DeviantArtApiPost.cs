@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -114,7 +113,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, new[] { Content.Source }));
+			return Task.FromResult(ImageResponse.FromUrl(Content.Source));
 		}
 		/// <summary>
 		/// Returns the id, width, and height.

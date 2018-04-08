@@ -135,7 +135,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			async Task<Uri> GenerateQueryAsync(IImageDownloaderClient cl, string co, bool al)
 			{
 				var endpoint = al ? "album" : "image";
-				return new Uri($"https://api.imgur.com/3/gallery/{endpoint}/{co}?client_id={await GetApiKeyAsync(cl).CAF()}");
+				return new Uri($"https://api.imgur.com/3/{endpoint}/{co}?client_id={await GetApiKeyAsync(cl).CAF()}");
 			}
 
 			//Albums are more commonly the 5 digit length code

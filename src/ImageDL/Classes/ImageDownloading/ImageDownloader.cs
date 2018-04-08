@@ -280,16 +280,12 @@ namespace ImageDL.Classes.ImageDownloading
 				ConsoleUtils.WriteLine(post.Format(++count));
 
 				var images = await post.GetImagesAsync(client).CAF();
-				//If the gatherer had any errors simply log them once and then be done with it
-				switch (images.Reason)
+				//If wasn't success, log it, keep the 
+				if (images.IsSuccess == false)
 				{
-					case FailureReason.Success: //Obvious why this one continues
-					case FailureReason.Misc: //This one continues because we can't be certain if it's invalid
-						break;
-					default:
-						Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images.Reason)));
-						ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
-						continue;
+					Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images.Text)));
+					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
+					continue;
 				}
 
 				for (int i = 0; i < images.ImageUrls.Length; ++i)
@@ -298,21 +294,25 @@ namespace ImageDL.Classes.ImageDownloading
 					{
 						var result = await DownloadImageAsync(client, comparer, post, images.ImageUrls[i]).CAF();
 						var text = $"\t[#{i + 1}] {result.Text.Replace(NL, NLT)}";
-						if (result.IsSuccess)
+						if (result.IsSuccess == true)
 						{
 							ConsoleUtils.WriteLine(text);
 						}
-						else
+						else if (result.IsSuccess == false)
 						{
 							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(post.CreateContentLink(images.ImageUrls[i], result.Reason));
+							Links.Add(post.CreateContentLink(images.ImageUrls[i], result.Text));
+						}
+						else
+						{
+							ConsoleUtils.WriteLine(text, ConsoleColor.Cyan);
 						}
 					}
 					//Catch all so they can be written and logged as a failed download
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(post.CreateContentLink(images.ImageUrls[i], FailureReason.Exception));
+						Links.Add(post.CreateContentLink(images.ImageUrls[i], ImageResponse.EXCEPTION));
 					}
 				}
 			}
@@ -328,7 +328,6 @@ namespace ImageDL.Classes.ImageDownloading
 				comparer.DeleteDuplicates(MaxImageSimilarity);
 				ConsoleUtils.WriteLine("");
 			}
-			Links.RemoveAll(x => x.Reason == FailureReason.AlreadyDownloaded);
 			if (Links.Any())
 			{
 				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
@@ -347,7 +346,7 @@ namespace ImageDL.Classes.ImageDownloading
 			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), url);
 			if (File.Exists(file.FullName))
 			{
-				return new Response(FailureReason.AlreadyDownloaded, $"{url} is already saved as {file}.");
+				return new Response("Already Saved", $"{url} is already saved as {file}.", false);
 			}
 
 			HttpResponseMessage resp = null;
@@ -359,16 +358,16 @@ namespace ImageDL.Classes.ImageDownloading
 				resp = await client.SendAsync(client.GetReq(url)).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
-					return new Response(FailureReason.Exception, $"{url} had the error: {resp.ToString()}");
+					return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:\n{resp}", false);
 				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
-					return new Response(FailureReason.AnimatedContent, $"{url} is animated content.");
+					return ImageResponse.FromAnimated(url);
 				}
 				if (!contentType.Contains("image/"))
 				{
-					return new Response(FailureReason.NotFound, $"{url} is not an image.");
+					return new Response("Not An Image", $"{url} is not an image.", false);
 				}
 
 				//Need to use a memory stream and copy to it
@@ -380,18 +379,18 @@ namespace ImageDL.Classes.ImageDownloading
 				var (width, height) = ms.GetImageSize();
 				if (!HasValidSize(url, width, height, out var sizeError))
 				{
-					return new Response(FailureReason.DoesNotFitSizeRequirements, $"{url} does not fit the size requirements ({width}x{height}).");
+					return new Response("Does Not Meet Size Reqs", $"{url} does not fit the size requirements ({width}x{height}).", false);
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
 				{
-					return new Response(FailureReason.Misc, $"{url} is unable to be cached.");
+					return new Response("Unable To Cache", $"{url} is unable to be cached.", false);
 				}
 
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).CAF();
-				return new Response(FailureReason.Success, $"Successfully saved {url} to {file}.");
+				return new Response(null, $"Successfully saved {url} to {file}.", true);
 			}
 			finally
 			{

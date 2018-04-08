@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Enums;
+using ImageDL.Classes.ImageDownloading.Vsco.Models;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco
@@ -21,18 +21,20 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
 			var search = "/media/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var id = u.Substring(index + search.Length).Split('/').First();
-				var post = await VscoImageDownloader.GetVscoPostAsync(client, id).CAF();
-				if (post != null)
+				if (await VscoImageDownloader.GetVscoPostAsync(client, id).CAF() is VscoPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();
 				}
-				return new ImageResponse(FailureReason.NotFound, $"Unable to find any images for {url}.", url);
 			}
-			return new ImageResponse(FailureReason.Misc, null, url);
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

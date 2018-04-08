@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru
@@ -39,17 +38,19 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
 			if (u.CaseInsIndexOf(_Search, out var index))
 			{
 				var id = u.Substring(index + _Search.Length).Split('/').First();
-				var post = await _Func(client, id).CAF();
-				if (post != null)
+				if (await _Func(client, id).CAF() is MoebooruPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();
 				}
-				return new ImageResponse(FailureReason.NotFound, $"Unable to find any images for {url}.", url);
 			}
-			return new ImageResponse(FailureReason.Misc, null, url);
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

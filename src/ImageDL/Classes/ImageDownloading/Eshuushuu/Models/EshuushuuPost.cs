@@ -136,8 +136,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			var images = new[] { new Uri($"http://e-shuushuu.net/images/{Filename}") };
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, images));
+			return Task.FromResult(ImageResponse.FromUrl(new Uri($"http://e-shuushuu.net/images/{Filename}")));
 		}
 		/// <summary>
 		/// Returns the id, width, and height.

@@ -132,9 +132,9 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// The link to the mp4 file if this is an mp4.
 		/// </summary>
 		[JsonProperty("mp4")]
-		public readonly Uri Mp4Link;
+		public readonly Uri Mp4Url;
 		/// <summary>
-		/// The link to the gifv, which is a wrapper of <see cref="Mp4Link"/>.
+		/// The link to the gifv, which is a wrapper of <see cref="Mp4Url"/>.
 		/// </summary>
 		[JsonProperty("gifv")]
 		public readonly Uri GifvLink;

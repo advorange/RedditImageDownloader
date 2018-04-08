@@ -1,10 +1,9 @@
-﻿using ImageDL.Enums;
-using ImageDL.Interfaces;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ImageDL.Interfaces;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 {
@@ -184,8 +183,12 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			var images = (Photos?.Select(x => x.FullSizeImageUrl) ?? new[] { FullSizeImageUrl }).ToArray();
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, images));
+			if (Photos != null)
+			{
+				var urls = Photos.Select(x => x.FullSizeImageUrl).ToArray();
+				return Task.FromResult(ImageResponse.FromImages(urls));
+			}
+			return Task.FromResult(ImageResponse.FromUrl(FullSizeImageUrl));
 		}
 		/// <summary>
 		/// Returns the id.

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using ImageDL.Enums;
+﻿using System.Threading.Tasks;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -56,7 +53,9 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// <inheritdoc />
 		public override Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, new[] { Mp4Link ?? PostUrl }));
+			return Mp4Url != null
+				? Task.FromResult(ImageResponse.FromAnimated(Mp4Url))
+				: Task.FromResult(ImageResponse.FromUrl(PostUrl));
 		}
 		/// <summary>
 		/// Returns the id, width, and height.

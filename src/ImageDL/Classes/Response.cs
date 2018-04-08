@@ -1,6 +1,4 @@
-﻿using ImageDL.Enums;
-
-namespace ImageDL.Classes
+﻿namespace ImageDL.Classes
 {
 	/// <summary>
 	/// Response to when gathering or downloading images.
@@ -9,26 +7,30 @@ namespace ImageDL.Classes
 	{
 		/// <summary>
 		/// The broad reason why this failed.
+		/// If this is null, this indicates success.
 		/// </summary>
-		public readonly FailureReason Reason;
+		public readonly string ReasonType;
 		/// <summary>
-		/// The more specific reason why this failed.
+		/// The actual reason.
 		/// </summary>
 		public readonly string Text;
 		/// <summary>
 		/// Whether or not the response indicates success.
+		/// Can be null in the case of an unknown status.
 		/// </summary>
-		public bool IsSuccess => Reason == FailureReason.Success;
+		public readonly bool? IsSuccess;
 
 		/// <summary>
 		/// Creates an instance of <see cref="Response"/>.
 		/// </summary>
-		/// <param name="reason"></param>
+		/// <param name="reasonType"></param>
 		/// <param name="text"></param>
-		public Response(FailureReason reason, string text)
+		/// <param name="isSuccess"></param>
+		public Response(string reasonType, string text, bool? isSuccess)
 		{
-			Reason = reason;
+			ReasonType = reasonType;
 			Text = text;
+			IsSuccess = isSuccess;
 		}
 	}
 }

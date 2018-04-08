@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -170,17 +169,15 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// <inheritdoc />
 		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			Uri[] urls;
 			if (ChildrenInfo.Nodes != null)
 			{
 				var tasks = ChildrenInfo.Nodes.Select(async x => await x.Child.GetImagesAsync(client).CAF());
-				urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				return ImageResponse.FromImages(urls);
 			}
-			else
-			{
-				urls = new[] { VideoUrl ?? DisplayUrl };
-			}
-			return new ImageResponse(FailureReason.Success, null, urls);
+			return VideoUrl != null
+				? ImageResponse.FromAnimated(VideoUrl)
+				: ImageResponse.FromUrl(PostUrl);
 		}
 		/// <summary>
 		/// Returns the shortcode and type name.

@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
@@ -23,16 +22,17 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
 			if (u.IsImagePath())
 			{
-				return new ImageResponse(FailureReason.Success, null, new Uri(u));
+				return ImageResponse.FromUrl(new Uri(u));
 			}
-			var images = await ImgurImageDownloader.GetImagesFromApi(client, u.Split('/').Last()).CAF();
+			var id = u.Split('/').Last();
+			var images = await ImgurImageDownloader.GetImagesFromApi(client, id).CAF();
 			if (images.Any())
 			{
 				var tasks = images.Select(async x => await x.GetImagesAsync(client).CAF());
 				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
-				return new ImageResponse(FailureReason.Success, null, urls);
+				return ImageResponse.FromImages(urls);
 			}
-			return new ImageResponse(FailureReason.NotFound, $"Unable to find any images for {url}.", url);
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

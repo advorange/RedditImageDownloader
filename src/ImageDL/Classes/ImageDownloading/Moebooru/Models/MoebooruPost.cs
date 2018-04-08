@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -72,12 +70,12 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			if (!Uri.TryCreate(FileUrl, UriKind.Absolute, out var url) &&
-				!Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out url))
+			if (Uri.TryCreate(FileUrl, UriKind.Absolute, out var url) ||
+				Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out url))
 			{
-				throw new ArgumentException($"Unable to generate an absolute url with {FileUrl}.");
+				return Task.FromResult(ImageResponse.FromUrl(url));
 			}
-			return Task.FromResult(new ImageResponse(FailureReason.Success, null, url));
+			return Task.FromResult(ImageResponse.FromNotFound(PostUrl));
 		}
 		/// <summary>
 		/// Returns the id, width, and height.

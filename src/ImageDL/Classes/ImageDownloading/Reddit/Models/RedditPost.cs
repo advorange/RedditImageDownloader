@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using RedditSharp.Things;
@@ -48,16 +47,15 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 		/// <inheritdoc />
 		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			var url = Post.Url;
-			if (url.ToString().IsImagePath())
+			if (Post.Url.ToString().IsImagePath())
 			{
-				return new ImageResponse(FailureReason.Success, null, url);
+				return ImageResponse.FromUrl(Post.Url);
 			}
-			else if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(url)) is IImageGatherer gatherer)
+			else if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(Post.Url)) is IImageGatherer gatherer)
 			{
-				return await gatherer.FindImagesAsync(client, url).CAF();
+				return await gatherer.FindImagesAsync(client, Post.Url).CAF();
 			}
-			return new ImageResponse(FailureReason.Misc, null, url);
+			return ImageResponse.FromNotFound(Post.Url);
 		}
 		/// <summary>
 		/// Returns the id.

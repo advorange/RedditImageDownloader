@@ -19,19 +19,19 @@ namespace ImageDL.Classes
 		/// <summary>
 		/// The reason why this wasn't downloaded. E.G. failed download, not a static image.
 		/// </summary>
-		public readonly FailureReason Reason;
+		public readonly string Reason;
 		
 		/// <summary>
 		/// Creates a content link, which stores a url, number (score, etc), and the reason for creating it.
 		/// </summary>
 		/// <param name="url"></param>
 		/// <param name="associatedNumber"></param>
-		/// <param name="reason"></param>
-		public ContentLink(Uri url, int associatedNumber, FailureReason reason)
+		/// <param name="reasonType"></param>
+		public ContentLink(Uri url, int associatedNumber, string reasonType)
 		{
 			Url = url;
 			AssociatedNumber = associatedNumber;
-			Reason = reason;
+			Reason = reasonType;
 		}
 
 		/// <summary>
