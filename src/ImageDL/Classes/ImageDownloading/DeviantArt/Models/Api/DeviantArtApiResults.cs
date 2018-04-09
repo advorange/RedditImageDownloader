@@ -27,6 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// The posts gathered this query.
 		/// </summary>
 		[JsonProperty("results")]
-		public List<DeviantArtApiPost> Results { get; private set; }
+		public IList<DeviantArtApiPost> Results { get; private set; }
 	}
 }

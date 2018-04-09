@@ -16,7 +16,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// Returns the images in the album.
 		/// </summary>
 		[JsonIgnore]
-		public List<ImgurImage> Images => _Images ?? new List<ImgurImage>() { this, };
+		public IList<ImgurImage> Images => _Images ?? new List<ImgurImage>() { this, };
 		/// <summary>
 		/// The id of the first image in the post.
 		/// </summary>
@@ -71,7 +71,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// Backing field for Images.
 		/// </summary>
 		[JsonProperty("images")]
-		private List<ImgurImage> _Images = null;
+		private IList<ImgurImage> _Images = null;
 
 		/// <summary>
 		/// Makes sure this post has all the images.
@@ -85,7 +85,10 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 				return;
 			}
 			Images.Clear();
-			Images.AddRange(await ImgurImageDownloader.GetImagesFromApi(client, Id).CAF());
+			foreach (var image in await ImgurImageDownloader.GetImagesFromApi(client, Id).CAF())
+			{
+				Images.Add(image);
+			}
 		}
 		/// <inheritdoc />
 		public override async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)

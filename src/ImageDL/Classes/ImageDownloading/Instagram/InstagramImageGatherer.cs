@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Instagram.Models;
@@ -28,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var search = "/p/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/').First();
+				var id = u.Substring(index + search.Length).Split('/')[0];
 				if (await InstagramImageDownloader.GetInstagramPostAsync(client, id).CAF() is InstagramMediaNode post)
 				{
 					return await post.GetImagesAsync(client).CAF();

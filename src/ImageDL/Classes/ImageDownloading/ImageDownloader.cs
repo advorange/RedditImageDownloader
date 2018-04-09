@@ -283,7 +283,7 @@ namespace ImageDL.Classes.ImageDownloading
 				//If wasn't success, log it, keep the 
 				if (images.IsSuccess == false)
 				{
-					Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images.Text)));
+					Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images)));
 					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
 					continue;
 				}
@@ -301,7 +301,7 @@ namespace ImageDL.Classes.ImageDownloading
 						else if (result.IsSuccess == false)
 						{
 							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(post.CreateContentLink(images.ImageUrls[i], result.Text));
+							Links.Add(post.CreateContentLink(images.ImageUrls[i], result));
 						}
 						else
 						{
@@ -312,7 +312,7 @@ namespace ImageDL.Classes.ImageDownloading
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(post.CreateContentLink(images.ImageUrls[i], ImageResponse.EXCEPTION));
+						Links.Add(post.CreateContentLink(images.ImageUrls[i], new Response(ImageResponse.EXCEPTION, e.Message, false)));
 					}
 				}
 			}
@@ -358,7 +358,7 @@ namespace ImageDL.Classes.ImageDownloading
 				resp = await client.SendAsync(client.GetReq(url)).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
-					return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:\n{resp}", false);
+					return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:{NL}{resp}", false);
 				}
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
@@ -379,12 +379,12 @@ namespace ImageDL.Classes.ImageDownloading
 				var (width, height) = ms.GetImageSize();
 				if (!HasValidSize(url, width, height, out var sizeError))
 				{
-					return new Response("Does Not Meet Size Reqs", $"{url} does not fit the size requirements ({width}x{height}).", false);
+					return new Response("Does Not Meet Size Reqs", sizeError, false);
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
 				{
-					return new Response("Unable To Cache", $"{url} is unable to be cached.", false);
+					return new Response("Unable To Cache", cachingError, false);
 				}
 
 				//Save the file

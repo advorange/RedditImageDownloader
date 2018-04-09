@@ -103,7 +103,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// The thumbnails of the post.
 		/// </summary>
 		[JsonProperty("thumbs")]
-		public List<DeviantArtApiThumbnail> Thumbnails { get; private set; }
+		public IList<DeviantArtApiThumbnail> Thumbnails { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was published.
 		/// </summary>

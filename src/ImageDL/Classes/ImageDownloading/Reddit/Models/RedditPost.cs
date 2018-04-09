@@ -27,9 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 		public Uri PostUrl => new Uri($"https://www.reddit.com/{Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public IEnumerable<Uri> ContentUrls => new[] { Post.Url };
-		/// <inheritdoc />
-		[JsonIgnore]
 		public int Score => Post.Score;
 		/// <inheritdoc />
 		[JsonIgnore]

@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The children of a post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramChildNode> Nodes { get; private set; }
+		public IList<InstagramChildNode> Nodes { get; private set; }
 	}
 
 	/// <summary>

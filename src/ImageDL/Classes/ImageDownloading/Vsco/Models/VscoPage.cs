@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The posts on the page.
 		/// </summary>
 		[JsonProperty("media")]
-		public List<VscoPost> Posts { get; private set; }
+		public IList<VscoPost> Posts { get; private set; }
 		/// <summary>
 		/// The current page number.
 		/// </summary>

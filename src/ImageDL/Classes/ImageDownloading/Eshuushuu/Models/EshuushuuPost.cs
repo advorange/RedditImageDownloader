@@ -96,22 +96,22 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// The tags on the image (not source, character, or artist tags).
 		/// </summary>
 		[JsonProperty("tags")]
-		public List<EshuushuuTag> Tags { get; private set; }
+		public IList<EshuushuuTag> Tags { get; private set; }
 		/// <summary>
 		/// Tags on where the characters are from.
 		/// </summary>
 		[JsonProperty("source")]
-		public List<EshuushuuTag> Source { get; private set; }
+		public IList<EshuushuuTag> Source { get; private set; }
 		/// <summary>
 		/// Tags on the characters in the image.
 		/// </summary>
 		[JsonProperty("characters")]
-		public List<EshuushuuTag> Characters { get; private set; }
+		public IList<EshuushuuTag> Characters { get; private set; }
 		/// <summary>
 		/// Tags on who made the image.
 		/// </summary>
 		[JsonProperty("artist")]
-		public List<EshuushuuTag> Artist { get; private set; }
+		public IList<EshuushuuTag> Artist { get; private set; }
 		/// <summary>
 		/// When the image was submitted. This string is not friendly to convert from.
 		/// </summary>

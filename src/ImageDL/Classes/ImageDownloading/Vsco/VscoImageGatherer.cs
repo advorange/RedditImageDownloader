@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Vsco.Models;
@@ -28,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			var search = "/media/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/').First();
+				var id = u.Substring(index + search.Length).Split('/')[0];
 				if (await VscoImageDownloader.GetVscoPostAsync(client, id).CAF() is VscoPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();

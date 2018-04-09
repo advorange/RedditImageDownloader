@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The users who were tagged.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramTaggedUserNode> Nodes { get; private set; }
+		public IList<InstagramTaggedUserNode> Nodes { get; private set; }
 	}
 
 	/// <summary>

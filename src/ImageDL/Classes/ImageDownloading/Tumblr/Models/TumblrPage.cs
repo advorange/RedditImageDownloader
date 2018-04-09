@@ -32,6 +32,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The posts that were found.
 		/// </summary>
 		[JsonProperty("posts")]
-		public List<TumblrPost> Posts { get; private set; }
+		public IList<TumblrPost> Posts { get; private set; }
 	}
 }

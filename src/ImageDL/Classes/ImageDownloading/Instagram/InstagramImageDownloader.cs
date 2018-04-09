@@ -105,7 +105,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					}
 					else if (p.ChildrenInfo.Nodes?.Any() ?? false) //Only go into this statment if there are any children
 					{
-						p.ChildrenInfo.Nodes.RemoveAll(x => !HasValidSize(null, x.Child.Dimensions.Width, x.Child.Dimensions.Height, out _));
+						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(null, x.Child.Dimensions.Width, x.Child.Dimensions.Height, out _)).ToList())
+						{
+							p.ChildrenInfo.Nodes.Remove(node);
+						}
 						if (!p.ChildrenInfo.Nodes.Any())
 						{
 							continue;

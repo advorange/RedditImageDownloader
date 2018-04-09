@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The captions of a post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramCaptionNode> Nodes { get; private set; }
+		public IList<InstagramCaptionNode> Nodes { get; private set; }
 	}
 
 	/// <summary>

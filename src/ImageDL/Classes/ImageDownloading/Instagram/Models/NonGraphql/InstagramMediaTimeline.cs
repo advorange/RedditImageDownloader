@@ -22,6 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// The posts a user has made.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramMedia> Posts { get; private set; }
+		public IList<InstagramMedia> Posts { get; private set; }
 	}
 }

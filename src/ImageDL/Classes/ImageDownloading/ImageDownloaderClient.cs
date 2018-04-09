@@ -32,9 +32,8 @@ namespace ImageDL.Classes.ImageDownloading
 		public ImageDownloaderClient(CookieContainer cookies) : base(GetDefaultClientHandler(cookies))
 		{
 			Gatherers = typeof(IImageGatherer).Assembly.DefinedTypes
-				.Where(x => x.IsSubclassOf(typeof(IImageGatherer)))
-				.Select(x => Activator.CreateInstance(x))
-				.Cast<IImageGatherer>()
+				.Where(x => !x.IsAbstract && x.ImplementedInterfaces.Contains(typeof(IImageGatherer)))
+				.Select(x => (IImageGatherer)Activator.CreateInstance(x))
 				.ToList();
 			ApiKeys = new Dictionary<Type, ApiKey>();
 			Cookies = cookies;

@@ -17,7 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Who has liked the post.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramLikeNode> Nodes { get; private set; }
+		public IList<InstagramLikeNode> Nodes { get; private set; }
 	}
 
 	/// <summary>

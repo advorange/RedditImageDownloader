@@ -78,7 +78,10 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					//Make sure we have all the images.
 					await post.SetAllImages(client).CAF();
 					//Remove all images that don't meet the size requirements
-					post.Images.RemoveAll(x => !HasValidSize(null, x.Width, x.Height, out _));
+					foreach (var image in post.Images.Where(x => !HasValidSize(null, x.Width, x.Height, out _)).ToList())
+					{
+						post.Images.Remove(image);
+					}
 					if (!post.Images.Any())
 					{
 						continue;

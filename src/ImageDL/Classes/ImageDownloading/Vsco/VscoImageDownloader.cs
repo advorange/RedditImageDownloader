@@ -45,10 +45,9 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var userId = 0;
-			var parsed = new List<Model>();
-			var keepGoing = true;
+			IList<Model> parsed = new List<Model>();
 			//Iterate because the results are in pages
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
 			{
 				if (userId == 0)
 				{
@@ -68,23 +67,23 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 						--i;
 						continue;
 					}
-					break;
+					return;
 				}
 
 				var page = JsonConvert.DeserializeObject<VscoPage>(result.Value);
 				foreach (var post in (parsed = page.Posts))
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					if (post.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (!HasValidSize(null, post.Width, post.Height, out _))
 					{
 						continue;
 					}
-					if (!(keepGoing = Add(list, post)))
+					if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}

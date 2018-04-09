@@ -7,11 +7,10 @@
 	{
 		/// <summary>
 		/// The broad reason why this failed.
-		/// If this is null, this indicates success.
 		/// </summary>
 		public readonly string ReasonType;
 		/// <summary>
-		/// The actual reason.
+		/// The reponse.
 		/// </summary>
 		public readonly string Text;
 		/// <summary>

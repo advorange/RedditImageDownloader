@@ -153,7 +153,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The photos of the post if this is a multiphoto post.
 		/// </summary>
 		[JsonProperty("photos")]
-		public List<TumblrPhoto> Photos { get; private set; }
+		public IList<TumblrPhoto> Photos { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds for when this post was posted.
 		/// </summary>

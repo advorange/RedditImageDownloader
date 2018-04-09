@@ -12,6 +12,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The gathered users.
 		/// </summary>
 		[JsonProperty("sites")]
-		public List<VscoUserInfo> Users { get; private set; }
+		public IList<VscoUserInfo> Users { get; private set; }
 	}
 }

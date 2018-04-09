@@ -132,7 +132,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The pending frames of the post, for when it's a gif.
 		/// </summary>
 		[JsonProperty("frames_pending")]
-		public List<KonachanFrame> FramesPending { get; private set; }
+		public IList<KonachanFrame> FramesPending { get; private set; }
 		/// <summary>
 		/// The string the frames are gotten from.
 		/// </summary>
@@ -142,7 +142,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The frames of the post, for when it's a gif.
 		/// </summary>
 		[JsonProperty("frames")]
-		public List<KonachanFrame> Frames { get; private set; }
+		public IList<KonachanFrame> Frames { get; private set; }
 		/// <summary>
 		/// The size of the file in bytes.
 		/// </summary>

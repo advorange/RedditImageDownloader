@@ -67,7 +67,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// The thumbnails of the image.
 		/// </summary>
 		[JsonProperty("sizing")]
-		public List<DeviantArtScrapedThumbnail> Thumbnails { get; private set; }
+		public IList<DeviantArtScrapedThumbnail> Thumbnails { get; private set; }
 		/// <summary>
 		/// The direct link to the image.
 		/// </summary>

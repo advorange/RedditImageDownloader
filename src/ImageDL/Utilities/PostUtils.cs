@@ -40,11 +40,11 @@ namespace ImageDL.Utilities
 		/// </summary>
 		/// <param name="post"></param>
 		/// <param name="url"></param>
-		/// <param name="reasonType"></param>
+		/// <param name="response"></param>
 		/// <returns></returns>
-		public static ContentLink CreateContentLink(this IPost post, Uri url, string reasonType)
+		public static ContentLink CreateContentLink(this IPost post, Uri url, Response response)
 		{
-			return new ContentLink(url, post.Score, reasonType);
+			return new ContentLink(url, post.Score, response.ReasonType);
 		}
 		/// <summary>
 		/// Returns the count, the score, and the ToString() of the post.

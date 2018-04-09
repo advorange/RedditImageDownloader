@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
@@ -44,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 			}
 			if (u.CaseInsIndexOf(_Search, out var index))
 			{
-				var id = u.Substring(index + _Search.Length).Split('/').First();
+				var id = u.Substring(index + _Search.Length).Split('/')[0];
 				if (await _Func(client, id).CAF() is MoebooruPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();

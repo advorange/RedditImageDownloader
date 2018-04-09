@@ -23,7 +23,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Who has commented.
 		/// </summary>
 		[JsonProperty("edges")]
-		public List<InstagramCommentNode> Nodes { get; private set; }
+		public IList<InstagramCommentNode> Nodes { get; private set; }
 	}
 
 	/// <summary>

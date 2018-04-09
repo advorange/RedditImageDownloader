@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
@@ -28,12 +27,11 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			var search = "/image/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/').First();
+				var id = u.Substring(index + search.Length).Split('/')[0];
 				if (await EshuushuuImageDownloader.GetEshuushuuPostAsync(client, id).CAF() is EshuushuuPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();
 				}
-				return ImageResponse.FromNotFound(url);
 			}
 			return ImageResponse.FromNotFound(url);
 		}

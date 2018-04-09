@@ -54,7 +54,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// The thumbnails of each image in the post.
 		/// </summary>
 		[JsonProperty("display_resources")]
-		public List<InstagramThumbnail> Thumbnails { get; private set; }
+		public IList<InstagramThumbnail> Thumbnails { get; private set; }
 		/// <summary>
 		/// The url to the video if there is one.
 		/// </summary>

@@ -64,12 +64,12 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The kinds of copyright on this image. Usually is 'restricted'.
 		/// </summary>
 		[JsonProperty("copyright_classes")]
-		public List<string> CopyrightClasses { get; private set; }
+		public IList<string> CopyrightClasses { get; private set; }
 		/// <summary>
 		/// Where the photo was taken.
 		/// </summary>
 		[JsonProperty("location_coords")]
-		public List<double> LocationCoords { get; private set; }
+		public IList<double> LocationCoords { get; private set; }
 		/// <summary>
 		/// If the image has any <see cref="LocationCoords"/>.
 		/// </summary>
@@ -144,7 +144,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The hashtags in the description.
 		/// </summary>
 		[JsonProperty("tags")]
-		public List<VscoTag> Tags { get; private set; }
+		public IList<VscoTag> Tags { get; private set; }
 		/// <summary>
 		/// The unix timestamp in milliseconds of when this picture was taken.
 		/// </summary>

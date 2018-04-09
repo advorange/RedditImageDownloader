@@ -37,6 +37,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// No clue.
 		/// </summary>
 		[JsonProperty("feeds")]
-		public List<object> Feeds { get; private set; }
+		public IList<object> Feeds { get; private set; }
 	}
 }

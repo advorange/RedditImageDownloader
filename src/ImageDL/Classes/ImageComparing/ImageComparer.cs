@@ -135,7 +135,7 @@ namespace ImageDL.Classes.ImageComparing
 				}
 			}
 
-			RecyclingUtils.MoveFiles(filesToDelete);
+			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
 			ConsoleUtils.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
 		/// <summary>

@@ -137,7 +137,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// The link to the gifv, which is a wrapper of <see cref="Mp4Url"/>.
 		/// </summary>
 		[JsonProperty("gifv")]
-		public readonly Uri GifvLink;
+		public readonly Uri GifvUrl;
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was created.
 		/// </summary>
