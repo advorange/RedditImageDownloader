@@ -178,7 +178,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The link to the raw image.
 		/// </summary>
 		[JsonIgnore]
-		public Uri FullSizeImageUrl => TumblrImageGatherer.GetFullSizeImage(RegularImageUrl);
+		public Uri FullSizeImageUrl => TumblrImageDownloader.GetFullSizeTumblrImage(RegularImageUrl);
 
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)

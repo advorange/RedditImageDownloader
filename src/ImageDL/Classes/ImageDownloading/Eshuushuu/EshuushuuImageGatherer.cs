@@ -19,21 +19,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
-			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var search = "/image/";
-			if (u.CaseInsIndexOf(search, out var index))
-			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
-				if (await EshuushuuImageDownloader.GetEshuushuuPostAsync(client, id).CAF() is EshuushuuPost post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			return ImageResponse.FromNotFound(url);
+			return await EshuushuuImageDownloader.GetEshuushuuImagesAsync(client, url).CAF();
 		}
 	}
 }

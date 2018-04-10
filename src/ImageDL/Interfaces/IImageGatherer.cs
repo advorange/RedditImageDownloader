@@ -6,6 +6,7 @@ namespace ImageDL.Interfaces
 {
 	/// <summary>
 	/// Interface for something that can grab the images of a post.
+	/// Effectively acts as abstract static methods for some methods in image downloaders.
 	/// </summary>
 	public interface IImageGatherer
 	{

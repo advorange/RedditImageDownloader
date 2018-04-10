@@ -1,18 +1,24 @@
-﻿using AdvorangesUtils;
+﻿using System;
+using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 {
 	/// <summary>
 	/// Gathers images from a specified Konachan link.
 	/// </summary>
-	public sealed class KonachanImageGatherer : MoebooruImageGatherer
+	public sealed class KonachanImageGatherer : IImageGatherer
 	{
-		/// <summary>
-		/// Creates an instance of <see cref="KonachanImageGatherer"/>.
-		/// </summary>
-		public KonachanImageGatherer() : base("konachan.com", "/post/show/", async (c, i) =>
+		/// <inheritdoc />
+		public bool IsFromWebsite(Uri url)
 		{
-			return await KonachanImageDownloader.GetKonachanPost(c, i).CAF();
-		}) { }
+			return url.Host.CaseInsContains("konachan.com");
+		}
+		/// <inheritdoc />
+		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			return await KonachanImageDownloader.GetKonachanImagesAsync(client, url).CAF();
+		}
 	}
 }

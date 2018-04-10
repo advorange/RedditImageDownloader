@@ -147,5 +147,29 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			}
 			return jObj.ToObject<Model>();
 		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetEshuushuuImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/image/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetEshuushuuPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
+		}
 	}
 }

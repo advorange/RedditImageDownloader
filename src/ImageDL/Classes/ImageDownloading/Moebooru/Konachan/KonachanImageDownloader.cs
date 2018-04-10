@@ -31,12 +31,12 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 		}
 
 		/// <summary>
-		/// Generates a search uri.
+		/// Generates a search url.
 		/// </summary>
 		/// <param name="tags"></param>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		public static Uri GenerateKonachanQuery(string tags, int page)
+		private static Uri GenerateKonachanQuery(string tags, int page)
 		{
 			return new Uri($"https://www.konachan.com/post.json" +
 				$"?limit=100" +
@@ -48,7 +48,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		public static List<Model> ParseKonachanPosts(string text)
+		private static List<Model> ParseKonachanPosts(string text)
 		{
 			return JsonConvert.DeserializeObject<List<Model>>(text);
 		}
@@ -58,11 +58,35 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetKonachanPost(IImageDownloaderClient client, string id)
+		public static async Task<Model> GetKonachanPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = GenerateKonachanQuery($"id:{id}", 0);
 			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseKonachanPosts(result.Value)[0] : null;
+		}
+		/// <summary>
+		/// Gets images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetKonachanImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/post/show/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetKonachanPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

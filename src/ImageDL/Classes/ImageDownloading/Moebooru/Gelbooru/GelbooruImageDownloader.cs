@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
@@ -39,7 +40,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// <param name="tags"></param>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		public static Uri GenerateGelbooruQuery(string tags, int page)
+		private static Uri GenerateGelbooruQuery(string tags, int page)
 		{
 			return new Uri($"https://gelbooru.com/index.php" +
 				$"?page=dapi" +
@@ -55,7 +56,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		public static List<Model> ParseGelbooruPosts(string text)
+		private static List<Model> ParseGelbooruPosts(string text)
 		{
 			//Parses through Xml instead of Json since the Json doesn't include some information idk why
 			var doc = new XmlDocument();
@@ -80,8 +81,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 						prop.Value = String.Join(" ", parts.Take(parts.Count - 1));
 					}
 
-					prop.Remove();
-					post[prop.Name.Substring(1)] = prop.Value;
+					prop.Replace(new JProperty(prop.Name.Substring(1), prop.Value));
 				}
 			}
 			return posts.ToObject<List<Model>>();
@@ -97,6 +97,26 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 			var query = GenerateGelbooruQuery($"id:{id}", 0);
 			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseGelbooruPosts(result.Value)[0] : null;
+		}
+		/// <summary>
+		/// Gets images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetGelbooruImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var id = HttpUtility.ParseQueryString(url.Query)["id"];
+			if (id != null && await GetGelbooruPostAsync(client, id).CAF() is Model post)
+			{
+				return await post.GetImagesAsync(client).CAF();
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

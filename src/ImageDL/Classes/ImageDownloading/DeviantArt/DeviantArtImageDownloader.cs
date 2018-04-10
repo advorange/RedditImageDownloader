@@ -5,9 +5,11 @@ using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api;
+using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
+using ImageDL.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Model = ImageDL.Interfaces.IPost;
@@ -96,7 +98,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <param name="clientId"></param>
 		/// <param name="clientSecret"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKey(IImageDownloaderClient client, string clientId, string clientSecret)
+		private static async Task<ApiKey> GetApiKey(IImageDownloaderClient client, string clientId, string clientSecret)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(DeviantArtImageDownloader), out var key))
 			{
@@ -119,6 +121,10 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return default;
 		}
+		/// <summary>
+		/// Generates the tags to be used in a query.
+		/// </summary>
+		/// <returns></returns>
 		private string GenerateTags()
 		{
 			var query = WebUtility.UrlEncode(TagString);
@@ -128,6 +134,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			}
 			return query.Trim('+');
 		}
+		/// <summary>
+		/// Gets posts through scraping.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <returns></returns>
 		private async Task GetPostsThroughScraping(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<DeviantArtScrapedPost>();
@@ -172,6 +184,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}
 			}
 		}
+		/// <summary>
+		/// Gets posts through the api.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <returns></returns>
 		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new DeviantArtApiResults();
@@ -216,6 +234,63 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					}
 				}
 			}
+		}
+		/// <summary>
+		/// Gets posts through the rss feed.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <returns></returns>
+		private async Task GetPostsThroughRss(IImageDownloaderClient client, List<Model> list)
+		{
+			throw new NotImplementedException();
+			//TODO: implement.
+			var query = new Uri($"http://backend.deviantart.com/rss.xml?q={GenerateTags()}");
+			var result = await client.GetText(client.GetReq(query)).CAF();
+			if (!result.IsSuccess)
+			{
+				return;
+			}
+
+			var json = JsonUtils.ConvertXmlToJson(result.Value);
+			var rss = JObject.Parse(json)["rss"]["channel"]["item"];
+		}
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url">The url to gather. Can be in fav.me/id or post link format.</param>
+		/// <returns></returns>
+		public static async Task<DeviantArtOEmbedPost> GetDeviantArtPostAsync(IImageDownloaderClient client, Uri url)
+		{
+			var query = new Uri($"https://backend.deviantart.com/oembed?url={url}");
+			var result = await client.GetText(client.GetReq(query)).CAF();
+			if (result.IsSuccess)
+			{
+				var jObj = JObject.Parse(result.Value);
+				jObj.Add(nameof(DeviantArtOEmbedPost.PostUrl), url);
+				return jObj.ToObject<DeviantArtOEmbedPost>();
+			}
+			return null;
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetDeviantArtImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			if (await GetDeviantArtPostAsync(client, url).CAF() is Model post)
+			{
+				return await post.GetImagesAsync(client).CAF();
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

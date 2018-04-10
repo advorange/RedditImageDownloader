@@ -85,7 +85,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 				return;
 			}
 			Images.Clear();
-			foreach (var image in await ImgurImageDownloader.GetImagesFromApi(client, Id).CAF())
+			foreach (var image in await ImgurImageDownloader.GetImgurImagesByCode(client, Id).CAF())
 			{
 				Images.Add(image);
 			}

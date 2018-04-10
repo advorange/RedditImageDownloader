@@ -14,7 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 	{
 		/// <inheritdoc />
 		[JsonIgnore]
-		public string Id => PostUrl.ToString().Split('-').Last();
+		public string Id => Content.Source.ToString().Split('-', '/').Last().Split('.')[0];
 		/// <inheritdoc />
 		[JsonProperty("url")]
 		public Uri PostUrl { get; private set; }

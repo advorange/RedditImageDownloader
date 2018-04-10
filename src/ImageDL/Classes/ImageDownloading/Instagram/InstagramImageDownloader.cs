@@ -132,7 +132,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
+		private static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(InstagramImageDownloader), out var key))
 			{
@@ -169,7 +169,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		public static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
+		private static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.instagram.com/{username}/?hl=en");
 			var result = await client.GetText(client.GetReq(query)).CAF();
@@ -201,6 +201,30 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				return null;
 			}
 			return JsonConvert.DeserializeObject<InstagramGraphqlResult>(result.Value).Graphql.ShortcodeMedia;
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetInstagramImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/p/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetInstagramPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

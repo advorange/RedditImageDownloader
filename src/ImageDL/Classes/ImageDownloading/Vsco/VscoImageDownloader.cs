@@ -138,5 +138,29 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? JObject.Parse(result.Value)["media"].ToObject<Model>() : null;
 		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetVscoImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/media/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetVscoPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
+		}
 	}
 }

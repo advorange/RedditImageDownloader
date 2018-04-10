@@ -34,12 +34,6 @@ namespace ImageDL.Interfaces
 		/// <returns></returns>
 		HttpRequestMessage GetReq(Uri url, HttpMethod method = default);
 		/// <summary>
-		/// Sends a request to the supplied uri.
-		/// </summary>
-		/// <param name="req"></param>
-		/// <returns></returns>
-		Task<HttpResponseMessage> SendAsync(HttpRequestMessage req);
-		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up/all errors other than 421 and 429.
 		/// </summary>
@@ -58,5 +52,21 @@ namespace ImageDL.Interfaces
 		/// /// <returns></returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
 		Task<ClientResult<HtmlDocument>> GetHtml(HttpRequestMessage req, TimeSpan wait = default, int tries = 3);
+		/// <summary>
+		/// Sends a request to the supplied uri.
+		/// </summary>
+		/// <param name="req"></param>
+		/// <returns></returns>
+		Task<HttpResponseMessage> SendAsync(HttpRequestMessage req);
+		/// <summary>
+		/// Adds a gatherer of the specified type to the client.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		void AddGatherer<T>() where T : IImageGatherer, new();
+		/// <summary>
+		/// Removes a gatherer of the specified type from the client.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		void RemoveGatherer<T>() where T : IImageGatherer, new();
 	}
 }

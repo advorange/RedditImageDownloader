@@ -1,18 +1,24 @@
-﻿using AdvorangesUtils;
+﻿using System;
+using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 {
 	/// <summary>
 	/// Gathers images from a specified Gelbooru link.
 	/// </summary>
-	public sealed class GelbooruImageGatherer : MoebooruImageGatherer
+	public sealed class GelbooruImageGatherer : IImageGatherer
 	{
-		/// <summary>
-		/// Creates an instance of <see cref="GelbooruImageGatherer"/>.
-		/// </summary>
-		public GelbooruImageGatherer() : base("gelbooru.com", "id=", async (c, i) =>
+		/// <inheritdoc />
+		public bool IsFromWebsite(Uri url)
 		{
-			return await GelbooruImageDownloader.GetGelbooruPostAsync(c, i).CAF();
-		}) { }
+			return url.Host.CaseInsContains("gelbooru.com");
+		}
+		/// <inheritdoc />
+		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			return await GelbooruImageDownloader.GetGelbooruImagesAsync(client, url).CAF();
+		}
 	}
 }

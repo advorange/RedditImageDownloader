@@ -36,7 +36,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 		/// <param name="tags"></param>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		public static Uri GenerateDanbooruQuery(string tags, int page)
+		private static Uri GenerateDanbooruQuery(string tags, int page)
 		{
 			return new Uri($"https://danbooru.donmai.us/posts.json" +
 				$"?utf8=✓" +
@@ -49,7 +49,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		public static List<Model> ParseDanbooruPosts(string text)
+		private static List<Model> ParseDanbooruPosts(string text)
 		{
 			return JsonConvert.DeserializeObject<List<Model>>(text);
 		}
@@ -64,6 +64,30 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 			var query = GenerateDanbooruQuery($"id:{id}", 0);
 			var result = await client.GetText(client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseDanbooruPosts(result.Value)[0] : null;
+		}
+		/// <summary>
+		/// Gets images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetDanbooruImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/posts/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetDanbooruPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

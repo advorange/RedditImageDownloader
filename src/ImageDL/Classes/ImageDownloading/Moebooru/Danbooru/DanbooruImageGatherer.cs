@@ -1,18 +1,24 @@
-﻿using AdvorangesUtils;
+﻿using System;
+using System.Threading.Tasks;
+using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 {
 	/// <summary>
 	/// Gathers images from a specified Danbooru link.
 	/// </summary>
-	public sealed class DanbooruImageGatherer : MoebooruImageGatherer
+	public sealed class DanbooruImageGatherer : IImageGatherer
 	{
-		/// <summary>
-		/// Creates an instance of <see cref="DanbooruImageGatherer"/>.
-		/// </summary>
-		public DanbooruImageGatherer() : base("donmai.us", "/posts/", async (c, i) =>
+		/// <inheritdoc />
+		public bool IsFromWebsite(Uri url)
 		{
-			return await DanbooruImageDownloader.GetDanbooruPostAsync(c, i).CAF();
-		}) { }
+			return url.Host.CaseInsContains("donmai.us");
+		}
+		/// <inheritdoc />
+		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			return await DanbooruImageDownloader.GetDanbooruImagesAsync(client, url).CAF();
+		}
 	}
 }

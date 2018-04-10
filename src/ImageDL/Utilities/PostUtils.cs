@@ -1,10 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using AdvorangesUtils;
 using ImageDL.Classes;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Utilities

@@ -99,7 +99,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
+		private static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
 			if (client.ApiKeys.TryGetValue(typeof(ImgurImageDownloader), out var key))
 			{
@@ -132,20 +132,15 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <param name="client"></param>
 		/// <param name="code"></param>
 		/// <returns></returns>
-		public static async Task<List<ImgurImage>> GetImagesFromApi(IImageDownloaderClient client, string code)
+		public static async Task<List<ImgurImage>> GetImgurImagesByCode(IImageDownloaderClient client, string code)
 		{
-			//TODO: check if this works correctly
-			async Task<Uri> GenerateQueryAsync(IImageDownloaderClient cl, string co, bool al)
-			{
-				var endpoint = al ? "album" : "image";
-				return new Uri($"https://api.imgur.com/3/{endpoint}/{co}?client_id={await GetApiKeyAsync(cl).CAF()}");
-			}
-
 			//Albums are more commonly the 5 digit length code
 			var isAlbum = code.Length == 5;
 			for (int notFoundCount = 0;;)
 			{
-				var result = await client.GetText(client.GetReq(await GenerateQueryAsync(client, code, isAlbum).CAF())).CAF();
+				var endpoint = isAlbum ? "album" : "image";
+				var query = new Uri($"https://api.imgur.com/3/{endpoint}/{code}?client_id={await GetApiKeyAsync(client).CAF()}");
+				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (result.IsSuccess)
 				{
 					var data = JObject.Parse(result.Value)["data"];
@@ -173,6 +168,29 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 				}
 				return new List<ImgurImage>();
 			}
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetImgurImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var id = u.Split('/').Last();
+			var images = await GetImgurImagesByCode(client, id).CAF();
+			if (images.Any())
+			{
+				var tasks = images.Select(async x => await x.GetImagesAsync(client).CAF());
+				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				return ImageResponse.FromImages(urls);
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

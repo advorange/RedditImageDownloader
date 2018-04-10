@@ -42,6 +42,15 @@ namespace ImageDL.Classes.ImageDownloading
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
 
+		/// <summary>
+		/// Removes query parameters and hash parameters from a url.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static Uri RemoveQuery(Uri url)
+		{
+			return new Uri(url.ToString().Split('?', '#')[0]);
+		}
 		private static HttpClientHandler GetDefaultClientHandler(CookieContainer cookies)
 		{
 			cookies.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
@@ -112,15 +121,15 @@ namespace ImageDL.Classes.ImageDownloading
 				return new ClientResult<HtmlDocument>(null, result.StatusCode, result.IsSuccess);
 			}
 		}
-		/// <summary>
-		/// Removes query parameters from a url.
-		/// </summary>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static Uri RemoveQuery(Uri url)
+		/// <inheritdoc />
+		public void AddGatherer<T>() where T : IImageGatherer, new()
 		{
-			var u = url.ToString();
-			return u.CaseInsIndexOf("?", out var index) ? new Uri(u.Substring(0, index)) : url;
+			Gatherers.Add(Activator.CreateInstance<T>());
+		}
+		/// <inheritdoc />
+		public void RemoveGatherer<T>() where T : IImageGatherer, new()
+		{
+			Gatherers.RemoveAll(x => x is T);
 		}
 	}
 }
