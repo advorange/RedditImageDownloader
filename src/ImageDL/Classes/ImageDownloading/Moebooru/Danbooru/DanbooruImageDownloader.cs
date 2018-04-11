@@ -27,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 		/// <inheritdoc />
 		protected override List<Model> Parse(string text)
 		{
-			return Parse(text);
+			return ParseDanbooruPosts(text);
 		}
 
 		/// <summary>

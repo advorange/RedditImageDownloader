@@ -14,7 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 		public override Uri BaseUrl => new Uri("https://gelbooru.com");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public override Uri PostUrl => new Uri($"{BaseUrl}/index.php?page=post&s=view&id={Id}");
+		public override Uri PostUrl => new Uri($"{BaseUrl}index.php?page=post&s=view&id={Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
 		public override DateTime CreatedAt => _CreatedAt;

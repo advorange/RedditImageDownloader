@@ -17,12 +17,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		/// The height of the image.
 		/// </summary>
 		[JsonProperty("height")]
-		public string Height { get; private set; }
+		public int Height { get; private set; }
 		/// <summary>
 		/// The width of the image.
 		/// </summary>
 		[JsonProperty("width")]
-		public string Width { get; private set; }
+		public int Width { get; private set; }
 		/// <summary>
 		/// The type of content, e.g. image.
 		/// </summary>

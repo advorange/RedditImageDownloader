@@ -60,9 +60,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		{
 			var userId = 0UL;
 			var parsed = new InstagramMediaTimeline();
-			var keepGoing = true;
 			//Iterate to update the pagination start point
-			for (var nextPage = ""; keepGoing && list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
+			for (var nextPage = ""; list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
 				if (userId == 0UL)
@@ -95,9 +94,9 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				foreach (var post in (parsed = insta.Data.User.Content).Posts)
 				{
 					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
-					if (!(keepGoing = p.CreatedAt >= OldestAllowed))
+					if (p.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (p.LikeInfo.Count < MinScore)
 					{
@@ -119,9 +118,9 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						continue;
 					}
-					if (!(keepGoing = Add(list, p)))
+					if (!Add(list, p))
 					{
-						break;
+						return;
 					}
 				}
 			}

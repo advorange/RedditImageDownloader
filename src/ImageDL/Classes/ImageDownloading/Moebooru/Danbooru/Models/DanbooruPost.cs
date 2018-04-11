@@ -17,7 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru.Models
 		public override Uri BaseUrl => new Uri("https://danbooru.donmai.us");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public override Uri PostUrl => new Uri($"{BaseUrl}/posts/{Id}");
+		public override Uri PostUrl => new Uri($"{BaseUrl}posts/{Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
 		public override DateTime CreatedAt => _CreatedAt;

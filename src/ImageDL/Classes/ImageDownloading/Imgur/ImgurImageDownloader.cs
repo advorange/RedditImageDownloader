@@ -44,9 +44,8 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
-			var keepGoing = true;
 			//Iterate to get the next page of results
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
 			{
 				var query = new Uri($"https://api.imgur.com/3/gallery/search/time/all/{i}/" +
 					$"?client_id={await GetApiKeyAsync(client).CAF()}" +
@@ -67,9 +66,9 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 				parsed = JObject.Parse(result.Value)["data"].ToObject<List<Model>>();
 				foreach (var post in parsed)
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					if (post.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (post.Score < MinScore)
 					{
@@ -86,9 +85,9 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, post)))
+					else if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}

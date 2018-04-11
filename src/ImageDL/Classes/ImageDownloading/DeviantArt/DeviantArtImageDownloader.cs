@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
+using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -75,17 +76,19 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> validPosts)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			try
 			{
 				if ((await GetApiKey(client, ClientId, ClientSecret).CAF()).Key != null)
 				{
-					await GetPostsThroughApi(client, validPosts).CAF();
+					await GetPostsThroughApi(client, list).CAF();
 				}
 				else
 				{
-					await GetPostsThroughScraping(client, validPosts).CAF();
+					await GetPostsThroughScraping(client, list).CAF();
+					//TODO: implement way to choose
+					//await GetPostsThroughRss(client, list).CAF();
 				}
 			}
 			catch (WebException we) when (we.Message.Contains("403")) { } //Gotten when scraping since don't know when to stop.
@@ -143,9 +146,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		private async Task GetPostsThroughScraping(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<DeviantArtScrapedPost>();
-			var keepGoing = true;
 			//Iterate to get the new offset to start at
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); i += parsed.Count)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); i += parsed.Count)
 			{
 				var query = new Uri($"https://www.deviantart.com/newest/" +
 					$"?offset={i}" +
@@ -177,9 +179,9 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, post)))
+					else if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}
@@ -193,9 +195,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new DeviantArtApiResults();
-			var keepGoing = true;
 			//Iterate to get the new offset to start at
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
 			{
 				var query = new Uri($"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 					$"?offset={i}" +
@@ -218,9 +219,9 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				parsed = JsonConvert.DeserializeObject<DeviantArtApiResults>(result.Value);
 				foreach (var post in parsed.Results)
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					if (post.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (post.Content.Source == null //Is a journal or something like that
 						|| !HasValidSize(null, post.Content.Width, post.Content.Height, out _)
@@ -228,9 +229,9 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, post)))
+					else if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}
@@ -243,17 +244,37 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <returns></returns>
 		private async Task GetPostsThroughRss(IImageDownloaderClient client, List<Model> list)
 		{
-			throw new NotImplementedException();
-			//TODO: implement.
-			var query = new Uri($"http://backend.deviantart.com/rss.xml?q={GenerateTags()}");
-			var result = await client.GetText(client.GetReq(query)).CAF();
-			if (!result.IsSuccess)
+			var parsed = new List<DeviantArtRssPost>();
+			//Iterate to get the new offset to start at
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); i += parsed.Count)
 			{
-				return;
-			}
+				var query = new Uri($"http://backend.deviantart.com/rss.xml" +
+					$"?offset={i}" +
+					$"&q={GenerateTags()}");
+				var result = await client.GetText(client.GetReq(query)).CAF();
+				if (!result.IsSuccess)
+				{
+					break;
+				}
 
-			var json = JsonUtils.ConvertXmlToJson(result.Value);
-			var rss = JObject.Parse(json)["rss"]["channel"]["item"];
+				var json = JsonUtils.ConvertXmlToJson(result.Value);
+				parsed = JObject.Parse(json)["rss"]["channel"]["item"].ToObject<List<DeviantArtRssPost>>();
+				foreach (var post in parsed)
+				{
+					if (post.CreatedAt < OldestAllowed)
+					{
+						return;
+					}
+					else if (!HasValidSize(null, post.MediaContent.Width, post.MediaContent.Height, out _))
+					{
+						continue;
+					}
+					else if (!Add(list, post))
+					{
+						return;
+					}
+				}
+			}
 		}
 		/// <summary>
 		/// Gets the post with the specified id.

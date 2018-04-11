@@ -50,9 +50,8 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
 			var parsed = new List<Model>();
-			var keepGoing = true;
 			//Iterate to get the next page of results
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 15); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 15); ++i)
 			{
 				var query = new Uri("http://e-shuushuu.net/search/results/" +
 					$"?thumbs=1" +
@@ -73,17 +72,17 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					.Select(async x => await GetEshuushuuPostAsync(client, x).CAF())).CAF()).ToList();
 				foreach (var post in parsed)
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					if (post.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, post)))
+					else if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}

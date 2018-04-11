@@ -15,7 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		public override Uri BaseUrl => new Uri("https://www.konachan.com");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public override Uri PostUrl => new Uri($"{BaseUrl}/post/show/{Id}");
+		public override Uri PostUrl => new Uri($"{BaseUrl}post/show/{Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
 		public override DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(CreatedAtTimestamp)).ToUniversalTime();

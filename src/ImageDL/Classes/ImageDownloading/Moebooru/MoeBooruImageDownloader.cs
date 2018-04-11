@@ -69,9 +69,8 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<T> list)
 		{
 			var parsed = new List<T>();
-			var keepGoing = true;
 			//Iterate because there's a limit of around 100 per request
-			for (int i = 0; keepGoing && list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
 				var query = GenerateQuery(Tags, Page + i);
 				var result = await client.GetText(client.GetReq(query)).CAF();
@@ -82,17 +81,17 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 
 				foreach (var post in (parsed = Parse(result.Value)))
 				{
-					if (!(keepGoing = post.CreatedAt >= OldestAllowed))
+					if (post.CreatedAt < OldestAllowed)
 					{
-						break;
+						return;
 					}
 					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
-					else if (!(keepGoing = Add(list, post)))
+					else if (!Add(list, post))
 					{
-						break;
+						return;
 					}
 				}
 			}
