@@ -76,7 +76,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
-					break;
+					return;
 				}
 
 				foreach (var post in (parsed = Parse(result.Value)))

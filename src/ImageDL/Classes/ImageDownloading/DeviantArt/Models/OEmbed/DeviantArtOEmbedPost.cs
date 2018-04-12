@@ -9,7 +9,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via OEmbed.
 	/// </summary>
-	public class DeviantArtOEmbedPost : IPost
+	public sealed class DeviantArtOEmbedPost : IPost
 	{
 		/// <inheritdoc />
 		[JsonIgnore]

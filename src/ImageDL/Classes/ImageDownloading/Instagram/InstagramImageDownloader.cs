@@ -19,6 +19,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	/// </summary>
 	public class InstagramImageDownloader : ImageDownloader<Model>
 	{
+		private static readonly Type _Type = typeof(InstagramImageDownloader);
+
 		/// <summary>
 		/// The name of the user to search for.
 		/// </summary>
@@ -84,10 +86,15 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					//If there's an error with the query hash, try to get another one
 					if (result.Value.Contains("query_hash"))
 					{
-						client.ApiKeys.Remove(typeof(InstagramImageDownloader));
+						//Means the access token cannot be gotten
+						if (!client.ApiKeys.ContainsKey(_Type))
+						{
+							return;
+						}
+						client.ApiKeys.Remove(_Type);
 						continue;
 					}
-					break;
+					return;
 				}
 
 				var insta = JsonConvert.DeserializeObject<InstagramResult>(result.Value);
@@ -133,7 +140,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <returns></returns>
 		private static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
-			if (client.ApiKeys.TryGetValue(typeof(InstagramImageDownloader), out var key))
+			if (client.ApiKeys.TryGetValue(_Type, out var key))
 			{
 				return key;
 			}
@@ -160,7 +167,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			//Read ProfilePageContainer.js and find the query hash
 			var qSearch = "e.profilePosts.byUserId.get(t))?o.pagination:o},queryId:\"";
 			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
-			return (client.ApiKeys[typeof(InstagramImageDownloader)] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
+			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
 		}
 		/// <summary>
 		/// Gets the id of the Instagram user.

@@ -9,6 +9,7 @@ using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Newtonsoft.Json;
@@ -24,6 +25,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	{
 		private const string SEARCH = "https://www.deviantartsupport.com/en/article/are-there-any-tricks-to-narrowing-down-a-search-on-deviantart";
 		private const string API = "https://www.deviantart.com/developers/";
+		private static readonly Type _Type = typeof(DeviantArtImageDownloader);
 
 		/// <summary>
 		/// The client id to get the authorization token from.
@@ -49,10 +51,19 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			get => _TagString;
 			set => _TagString = value;
 		}
+		/// <summary>
+		/// The method to gather images with.
+		/// </summary>
+		public GatheringMethod GatheringMethod
+		{
+			get => _GatheringMethod;
+			set => _GatheringMethod = value;
+		}
 
 		private string _ClientId;
 		private string _ClientSecret;
 		private string _TagString;
+		private GatheringMethod _GatheringMethod;
 
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.
@@ -71,27 +82,29 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			});
 			SettingParser.Add(new Setting<string>(new[] { nameof(TagString), "tags" }, x => TagString = x)
 			{
-				Description = $"the tags to search for. For additional help, visit {SEARCH}.",
+				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
+			});
+			SettingParser.Add(new Setting<GatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, EnumParsingUtils.TryParseEnumCaseIns)
+			{
+				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});
 		}
 
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
-			try
+			switch (GatheringMethod)
 			{
-				if ((await GetApiKey(client, ClientId, ClientSecret).CAF()).Key != null)
-				{
-					await GetPostsThroughApi(client, list).CAF();
-				}
-				else
-				{
-					await GetPostsThroughScraping(client, list).CAF();
-					//TODO: implement way to choose
-					//await GetPostsThroughRss(client, list).CAF();
-				}
+				case GatheringMethod.Scraping:
+					await GetPostsThroughScraping(client, list);
+					return;
+				case GatheringMethod.Api:
+					await GetPostsThroughApi(client, list);
+					return;
+				case GatheringMethod.Rss:
+					await GetPostsThroughRss(client, list);
+					return;
 			}
-			catch (WebException we) when (we.Message.Contains("403")) { } //Gotten when scraping since don't know when to stop.
 		}
 
 		/// <summary>
@@ -103,7 +116,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <returns></returns>
 		private static async Task<ApiKey> GetApiKey(IImageDownloaderClient client, string clientId, string clientSecret)
 		{
-			if (client.ApiKeys.TryGetValue(typeof(DeviantArtImageDownloader), out var key))
+			if (client.ApiKeys.TryGetValue(_Type, out var key))
 			{
 				return key;
 			}
@@ -119,7 +132,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					var jObj = JObject.Parse(result.Value);
 					var token = jObj["access_token"].ToObject<string>();
 					var duration = TimeSpan.FromSeconds(jObj["expires_in"].ToObject<int>());
-					return (client.ApiKeys[typeof(DeviantArtImageDownloader)] = new ApiKey(token, duration));
+					return (client.ApiKeys[_Type] = new ApiKey(token, duration));
 				}
 			}
 			return default;
@@ -155,7 +168,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
-					break;
+					return;
 				}
 
 				var jsonSearch = "window.__pageload =";
@@ -196,7 +209,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		{
 			var parsed = new DeviantArtApiResults();
 			//Iterate to get the new offset to start at
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results.Count)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results?.Count ?? 0)
 			{
 				var query = new Uri($"https://www.deviantart.com/api/v1/oauth2/browse/newest" +
 					$"?offset={i}" +
@@ -209,11 +222,17 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					//If there's an error with the access token, try to get another one
 					if (result.Value.Contains("access_token"))
 					{
-						client.ApiKeys.Remove(typeof(DeviantArtImageDownloader));
-						i -= parsed.Results.Count;
+						//TODO: change how key is set
+						//Means the access token cannot be gotten
+						if (!client.ApiKeys.ContainsKey(_Type))
+						{
+							return;
+						}
+						client.ApiKeys.Remove(_Type);
+						i -= parsed.Results?.Count ?? 0;
 						continue;
 					}
-					break;
+					return;
 				}
 
 				parsed = JsonConvert.DeserializeObject<DeviantArtApiResults>(result.Value);
@@ -254,7 +273,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				var result = await client.GetText(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
-					break;
+					return;
 				}
 
 				var json = JsonUtils.ConvertXmlToJson(result.Value);

@@ -18,6 +18,8 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// </summary>
 	public sealed class ImgurImageDownloader : ImageDownloader<Model>
 	{
+		private static readonly Type _Type = typeof(ImgurImageDownloader);
+
 		/// <summary>
 		/// The tags to search for posts with.
 		/// </summary>
@@ -56,11 +58,16 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					//If there's an error with the api key, try to get another one
 					if (result.Value.Contains("client_id"))
 					{
-						client.ApiKeys.Remove(typeof(ImgurImageDownloader));
+						//Means the access token cannot be gotten
+						if (!client.ApiKeys.ContainsKey(_Type))
+						{
+							return;
+						}
+						client.ApiKeys.Remove(_Type);
 						--i;
 						continue;
 					}
-					break;
+					return;
 				}
 
 				parsed = JObject.Parse(result.Value)["data"].ToObject<List<Model>>();
@@ -100,7 +107,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <returns></returns>
 		private static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
-			if (client.ApiKeys.TryGetValue(typeof(ImgurImageDownloader), out var key))
+			if (client.ApiKeys.TryGetValue(_Type, out var key))
 			{
 				return key;
 			}
@@ -123,7 +130,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			//Read main.gibberish.js and find the client id
 			var idSearch = "apiClientId:\"";
 			var idCut = jsResult.Value.Substring(jsResult.Value.IndexOf(idSearch) + idSearch.Length);
-			return (client.ApiKeys[typeof(ImgurImageDownloader)] = new ApiKey(idCut.Substring(0, idCut.IndexOf('"'))));
+			return (client.ApiKeys[_Type] = new ApiKey(idCut.Substring(0, idCut.IndexOf('"'))));
 		}
 		/// <summary>
 		/// Gets the images from the supplied album id.
@@ -162,7 +169,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 				//If there's an error with the api key, try to get another one
 				if (result.Value.Contains("client_id"))
 				{
-					client.ApiKeys.Remove(typeof(ImgurImageDownloader));
+					client.ApiKeys.Remove(_Type);
 					continue;
 				}
 				return new List<ImgurImage>();

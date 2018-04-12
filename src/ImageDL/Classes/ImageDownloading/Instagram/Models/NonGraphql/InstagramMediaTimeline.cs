@@ -6,7 +6,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 	/// <summary>
 	/// Holds information about the media gotten from the query.
 	/// </summary>
-	public sealed class InstagramMediaTimeline
+	public struct InstagramMediaTimeline
 	{
 		/// <summary>
 		/// How many posts the users has made.

@@ -6,7 +6,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 	/// <summary>
 	/// Json model for searching for DeviantArt posts through the API.
 	/// </summary>
-	public sealed class DeviantArtApiResults
+	public struct DeviantArtApiResults
 	{
 		/// <summary>
 		/// Whether or not there are more posts.

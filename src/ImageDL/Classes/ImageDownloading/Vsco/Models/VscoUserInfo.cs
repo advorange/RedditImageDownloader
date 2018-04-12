@@ -57,7 +57,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// The page's id.
 		/// </summary>
 		[JsonProperty("id")]
-		public int Id { get; private set; }
+		public ulong Id { get; private set; }
 		/// <summary>
 		/// No clue.
 		/// </summary>

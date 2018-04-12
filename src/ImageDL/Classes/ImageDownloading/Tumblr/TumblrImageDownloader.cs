@@ -42,9 +42,9 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
-			IList<Model> parsed = new List<Model>();
+			var parsed = new TumblrPage();
 			//Iterate because the results are in pages
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); i += parsed.Count)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Posts?.Count > 0); i += parsed.Posts?.Count ?? 0)
 			{
 				var query = new Uri($"http://{Username}.tumblr.com/api/read/json" +
 					$"?debug=1" +
@@ -58,14 +58,14 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 					return;
 				}
 
-				var page = JsonConvert.DeserializeObject<TumblrPage>(result.Value);
-				foreach (var post in (parsed = page.Posts))
+				parsed = JsonConvert.DeserializeObject<TumblrPage>(result.Value);
+				foreach (var post in parsed.Posts)
 				{
 					if (post.CreatedAt < OldestAllowed)
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.Width, post.Height, out _))
+					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
 					{
 						continue;
 					}

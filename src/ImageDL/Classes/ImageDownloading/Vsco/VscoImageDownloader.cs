@@ -19,6 +19,8 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	/// </summary>
 	public sealed class VscoImageDownloader : ImageDownloader<Model>
 	{
+		private static readonly Type _Type = typeof(VscoImageDownloader);
+
 		/// <summary>
 		/// The name of the user to download images from.
 		/// </summary>
@@ -44,12 +46,12 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
 		{
-			var userId = 0;
-			IList<Model> parsed = new List<Model>();
+			var userId = 0UL;
+			var parsed = new VscoPage();
 			//Iterate because the results are in pages
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Posts.Count > 0); ++i)
 			{
-				if (userId == 0)
+				if (userId == 0UL)
 				{
 					userId = await GetUserIdAsync(client, Username).CAF();
 				}
@@ -63,15 +65,15 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 					//If there's an error with authorization, try to get a new key
 					if (result.StatusCode == HttpStatusCode.Unauthorized)
 					{
-						client.ApiKeys.Remove(typeof(VscoImageDownloader));
+						client.ApiKeys.Remove(_Type);
 						--i;
 						continue;
 					}
 					return;
 				}
 
-				var page = JsonConvert.DeserializeObject<VscoPage>(result.Value);
-				foreach (var post in (parsed = page.Posts))
+				parsed = JsonConvert.DeserializeObject<VscoPage>(result.Value);
+				foreach (var post in parsed.Posts)
 				{
 					if (post.CreatedAt < OldestAllowed)
 					{
@@ -96,7 +98,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <returns></returns>
 		public static async Task<ApiKey> GetApiKeyAsync(IImageDownloaderClient client)
 		{
-			if (client.ApiKeys.TryGetValue(typeof(VscoImageDownloader), out var key))
+			if (client.ApiKeys.TryGetValue(_Type, out var key))
 			{
 				return key;
 			}
@@ -108,7 +110,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 				throw new HttpRequestException("Unable to get the api key.");
 			}
 			var cookie = client.Cookies.GetCookies(query)["vs"].Value;
-			return (client.ApiKeys[typeof(VscoImageDownloader)] = new ApiKey(cookie));
+			return (client.ApiKeys[_Type] = new ApiKey(cookie));
 		}
 		/// <summary>
 		/// Gets the id of the Vsco user.
@@ -116,7 +118,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		public static async Task<int> GetUserIdAsync(IImageDownloaderClient client, string username)
+		public static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/sites?subdomain={username}");
 			var result = await client.GetText(client.GetReq(query)).CAF();

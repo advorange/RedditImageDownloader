@@ -61,7 +61,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				var result = await client.GetHtml(client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
-					break;
+					return;
 				}
 
 				parsed = (await Task.WhenAll(result.Value.DocumentNode.Descendants("div")

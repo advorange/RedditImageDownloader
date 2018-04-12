@@ -5,7 +5,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 	/// <summary>
 	/// A title for an image.
 	/// </summary>
-	public class DeviantArtRssTitle
+	public struct DeviantArtRssTitle
 	{
 		/// <summary>
 		/// The type of title. Is either html or plain.

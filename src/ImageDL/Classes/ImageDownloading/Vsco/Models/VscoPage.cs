@@ -6,7 +6,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// <summary>
 	/// Json model for the results of a Vsco page.
 	/// </summary>
-	public class VscoPage
+	public struct VscoPage
 	{
 		/// <summary>
 		/// The posts on the page.

@@ -152,7 +152,7 @@ namespace ImageDL.Classes.SettingParsing
 			}
 			else if (_NameMap.TryGetValue(input, out var guid))
 			{
-				return _SettingMap[guid].GetHelp();
+				return _SettingMap[guid].Information;
 			}
 			else
 			{
