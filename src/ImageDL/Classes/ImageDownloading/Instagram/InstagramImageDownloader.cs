@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
@@ -60,32 +62,30 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
-			var userId = 0UL;
+			var id = 0UL;
+			var rhx = "";
 			var parsed = new InstagramMediaTimeline();
 			//Iterate to update the pagination start point
 			for (var nextPage = ""; list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
-				if (userId == 0UL)
+				if (id == 0UL)
 				{
-					userId = await GetUserIdAsync(client, Username).CAF();
+					var (Id, Rhx) = await GetUserIdAndRhx(client, Username).CAF();
+					id = Id;
+					rhx = Rhx;
 				}
 
 				var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
 				{
-					{ "id", userId }, //The id of the user to search
+					{ "id", id }, //The id of the user to search
 					{ "first", 100 }, //The amount of posts to get
 					{ "after", nextPage ?? "" }, //The position in the pagination
 				});
 				var query = new Uri("https://www.instagram.com/graphql/query/" +
 					$"?query_hash={await GetApiKeyAsync(client).CAF()}" +
 					$"&variables={WebUtility.UrlEncode(variables)}");
-				var cookies = client.Cookies.GetCookies(query);
-				var req = client.GetReq(query);
-				var gis = GetGis("4fb063cf89f9712f06f01698e4e39db8", cookies["csrftoken"].Value, client.UserAgent, variables);
-				req.Headers.Add("x-instagram-gis", gis);
-				req.Headers.Add("x-requested-with", "XMLHttpRequest");
-				var result = await client.GetText(req).CAF();
+				var result = await client.GetText(GenerateApiReq(client, query, rhx, variables)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
@@ -177,19 +177,26 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// Gets the gis code for this request.
 		/// </summary>
-		/// <param name="rhxgis"></param>
-		/// <param name="csrf"></param>
-		/// <param name="useragent"></param>
-		/// <param name="variables"></param>
+		/// <param name="client">The client being used to download images.</param>
+		/// <param name="url">The webpage being gathered from.</param>
+		/// <param name="rhx">A variable on the webpage.</param>
+		/// <param name="variables">The search terms in the query parameters.</param>
 		/// <returns></returns>
-		private static string GetGis(string rhxgis, string csrf, string useragent, string variables)
+		private static HttpRequestMessage GenerateApiReq(IImageDownloaderClient client, Uri url, string rhx, string variables)
 		{
-			var input = $"{rhxgis}:{csrf}:{variables}";
-			using (var md5 = System.Security.Cryptography.MD5.Create())
+			//Magic string, likely to change in the future
+			var text = $"{rhx}:{client.Cookies.GetCookies(url)["csrftoken"].Value}:{variables}";
+			var gis = "";
+			using (var md5 = MD5.Create())
 			{
-				var bytes = md5.ComputeHash(System.Text.Encoding.ASCII.GetBytes(input));
-				return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+				gis = BitConverter.ToString(md5.ComputeHash(Encoding.ASCII.GetBytes(text))).Replace("-", "").ToLower();
 			}
+
+			//Not sure what GIS stands for, but it's what Instagram calls it
+			var req = client.GetReq(url);
+			req.Headers.Add("X-Instagram-GIS", gis);
+			req.Headers.Add("X-Requested-With", "XMLHttpRequest");
+			return req;
 		}
 		/// <summary>
 		/// Gets the id of the Instagram user.
@@ -197,7 +204,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		private static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
+		private static async Task<(ulong Id, string Rhx)> GetUserIdAndRhx(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.instagram.com/{username}/?hl=en");
 			var result = await client.GetText(client.GetReq(query)).CAF();
@@ -212,7 +219,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 
 			var idSearch = "owner\":{\"id\":\"";
 			var idCut = result.Value.Substring(result.Value.IndexOf(idSearch) + idSearch.Length);
-			return Convert.ToUInt64(idCut.Substring(0, idCut.IndexOf('"')));
+			var id = Convert.ToUInt64(idCut.Substring(0, idCut.IndexOf('"')));
+
+			var rhxSearch = "\"rhx_gis\":\"";
+			var rhxCut = result.Value.Substring(result.Value.IndexOf(rhxSearch) + rhxSearch.Length);
+			var rhx = rhxCut.Substring(0, rhxCut.IndexOf('"'));
+			return (id, rhx);
 		}
 		/// <summary>
 		/// Gets the post with the specified id.
