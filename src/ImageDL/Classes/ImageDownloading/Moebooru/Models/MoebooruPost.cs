@@ -55,7 +55,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 		/// The hash of the image.
 		/// </summary>
 		[JsonProperty("md5")]
-		public string MD5 { get; private set; }
+		public string Md5 { get; private set; }
 		/// <summary>
 		/// Whether or not the post has children.
 		/// </summary>

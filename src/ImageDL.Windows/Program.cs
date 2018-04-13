@@ -27,10 +27,10 @@ namespace ImageDL.Windows
 
 		public static async Task Main(string[] args)
 		{
+			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 			ConsoleUtils.LogTimeAndCaller = false;
 			ConsoleUtils.RemoveMarkdown = false;
 			ConsoleUtils.RemoveDuplicateNewLines = true;
-			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
 

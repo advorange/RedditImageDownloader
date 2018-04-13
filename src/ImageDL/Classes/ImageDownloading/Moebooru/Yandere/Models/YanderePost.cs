@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
+namespace ImageDL.Classes.ImageDownloading.Moebooru.Yandere.Models
 {
 	/// <summary>
-	/// Json model for a Konachan post.
+	/// Json model for a Yandere post.
 	/// </summary>
-	public sealed class KonachanPost : MoebooruPost
+	public sealed class YanderePost : MoebooruPost
 	{
 		/// <inheritdoc />
 		[JsonIgnore]
-		public override Uri BaseUrl => new Uri("https://www.konachan.com");
+		public override Uri BaseUrl => new Uri("https://www.yande.re");
 		/// <inheritdoc />
 		[JsonIgnore]
 		public override Uri PostUrl => new Uri($"{BaseUrl}post/show/{Id}");
@@ -34,10 +34,20 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		[JsonProperty("created_at")]
 		public int CreatedAtTimestamp { get; private set; }
 		/// <summary>
+		/// The unix timestamp in seconds of when the post was last updated.
+		/// </summary>
+		[JsonProperty("updated_at")]
+		public int UpdatedAtTimestamp { get; private set; }
+		/// <summary>
 		/// The id of whoever created the image.
 		/// </summary>
 		[JsonProperty("creator_id")]
-		public int CreatorId { get; private set; }
+		public int? CreatorId { get; private set; }
+		/// <summary>
+		/// The id of whoever approved the image.
+		/// </summary>
+		[JsonProperty("approver_id")]
+		public int? ApproverId { get; private set; }
 		/// <summary>
 		/// The uploader of the image.
 		/// </summary>
@@ -52,7 +62,12 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The size of the file in bytes.
 		/// </summary>
 		[JsonProperty("file_size")]
-		public long FileSize { get; private set; }
+		public int FileSize { get; private set; }
+		/// <summary>
+		/// The extension of the image.
+		/// </summary>
+		[JsonProperty("file_ext")]
+		public string FileExt { get; private set; }
 		/// <summary>
 		/// If the post is listed.
 		/// </summary>
@@ -84,7 +99,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		[JsonProperty("actual_preview_height")]
 		public int ActualPreviewHeight { get; private set; }
 		/// <summary>
-		/// Same as <see cref="JpgUrl"/> unless wider than 1500px.
+		/// Same as <see cref="JpegUrl"/> unless wider than 1500px.
 		/// </summary>
 		[JsonProperty("sample_url")]
 		public string SampleUrl { get; private set; }
@@ -102,32 +117,42 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// 0 if sample url is the same as jpg url.
 		/// </summary>
 		[JsonProperty("sample_file_size")]
-		public long SampleFileSize { get; private set; }
+		public int SampleFileSize { get; private set; }
 		/// <summary>
 		/// The url if the image is a jpg. Will be scaled down to 3500px if wider.
 		/// </summary>
 		[JsonProperty("jpeg_url")]
-		public string JpgUrl { get; private set; }
+		public string JpegUrl { get; private set; }
 		/// <summary>
 		/// Width of the jpg url file.
 		/// </summary>
 		[JsonProperty("jpeg_width")]
-		public int JpgWidth { get; private set; }
+		public int JpegWidth { get; private set; }
 		/// <summary>
 		/// Height of the jpg url file.
 		/// </summary>
 		[JsonProperty("jpeg_height")]
-		public int JpgHeight { get; private set; }
+		public int JpegHeight { get; private set; }
 		/// <summary>
 		/// 0 if jpg url is the same as file url.
 		/// </summary>
 		[JsonProperty("jpeg_file_size")]
-		public long JpgFileSize { get; private set; }
+		public int JpegFileSize { get; private set; }
+		/// <summary>
+		/// Whether people can change the rating.
+		/// </summary>
+		[JsonProperty("is_rating_locked")]
+		public bool IsRatingLocked { get; private set; }
 		/// <summary>
 		/// The status of the image, e.g. active, etc.
 		/// </summary>
 		[JsonProperty("status")]
 		public string Status { get; private set; }
+		/// <summary>
+		/// Whether the post has been approved or not.
+		/// </summary>
+		[JsonProperty("is_pending")]
+		public bool IsPending { get; private set; }
 		/// <summary>
 		/// If the post has been held by a moderator.
 		/// </summary>
@@ -142,7 +167,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The pending frames of the post, for when it's a gif.
 		/// </summary>
 		[JsonProperty("frames_pending")]
-		public IList<KonachanFrame> FramesPending { get; private set; }
+		public IList<YandereFrame> FramesPending { get; private set; }
 		/// <summary>
 		/// The string the frames are gotten from.
 		/// </summary>
@@ -152,7 +177,22 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models
 		/// The frames of the post, for when it's a gif.
 		/// </summary>
 		[JsonProperty("frames")]
-		public IList<KonachanFrame> Frames { get; private set; }
+		public IList<YandereFrame> Frames { get; private set; }
+		/// <summary>
+		/// Whether or not notes can be made.
+		/// </summary>
+		[JsonProperty("is_note_locked")]
+		public bool IsNoteLocked { get; private set; }
+		/// <summary>
+		/// The unix timestamp in seconds of when the post was last noted.
+		/// </summary>
+		[JsonProperty("last_noted_at")]
+		public int LastNotedAtTimestamp { get; private set; }
+		/// <summary>
+		/// The unix timestamp in seconds of when the post was last commented on.
+		/// </summary>
+		[JsonProperty("last_commented_at")]
+		public int LastCommentedAtTimestamp { get; private set; }
 
 		[JsonProperty("width")]
 		private int _Width = -1;
