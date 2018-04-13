@@ -17,8 +17,7 @@ namespace ImageDL.Classes.ImageDownloading
 	/// <summary>
 	/// Downloads images from a site.
 	/// </summary>
-	/// <typeparam name="T">The type of each post. Some might be uris, some might be specified classes.</typeparam>
-	public abstract class ImageDownloader<T> : IImageDownloader where T : IPost
+	public abstract class ImageDownloader : IImageDownloader
 	{
 		private static readonly string NL = Environment.NewLine;
 		private static readonly string NLT = NL + "\t";
@@ -171,7 +170,7 @@ namespace ImageDL.Classes.ImageDownloading
 		private string _Name;
 
 		/// <summary>
-		/// Creates an instance of <see cref="ImageDownloader{TPost}"/>.
+		/// Creates an instance of <see cref="ImageDownloader"/>.
 		/// </summary>
 		/// <param name="name">The name of the website.</param>
 		public ImageDownloader(string name)
@@ -245,7 +244,6 @@ namespace ImageDL.Classes.ImageDownloading
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
-			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 		}
 
 		/// <inheritdoc />
@@ -256,7 +254,7 @@ namespace ImageDL.Classes.ImageDownloading
 			//Comparer can be null
 			var comparer = provider.GetService<IImageComparer>();
 
-			var posts = new List<T>();
+			var posts = new List<IPost>();
 			try
 			{
 				ConsoleUtils.WriteLine($"Starting to find posts.");
@@ -341,7 +339,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="post">The post to save from.</param>
 		/// <param name="url">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, T post, Uri url)
+		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, IPost post, Uri url)
 		{
 			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), url);
 			if (File.Exists(file.FullName))
@@ -471,7 +469,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="list"></param>
 		/// <param name="post"></param>
 		/// <returns></returns>
-		protected bool Add(List<T> list, T post)
+		protected bool Add(List<IPost> list, IPost post)
 		{
 			list.Add(post);
 			if (list.Count % 25 == 0)
@@ -486,6 +484,6 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="client">The client to gather posts with.</param>
 		/// <param name="list">The list to add values to.</param>
 		/// <returns></returns>
-		protected abstract Task GatherPostsAsync(IImageDownloaderClient client, List<T> list);
+		protected abstract Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list);
 	}
 }

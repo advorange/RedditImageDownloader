@@ -14,14 +14,13 @@ using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Model = ImageDL.Interfaces.IPost;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt
 {
 	/// <summary>
 	/// Downloads images from DeviantArt.
 	/// </summary>
-	public sealed class DeviantArtImageDownloader : ImageDownloader<Model>
+	public sealed class DeviantArtImageDownloader : ImageDownloader
 	{
 		private const string SEARCH = "https://www.deviantartsupport.com/en/article/are-there-any-tricks-to-narrowing-down-a-search-on-deviantart";
 		private const string API = "https://www.deviantart.com/developers/";
@@ -91,7 +90,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			switch (GatheringMethod)
 			{
@@ -156,7 +155,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <param name="client"></param>
 		/// <param name="list"></param>
 		/// <returns></returns>
-		private async Task GetPostsThroughScraping(IImageDownloaderClient client, List<Model> list)
+		private async Task GetPostsThroughScraping(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<DeviantArtScrapedPost>();
 			//Iterate to get the new offset to start at
@@ -205,7 +204,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <param name="client"></param>
 		/// <param name="list"></param>
 		/// <returns></returns>
-		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<Model> list)
+		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new DeviantArtApiResults();
 			//Iterate to get the new offset to start at
@@ -261,7 +260,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <param name="client"></param>
 		/// <param name="list"></param>
 		/// <returns></returns>
-		private async Task GetPostsThroughRss(IImageDownloaderClient client, List<Model> list)
+		private async Task GetPostsThroughRss(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<DeviantArtRssPost>();
 			//Iterate to get the new offset to start at
@@ -326,7 +325,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			{
 				return ImageResponse.FromUrl(new Uri(u));
 			}
-			if (await GetDeviantArtPostAsync(client, url).CAF() is Model post)
+			if (await GetDeviantArtPostAsync(client, url).CAF() is IPost post)
 			{
 				return await post.GetImagesAsync(client).CAF();
 			}

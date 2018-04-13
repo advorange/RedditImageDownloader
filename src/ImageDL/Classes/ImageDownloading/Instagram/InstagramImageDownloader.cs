@@ -17,7 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	/// <summary>
 	/// Downloads images from Instagram.
 	/// </summary>
-	public class InstagramImageDownloader : ImageDownloader<Model>
+	public class InstagramImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(InstagramImageDownloader);
 
@@ -58,7 +58,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var userId = 0UL;
 			var parsed = new InstagramMediaTimeline();

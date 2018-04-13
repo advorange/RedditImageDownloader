@@ -17,7 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	/// <summary>
 	/// Downloads images from Vsco.
 	/// </summary>
-	public sealed class VscoImageDownloader : ImageDownloader<Model>
+	public sealed class VscoImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(VscoImageDownloader);
 
@@ -44,7 +44,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var userId = 0UL;
 			var parsed = new VscoPage();

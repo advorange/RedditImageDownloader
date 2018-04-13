@@ -15,7 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	/// <summary>
 	/// Downloads images from Eshuushuu.
 	/// </summary>
-	public sealed class EshuushuuImageDownloader : ImageDownloader<Model>
+	public sealed class EshuushuuImageDownloader : ImageDownloader
 	{
 		/// <summary>
 		/// The terms to search for. Joined by +, must be numbers.
@@ -47,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<Model>();
 			//Iterate to get the next page of results

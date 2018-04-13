@@ -30,6 +30,7 @@ namespace ImageDL.Windows
 			ConsoleUtils.LogTimeAndCaller = false;
 			ConsoleUtils.RemoveMarkdown = false;
 			ConsoleUtils.RemoveDuplicateNewLines = true;
+			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(BUFFER_SIZE), Console.InputEncoding, false, BUFFER_SIZE));
 			Console.OutputEncoding = Encoding.UTF8;
 

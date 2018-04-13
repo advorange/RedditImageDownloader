@@ -15,7 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 	/// <summary>
 	/// Downloads images from Tumblr.
 	/// </summary>
-	public sealed class TumblrImageDownloader : ImageDownloader<Model>
+	public sealed class TumblrImageDownloader : ImageDownloader
 	{
 		/// <summary>
 		/// The name of the user to download images from.
@@ -40,7 +40,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new TumblrPage();
 			//Iterate because the results are in pages

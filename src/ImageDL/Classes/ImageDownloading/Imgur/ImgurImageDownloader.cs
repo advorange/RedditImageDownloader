@@ -16,7 +16,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// <summary>
 	/// Downloads images from Imgur.
 	/// </summary>
-	public sealed class ImgurImageDownloader : ImageDownloader<Model>
+	public sealed class ImgurImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(ImgurImageDownloader);
 
@@ -43,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<Model>();
 			//Iterate to get the next page of results

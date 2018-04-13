@@ -14,7 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
-	public sealed class RedditImageDownloader : ImageDownloader<Model>
+	public sealed class RedditImageDownloader : ImageDownloader
 	{
 		/// <summary>
 		/// The subreddit to download images from.
@@ -42,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();

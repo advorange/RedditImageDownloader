@@ -12,7 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 	/// Downloads images from a Moebooru based website.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public abstract class MoebooruImageDownloader<T> : ImageDownloader<T> where T : MoebooruPost
+	public abstract class MoebooruImageDownloader<T> : ImageDownloader where T : MoebooruPost
 	{
 		/// <summary>
 		/// The terms to search for. Split by spaces.
@@ -66,7 +66,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<T> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<T>();
 			//Iterate because there's a limit of around 100 per request

@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using AdvorangesUtils;
+using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.SettingParsing
 {
@@ -12,12 +13,12 @@ namespace ImageDL.Classes.SettingParsing
 	/// Parses options and then sets them.
 	/// </summary>
 	/// <remarks>Reserved setting names: help, h</remarks>
-	public sealed class SettingParser : IEnumerable<Setting>
+	public sealed class SettingParser : IEnumerable<ISetting>
 	{
 		/// <summary>
 		/// Valid prefixes for a setting.
 		/// </summary>
-		public readonly ImmutableArray<string> Prefixes;
+		public ImmutableArray<string> Prefixes { get; }
 		/// <summary>
 		/// Returns true if every setting has been set or is optional.
 		/// </summary>
@@ -25,7 +26,7 @@ namespace ImageDL.Classes.SettingParsing
 		public bool AllSet => !_SettingMap.Values.Any(x => !(x.HasBeenSet || x.IsOptional));
 
 		private readonly Dictionary<string, Guid> _NameMap = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
-		private readonly Dictionary<Guid, Setting> _SettingMap = new Dictionary<Guid, Setting>();
+		private readonly Dictionary<Guid, ISetting> _SettingMap = new Dictionary<Guid, ISetting>();
 
 		/// <summary>
 		/// Creates an instance of <see cref="SettingParser"/>.
@@ -48,7 +49,7 @@ namespace ImageDL.Classes.SettingParsing
 		public SettingsParseResult Parse(string input)
 		{
 			//Try to find the setting, will only use the first match, even if there are multiple matches
-			Setting GetSetting(string part)
+			ISetting GetSetting(string part)
 			{
 				foreach (var prefix in Prefixes)
 				{
@@ -74,7 +75,7 @@ namespace ImageDL.Classes.SettingParsing
 				var part = parts[i];
 				string value;
 				//No setting was gotten, so just skip this part
-				if (!(GetSetting(part) is Setting setting))
+				if (!(GetSetting(part) is ISetting setting))
 				{
 					unusedParts.Add(part);
 					continue;
@@ -85,7 +86,7 @@ namespace ImageDL.Classes.SettingParsing
 					value = Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
-				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is Setting throwaway))
+				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is ISetting throwaway))
 				{
 					value = parts[++i]; //Make sure to increment i since the part is being used as a setting
 				}
@@ -133,7 +134,7 @@ namespace ImageDL.Classes.SettingParsing
 			{
 				sb.AppendLine($"\t{setting.ToString()}");
 			}
-			return sb.ToString().Trim() + "\n";
+			return sb.ToString().Trim() + Environment.NewLine;
 		}
 		/// <summary>
 		/// Gets the help information associated with this setting name.
@@ -148,7 +149,7 @@ namespace ImageDL.Classes.SettingParsing
 				{
 					return x.Names.Length < 2 ? x.Names[0] : $"{x.Names[0]} ({String.Join(", ", x.Names.Skip(1))})";
 				});
-				return $"All Settings:\n\t{String.Join("\n\t", vals)}";
+				return $"All Settings:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", vals)}";
 			}
 			else if (_NameMap.TryGetValue(input, out var guid))
 			{
@@ -163,7 +164,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// Adds the setting to the dictionary and maps it by its names.
 		/// </summary>
 		/// <param name="setting"></param>
-		public void Add(Setting setting)
+		public void Add(ISetting setting)
 		{
 			var guid = Guid.NewGuid();
 			foreach (var name in setting.Names)
@@ -177,7 +178,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// </summary>
 		/// <param name="setting"></param>
 		/// <returns></returns>
-		public bool Remove(Setting setting)
+		public bool Remove(ISetting setting)
 		{
 			if (!_NameMap.TryGetValue(setting.Names[0], out var guid))
 			{
@@ -190,7 +191,7 @@ namespace ImageDL.Classes.SettingParsing
 			return _SettingMap.Remove(guid);
 		}
 		/// <inheritdoc />
-		public IEnumerator<Setting> GetEnumerator()
+		public IEnumerator<ISetting> GetEnumerator()
 		{
 			return _SettingMap.Values.GetEnumerator();
 		}
