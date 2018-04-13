@@ -80,7 +80,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				var query = new Uri("https://www.instagram.com/graphql/query/" +
 					$"?query_hash={await GetApiKeyAsync(client).CAF()}" +
 					$"&variables={WebUtility.UrlEncode(variables)}");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var cookies = client.Cookies.GetCookies(query);
+				var req = client.GetReq(query);
+				var gis = GetGis("4fb063cf89f9712f06f01698e4e39db8", cookies["csrftoken"].Value, client.UserAgent, variables);
+				req.Headers.Add("x-instagram-gis", gis);
+				req.Headers.Add("x-requested-with", "XMLHttpRequest");
+				var result = await client.GetText(req).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
@@ -168,6 +173,23 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var qSearch = "e.profilePosts.byUserId.get(t))?o.pagination:o},queryId:\"";
 			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
 			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
+		}
+		/// <summary>
+		/// Gets the gis code for this request.
+		/// </summary>
+		/// <param name="rhxgis"></param>
+		/// <param name="csrf"></param>
+		/// <param name="useragent"></param>
+		/// <param name="variables"></param>
+		/// <returns></returns>
+		private static string GetGis(string rhxgis, string csrf, string useragent, string variables)
+		{
+			var input = $"{rhxgis}:{csrf}:{variables}";
+			using (var md5 = System.Security.Cryptography.MD5.Create())
+			{
+				var bytes = md5.ComputeHash(System.Text.Encoding.ASCII.GetBytes(input));
+				return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+			}
 		}
 		/// <summary>
 		/// Gets the id of the Instagram user.

@@ -16,6 +16,8 @@ namespace ImageDL.Classes.ImageDownloading
 	public class ImageDownloaderClient : HttpClient, IImageDownloaderClient
 	{
 		/// <inheritdoc />
+		public string UserAgent => "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)";
+		/// <inheritdoc />
 		public List<IImageGatherer> Gatherers { get; }
 		/// <inheritdoc />
 		public Dictionary<Type, ApiKey> ApiKeys { get; }
@@ -38,7 +40,7 @@ namespace ImageDL.Classes.ImageDownloading
 			ApiKeys = new Dictionary<Type, ApiKey>();
 			Cookies = cookies;
 			Timeout = TimeSpan.FromMilliseconds(60000);
-			DefaultRequestHeaders.Add("User-Agent", $"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36 (compatible; MSIE 4.01; AOL 4.0; Mac_68K) (+https://github.com/advorange/ImageDL)");
+			DefaultRequestHeaders.Add("User-Agent", UserAgent);
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
 

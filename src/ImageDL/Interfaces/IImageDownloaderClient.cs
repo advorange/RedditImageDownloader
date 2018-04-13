@@ -14,6 +14,10 @@ namespace ImageDL.Interfaces
 	public interface IImageDownloaderClient
 	{
 		/// <summary>
+		/// The user agent for the client.
+		/// </summary>
+		string UserAgent { get; }
+		/// <summary>
 		/// Scrapers for gathering images from websites.
 		/// </summary>
 		List<IImageGatherer> Gatherers { get; }
