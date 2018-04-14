@@ -73,6 +73,11 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 			if (Uri.TryCreate(FileUrl, UriKind.Absolute, out var url) ||
 				Uri.TryCreate($"{BaseUrl}{FileUrl}", UriKind.Absolute, out url))
 			{
+				if (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps)
+				{
+					url = new Uri($"https:{url.ToString().Substring(url.ToString().IndexOf("//"))}");
+				}
+
 				return Task.FromResult(ImageResponse.FromUrl(url));
 			}
 			return Task.FromResult(ImageResponse.FromNotFound(PostUrl));

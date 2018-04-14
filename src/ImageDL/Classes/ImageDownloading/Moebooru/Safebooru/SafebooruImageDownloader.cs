@@ -7,29 +7,29 @@ using AdvorangesUtils;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Newtonsoft.Json.Linq;
-using Model = ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models.GelbooruPost;
+using Model = ImageDL.Classes.ImageDownloading.Moebooru.Safebooru.Models.SafebooruPost;
 
-namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
+namespace ImageDL.Classes.ImageDownloading.Moebooru.Safebooru
 {
 	/// <summary>
-	/// Downloads images from Gelbooru.
+	/// Downloads images from Safebooru.
 	/// </summary>
-	public sealed class GelbooruImageDownloader : MoebooruImageDownloader<Model>
+	public sealed class SafebooruImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
-		/// Creates an instance of <see cref="GelbooruImageDownloader"/>.
+		/// Creates an instance of <see cref="SafebooruImageDownloader"/>.
 		/// </summary>
-		public GelbooruImageDownloader() : base("Gelbooru", int.MaxValue, false) { }
+		public SafebooruImageDownloader() : base("Safebooru", int.MaxValue, false) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)
 		{
-			return GenerateGelbooruQuery(tags, page);
+			return GenerateSafebooruQuery(tags, page);
 		}
 		/// <inheritdoc />
 		protected override List<Model> Parse(string text)
 		{
-			return ParseGelbooruPosts(text);
+			return ParseSafebooruPosts(text);
 		}
 
 		/// <summary>
@@ -38,9 +38,9 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// <param name="tags"></param>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		private static Uri GenerateGelbooruQuery(string tags, int page)
+		private static Uri GenerateSafebooruQuery(string tags, int page)
 		{
-			return new Uri($"https://gelbooru.com/index.php" +
+			return new Uri($"https://safebooru.org/index.php" +
 				$"?page=dapi" +
 				$"&s=post" +
 				$"&q=index" +
@@ -50,11 +50,11 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 				$"&pid={page}");
 		}
 		/// <summary>
-		/// Parses Gelbooru posts from the supplied text.
+		/// Parses Safebooru posts from the supplied text.
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private static List<Model> ParseGelbooruPosts(string text)
+		private static List<Model> ParseSafebooruPosts(string text)
 		{
 			return JObject.Parse(JsonUtils.ConvertXmlToJson(text))["posts"]["post"].ToObject<List<Model>>();
 		}
@@ -64,11 +64,11 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetGelbooruPostAsync(IImageDownloaderClient client, string id)
+		public static async Task<Model> GetSafebooruPostAsync(IImageDownloaderClient client, string id)
 		{
-			var query = GenerateGelbooruQuery($"id:{id}", 0);
+			var query = GenerateSafebooruQuery($"id:{id}", 0);
 			var result = await client.GetText(client.GetReq(query)).CAF();
-			return result.IsSuccess ? ParseGelbooruPosts(result.Value)[0] : null;
+			return result.IsSuccess ? ParseSafebooruPosts(result.Value)[0] : null;
 		}
 		/// <summary>
 		/// Gets images from the specified url.
@@ -76,7 +76,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		/// <param name="client"></param>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		public static async Task<ImageResponse> GetGelbooruImagesAsync(IImageDownloaderClient client, Uri url)
+		public static async Task<ImageResponse> GetSafebooruImagesAsync(IImageDownloaderClient client, Uri url)
 		{
 			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
 			if (u.IsImagePath())
@@ -84,7 +84,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 				return ImageResponse.FromUrl(new Uri(u));
 			}
 			var id = HttpUtility.ParseQueryString(url.Query)["id"];
-			if (id != null && await GetGelbooruPostAsync(client, id).CAF() is Model post)
+			if (id != null && await GetSafebooruPostAsync(client, id).CAF() is Model post)
 			{
 				return await post.GetImagesAsync(client).CAF();
 			}

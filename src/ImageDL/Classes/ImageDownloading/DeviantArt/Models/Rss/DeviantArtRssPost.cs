@@ -27,10 +27,14 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		{
 			get
 			{
+				if (DateTime.TryParse(CreatedAtString, out var dt))
+				{
+					return dt;
+				}
 				var parts = CreatedAtString.Split(' ');
 				//DateTime.TryParse only works with GMT as the timezone
 				parts[parts.Length - 1] = "GMT";
-				if (DateTime.TryParse(String.Join(" ", parts), out var dt))
+				if (DateTime.TryParse(String.Join(" ", parts), out dt))
 				{
 					return dt.ToUniversalTime(); //Will be off by a few hours, but whatever
 				}

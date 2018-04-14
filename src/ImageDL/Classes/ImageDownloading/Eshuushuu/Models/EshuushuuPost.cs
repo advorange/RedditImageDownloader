@@ -28,18 +28,18 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 			get
 			{
 				//Try regularly
-				if (DateTime.TryParse(SubmittedOnString, out var dt))
+				if (DateTime.TryParse(CreatedAtString, out var dt))
 				{
 					return dt;
 				}
 				//Try by removing ordinal suffix
-				var parts = SubmittedOnString.Split(' ');
+				var parts = CreatedAtString.Split(' ');
 				parts[1] = parts[1].Remove(Regex.Match(parts[1], "[a-z]", RegexOptions.IgnoreCase).Index, 2);
 				if (DateTime.TryParse(String.Join(" ", parts), out dt))
 				{
 					return dt;
 				}
-				throw new ArgumentException("Unable to parse the datetime.");
+				throw new ArgumentException($"Unable to convert {CreatedAtString} to a datetime.");
 			}
 		}
 		/// <summary>
@@ -114,7 +114,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// When the image was submitted. This string is not friendly to convert from.
 		/// </summary>
 		[JsonProperty("submitted_on")]
-		public string SubmittedOnString { get; private set; }
+		public string CreatedAtString { get; private set; }
 		/// <summary>
 		/// The size of the file. This string is not friendly to convert from.
 		/// </summary>

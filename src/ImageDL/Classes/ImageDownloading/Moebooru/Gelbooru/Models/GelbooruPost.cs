@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using Newtonsoft.Json;
 
@@ -7,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 	/// <summary>
 	/// Json model (gotten through the Xml endpoint though) for a Gelbooru post.
 	/// </summary>
-	public sealed class GelbooruPost : MoebooruPost
+	public class GelbooruPost : MoebooruPost
 	{
 		/// <inheritdoc />
 		[JsonIgnore]
@@ -17,7 +18,23 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 		public override Uri PostUrl => new Uri($"{BaseUrl}index.php?page=post&s=view&id={Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public override DateTime CreatedAt => _CreatedAt;
+		public override DateTime CreatedAt
+		{
+			get
+			{
+				if (DateTime.TryParse(CreatedAtString, out var dt))
+				{
+					return dt;
+				}
+				var parts = CreatedAtString.Split(' ').ToList();
+				parts.Insert(3, parts.Last());
+				if (DateTime.TryParse(String.Join(" ", parts.Take(parts.Count - 1)), out dt))
+				{
+					return dt;
+				}
+				throw new ArgumentException($"Unable to convert {CreatedAtString} to a datetime.");
+			}
+		}
 		/// <inheritdoc />
 		[JsonIgnore]
 		public override int Width => _Width;
@@ -82,9 +99,12 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 		/// </summary>
 		[JsonProperty("creator_id")]
 		public int CreatorId { get; private set; }
-
+		/// <summary>
+		/// String representation of when the post was created at.
+		/// </summary>
 		[JsonProperty("created_at")]
-		private DateTime _CreatedAt = default;
+		public string CreatedAtString;
+
 		[JsonProperty("width")]
 		private int _Width = -1;
 		[JsonProperty("height")]
