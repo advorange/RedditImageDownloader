@@ -29,7 +29,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		private string _Subreddit;
 
 		/// <summary>
-		/// Creates an image downloader for reddit.
+		/// Creates an instance of <see cref="RedditImageDownloader"/>.
 		/// </summary>
 		public RedditImageDownloader() : base("Reddit")
 		{

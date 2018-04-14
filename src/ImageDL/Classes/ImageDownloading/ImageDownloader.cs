@@ -265,18 +265,18 @@ namespace ImageDL.Classes.ImageDownloading
 				e.Write();
 			}
 
-			ConsoleUtils.WriteLine($"{NL}Found {posts.Count} posts.");
-			if (!posts.Any())
+			var sorted = posts.GroupBy(x => x.Id).Select(x => x.First()).OrderByDescending(x => x.Score).ToList();
+			ConsoleUtils.WriteLine($"{NL}Found {sorted.Count} posts.");
+			if (!sorted.Any())
 			{
 				return;
 			}
 
-			var count = 0;
-			var sorted = posts.GroupBy(x => x.PostUrl).Select(x => x.First()).OrderByDescending(x => x.Score);
-			foreach (var post in sorted)
+			for (int i = 0; i < sorted.Count; ++i)
 			{
 				token.ThrowIfCancellationRequested();
-				ConsoleUtils.WriteLine(post.Format(++count));
+				var post = sorted[i];
+				ConsoleUtils.WriteLine(post.Format(i + 1));
 
 				var images = await post.GetImagesAsync(client).CAF();
 				//If wasn't success, log it, keep the 
@@ -287,12 +287,12 @@ namespace ImageDL.Classes.ImageDownloading
 					continue;
 				}
 
-				for (int i = 0; i < images.ImageUrls.Length; ++i)
+				for (int j = 0; j < images.ImageUrls.Length; ++j)
 				{
 					try
 					{
-						var result = await DownloadImageAsync(client, comparer, post, images.ImageUrls[i]).CAF();
-						var text = $"\t[#{i + 1}] {result.Text.Replace(NL, NLT)}";
+						var result = await DownloadImageAsync(client, comparer, post, images.ImageUrls[j]).CAF();
+						var text = $"\t[#{j + 1}] {result.Text.Replace(NL, NLT)}";
 						if (result.IsSuccess == true)
 						{
 							ConsoleUtils.WriteLine(text);
@@ -300,7 +300,7 @@ namespace ImageDL.Classes.ImageDownloading
 						else if (result.IsSuccess == false)
 						{
 							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(post.CreateContentLink(images.ImageUrls[i], result));
+							Links.Add(post.CreateContentLink(images.ImageUrls[j], result));
 						}
 						else
 						{
@@ -311,7 +311,7 @@ namespace ImageDL.Classes.ImageDownloading
 					catch (Exception e)
 					{
 						e.Write();
-						Links.Add(post.CreateContentLink(images.ImageUrls[i], new Response(ImageResponse.EXCEPTION, e.Message, false)));
+						Links.Add(post.CreateContentLink(images.ImageUrls[j], new Response(ImageResponse.EXCEPTION, e.Message, false)));
 					}
 				}
 			}
