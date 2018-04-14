@@ -3,22 +3,22 @@ using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
 
-namespace ImageDL.Classes.ImageDownloading.Eshuushuu
+namespace ImageDL.Classes.ImageDownloading.Artstation
 {
 	/// <summary>
-	/// Gathers images from a specified Eshuushuu link.
+	/// Gathers images from the specified Artstation link.
 	/// </summary>
-	public sealed class EshuushuuImageGatherer : IImageGatherer
+	public sealed class ArtstationImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
 		{
-			return url.Host.CaseInsContains("e-shuushuu.net");
+			return url.Host.CaseInsContains("artstation.com");
 		}
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
-			return await EshuushuuImageDownloader.GetEshuushuuImagesAsync(client, url).CAF();
+			return await ArtstationImageDownloader.GetArtstationImagesAsync(client, url).CAF();
 		}
 	}
 }

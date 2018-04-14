@@ -272,7 +272,8 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 
 			var count = 0;
-			foreach (var post in posts.GroupBy(x => x.PostUrl).Select(x => x.First()).OrderByDescending(x => x.Score))
+			var sorted = posts.GroupBy(x => x.PostUrl).Select(x => x.First()).OrderByDescending(x => x.Score);
+			foreach (var post in sorted)
 			{
 				token.ThrowIfCancellationRequested();
 				ConsoleUtils.WriteLine(post.Format(++count));
@@ -471,6 +472,11 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <returns></returns>
 		protected bool Add(List<IPost> list, IPost post)
 		{
+			//Return true to signify keep collecting, but don't add it because duplicate.
+			if (list.Any(x => x.Id == post.Id))
+			{
+				return true;
+			}
 			list.Add(post);
 			if (list.Count % 25 == 0)
 			{
