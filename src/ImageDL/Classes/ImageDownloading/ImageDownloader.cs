@@ -365,7 +365,7 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 				if (!contentType.Contains("image/"))
 				{
-					return new Response("Not An Image", $"{url} is not an image.", false);
+					return new Response("Not An Image", $"{url} did not lead to an image.", false);
 				}
 
 				//Need to use a memory stream and copy to it

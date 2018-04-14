@@ -19,7 +19,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	/// <summary>
 	/// Downloads images from Instagram.
 	/// </summary>
-	public class InstagramImageDownloader : ImageDownloader
+	public sealed class InstagramImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(InstagramImageDownloader);
 

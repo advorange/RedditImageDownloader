@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -41,7 +39,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 				{
 					return dt;
 				}
-				throw new ArgumentException("Unable to parse the submitted on datetime.");
+				throw new ArgumentException("Unable to parse the datetime.");
 			}
 		}
 		/// <summary>

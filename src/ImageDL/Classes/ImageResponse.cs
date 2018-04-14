@@ -63,7 +63,7 @@ namespace ImageDL.Classes
 		/// <returns></returns>
 		public static ImageResponse FromImages(IEnumerable<Uri> urls)
 		{
-			return new ImageResponse(SUCCESS, $"{urls} is a valid image(s).", true, urls);
+			return new ImageResponse(SUCCESS, $"{urls.Count()} valid image(s) found.", true, urls);
 		}
 		/// <summary>
 		/// Returns a response indicating failure with the passed in url.
