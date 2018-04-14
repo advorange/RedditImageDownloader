@@ -1,5 +1,7 @@
 # ImageDL
-Mass download images from websites.
+Mass download images from websites and compare for duplicates.
+
+Currently there is only a Windows implementation, but any other operating system that supports .Net Core/Standard only needs the method that generates the brightness hash of pixels to work.
 
 **Currently supports:**
 * 4chan
