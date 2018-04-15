@@ -329,7 +329,7 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			if (Links.Any())
 			{
-				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} links to file.");
+				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} link(s) to file.");
 			}
 		}
 		/// <summary>

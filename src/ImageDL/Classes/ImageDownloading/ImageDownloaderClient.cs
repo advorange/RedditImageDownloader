@@ -39,7 +39,7 @@ namespace ImageDL.Classes.ImageDownloading
 				.ToList();
 			ApiKeys = new Dictionary<Type, ApiKey>();
 			Cookies = cookies;
-			Timeout = TimeSpan.FromMilliseconds(60000);
+			Timeout = TimeSpan.FromMilliseconds(1000 * 60 * 5);
 			DefaultRequestHeaders.Add("User-Agent", UserAgent);
 			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
