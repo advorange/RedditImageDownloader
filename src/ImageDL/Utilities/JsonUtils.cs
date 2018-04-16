@@ -6,6 +6,7 @@ using System.Xml;
 using Newtonsoft.Json;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace ImageDL.Utilities
 {
@@ -31,35 +32,37 @@ namespace ImageDL.Utilities
 			}
 		}
 		/// <summary>
+		/// Returns a json string.
+		/// </summary>
+		/// <param name="html"></param>
+		/// <returns></returns>
+		public static string ConvertHtmlToJson(string html)
+		{
+			var doc = new HtmlDocument();
+			doc.LoadHtml(html);
+			return ConvertHtmlNodeToJObject(doc.DocumentNode).ToString();
+		}
+		/// <summary>
 		/// Returns a json string created from the supplied node.
 		/// </summary>
 		/// <param name="node"></param>
 		/// <returns></returns>
-		public static JToken ConvertHtmlNodeToJToken(HtmlNode node)
+		public static JObject ConvertHtmlNodeToJObject(HtmlNode node)
 		{
 			var jObj = new JObject();
 			foreach (var attribute in node.Attributes)
 			{
-				jObj.Add(attribute.Name, System.Net.WebUtility.HtmlDecode(attribute.Value));
+				jObj.Add(attribute.Name, WebUtility.HtmlDecode(attribute.Value));
 			}
 			var text = node.InnerText.Trim();
 			if (!String.IsNullOrWhiteSpace(text))
 			{
-				jObj.Add("inner_text", System.Net.WebUtility.HtmlDecode(text));
+				jObj.Add("inner_text", WebUtility.HtmlDecode(text));
 			}
-			if (node.ChildNodes.Any())
+			var childJTokens = node.ChildNodes.Select(x => ConvertHtmlNodeToJObject(x)).Where(x => x.HasValues);
+			if (childJTokens.Any())
 			{
-				var children = new JArray();
-				foreach (var child in node.ChildNodes)
-				{
-					var childToken = ConvertHtmlNodeToJToken(child);
-					if (!childToken.HasValues) //If no values were gotten, this token is unecessary
-					{
-						continue;
-					}
-					children.Add(childToken);
-				}
-				jObj.Add("children", children);
+				jObj.Add("children", new JArray(childJTokens));
 			}
 			return jObj;
 		}

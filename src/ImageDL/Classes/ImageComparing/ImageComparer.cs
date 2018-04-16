@@ -166,7 +166,9 @@ namespace ImageDL.Classes.ImageComparing
 			using (var fs = file.OpenRead())
 			{
 				md5Hash = fs.GetMD5Hash();
+				fs.Seek(0, SeekOrigin.Begin);
 				var (width, height) = fs.GetImageSize();
+				fs.Seek(0, SeekOrigin.Begin);
 				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, thumbnailSize));
 				return true;
 			}

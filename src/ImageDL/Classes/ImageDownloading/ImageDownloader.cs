@@ -375,6 +375,7 @@ namespace ImageDL.Classes.ImageDownloading
 				await (rs = await resp.Content.ReadAsStreamAsync().CAF()).CopyToAsync(ms = new MemoryStream());
 
 				//If image is too small, don't bother saving
+				ms.Seek(0, SeekOrigin.Begin);
 				var (width, height) = ms.GetImageSize();
 				if (!HasValidSize(url, width, height, out var sizeError))
 				{

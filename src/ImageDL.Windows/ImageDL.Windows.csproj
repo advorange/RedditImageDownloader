@@ -36,8 +36,8 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AdvorangesUtils, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\AdvorangesUtils.1.0.2\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
+    <Reference Include="AdvorangesUtils, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AdvorangesUtils.1.0.3\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
     </Reference>
     <Reference Include="FChan.Library, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\FChan.Library.2.0.0\lib\netstandard2.0\FChan.Library.dll</HintPath>
