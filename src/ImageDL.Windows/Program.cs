@@ -27,6 +27,12 @@ namespace ImageDL.Windows
 
 		public static async Task Main(string[] args)
 		{
+			var client = new ImageDownloaderClient();
+			var query = new Uri($"https://api.twitter.com/1.1/statuses/user_timeline.json?count=4&screen_name=jammieuwu");
+			var req = client.GetReq(query);
+			req.Headers.Add("Authorization", "Bearer AAAAAAAAAAAAAAAAAAAAAPYXBAAAAAAACLXUNDekMxqa8h%2F40K4moUkGsoc%3DTYfbDKbT3jJPCEVnMYqilB28NHfOPqkca3qaAxGfsyKCs0wRbw");
+			var result = await client.GetText(req).CAF();
+
 			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
 			ConsoleUtils.LogTimeAndCaller = false;
 			ConsoleUtils.RemoveMarkdown = false;

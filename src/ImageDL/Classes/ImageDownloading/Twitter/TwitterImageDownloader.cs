@@ -62,39 +62,32 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					return;
 				}
 
-				var htmlSearch = "\"items_html\":\"";
-				var htmlCut = result.Value.Substring(result.Value.IndexOf(htmlSearch) + htmlSearch.Length);
-				var html = WebUtility.HtmlDecode(htmlCut.Substring(0, htmlCut.LastIndexOf("\",")));
-				var decodedHtml = Regex.Replace(Regex.Unescape(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
+				var html = WebUtility.HtmlDecode(JObject.Parse(result.Value)["items_html"].ToString());
+				var unicodeHtml = Regex.Replace(Regex.Unescape(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
 				{
 					return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
 				});
 
 				var doc = new HtmlDocument();
-				doc.LoadHtml(decodedHtml);
+				doc.LoadHtml(unicodeHtml);
 
 				var li = doc.DocumentNode.Descendants("li");
 				var tweets = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item"));
 				parsed = tweets.Select(t =>
 				{
-					var imageUrls = t.Descendants("div")
-						.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"))
+					var div = t.Descendants("div");
+					var span = t.Descendants("span");
+
+					var imageUrls = div.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"))
 						.Descendants("img").Select(x => x.GetAttributeValue("src", null)).Where(x => x != null);
-					var tweetInfo = t.Descendants("div")
-						.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
-					var timestamp = t.Descendants("span")
-						.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"));
-					var stats = t.Descendants("div")
-						.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-actionCountList"));
-					var likes = stats.Descendants("span")
-						.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--favorite"))
-						.Descendants("span").First().GetAttributeValue("data-tweet-stat-count", -1);
-					var retweets = stats.Descendants("span")
-						.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--retweet"))
-						.Descendants("span").First().GetAttributeValue("data-tweet-stat-count", -1);
-					var replies = stats.Descendants("span")
-						.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--reply"))
-						.Descendants("span").First().GetAttributeValue("data-tweet-stat-count", -1);
+					var tweetInfo = div.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
+					var timestamp = span.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"));
+					var likes = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--favorite"))
+						.Descendants("span").First();
+					var retweets = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--retweet"))
+						.Descendants("span").First();
+					var replies = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--reply"))
+						.Descendants("span").First();
 
 					return new JObject
 					{
@@ -102,9 +95,9 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 						{ nameof(Model.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
 						{ nameof(Model.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
 						{ nameof(Model.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
-						{ nameof(Model.LikeCount), likes  },
-						{ nameof(Model.RetweetCount), retweets },
-						{ nameof(Model.CommentCount), replies },
+						{ nameof(Model.LikeCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(Model.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(Model.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
 					}.ToObject<Model>();
 				}).ToList();
 
@@ -124,6 +117,32 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					}
 				}
 			}
+		}
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetTwitterPostAsync(IImageDownloaderClient client, string id)
+		{
+			var query = new Uri($"https://twitter.com/i/web/status/{id}");
+			var result = await client.GetHtml(client.GetReq(query)).CAF();
+			if (!result.IsSuccess)
+			{
+				return null;
+			}
+			return null;
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetTwitterImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			return null;
 		}
 	}
 }
