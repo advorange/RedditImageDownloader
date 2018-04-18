@@ -9,6 +9,7 @@ using AdvorangesUtils;
 using HtmlAgilityPack;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Model = ImageDL.Classes.ImageDownloading.Twitter.Models.TwitterPost;
 
@@ -19,6 +20,9 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 	/// </summary>
 	public sealed class TwitterImageDownloader : ImageDownloader
 	{
+		//Source file: https://abs.twimg.com/k/en/init.en.9fe6ea43287284f537d7.js
+		private static readonly string _Token = "AAAAAAAAAAAAAAAAAAAAAPYXBAAAAAAACLXUNDekMxqa8h%2F40K4moUkGsoc%3DTYfbDKbT3jJPCEVnMYqilB28NHfOPqkca3qaAxGfsyKCs0wRbw";
+
 		/// <summary>
 		/// The name of the user to download images from.
 		/// </summary>
@@ -43,6 +47,16 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		{
+			await GetPostsThroughRegularApi(client, list).CAF();
+		}
+		/// <summary>
+		/// Gets posts through the api that is regularly used on the webpage.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <returns></returns>
+		private async Task GetPostsThroughRegularApi(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<Model>();
 			//Iterate to update the pagination start point.
@@ -119,20 +133,35 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 			}
 		}
 		/// <summary>
+		/// Gets posts through the OAuth api using a key from a public Javascript file.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <returns></returns>
+		private Task GetPostsThroughOAuthApi(IImageDownloader client, List<IPost> list)
+		{
+			//Honestly, this is more annoying than just getting the HTML from the JSON
+			//The only benefit is that this contains the size of the media content
+			//But it has a big drawback of only being able to access the 3200 most recent posts.
+			throw new NotImplementedException();
+		}
+		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetTwitterPostAsync(IImageDownloaderClient client, string id)
+		public static async Task<TwitterApiPost> GetTwitterPostAsync(IImageDownloaderClient client, string id)
 		{
-			var query = new Uri($"https://twitter.com/i/web/status/{id}");
-			var result = await client.GetHtml(client.GetReq(query)).CAF();
+			var query = new Uri($"https://api.twitter.com/1.1/statuses/show.json?id={id}");
+			var req = client.GetReq(query);
+			req.Headers.Add("Authorization", $"Bearer {_Token}");
+			var result = await client.GetText(req).CAF();
 			if (!result.IsSuccess)
 			{
 				return null;
 			}
-			return null;
+			return JsonConvert.DeserializeObject<TwitterApiPost>(result.Value);
 		}
 		/// <summary>
 		/// Gets the images from the specified url.
@@ -142,7 +171,21 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <returns></returns>
 		public static async Task<ImageResponse> GetTwitterImagesAsync(IImageDownloaderClient client, Uri url)
 		{
-			return null;
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/status/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetTwitterPostAsync(client, id).CAF() is IPost post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }
