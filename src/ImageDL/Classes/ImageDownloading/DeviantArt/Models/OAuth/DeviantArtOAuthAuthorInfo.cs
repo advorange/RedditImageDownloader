@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
+namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
 	/// Holds information about the author of the image.
 	/// </summary>
-	public struct DeviantArtApiAuthorInfo
+	public struct DeviantArtOAuthAuthorInfo
 	{
 		/// <summary>
 		/// The guid of the user.

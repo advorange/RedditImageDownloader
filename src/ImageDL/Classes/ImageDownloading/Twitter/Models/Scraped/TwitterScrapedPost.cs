@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.Twitter.Models
+namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 {
 	/// <summary>
 	/// Json model for a post from Twitter.
 	/// </summary>
-	public sealed class TwitterPost : IPost
+	public sealed class TwitterScrapedPost : IPost
 	{
 		/// <inheritdoc />
 		[JsonProperty(nameof(Id))]

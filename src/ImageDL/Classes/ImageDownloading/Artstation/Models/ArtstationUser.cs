@@ -27,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// The user's id.
 		/// </summary>
 		[JsonProperty("id")]
-		public int Id { get; private set; }
+		public long Id { get; private set; }
 		/// <summary>
 		/// The user's name.
 		/// </summary>

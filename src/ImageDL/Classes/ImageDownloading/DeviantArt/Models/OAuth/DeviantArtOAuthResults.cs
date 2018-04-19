@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
+namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
 	/// Json model for searching for DeviantArt posts through the API.
 	/// </summary>
-	public struct DeviantArtApiResults
+	public struct DeviantArtOAuthResults
 	{
 		/// <summary>
 		/// Whether or not there are more posts.
@@ -27,6 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// The posts gathered this query.
 		/// </summary>
 		[JsonProperty("results")]
-		public IList<DeviantArtApiPost> Results { get; private set; }
+		public IList<DeviantArtOAuthPost> Results { get; private set; }
 	}
 }

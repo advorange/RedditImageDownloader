@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api;
+using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
@@ -206,7 +206,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <returns></returns>
 		private async Task GetPostsThroughApi(IImageDownloaderClient client, List<IPost> list)
 		{
-			var parsed = new DeviantArtApiResults();
+			var parsed = new DeviantArtOAuthResults();
 			//Iterate to get the new offset to start at
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.HasMore); i += parsed.Results?.Count ?? 0)
 			{
@@ -234,7 +234,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					return;
 				}
 
-				parsed = JsonConvert.DeserializeObject<DeviantArtApiResults>(result.Value);
+				parsed = JsonConvert.DeserializeObject<DeviantArtOAuthResults>(result.Value);
 				foreach (var post in parsed.Results)
 				{
 					if (post.CreatedAt < OldestAllowed)

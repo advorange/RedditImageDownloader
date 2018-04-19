@@ -1,12 +1,12 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
+namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
 	/// Holds information about a resized version of the image.
 	/// </summary>
-	public struct DeviantArtApiThumbnail
+	public struct DeviantArtOAuthThumbnail
 	{
 		/// <summary>
 		/// Whether or not the thumbnail is transparent.

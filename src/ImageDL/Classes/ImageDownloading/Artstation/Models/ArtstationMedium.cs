@@ -16,6 +16,6 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// The id of the medium.
 		/// </summary>
 		[JsonProperty("id")]
-		public int Id { get; private set; }
+		public long Id { get; private set; }
 	}
 }

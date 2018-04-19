@@ -7,11 +7,12 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using HtmlAgilityPack;
+using ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth;
+using ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Model = ImageDL.Classes.ImageDownloading.Twitter.Models.TwitterPost;
 
 namespace ImageDL.Classes.ImageDownloading.Twitter
 {
@@ -58,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <returns></returns>
 		private async Task GetPostsThroughRegularApi(IImageDownloaderClient client, List<IPost> list)
 		{
-			var parsed = new List<Model>();
+			var parsed = new List<TwitterScrapedPost>();
 			//Iterate to update the pagination start point.
 			for (var min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.Count >= 20); min = parsed.Last().Id)
 			{
@@ -105,14 +106,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 
 					return new JObject
 					{
-						{ nameof(Model.ImageUrls), JArray.FromObject(imageUrls) },
-						{ nameof(Model.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
-						{ nameof(Model.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
-						{ nameof(Model.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
-						{ nameof(Model.LikeCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(Model.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(Model.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
-					}.ToObject<Model>();
+						{ nameof(TwitterScrapedPost.ImageUrls), JArray.FromObject(imageUrls) },
+						{ nameof(TwitterScrapedPost.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
+						{ nameof(TwitterScrapedPost.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
+						{ nameof(TwitterScrapedPost.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
+						{ nameof(TwitterScrapedPost.LikeCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(TwitterScrapedPost.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(TwitterScrapedPost.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
+					}.ToObject<TwitterScrapedPost>();
 				}).ToList();
 
 				foreach (var post in parsed)
@@ -151,17 +152,13 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<TwitterApiPost> GetTwitterPostAsync(IImageDownloaderClient client, string id)
+		public static async Task<TwitterOAuthPost> GetTwitterPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://api.twitter.com/1.1/statuses/show.json?id={id}");
 			var req = client.GetReq(query);
 			req.Headers.Add("Authorization", $"Bearer {_Token}");
 			var result = await client.GetText(req).CAF();
-			if (!result.IsSuccess)
-			{
-				return null;
-			}
-			return JsonConvert.DeserializeObject<TwitterApiPost>(result.Value);
+			return result.IsSuccess ? JsonConvert.DeserializeObject<TwitterOAuthPost>(result.Value) : null;
 		}
 		/// <summary>
 		/// Gets the images from the specified url.

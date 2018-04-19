@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
+namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via the API.
 	/// </summary>
-	public sealed class DeviantArtApiPost : IPost
+	public sealed class DeviantArtOAuthPost : IPost
 	{
 		/// <inheritdoc />
 		[JsonIgnore]
@@ -83,27 +83,27 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
 		/// Information about the author.
 		/// </summary>
 		[JsonProperty("author")]
-		public DeviantArtApiAuthorInfo Author { get; private set; }
+		public DeviantArtOAuthAuthorInfo Author { get; private set; }
 		/// <summary>
 		/// Information about the post itself.
 		/// </summary>
 		[JsonProperty("stats")]
-		public DeviantArtApiStats Stats { get; private set; }
+		public DeviantArtOAuthStats Stats { get; private set; }
 		/// <summary>
 		/// A small preview of the content.
 		/// </summary>
 		[JsonProperty("preview")]
-		public DeviantArtApiThumbnail Preview { get; private set; }
+		public DeviantArtOAuthThumbnail Preview { get; private set; }
 		/// <summary>
 		/// The main picture.
 		/// </summary>
 		[JsonProperty("content")]
-		public DeviantArtApiThumbnail Content { get; private set; }
+		public DeviantArtOAuthThumbnail Content { get; private set; }
 		/// <summary>
 		/// The thumbnails of the post.
 		/// </summary>
 		[JsonProperty("thumbs")]
-		public IList<DeviantArtApiThumbnail> Thumbnails { get; private set; }
+		public IList<DeviantArtOAuthThumbnail> Thumbnails { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was published.
 		/// </summary>

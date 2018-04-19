@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
 
-namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Api
+namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
 	/// Holds information about comments/favorites
 	/// </summary>
-	public struct DeviantArtApiStats
+	public struct DeviantArtOAuthStats
 	{
 		/// <summary>
 		/// How many comments this post has.

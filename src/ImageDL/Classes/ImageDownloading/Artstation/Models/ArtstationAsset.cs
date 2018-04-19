@@ -32,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// The id of the image.
 		/// </summary>
 		[JsonProperty("id")]
-		public int Id { get; private set; }
+		public long Id { get; private set; }
 		/// <summary>
 		/// The title of the image. This is in HTML.
 		/// </summary>
