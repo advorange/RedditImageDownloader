@@ -10,7 +10,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 	/// <summary>
 	/// Json model for 
 	/// </summary>
-	public sealed class AnimePicturesPost : IPost
+	public sealed class AnimePicturesPost : IPost, ISize
 	{
 		/// <inheritdoc />
 		[JsonProperty("id")]
@@ -24,6 +24,12 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// <inheritdoc />
 		[JsonProperty("pubtime")]
 		public DateTime CreatedAt { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// The hash of the file.
 		/// </summary>
@@ -34,16 +40,6 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// </summary>
 		[JsonProperty("md5_pixels")]
 		public string Md5Pixels { get; private set; }
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// 150px biggest side.
 		/// </summary>

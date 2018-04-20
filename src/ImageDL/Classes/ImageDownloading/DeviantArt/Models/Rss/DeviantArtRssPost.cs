@@ -36,7 +36,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 				parts[parts.Length - 1] = "GMT";
 				if (DateTime.TryParse(String.Join(" ", parts), out dt))
 				{
-					return dt.ToUniversalTime(); //Will be off by a few hours, but whatever
+					return dt; //Will be off by a few hours, but whatever
 				}
 				throw new ArgumentException($"Unable to convert {CreatedAtString} to a datetime.");
 			}

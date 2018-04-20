@@ -49,24 +49,15 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <inheritdoc />
 		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
-			await GetPostsThroughRegularApi(client, list).CAF();
-		}
-		/// <summary>
-		/// Gets posts through the api that is regularly used on the webpage.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="list"></param>
-		/// <returns></returns>
-		private async Task GetPostsThroughRegularApi(IImageDownloaderClient client, List<IPost> list)
-		{
-			var parsed = new List<TwitterScrapedPost>();
+			var parsed = new TwitterScrapedPage();
 			//Iterate to update the pagination start point.
-			for (var min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.Count >= 20); min = parsed.Last().Id)
+			for (var min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.HasMoreItems); min = parsed.MinimumPosition)
 			{
 				var query = $"https://twitter.com/i/profiles/show/{Username}/media_timeline" +
 					$"?include_available_features=1" +
 					$"&include_entities=1" +
-					$"&reset_error_state=false";
+					$"&reset_error_state=false" +
+					$"&count=100";
 				if (min != "")
 				{
 					query += $"&max_position={min}";
@@ -77,74 +68,32 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					return;
 				}
 
-				var html = WebUtility.HtmlDecode(JObject.Parse(result.Value)["items_html"].ToString());
-				var unicodeHtml = Regex.Replace(Regex.Unescape(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
+				parsed = JsonConvert.DeserializeObject<TwitterScrapedPage>(result.Value);
+				foreach (var id in parsed.ItemIds)
 				{
-					return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
-				});
-
-				var doc = new HtmlDocument();
-				doc.LoadHtml(unicodeHtml);
-
-				var li = doc.DocumentNode.Descendants("li");
-				var tweets = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item"));
-				parsed = tweets.Select(t =>
-				{
-					var div = t.Descendants("div");
-					var span = t.Descendants("span");
-
-					var imageUrls = div.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"))
-						.Descendants("img").Select(x => x.GetAttributeValue("src", null)).Where(x => x != null);
-					var tweetInfo = div.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
-					var timestamp = span.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"));
-					var likes = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--favorite"))
-						.Descendants("span").First();
-					var retweets = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--retweet"))
-						.Descendants("span").First();
-					var replies = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--reply"))
-						.Descendants("span").First();
-
-					return new JObject
-					{
-						{ nameof(TwitterScrapedPost.ImageUrls), JArray.FromObject(imageUrls) },
-						{ nameof(TwitterScrapedPost.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
-						{ nameof(TwitterScrapedPost.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
-						{ nameof(TwitterScrapedPost.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
-						{ nameof(TwitterScrapedPost.LikeCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(TwitterScrapedPost.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(TwitterScrapedPost.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
-					}.ToObject<TwitterScrapedPost>();
-				}).ToList();
-
-				foreach (var post in parsed)
-				{
+					var post = await GetTwitterPostAsync(client, id).CAF();
 					if (post.CreatedAt < OldestAllowed)
 					{
 						return;
 					}
-					else if (post.LikeCount < MinScore)
+					if (post.FavoriteCount < MinScore)
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					foreach (var media in post.ExtendedEntities.Media.Where(x => !HasValidSize(x.Sizes.Large, out _)).ToList())
+					{
+						post.ExtendedEntities.Media.Remove(media);
+					}
+					if (!post.ExtendedEntities.Media.Any())
+					{
+						continue;
+					}
+					if (!Add(list, post))
 					{
 						return;
 					}
 				}
 			}
-		}
-		/// <summary>
-		/// Gets posts through the OAuth api using a key from a public Javascript file.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="list"></param>
-		/// <returns></returns>
-		private Task GetPostsThroughOAuthApi(IImageDownloader client, List<IPost> list)
-		{
-			//Honestly, this is more annoying than just getting the HTML from the JSON
-			//The only benefit is that this contains the size of the media content
-			//But it has a big drawback of only being able to access the 3200 most recent posts.
-			throw new NotImplementedException();
 		}
 		/// <summary>
 		/// Gets the post with the specified id.

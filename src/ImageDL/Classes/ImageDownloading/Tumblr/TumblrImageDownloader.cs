@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading.Tumblr.Models;
@@ -65,7 +66,22 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
+					if (post.Score < MinScore)
+					{
+						continue;
+					}
+					if (post.Photos.Any()) //Going into here means there is more than one photo
+					{
+						foreach (var photo in post.Photos.Where(x => !HasValidSize(x, out _)).ToList())
+						{
+							post.Photos.Remove(photo);
+						}
+						if (!post.Photos.Any())
+						{
+							continue;
+						}
+					}
+					else if (!HasValidSize(post, out _)) //Going into here means there is one photo
 					{
 						continue;
 					}

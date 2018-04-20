@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ImageDL.Interfaces;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 {
@@ -32,16 +33,12 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 	/// <summary>
 	/// Size for media.
 	/// </summary>
-	public struct TwitterOAuthSize
+	public struct TwitterOAuthSize : ISize
 	{
-		/// <summary>
-		/// Width of this size.
-		/// </summary>
+		/// <inheritdoc />
 		[JsonProperty("w")]
 		public int Width { get; private set; }
-		/// <summary>
-		/// Height of this size.
-		/// </summary>
+		/// <inheritdoc />
 		[JsonProperty("h")]
 		public int Height { get; private set; }
 		/// <summary>

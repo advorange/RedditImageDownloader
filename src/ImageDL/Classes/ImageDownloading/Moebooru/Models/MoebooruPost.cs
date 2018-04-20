@@ -8,24 +8,20 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Models
 	/// <summary>
 	/// Base Json model for a post from a Moebooru site.
 	/// </summary>
-	public abstract class MoebooruPost : IPost
+	public abstract class MoebooruPost : IPost, ISize
 	{
 		/// <inhertitdoc />
 		public abstract Uri PostUrl { get; }
 		/// <inheritdoc />
 		public abstract DateTime CreatedAt { get; }
+		/// <inheritdoc />
+		public abstract int Width { get; }
+		/// <inheritdoc />
+		public abstract int Height { get; }
 		/// <summary>
 		/// The base url of the -booru site. E.G.: https://danbooru.donmai.us or https://www.konachan.com
 		/// </summary>
 		public abstract Uri BaseUrl { get; }
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		public abstract int Width { get; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		public abstract int Height { get; }
 		/// <summary>
 		/// The tags for this image.
 		/// </summary>

@@ -93,17 +93,17 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 		/// A small preview of the content.
 		/// </summary>
 		[JsonProperty("preview")]
-		public DeviantArtOAuthThumbnail Preview { get; private set; }
+		public DeviantArtOAuthImage Preview { get; private set; }
 		/// <summary>
 		/// The main picture.
 		/// </summary>
 		[JsonProperty("content")]
-		public DeviantArtOAuthThumbnail Content { get; private set; }
+		public DeviantArtOAuthImage Content { get; private set; }
 		/// <summary>
 		/// The thumbnails of the post.
 		/// </summary>
 		[JsonProperty("thumbs")]
-		public IList<DeviantArtOAuthThumbnail> Thumbnails { get; private set; }
+		public IList<DeviantArtOAuthImage> Thumbnails { get; private set; }
 		/// <summary>
 		/// The unix timestamp in seconds of when the post was published.
 		/// </summary>

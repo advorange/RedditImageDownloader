@@ -79,7 +79,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.Width, post.Height, out _))
+					if (!HasValidSize(post, out _))
 					{
 						continue;
 					}

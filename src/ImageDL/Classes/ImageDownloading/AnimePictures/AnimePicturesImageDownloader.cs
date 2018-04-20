@@ -64,11 +64,11 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
+					if (!HasValidSize(post, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
-					else if (!Add(list, await GetAnimePicturesPostAsync(client, post.Id)))
+					if (!Add(list, await GetAnimePicturesPostAsync(client, post.Id)))
 					{
 						return;
 					}

@@ -60,12 +60,12 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 					{
 						return;
 					}
-					else if (fullPost.Score < MinScore)
+					if (fullPost.Score < MinScore)
 					{
 						continue;
 					}
 					//Remove all images that don't meet the size requirements
-					foreach (var image in fullPost.Assets.Where(x => x.AssetType != "image" || !HasValidSize(null, x.Width, x.Height, out _)).ToList())
+					foreach (var image in fullPost.Assets.Where(x => x.AssetType != "image" || !HasValidSize(x, out _)).ToList())
 					{
 						fullPost.Assets.Remove(image);
 					}
@@ -73,7 +73,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 					{
 						continue;
 					}
-					else if (!Add(list, fullPost))
+					if (!Add(list, fullPost))
 					{
 						return;
 					}

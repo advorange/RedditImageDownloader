@@ -187,11 +187,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				}).Where(x => x != null).ToList();
 				foreach (var post in parsed)
 				{
-					if (!HasValidSize(null, post.Width, post.Height, out _)) //Can't check score or time when scraping
+					if (!HasValidSize(post, out _)) //Can't check score or time when scraping
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					if (!Add(list, post))
 					{
 						return;
 					}
@@ -241,13 +241,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						return;
 					}
-					else if (post.Content.Source == null //Is a journal or something like that
-						|| !HasValidSize(null, post.Content.Width, post.Content.Height, out _)
-						|| post.Stats.Favorites < MinScore)
+					if (!HasValidSize(post.Content, out _) || post.Stats.Favorites < MinScore)
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					if (!Add(list, post))
 					{
 						return;
 					}
@@ -283,11 +281,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.MediaContent.Width, post.MediaContent.Height, out _))
+					if (!HasValidSize(post.MediaContent, out _))
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					if (!Add(list, post))
 					{
 						return;
 					}

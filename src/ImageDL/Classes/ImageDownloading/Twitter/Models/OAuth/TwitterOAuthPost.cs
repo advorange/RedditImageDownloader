@@ -27,18 +27,18 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 				const string FORMAT = "ddd MMM dd HH:mm:ss zzz yyyy";
 				if (DateTime.TryParse(CreatedAtString, out var dt))
 				{
-					return dt.ToUniversalTime();
+					return dt;
 				}
 				else if (DateTime.TryParseExact(CreatedAtString, FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
 				{
-					return dt.ToUniversalTime();
+					return dt;
 				}
 				throw new ArgumentException($"Unable to convert {CreatedAtString} to a datetime.");
 			}
 		}
 		/// <inheritdoc />
 		[JsonIgnore]
-		string IPost.Id => IdStr;
+		string IPost.Id => IdString;
 		/// <summary>
 		/// Time when this post was created at in UTC.
 		/// </summary>
@@ -53,7 +53,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// String of <see cref="Id"/>.
 		/// </summary>
 		[JsonProperty("id_str")]
-		public string IdStr { get; private set; }
+		public string IdString { get; private set; }
 		/// <summary>
 		/// The text of the post.
 		/// </summary>
@@ -160,6 +160,11 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		[JsonProperty("entities")]
 		public TwitterOAuthEntities Entities { get; private set; }
 		/// <summary>
+		/// Extra entities in a post. Contains all the images.
+		/// </summary>
+		[JsonProperty("extended_entities")]
+		public TwitterOAuthEntities ExtendedEntities { get; private set; }
+		/// <summary>
 		/// Whether this post has been liked by you.
 		/// </summary>
 		[JsonProperty("favorited")]
@@ -194,7 +199,9 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			return Task.FromResult(ImageResponse.FromImages(Entities.Media.Select(x => x.MediaUrlHttps)));
+			return ExtendedEntities.Media == null
+				? Task.FromResult(ImageResponse.FromNotFound(PostUrl))
+				: Task.FromResult(ImageResponse.FromImages(ExtendedEntities.Media.Select(x => x.MediaUrlHttps)));
 		}
 	}
 }

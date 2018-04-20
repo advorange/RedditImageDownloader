@@ -1,4 +1,5 @@
 ﻿using System;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Artstation.Models
@@ -6,8 +7,14 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 	/// <summary>
 	/// An image on a post.
 	/// </summary>
-	public struct ArtstationAsset
+	public struct ArtstationAsset : ISize
 	{
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// Whether the asset is a video or image or something that shows an image.
 		/// </summary>
@@ -43,16 +50,6 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// </summary>
 		[JsonProperty("image_url")]
 		public Uri ImageUrl { get; private set; }
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The position the image comes in the list. This is 0 based.
 		/// </summary>

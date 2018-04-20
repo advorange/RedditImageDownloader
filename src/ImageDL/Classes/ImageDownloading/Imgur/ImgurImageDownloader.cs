@@ -77,14 +77,13 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						return;
 					}
-					else if (post.Score < MinScore)
+					if (post.Score < MinScore)
 					{
 						continue;
 					}
-					//Make sure we have all the images.
+					//Get all images then make sure they're valid
 					await post.SetAllImages(client).CAF();
-					//Remove all images that don't meet the size requirements
-					foreach (var image in post.Images.Where(x => !HasValidSize(null, x.Width, x.Height, out _)).ToList())
+					foreach (var image in post.Images.Where(x => !HasValidSize(x, out _)).ToList())
 					{
 						post.Images.Remove(image);
 					}
@@ -92,7 +91,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					if (!Add(list, post))
 					{
 						return;
 					}

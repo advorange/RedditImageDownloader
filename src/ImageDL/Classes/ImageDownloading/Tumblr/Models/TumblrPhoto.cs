@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ImageDL.Interfaces;
+using Newtonsoft.Json;
 using System;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
@@ -6,8 +7,14 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 	/// <summary>
 	/// Json model for a tumblr Photo.
 	/// </summary>
-	public class TumblrPhoto
+	public class TumblrPhoto : ISize
 	{
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// The offset of an image if it was in a post with more than one image.
 		/// </summary>
@@ -18,16 +25,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// </summary>
 		[JsonProperty("caption")]
 		public string Caption { get; private set; }
-		/// <summary>
-		/// The image's width.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The image's height.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The link to the image.
 		/// </summary>

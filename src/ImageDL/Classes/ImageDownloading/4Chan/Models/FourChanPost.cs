@@ -9,7 +9,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan.Models
 	/// <summary>
 	/// Holds the gotten post for 4Chan.
 	/// </summary>
-	public sealed class FourChanPost : IPost
+	public sealed class FourChanPost : IPost, ISize
 	{
 		/// <summary>
 		/// The post holding all of the information.
@@ -28,6 +28,12 @@ namespace ImageDL.Classes.ImageDownloading.FourChan.Models
 		/// <inheritdoc />
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(Post.UnixTimestamp)).ToUniversalTime();
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Width => Post.ImageWidth ?? -1;
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Height => Post.ImageHeight ?? -1;
 		/// <summary>
 		/// The id of the thread this was posted in.
 		/// </summary>

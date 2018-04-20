@@ -9,7 +9,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 	/// <summary>
 	/// Json model for a post from Vsco.
 	/// </summary>
-	public sealed class VscoPost : IPost
+	public sealed class VscoPost : IPost, ISize
 	{
 		/// <inheritdoc />
 		[JsonProperty("_id")]
@@ -33,6 +33,12 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// </summary>
 		[JsonIgnore]
 		public DateTime LastUpdatedAt => (new DateTime(1970, 1, 1).AddSeconds(LastUpdatedTimestamp / 1000)).ToUniversalTime();
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// The name of the gallery.
 		/// </summary>
@@ -128,16 +134,6 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// </summary>
 		[JsonProperty("preset")]
 		public VscoPreset Preset { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
-		/// <summary>
-		/// The width of the image
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
 		/// <summary>
 		/// The hashtags in the description.
 		/// </summary>

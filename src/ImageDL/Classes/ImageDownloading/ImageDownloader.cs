@@ -377,9 +377,9 @@ namespace ImageDL.Classes.ImageDownloading
 				//If image is too small, don't bother saving
 				ms.Seek(0, SeekOrigin.Begin);
 				var (width, height) = ms.GetImageSize();
-				if (!HasValidSize(url, width, height, out var sizeError))
+				if (!HasValidSize(width, height, out var sizeError))
 				{
-					return new Response("Does Not Meet Size Reqs", sizeError, false);
+					return new Response("Does Not Meet Size Reqs", $"{url} {sizeError}", false);
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
@@ -403,22 +403,31 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// Checks min width, min height, and the min/max aspect ratios.
 		/// </summary>
-		/// <param name="url"></param>
+		/// <param name="size"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		protected bool HasValidSize(ISize size, out string error)
+		{
+			return HasValidSize(size.Width, size.Height, out error);
+		}
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
 		/// <param name="error"></param>
 		/// <returns></returns>
-		protected bool HasValidSize(Uri url, int width, int height, out string error)
+		protected bool HasValidSize(int width, int height, out string error)
 		{
 			if (width < MinWidth || height < MinHeight)
 			{
-				error = $"{url} is too small ({width}x{height}).";
+				error = $"is too small ({width}x{height}).";
 				return false;
 			}
 			var aspectRatio = width / (double)height;
 			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
 			{
-				error = $"{url} does not fit in the aspect ratio restrictions ({width}x{height}).";
+				error = $"does not fit in the aspect ratio restrictions ({width}x{height}).";
 				return false;
 			}
 			error = null;

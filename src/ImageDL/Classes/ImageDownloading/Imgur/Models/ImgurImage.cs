@@ -7,8 +7,14 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 	/// <summary>
 	/// Json model for an image from Imgur.
 	/// </summary>
-	public class ImgurImage : ImgurThing
+	public class ImgurImage : ImgurThing, ISize
 	{
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// The type of post this is.
 		/// </summary>
@@ -19,16 +25,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// </summary>
 		[JsonProperty("animated")]
 		public bool IsAnimated { get; private set; }
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The size of the file in bytes.
 		/// </summary>

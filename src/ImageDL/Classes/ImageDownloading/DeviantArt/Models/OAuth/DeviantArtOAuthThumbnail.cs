@@ -1,28 +1,25 @@
 ﻿using System;
+using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 {
 	/// <summary>
-	/// Holds information about a resized version of the image.
+	/// Holds information about the image.
 	/// </summary>
-	public struct DeviantArtOAuthThumbnail
+	public struct DeviantArtOAuthImage : ISize
 	{
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// Whether or not the thumbnail is transparent.
 		/// </summary>
 		[JsonProperty("transparency")]
 		public bool IsTransparent { get; private set; }
-		/// <summary>
-		/// The thumbnail's width.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The thumbnail's height.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The size of the thumbnail in bytes.
 		/// </summary>

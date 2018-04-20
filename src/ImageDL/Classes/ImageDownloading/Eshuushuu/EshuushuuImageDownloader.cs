@@ -76,11 +76,11 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					{
 						return;
 					}
-					else if (!HasValidSize(null, post.Width, post.Height, out _) || post.Score < MinScore)
+					if (!HasValidSize(post, out _) || post.Score < MinScore)
 					{
 						continue;
 					}
-					else if (!Add(list, post))
+					if (!Add(list, post))
 					{
 						return;
 					}

@@ -10,7 +10,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 	/// <summary>
 	/// Json model for a post from Eshuushuu.
 	/// </summary>
-	public sealed class EshuushuuPost : IPost
+	public sealed class EshuushuuPost : IPost, ISize
 	{
 		/// <inheritdoc />
 		[JsonProperty(nameof(Id))]
@@ -27,7 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		{
 			get
 			{
-				//Try regularly
 				if (DateTime.TryParse(CreatedAtString, out var dt))
 				{
 					return dt;
@@ -42,6 +41,12 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 				throw new ArgumentException($"Unable to convert {CreatedAtString} to a datetime.");
 			}
 		}
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Width => Convert.ToInt32(DimensionsString.Split('x', ' ')[0]);
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Height => Convert.ToInt32(DimensionsString.Split('x', ' ')[1]);
 		/// <summary>
 		/// The size of the file in bytes.
 		/// </summary>
@@ -65,16 +70,6 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 				}
 			}
 		}
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		[JsonIgnore]
-		public int Width => Convert.ToInt32(DimensionsString.Split('x', ' ')[0]);
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonIgnore]
-		public int Height => Convert.ToInt32(DimensionsString.Split('x', ' ')[1]);
 		/// <summary>
 		/// Who the post was submitted by.
 		/// </summary>

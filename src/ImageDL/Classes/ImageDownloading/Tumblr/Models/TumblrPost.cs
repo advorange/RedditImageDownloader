@@ -10,7 +10,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 	/// <summary>
 	/// Json model for a Tumlbr post.
 	/// </summary>
-	public class TumblrPost : IPost
+	public class TumblrPost : IPost, ISize
 	{
 		/// <inheritdoc />
 		[JsonProperty("id")]
@@ -20,10 +20,16 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		public Uri PostUrl { get; private set; }
 		/// <inheritdoc />
 		[JsonProperty("note-count")]
-		public int Score { get; private set; } = -1;
+		public int Score { get; private set; }
 		/// <inheritdoc />
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(UnixTimestamp)).ToUniversalTime();
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// The full url.
 		/// </summary>
@@ -139,16 +145,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// </summary>
 		[JsonProperty("photo-link-url")]
 		public Uri PhotoLinkUrl { get; private set; }
-		/// <summary>
-		/// The width of the photo.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the photo.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The photos of the post if this is a multiphoto post.
 		/// </summary>

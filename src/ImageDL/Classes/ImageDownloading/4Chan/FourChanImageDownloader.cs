@@ -86,15 +86,11 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 				{
 					return true;
 				}
-				else if (post.Post.IsStickied || post.Post.IsArchived || (post.Post.IsFileDeleted ?? false))
+				if (!HasValidSize(post, out _) || post.Post.IsStickied || post.Post.IsArchived || (post.Post.IsFileDeleted ?? false))
 				{
 					continue;
 				}
-				else if (!HasValidSize(null, post.Post.ImageWidth ?? -1, post.Post.ImageHeight ?? -1, out _))
-				{
-					continue;
-				}
-				else if (!Add(list, post))
+				if (!Add(list, post))
 				{
 					return false;
 				}

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Globalization;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using Newtonsoft.Json;
 
@@ -22,13 +22,12 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru.Models
 		{
 			get
 			{
+				const string FORMAT = "ddd MMM dd HH:mm:ss zzz yyyy";
 				if (DateTime.TryParse(CreatedAtString, out var dt))
 				{
 					return dt;
 				}
-				var parts = CreatedAtString.Split(' ').ToList();
-				parts.Insert(3, parts.Last());
-				if (DateTime.TryParse(String.Join(" ", parts.Take(parts.Count - 1)), out dt))
+				else if (DateTime.TryParseExact(CreatedAtString, FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
 				{
 					return dt;
 				}

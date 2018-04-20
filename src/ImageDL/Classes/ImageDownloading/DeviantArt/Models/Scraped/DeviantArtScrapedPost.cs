@@ -9,7 +9,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 	/// <summary>
 	/// Json model for a DeviantArt post gotten via scraping a gallery.
 	/// </summary>
-	public sealed class DeviantArtScrapedPost : IPost
+	public sealed class DeviantArtScrapedPost : IPost, ISize
 	{
 		/// <inheritdoc />
 		[JsonProperty("id")]
@@ -23,6 +23,12 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// <inheritdoc />
 		[JsonIgnore]
 		public DateTime CreatedAt => new DateTime(1970, 1, 1);
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
 		/// <summary>
 		/// Whether the post requires a user to agree to view mature content.
 		/// </summary>
@@ -33,16 +39,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// </summary>
 		[JsonProperty("faved")]
 		public bool IsFavorited { get; private set; }
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// The row the image is in in the gallery.
 		/// </summary>

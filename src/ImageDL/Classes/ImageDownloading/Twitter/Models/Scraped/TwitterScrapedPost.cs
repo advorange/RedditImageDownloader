@@ -19,7 +19,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 		public Uri PostUrl => new Uri($"https://www.twitter.com/{Username}/status/{Id}");
 		/// <inheritdoc />
 		[JsonIgnore]
-		public int Score => LikeCount;
+		public int Score => FavoriteCount;
 		/// <inheritdoc />
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(CreatedAtTimestamp)).ToUniversalTime();
@@ -41,8 +41,8 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 		/// <summary>
 		/// The amount of likes the post has.
 		/// </summary>
-		[JsonProperty(nameof(LikeCount))]
-		public int LikeCount { get; private set; }
+		[JsonProperty(nameof(FavoriteCount))]
+		public int FavoriteCount { get; private set; }
 		/// <summary>
 		/// The amount of retweets the post has.
 		/// </summary>

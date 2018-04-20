@@ -110,13 +110,13 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						return;
 					}
-					else if (p.LikeInfo.Count < MinScore)
+					if (p.LikeInfo.Count < MinScore)
 					{
 						continue;
 					}
-					else if (p.ChildrenInfo.Nodes?.Any() ?? false) //Only go into this statment if there are any children
+					if (p.ChildrenInfo.Nodes?.Any() ?? false) //Only go into this statment if there are any children
 					{
-						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(null, x.Child.Dimensions.Width, x.Child.Dimensions.Height, out _)).ToList())
+						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(x.Child.Dimensions, out _)).ToList())
 						{
 							p.ChildrenInfo.Nodes.Remove(node);
 						}
@@ -126,7 +126,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 						}
 					}
 					//If there are no children, we can check the post's dimensions directly
-					else if (!HasValidSize(null, p.Dimensions.Width, p.Dimensions.Height, out _))
+					else if (!HasValidSize(p.Dimensions, out _))
 					{
 						continue;
 					}

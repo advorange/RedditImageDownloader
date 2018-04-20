@@ -1,20 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using ImageDL.Interfaces;
+using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 {
 	/// <summary>
 	/// Holds the dimensions of the image.
 	/// </summary>
-	public struct InstagramImageDimensions
+	public struct InstagramImageDimensions : ISize
 	{
-		/// <summary>
-		/// The width of the image.
-		/// </summary>
+		/// <inheritdoc />
 		[JsonProperty("width")]
 		public int Width { get; private set; }
-		/// <summary>
-		/// The height of the image.
-		/// </summary>
+		/// <inheritdoc />
 		[JsonProperty("height")]
 		public int Height { get; private set; }
 
