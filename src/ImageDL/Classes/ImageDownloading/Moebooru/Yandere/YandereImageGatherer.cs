@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Yandere
 	/// <summary>
 	/// Gathers images from a specified Yandere link.
 	/// </summary>
-	public sealed class YandereImageGatherer : IImageGatherer
+	public struct YandereImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

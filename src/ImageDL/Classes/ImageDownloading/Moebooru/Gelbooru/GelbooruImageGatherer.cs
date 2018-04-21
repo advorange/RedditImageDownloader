@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 	/// <summary>
 	/// Gathers images from a specified Gelbooru link.
 	/// </summary>
-	public sealed class GelbooruImageGatherer : IImageGatherer
+	public struct GelbooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

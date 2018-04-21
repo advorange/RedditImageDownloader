@@ -3,22 +3,22 @@ using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
 
-namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
+namespace ImageDL.Classes.ImageDownloading.Twitter
 {
 	/// <summary>
-	/// Gathers images from a specified Danbooru link.
+	/// Gathers images from a specified Twitter link.
 	/// </summary>
-	public struct DanbooruImageGatherer : IImageGatherer
+	public struct TwitterImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
 		{
-			return url.Host.CaseInsContains("donmai.us");
+			return url.Host.CaseInsContains("twitter.com");
 		}
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
 		{
-			return await DanbooruImageDownloader.GetDanbooruImagesAsync(client, url).CAF();
+			return await TwitterImageDownloader.GetTwitterImagesAsync(client, url).CAF();
 		}
 	}
 }

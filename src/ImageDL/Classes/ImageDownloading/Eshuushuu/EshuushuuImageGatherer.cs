@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	/// <summary>
 	/// Gathers images from a specified Eshuushuu link.
 	/// </summary>
-	public sealed class EshuushuuImageGatherer : IImageGatherer
+	public struct EshuushuuImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

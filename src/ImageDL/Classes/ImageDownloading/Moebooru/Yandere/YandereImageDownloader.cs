@@ -61,7 +61,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Yandere
 		public static async Task<Model> GetYanderePostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = GenerateYandereQuery($"id:{id}", 0);
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			return result.IsSuccess ? ParseYanderePosts(result.Value)[0] : null;
 		}
 		/// <summary>

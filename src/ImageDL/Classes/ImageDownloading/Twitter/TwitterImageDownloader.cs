@@ -62,29 +62,21 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 				{
 					query += $"&max_position={min}";
 				}
-				var result = await client.GetText(client.GetReq(new Uri(query))).CAF();
+				var result = await client.GetText(() => client.GetReq(new Uri(query)), TimeSpan.FromSeconds(60)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
 				}
 
 				parsed = JsonConvert.DeserializeObject<TwitterScrapedPage>(result.Value);
-				foreach (var id in parsed.ItemIds)
+				foreach (var post in parsed.Items)
 				{
-					var post = await GetTwitterPostAsync(client, id).CAF();
+					//Could grab each full post (has media sizes and such) but that only has 1000 reqs per 15 mins
 					if (post.CreatedAt < OldestAllowed)
 					{
 						return;
 					}
 					if (post.FavoriteCount < MinScore)
-					{
-						continue;
-					}
-					foreach (var media in post.ExtendedEntities.Media.Where(x => !HasValidSize(x.Sizes.Large, out _)).ToList())
-					{
-						post.ExtendedEntities.Media.Remove(media);
-					}
-					if (!post.ExtendedEntities.Media.Any())
 					{
 						continue;
 					}
@@ -104,9 +96,12 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		public static async Task<TwitterOAuthPost> GetTwitterPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://api.twitter.com/1.1/statuses/show.json?id={id}");
-			var req = client.GetReq(query);
-			req.Headers.Add("Authorization", $"Bearer {_Token}");
-			var result = await client.GetText(req).CAF();
+			var result = await client.GetText(() =>
+			{
+				var req = client.GetReq(query);
+				req.Headers.Add("Authorization", $"Bearer {_Token}");
+				return req;
+			}, TimeSpan.FromSeconds(140)).CAF();
 			return result.IsSuccess ? JsonConvert.DeserializeObject<TwitterOAuthPost>(result.Value) : null;
 		}
 		/// <summary>
@@ -126,7 +121,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var id = u.Substring(index + search.Length).Split('/')[0];
-				if (await GetTwitterPostAsync(client, id).CAF() is IPost post)
+				if (await GetTwitterPostAsync(client, id).CAF() is TwitterOAuthPost post)
 				{
 					return await post.GetImagesAsync(client).CAF();
 				}

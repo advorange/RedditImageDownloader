@@ -59,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 				var query = new Uri($"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/medias" +
 					$"?site_id={userId}" +
 					$"&page={i}");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with authorization, try to get a new key
@@ -104,7 +104,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			}
 			var time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 			var query = new Uri($"https://vsco.co/content/Static/userinfo?callback=jsonp_{time}_0");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the api key.");
@@ -121,7 +121,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		public static async Task<ulong> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/sites?subdomain={username}");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the user's id.");
@@ -137,7 +137,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		public static async Task<Model> GetVscoPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://vsco.co/ajxp/{await GetApiKeyAsync(client).CAF()}/2.0/medias/{id}");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			return result.IsSuccess ? JObject.Parse(result.Value)["media"].ToObject<Model>() : null;
 		}
 		/// <summary>

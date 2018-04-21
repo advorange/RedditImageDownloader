@@ -85,7 +85,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				var query = new Uri("https://www.instagram.com/graphql/query/" +
 					$"?query_hash={await GetApiKeyAsync(client).CAF()}" +
 					$"&variables={WebUtility.UrlEncode(variables)}");
-				var result = await client.GetText(GenerateApiReq(client, query, rhx, variables)).CAF();
+				var result = await client.GetText(() => GenerateApiReq(client, query, rhx, variables)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
@@ -114,7 +114,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						continue;
 					}
-					if (p.ChildrenInfo.Nodes?.Any() ?? false) //Only go into this statment if there are any children
+					if (p.ChildrenInfo.Nodes != null &&  p.ChildrenInfo.Nodes.Any()) //Only if children exist
 					{
 						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(x.Child.Dimensions, out _)).ToList())
 						{
@@ -125,8 +125,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 							continue;
 						}
 					}
-					//If there are no children, we can check the post's dimensions directly
-					else if (!HasValidSize(p.Dimensions, out _))
+					else if (!HasValidSize(p.Dimensions, out _)) //Otherwise check dimensions directly
 					{
 						continue;
 					}
@@ -152,7 +151,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 
 			//Load the page regularly first so we can get some data from it
 			var query = new Uri($"https://www.instagram.com/instagram/?hl=en");
-			var result = await client.GetHtml(client.GetReq(query)).CAF();
+			var result = await client.GetHtml(() => client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
@@ -163,7 +162,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				.Select(x => x.GetAttributeValue("href", null))
 				.First(x => (x ?? "").Contains("ProfilePageContainer.js"));
 			var jsQuery = new Uri($"https://www.instagram.com{jsLink}");
-			var jsResult = await client.GetText(client.GetReq(jsQuery)).CAF();
+			var jsResult = await client.GetText(() => client.GetReq(jsQuery)).CAF();
 			if (!jsResult.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the query hash.");
@@ -207,7 +206,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		private static async Task<(ulong Id, string Rhx)> GetUserIdAndRhx(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.instagram.com/{username}/?hl=en");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
@@ -235,12 +234,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		public static async Task<Model> GetInstagramPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://www.instagram.com/p/{id}/?__a=1");
-			var result = await client.GetText(client.GetReq(query)).CAF();
-			if (!result.IsSuccess)
-			{
-				return null;
-			}
-			return JsonConvert.DeserializeObject<InstagramGraphqlResult>(result.Value).Graphql.ShortcodeMedia;
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			return result.IsSuccess ? JsonConvert.DeserializeObject<InstagramGraphqlResult>(result.Value).Graphql.ShortcodeMedia : null;
 		}
 		/// <summary>
 		/// Gets the images from the specified url.

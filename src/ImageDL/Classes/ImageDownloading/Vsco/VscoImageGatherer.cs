@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Classes.ImageDownloading.Vsco.Models;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco
@@ -9,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	/// <summary>
 	/// Gathers images from a specified Vsco link.
 	/// </summary>
-	public sealed class VscoImageGatherer : IImageGatherer
+	public struct VscoImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

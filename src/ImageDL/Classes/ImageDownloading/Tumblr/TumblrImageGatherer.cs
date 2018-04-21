@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 	/// <summary>
 	/// Gathers images from a specified Tumblr link.
 	/// </summary>
-	public sealed class TumblrImageGatherer : IImageGatherer
+	public struct TumblrImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

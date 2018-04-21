@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Safebooru
 	/// <summary>
 	/// Gathers images from a specified Safebooru link.
 	/// </summary>
-	public sealed class SafebooruImageGatherer : IImageGatherer
+	public struct SafebooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

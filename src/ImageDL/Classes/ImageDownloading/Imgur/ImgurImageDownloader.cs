@@ -52,7 +52,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 				var query = new Uri($"https://api.imgur.com/3/gallery/search/time/all/{i}/" +
 					$"?client_id={await GetApiKeyAsync(client).CAF()}" +
 					$"&q={WebUtility.UrlEncode(Tags)}");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the api key, try to get another one
@@ -112,7 +112,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			}
 			//Load the page regularly first so we can get some data from it
 			var query = new Uri($"https://imgur.com/t/dogs");
-			var result = await client.GetHtml(client.GetReq(query)).CAF();
+			var result = await client.GetHtml(() => client.GetReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the tags page.");
@@ -121,7 +121,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			var jsQuery = new Uri(result.Value.DocumentNode.Descendants("script")
 				.Select(x => x.GetAttributeValue("src", null))
 				.First(x => (x ?? "").Contains("/main.")));
-			var jsResult = await client.GetText(client.GetReq(jsQuery)).CAF();
+			var jsResult = await client.GetText(() => client.GetReq(jsQuery)).CAF();
 			if (!jsResult.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the client id.");
@@ -145,7 +145,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			{
 				var endpoint = isAlbum ? "album" : "image";
 				var query = new Uri($"https://api.imgur.com/3/{endpoint}/{code}?client_id={await GetApiKeyAsync(client).CAF()}");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (result.IsSuccess)
 				{
 					var data = JObject.Parse(result.Value)["data"];

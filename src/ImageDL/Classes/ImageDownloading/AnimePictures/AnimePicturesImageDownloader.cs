@@ -51,7 +51,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 					$"&order_by=date" +
 					$"&ldate=0" +
 					$"&lang=en");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -85,7 +85,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 		public static async Task<Model> GetAnimePicturesPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://anime-pictures.net/pictures/view_post/{id}?type=json&lang=en");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
 		}
 		/// <summary>

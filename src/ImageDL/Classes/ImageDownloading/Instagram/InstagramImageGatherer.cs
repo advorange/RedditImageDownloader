@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	/// <summary>
 	/// Gathers images from a specified Instagram link.
 	/// </summary>
-	public sealed class InstagramImageGatherer : IImageGatherer
+	public struct InstagramImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

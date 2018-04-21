@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 	/// <summary>
 	/// Gathers images from a specified Konachan link.
 	/// </summary>
-	public sealed class KonachanImageGatherer : IImageGatherer
+	public struct KonachanImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

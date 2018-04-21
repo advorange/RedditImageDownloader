@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 	/// <summary>
 	/// Gathers images from the specified Artstation link.
 	/// </summary>
-	public sealed class ArtstationImageGatherer : IImageGatherer
+	public struct ArtstationImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

@@ -20,9 +20,11 @@ namespace ImageDL.Utilities
 		/// <returns></returns>
 		public static FileInfo GenerateFileInfo(this IPost post, DirectoryInfo dir, Uri url)
 		{
+			var path = Path.GetInvalidFileNameChars()
+				.Aggregate(Path.GetFileName(url.ToString()), (p, c) => p.Replace(c.ToString(), ""));
 			var directory = dir.ToString();
-			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(url.LocalPath)}";
-			var extension = Path.GetExtension(url.LocalPath);
+			var name = $"{post.Id}_{Path.GetFileNameWithoutExtension(path)}";
+			var extension = Path.GetExtension(path);
 
 			//Make sure the extension has a period
 			extension = extension.StartsWith(".") ? extension : "." + extension;

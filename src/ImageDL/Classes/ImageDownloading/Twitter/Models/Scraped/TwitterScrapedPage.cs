@@ -42,19 +42,39 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 					return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
 				});
 
-				//TODO: parse manually instead of loading inside html doc?
 				var doc = new HtmlDocument();
 				doc.LoadHtml(_ItemsHtml);
 
 				var li = doc.DocumentNode.Descendants("li");
-				var items = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item"));
-				var itemIds = items.Select(t =>
+				var tweets = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item"));
+				Items = tweets.Select(t =>
 				{
 					var div = t.Descendants("div");
+					var span = t.Descendants("span");
+
+					var imageUrls = div.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"))
+						?.Descendants("img")?.Select(x => x.GetAttributeValue("src", null))?.Where(x => x != null) ?? new string[0];
 					var tweetInfo = div.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
-					return tweetInfo.GetAttributeValue("data-tweet-id", null);
-				});
-				ItemIds = itemIds.ToList();
+					var timestamp = span.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"));
+					var likes = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--favorite"))
+						.Descendants("span").First();
+					var retweets = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--retweet"))
+						.Descendants("span").First();
+					var replies = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--reply"))
+						.Descendants("span").First();
+
+					return new JObject
+					{
+						{ nameof(TwitterScrapedPost.ImageUrls), JArray.FromObject(imageUrls) },
+						{ nameof(TwitterScrapedPost.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
+						{ nameof(TwitterScrapedPost.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
+						{ nameof(TwitterScrapedPost.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
+						{ nameof(TwitterScrapedPost.FavoriteCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(TwitterScrapedPost.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
+						{ nameof(TwitterScrapedPost.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
+					}.ToObject<TwitterScrapedPost>();
+				}).ToList();
+				ItemIds = Items.Select(x => x.Id).ToList();
 			}
 		}
 		/// <summary>
@@ -62,6 +82,11 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 		/// </summary>
 		[JsonIgnore]
 		public IList<string> ItemIds { get; private set; }
+		/// <summary>
+		/// The posts.
+		/// </summary>
+		[JsonIgnore]
+		public IList<TwitterScrapedPost> Items { get; private set; }
 		/// <summary>
 		/// The amount of posts gotten.
 		/// </summary>

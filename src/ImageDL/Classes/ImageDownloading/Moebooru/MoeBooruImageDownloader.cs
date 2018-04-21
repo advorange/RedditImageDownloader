@@ -73,7 +73,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
 				var query = GenerateQuery(Tags, Page + i);
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;

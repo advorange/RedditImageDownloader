@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 	/// <summary>
 	/// Gathers images from a specified AnimePictures link.
 	/// </summary>
-	public sealed class AnimePicturesImageGatherer : IImageGatherer
+	public struct AnimePicturesImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

@@ -199,9 +199,12 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			return ExtendedEntities.Media == null
-				? Task.FromResult(ImageResponse.FromNotFound(PostUrl))
-				: Task.FromResult(ImageResponse.FromImages(ExtendedEntities.Media.Select(x => x.MediaUrlHttps)));
+			if (ExtendedEntities.Media == null)
+			{
+				return Task.FromResult(ImageResponse.FromNotFound(PostUrl));
+			}
+			var urls = ExtendedEntities.Media.Select(x => new Uri($"{x.MediaUrlHttps}:orig"));
+			return Task.FromResult(ImageResponse.FromImages(urls));
 		}
 	}
 }

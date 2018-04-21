@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// <summary>
 	/// Gathers images from a specified Imgur link.
 	/// </summary>
-	public sealed class ImgurImageGatherer : IImageGatherer
+	public struct ImgurImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)

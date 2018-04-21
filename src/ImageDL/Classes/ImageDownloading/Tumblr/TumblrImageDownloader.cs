@@ -53,7 +53,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 					$"&filter=text" +
 					$"&num=50" +
 					$"&start={i}");
-				var result = await client.GetText(client.GetReq(query)).CAF();
+				var result = await client.GetText(() => client.GetReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -127,7 +127,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		public static async Task<Model> GetTumblrPostAsync(IImageDownloaderClient client, string username, string id)
 		{
 			var query = new Uri($"http://{username}.tumblr.com/api/read/json?debug=1&id={id}");
-			var result = await client.GetText(client.GetReq(query)).CAF();
+			var result = await client.GetText(() => client.GetReq(query)).CAF();
 			if (result.IsSuccess)
 			{
 				var post = JObject.Parse(result.Value)["posts"].First;

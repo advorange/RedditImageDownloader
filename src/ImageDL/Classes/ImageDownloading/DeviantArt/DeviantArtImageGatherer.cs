@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Gathers images from a specified DeviantArt link.
 	/// </summary>
-	public sealed class DeviantArtImageGatherer : IImageGatherer
+	public struct DeviantArtImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
