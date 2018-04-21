@@ -36,7 +36,7 @@ namespace ImageDL.Interfaces
 		/// <param name="url"></param>
 		/// <param name="method"></param>
 		/// <returns></returns>
-		HttpRequestMessage GetReq(Uri url, HttpMethod method = default);
+		HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default);
 		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up/all errors other than 421 and 429.
@@ -46,7 +46,7 @@ namespace ImageDL.Interfaces
 		/// <param name="tries"></param>
 		/// <returns></returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
-		Task<ClientResult<string>> GetText(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
+		Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
 		/// <summary>
 		/// Gets the Html of a webpage.
 		/// </summary>
@@ -55,7 +55,7 @@ namespace ImageDL.Interfaces
 		/// <param name="tries"></param>
 		/// /// <returns></returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
-		Task<ClientResult<HtmlDocument>> GetHtml(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
+		Task<ClientResult<HtmlDocument>> GetHtmlAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
 		/// <summary>
 		/// Sends a request to the supplied uri.
 		/// </summary>

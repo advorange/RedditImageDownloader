@@ -354,7 +354,7 @@ namespace ImageDL.Classes.ImageDownloading
 			FileStream fs = null;
 			try
 			{
-				resp = await client.SendAsync(client.GetReq(url)).CAF();
+				resp = await client.SendAsync(client.GenerateReq(url)).CAF();
 				if (!resp.IsSuccessStatusCode)
 				{
 					return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:{NL}{resp}", false);

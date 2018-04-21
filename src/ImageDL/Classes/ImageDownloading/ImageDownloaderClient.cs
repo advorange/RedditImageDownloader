@@ -69,7 +69,7 @@ namespace ImageDL.Classes.ImageDownloading
 		}
 
 		/// <inheritdoc />
-		public HttpRequestMessage GetReq(Uri url, HttpMethod method = default)
+		public HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default)
 		{
 			var req = new HttpRequestMessage
 			{
@@ -80,7 +80,7 @@ namespace ImageDL.Classes.ImageDownloading
 			return req;
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<string>> GetText(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
 		{
 			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
 			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
@@ -109,9 +109,9 @@ namespace ImageDL.Classes.ImageDownloading
 			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
 		}
 		/// <inheritdoc />
-		public async Task<ClientResult<HtmlDocument>> GetHtml(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
+		public async Task<ClientResult<HtmlDocument>> GetHtmlAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
 		{
-			var result = await GetText(reqFactory, wait, tries).CAF();
+			var result = await GetTextAsync(reqFactory, wait, tries).CAF();
 			if (result.IsSuccess)
 			{
 				var doc = new HtmlDocument();

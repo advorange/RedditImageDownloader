@@ -67,7 +67,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Safebooru
 		public static async Task<Model> GetSafebooruPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = GenerateSafebooruQuery($"id:{id}", 0);
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			return result.IsSuccess ? ParseSafebooruPosts(result.Value)[0] : null;
 		}
 		/// <summary>

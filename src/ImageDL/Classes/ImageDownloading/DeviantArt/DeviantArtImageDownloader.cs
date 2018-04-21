@@ -125,7 +125,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					$"?grant_type=client_credentials" +
 					$"&client_id={clientId}" +
 					$"&client_secret={clientSecret}");
-				var result = await client.GetText(() => client.GetReq(query)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (result.IsSuccess)
 				{
 					var jObj = JObject.Parse(result.Value);
@@ -164,7 +164,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				var query = new Uri($"https://www.deviantart.com/newest/" +
 					$"?offset={i}" +
 					$"&q={GenerateTags()}");
-				var result = await client.GetText(() => client.GetReq(query)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -215,7 +215,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					$"&mature_content=true" +
 					$"&q={GenerateTags()}" +
 					$"&access_token={await GetApiKey(client, ClientId, ClientSecret)}");
-				var result = await client.GetText(() => client.GetReq(query)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the access token, try to get another one
@@ -267,7 +267,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 				var query = new Uri($"http://backend.deviantart.com/rss.xml" +
 					$"?offset={i}" +
 					$"&q={GenerateTags()}");
-				var result = await client.GetText(() => client.GetReq(query)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -301,7 +301,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		public static async Task<DeviantArtOEmbedPost> GetDeviantArtPostAsync(IImageDownloaderClient client, Uri url)
 		{
 			var query = new Uri($"https://backend.deviantart.com/oembed?url={url}");
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			if (result.IsSuccess)
 			{
 				var jObj = JObject.Parse(result.Value);

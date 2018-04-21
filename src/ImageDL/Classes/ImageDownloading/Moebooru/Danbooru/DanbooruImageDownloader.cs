@@ -62,7 +62,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 		public static async Task<Model> GetDanbooruPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = GenerateDanbooruQuery($"id:{id}", 0);
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			return result.IsSuccess ? ParseDanbooruPosts(result.Value)[0] : null;
 		}
 		/// <summary>

@@ -62,7 +62,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 				{
 					query += $"&max_position={min}";
 				}
-				var result = await client.GetText(() => client.GetReq(new Uri(query)), TimeSpan.FromSeconds(60)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(new Uri(query)), TimeSpan.FromSeconds(60)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -96,12 +96,12 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		public static async Task<TwitterOAuthPost> GetTwitterPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://api.twitter.com/1.1/statuses/show.json?id={id}");
-			var result = await client.GetText(() =>
+			var result = await client.GetTextAsync(() =>
 			{
-				var req = client.GetReq(query);
+				var req = client.GenerateReq(query);
 				req.Headers.Add("Authorization", $"Bearer {_Token}");
 				return req;
-			}, TimeSpan.FromSeconds(140)).CAF();
+			}, TimeSpan.FromMinutes(15)).CAF();
 			return result.IsSuccess ? JsonConvert.DeserializeObject<TwitterOAuthPost>(result.Value) : null;
 		}
 		/// <summary>

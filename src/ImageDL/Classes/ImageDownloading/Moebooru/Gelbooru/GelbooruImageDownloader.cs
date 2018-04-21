@@ -67,7 +67,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 		public static async Task<Model> GetGelbooruPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = GenerateGelbooruQuery($"id:{id}", 0);
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			return result.IsSuccess ? ParseGelbooruPosts(result.Value)[0] : null;
 		}
 		/// <summary>

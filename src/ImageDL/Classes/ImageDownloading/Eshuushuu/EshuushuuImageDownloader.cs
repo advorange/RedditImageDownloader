@@ -58,7 +58,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					$"&hide_disabled=1" +
 					$"&tags={WebUtility.UrlEncode(Tags)}" +
 					$"&page={i}");
-				var result = await client.GetHtml(() => client.GetReq(query)).CAF();
+				var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -97,7 +97,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		public static async Task<Model> GetEshuushuuPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"http://e-shuushuu.net/httpreq.php?mode=show_all_meta&image_id={id}");
-			var result = await client.GetHtml(() => client.GetReq(query)).CAF();
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				return null;
@@ -134,7 +134,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					{
 						return new JObject
 						{
-							{ nameof(EshuushuuTag.Value).ToLower(), x.Descendants("a").Single().GetAttributeValue("href", null).Replace("/tags/", "") },
+							{ nameof(EshuushuuTag.Value).ToLower(), x.Descendants("a").Single().GetAttributeValue("href", "").Replace("/tags/", "") },
 							{ nameof(EshuushuuTag.Name).ToLower(), x.InnerText.Replace("\"", "") },
 						};
 					}).ToArray()));

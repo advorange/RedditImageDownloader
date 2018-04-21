@@ -46,7 +46,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Posts.Count >= 50); ++i)
 			{
 				var query = new Uri($"https://www.artstation.com/users/{Username}/projects.json?page={i}");
-				var result = await client.GetText(() => client.GetReq(query)).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
@@ -90,7 +90,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 		public static async Task<Model> GetArtstationPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://www.artstation.com/projects/{id}.json");
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
 		}
 		/// <summary>

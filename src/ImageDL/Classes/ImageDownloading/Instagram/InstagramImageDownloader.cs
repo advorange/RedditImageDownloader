@@ -66,7 +66,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var rhx = "";
 			var parsed = new InstagramMediaTimeline();
 			//Iterate to update the pagination start point
-			for (var nextPage = ""; list.Count < AmountOfPostsToGather && (nextPage == "" || parsed.PageInfo.HasNextPage); nextPage = parsed.PageInfo.EndCursor)
+			for (var end = ""; list.Count < AmountOfPostsToGather && (end == "" || parsed.PageInfo.HasNextPage); end = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
 				if (id == 0UL)
@@ -79,13 +79,13 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
 				{
 					{ "id", id }, //The id of the user to search
-					{ "first", 100 }, //The amount of posts to get
-					{ "after", nextPage ?? "" }, //The position in the pagination
+					{ "first", 50 }, //The amount of posts to get. Max allowed is 50, any other and bad request error is gotten
+					{ "after", end }, //The position in the pagination. Empty/null just returns the start of the user's images
 				});
 				var query = new Uri("https://www.instagram.com/graphql/query/" +
 					$"?query_hash={await GetApiKeyAsync(client).CAF()}" +
 					$"&variables={WebUtility.UrlEncode(variables)}");
-				var result = await client.GetText(() => GenerateApiReq(client, query, rhx, variables)).CAF();
+				var result = await client.GetTextAsync(() => GenerateApiReq(client, query, rhx, variables)).CAF();
 				if (!result.IsSuccess)
 				{
 					//If there's an error with the query hash, try to get another one
@@ -151,7 +151,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 
 			//Load the page regularly first so we can get some data from it
 			var query = new Uri($"https://www.instagram.com/instagram/?hl=en");
-			var result = await client.GetHtml(() => client.GetReq(query)).CAF();
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
@@ -159,10 +159,10 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 
 			//Find the direct link to ProfilePageContainer.js
 			var jsLink = result.Value.DocumentNode.Descendants("link")
-				.Select(x => x.GetAttributeValue("href", null))
-				.First(x => (x ?? "").Contains("ProfilePageContainer.js"));
+				.Select(x => x.GetAttributeValue("href", ""))
+				.First(x => x.Contains("ProfilePageContainer.js"));
 			var jsQuery = new Uri($"https://www.instagram.com{jsLink}");
-			var jsResult = await client.GetText(() => client.GetReq(jsQuery)).CAF();
+			var jsResult = await client.GetTextAsync(() => client.GenerateReq(jsQuery)).CAF();
 			if (!jsResult.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the query hash.");
@@ -183,16 +183,16 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <returns></returns>
 		private static HttpRequestMessage GenerateApiReq(IImageDownloaderClient client, Uri url, string rhx, string variables)
 		{
-			//Magic string, likely to change in the future
-			var text = $"{rhx}:{client.Cookies.GetCookies(url)["csrftoken"].Value}:{variables}";
 			var gis = "";
 			using (var md5 = MD5.Create())
 			{
-				gis = BitConverter.ToString(md5.ComputeHash(Encoding.ASCII.GetBytes(text))).Replace("-", "").ToLower();
+				//Magic string, likely to change in the future
+				var magic = $"{rhx}:{variables}";
+				gis = BitConverter.ToString(md5.ComputeHash(Encoding.UTF8.GetBytes(magic))).Replace("-", "").ToLower();
 			}
 
 			//Not sure what GIS stands for, but it's what Instagram calls it
-			var req = client.GetReq(url);
+			var req = client.GenerateReq(url);
 			req.Headers.Add("X-Instagram-GIS", gis);
 			req.Headers.Add("X-Requested-With", "XMLHttpRequest");
 			return req;
@@ -206,7 +206,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		private static async Task<(ulong Id, string Rhx)> GetUserIdAndRhx(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.instagram.com/{username}/?hl=en");
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
 				throw new HttpRequestException("Unable to get the first request to the user's account.");
@@ -234,7 +234,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		public static async Task<Model> GetInstagramPostAsync(IImageDownloaderClient client, string id)
 		{
 			var query = new Uri($"https://www.instagram.com/p/{id}/?__a=1");
-			var result = await client.GetText(() => client.GetReq(query)).CAF();
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			return result.IsSuccess ? JsonConvert.DeserializeObject<InstagramGraphqlResult>(result.Value).Graphql.ShortcodeMedia : null;
 		}
 		/// <summary>
