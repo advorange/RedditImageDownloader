@@ -69,5 +69,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("type")]
 		public string Type { get; private set; }
+
+		/// <summary>
+		/// Returns the url to the media.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return MediaUrlHttps.ToString();
+		}
 	}
 }

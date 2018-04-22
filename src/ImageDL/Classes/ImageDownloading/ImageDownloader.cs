@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ namespace ImageDL.Classes.ImageDownloading
 	/// <summary>
 	/// Downloads images from a site.
 	/// </summary>
+	[DownloaderName("Unknown")]
 	public abstract class ImageDownloader : IImageDownloader
 	{
 		private static readonly string NL = Environment.NewLine;
@@ -145,8 +147,6 @@ namespace ImageDL.Classes.ImageDownloading
 		public SettingParser SettingParser => _SettingParser;
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
-		/// <inheritdoc />
-		public string Name => _Name;
 
 		/// <summary>
 		/// Links to content that is animated, failed to download, etc.
@@ -167,13 +167,11 @@ namespace ImageDL.Classes.ImageDownloading
 		private bool _CreateDirectory;
 		private bool _Start;
 		private SettingParser _SettingParser;
-		private string _Name;
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDownloader"/>.
 		/// </summary>
-		/// <param name="name">The name of the website.</param>
-		public ImageDownloader(string name)
+		public ImageDownloader()
 		{
 			_SettingParser = new SettingParser(new[] { "--", "-", "/" })
 			{
@@ -240,7 +238,6 @@ namespace ImageDL.Classes.ImageDownloading
 					IsFlag = true,
 				},
 			};
-			_Name = name;
 
 			//Save on close in case program is closed while running
 			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
@@ -382,6 +379,7 @@ namespace ImageDL.Classes.ImageDownloading
 					return new Response("Does Not Meet Size Reqs", $"{url} {sizeError}", false);
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
+				ms.Seek(0, SeekOrigin.Begin);
 				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
 				{
 					return new Response("Unable To Cache", cachingError, false);
@@ -490,7 +488,7 @@ namespace ImageDL.Classes.ImageDownloading
 			list.Add(post);
 			if (list.Count % 25 == 0)
 			{
-				ConsoleUtils.WriteLine($"{list.Count} {Name} posts found.");
+				ConsoleUtils.WriteLine($"{list.Count} {GetType().GetCustomAttribute<DownloaderNameAttribute>().Name} posts found.");
 			}
 			return list.Count < AmountOfPostsToGather;
 		}

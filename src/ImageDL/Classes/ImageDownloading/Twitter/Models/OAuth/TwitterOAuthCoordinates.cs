@@ -18,5 +18,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("type")]
 		public string Type { get; private set; }
+
+		/// <summary>
+		/// Returns the latitude and longitude in non degree format.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Coordinates[0]}x{Coordinates[1]}";
+		}
 	}
 }

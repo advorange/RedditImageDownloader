@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Tumblr.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -16,6 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 	/// <summary>
 	/// Downloads images from Tumblr.
 	/// </summary>
+	[DownloaderName("Tumblr")]
 	public sealed class TumblrImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -32,7 +34,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		/// <summary>
 		/// Creates an instance of <see cref="TumblrImageDownloader"/>.
 		/// </summary>
-		public TumblrImageDownloader() : base("Tumblr")
+		public TumblrImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{

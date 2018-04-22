@@ -52,5 +52,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("url")]
 		public string Url { get; private set; }
+
+		/// <summary>
+		/// Returns the fullname of the place.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return FullName;
+		}
 	}
 }

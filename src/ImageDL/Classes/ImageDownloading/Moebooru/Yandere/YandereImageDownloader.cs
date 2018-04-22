@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Model = ImageDL.Classes.ImageDownloading.Moebooru.Yandere.Models.YanderePost;
@@ -12,12 +13,13 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Yandere
 	/// <summary>
 	/// Downloads images from Yandere.
 	/// </summary>
+	[DownloaderName("Yandere")]
 	public sealed class YandereImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="YandereImageDownloader"/>.
 		/// </summary>
-		public YandereImageDownloader() : base("Yandere", 6) { }
+		public YandereImageDownloader() : base(6) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)

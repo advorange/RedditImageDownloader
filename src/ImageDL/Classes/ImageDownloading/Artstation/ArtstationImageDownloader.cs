@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Artstation.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -14,6 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 	/// <summary>
 	/// Downloads images from Artstation.
 	/// </summary>
+	[DownloaderName("Artstation")]
 	public sealed class ArtstationImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -30,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 		/// <summary>
 		/// Creates an instance of <see cref="ArtstationImageDownloader"/>.
 		/// </summary>
-		public ArtstationImageDownloader() : base("Artstation")
+		public ArtstationImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user", }, x => Username = x)
 			{

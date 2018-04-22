@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using RedditSharp;
@@ -14,6 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 	/// <summary>
 	/// Downloads images from reddit.
 	/// </summary>
+	[DownloaderName("Reddit")]
 	public sealed class RedditImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -31,7 +33,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <summary>
 		/// Creates an instance of <see cref="RedditImageDownloader"/>.
 		/// </summary>
-		public RedditImageDownloader() : base("Reddit")
+		public RedditImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
 			{

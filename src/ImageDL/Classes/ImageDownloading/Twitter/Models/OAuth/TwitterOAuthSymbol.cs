@@ -18,5 +18,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("text")]
 		public string Text { get; private set; }
+
+		/// <summary>
+		/// Returns the text.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Text;
+		}
 	}
 }

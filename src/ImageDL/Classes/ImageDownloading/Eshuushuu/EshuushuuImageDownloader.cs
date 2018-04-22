@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -15,6 +16,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	/// <summary>
 	/// Downloads images from Eshuushuu.
 	/// </summary>
+	[DownloaderName("E-shuushuu")]
 	public sealed class EshuushuuImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -38,7 +40,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// <summary>
 		/// Creates an instance of <see cref="EshuushuuImageDownloader"/>.
 		/// </summary>
-		public EshuushuuImageDownloader() : base("E-shuushuu")
+		public EshuushuuImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{

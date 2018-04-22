@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Model = ImageDL.Classes.ImageDownloading.Moebooru.Danbooru.Models.DanbooruPost;
@@ -12,12 +13,13 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Danbooru
 	/// <summary>
 	/// Downloads images from Danbooru.
 	/// </summary>
+	[DownloaderName("Danbooru")]
 	public sealed class DanbooruImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="DanbooruImageDownloader"/>.
 		/// </summary>
-		public DanbooruImageDownloader() : base("Danbooru", 2) { }
+		public DanbooruImageDownloader() : base(2) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)

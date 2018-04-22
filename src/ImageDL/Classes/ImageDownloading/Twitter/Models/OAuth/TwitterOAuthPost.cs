@@ -206,5 +206,13 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 			var urls = ExtendedEntities.Media.Select(x => new Uri($"{x.MediaUrlHttps}:orig"));
 			return Task.FromResult(ImageResponse.FromImages(urls));
 		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return IdString;
+		}
 	}
 }

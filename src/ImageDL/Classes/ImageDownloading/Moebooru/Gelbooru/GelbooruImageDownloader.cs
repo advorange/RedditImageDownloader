@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Newtonsoft.Json.Linq;
@@ -14,12 +15,13 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Gelbooru
 	/// <summary>
 	/// Downloads images from Gelbooru.
 	/// </summary>
+	[DownloaderName("Gelbooru")]
 	public sealed class GelbooruImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="GelbooruImageDownloader"/>.
 		/// </summary>
-		public GelbooruImageDownloader() : base("Gelbooru", int.MaxValue, false) { }
+		public GelbooruImageDownloader() : base(int.MaxValue, false) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Model = ImageDL.Classes.ImageDownloading.Moebooru.Konachan.Models.KonachanPost;
@@ -12,12 +13,13 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Konachan
 	/// <summary>
 	/// Downloads images from Konachan.
 	/// </summary>
+	[DownloaderName("Konachan")]
 	public sealed class KonachanImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="KonachanImageDownloader"/>.
 		/// </summary>
-		public KonachanImageDownloader() : base("Konachan", 6) { }
+		public KonachanImageDownloader() : base(6) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)

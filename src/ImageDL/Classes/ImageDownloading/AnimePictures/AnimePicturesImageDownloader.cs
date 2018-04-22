@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.AnimePictures.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -14,6 +15,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 	/// <summary>
 	/// Downloads images from AnimePictures.
 	/// </summary>
+	[DownloaderName("Anime-Pictures")]
 	public sealed class AnimePicturesImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -30,7 +32,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 		/// <summary>
 		/// Creates an instance of <see cref="AnimePicturesImageDownloader"/>.
 		/// </summary>
-		public AnimePicturesImageDownloader() : base("Anime-Pictures")
+		public AnimePicturesImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{

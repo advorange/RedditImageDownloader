@@ -46,5 +46,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("resize")]
 		public string Resize { get; private set; }
+
+		/// <summary>
+		/// Returns the width and the height.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 }

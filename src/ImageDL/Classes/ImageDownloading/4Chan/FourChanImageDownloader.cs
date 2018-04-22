@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using FChan.Library;
+using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.FourChan.Models.FourChanPost;
@@ -11,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 	/// <summary>
 	/// Downloads images from 4chan.
 	/// </summary>
+	[DownloaderName("4chan")]
 	public sealed class FourChanImageDownloader : ImageDownloader
 	{
 		/// <summary>
@@ -36,7 +38,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		/// <summary>
 		/// Creates an instance of <see cref="FourChanImageDownloader"/>.
 		/// </summary>
-		public FourChanImageDownloader() : base("4chan")
+		public FourChanImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Board), }, x => Board = x)
 			{

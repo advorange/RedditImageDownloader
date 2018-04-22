@@ -1,24 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using HtmlAgilityPack;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace ImageDL.Classes.ImageDownloading.Twitter
 {
 	/// <summary>
 	/// Downloads images from Twitter.
 	/// </summary>
+	[DownloaderName("Twitter")]
 	public sealed class TwitterImageDownloader : ImageDownloader
 	{
 		//Source file: https://abs.twimg.com/k/en/init.en.9fe6ea43287284f537d7.js
@@ -38,7 +34,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <summary>
 		/// Creates an instance of <see cref="TwitterImageDownloader"/>.
 		/// </summary>
-		public TwitterImageDownloader() : base("Twitter")
+		public TwitterImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -51,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		{
 			var parsed = new TwitterScrapedPage();
 			//Iterate to update the pagination start point.
-			for (var min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.HasMoreItems); min = parsed.MinimumPosition)
+			for (string min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.HasMoreItems); min = parsed.MinimumPosition)
 			{
 				var query = $"https://twitter.com/i/profiles/show/{Username}/media_timeline" +
 					$"?include_available_features=1" +

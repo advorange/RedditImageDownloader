@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Moebooru.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -12,6 +13,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 	/// Downloads images from a Moebooru based website.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
+	[DownloaderName("Moebooru")]
 	public abstract class MoebooruImageDownloader<T> : ImageDownloader where T : MoebooruPost
 	{
 		/// <summary>
@@ -46,10 +48,9 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 		/// <summary>
 		/// Creats an instance of <see cref="MoebooruImageDownloader{T}"/>.
 		/// </summary>
-		/// <param name="name">The name of the website.</param>
 		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
 		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
-		public MoebooruImageDownloader(string name, int tagLimit, bool json = true) : base(name)
+		public MoebooruImageDownloader(int tagLimit, bool json = true)
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
 			{
@@ -79,7 +80,8 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 					return;
 				}
 
-				foreach (var post in (parsed = Parse(result.Value)))
+				parsed = Parse(result.Value);
+				foreach (var post in parsed)
 				{
 					if (post.CreatedAt < OldestAllowed)
 					{

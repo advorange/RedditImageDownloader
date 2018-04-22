@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql;
 using ImageDL.Classes.SettingParsing;
@@ -19,6 +20,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	/// <summary>
 	/// Downloads images from Instagram.
 	/// </summary>
+	[DownloaderName("Instagram")]
 	public sealed class InstagramImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(InstagramImageDownloader);
@@ -46,7 +48,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramImageDownloader"/>.
 		/// </summary>
-		public InstagramImageDownloader() : base("Instagram")
+		public InstagramImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
@@ -66,7 +68,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var rhx = "";
 			var parsed = new InstagramMediaTimeline();
 			//Iterate to update the pagination start point
-			for (var end = ""; list.Count < AmountOfPostsToGather && (end == "" || parsed.PageInfo.HasNextPage); end = parsed.PageInfo.EndCursor)
+			for (string end = ""; list.Count < AmountOfPostsToGather && (end == "" || parsed.PageInfo.HasNextPage); end = parsed.PageInfo.EndCursor)
 			{
 				//If the id is 0 either this just started or it was reset due to the key becoming invalid
 				if (id == 0UL)
@@ -91,7 +93,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					//If there's an error with the query hash, try to get another one
 					if (result.Value.Contains("query_hash"))
 					{
-						//Means the access token cannot be gotten
+						//Means the query hash cannot be gotten
 						if (!client.ApiKeys.ContainsKey(_Type))
 						{
 							return;
@@ -102,8 +104,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					return;
 				}
 
-				var insta = JsonConvert.DeserializeObject<InstagramResult>(result.Value);
-				foreach (var post in (parsed = insta.Data.User.Content).Posts)
+				parsed = JsonConvert.DeserializeObject<InstagramResult>(result.Value).Data.User.Content;
+				foreach (var post in parsed.Posts)
 				{
 					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
 					if (p.CreatedAt < OldestAllowed)

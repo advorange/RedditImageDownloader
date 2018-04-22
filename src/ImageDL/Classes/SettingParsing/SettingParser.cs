@@ -46,7 +46,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// Finds settings and then sets their value.
 		/// </summary>
 		/// <param name="input"></param>
-		public SettingsParseResult Parse(string input)
+		public SettingParserResults Parse(string input)
 		{
 			//Try to find the setting, will only use the first match, even if there are multiple matches
 			ISetting GetSetting(string part)
@@ -116,7 +116,7 @@ namespace ImageDL.Classes.SettingParsing
 					errors.Add(response);
 				}
 			}
-			return new SettingsParseResult(unusedParts, successes, errors, help);
+			return new SettingParserResults(unusedParts, successes, errors, help);
 		}
 		/// <summary>
 		/// Returns a string asking for unset settings.

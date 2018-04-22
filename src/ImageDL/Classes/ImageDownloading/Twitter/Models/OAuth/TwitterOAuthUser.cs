@@ -206,5 +206,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		[Obsolete]
 		[JsonProperty("notifications")]
 		public bool? Notifications { get; private set; }
+
+		/// <summary>
+		/// Returns the username and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Name} ({IdStr})";
+		}
 	}
 }

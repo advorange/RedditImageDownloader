@@ -47,9 +47,9 @@ namespace ImageDL.Windows
 			fcbm.CopyPixels(bytes, stride, 0);
 
 			var brightnesses = new List<float>();
-			for (var y = 0; y < fcbm.PixelHeight; ++y)
+			for (int y = 0; y < fcbm.PixelHeight; ++y)
 			{
-				for (var x = 0; x < fcbm.PixelWidth; ++x)
+				for (int x = 0; x < fcbm.PixelWidth; ++x)
 				{
 					var index = y * stride + x * pixelSize;
 					var r = bytes[index];

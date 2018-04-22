@@ -29,6 +29,7 @@ namespace ImageDL.Classes.ImageComparing
 		public bool TryStore(Uri url, FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
+			stream.Seek(0, SeekOrigin.Begin);
 			if (Images.TryGetValue(hash, out var value))
 			{
 				error = $"{url} had a matching hash with {value.File}.";

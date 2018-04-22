@@ -8,7 +8,7 @@ namespace ImageDL.Classes.SettingParsing
 	/// <summary>
 	/// Holds the results of parsing settings.
 	/// </summary>
-	public struct SettingsParseResult
+	public struct SettingParserResults
 	{
 		/// <summary>
 		/// Parts that were not used to set something.
@@ -32,13 +32,13 @@ namespace ImageDL.Classes.SettingParsing
 		public readonly bool IsSuccess;
 
 		/// <summary>
-		/// Creates an instance of <see cref="SettingsParseResult"/>.
+		/// Creates an instance of <see cref="SettingParserResults"/>.
 		/// </summary>
 		/// <param name="unusedParts"></param>
 		/// <param name="successes"></param>
 		/// <param name="errors"></param>
 		/// <param name="help"></param>
-		public SettingsParseResult(IEnumerable<string> unusedParts, IEnumerable<string> successes, IEnumerable<string> errors, IEnumerable<string> help)
+		public SettingParserResults(IEnumerable<string> unusedParts, IEnumerable<string> successes, IEnumerable<string> errors, IEnumerable<string> help)
 		{
 			UnusedParts = (unusedParts ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();
 			Successes = (successes ?? Enumerable.Empty<string>()).Where(x => x != null).ToImmutableArray();

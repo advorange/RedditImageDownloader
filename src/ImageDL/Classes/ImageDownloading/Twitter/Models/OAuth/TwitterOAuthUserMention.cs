@@ -33,5 +33,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("name")]
 		public string Name { get; private set; }
+
+		/// <summary>
+		/// Returns the username and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Name} ({IdStr})";
+		}
 	}
 }

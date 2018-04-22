@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
@@ -20,6 +21,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	/// <summary>
 	/// Downloads images from DeviantArt.
 	/// </summary>
+	[DownloaderName("DeviantArt")]
 	public sealed class DeviantArtImageDownloader : ImageDownloader
 	{
 		private const string SEARCH = "https://www.deviantartsupport.com/en/article/are-there-any-tricks-to-narrowing-down-a-search-on-deviantart";
@@ -67,7 +69,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.
 		/// </summary>
-		public DeviantArtImageDownloader() : base("DeviantArt")
+		public DeviantArtImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
 			{

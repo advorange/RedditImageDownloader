@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 using Newtonsoft.Json.Linq;
@@ -14,12 +15,13 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Safebooru
 	/// <summary>
 	/// Downloads images from Safebooru.
 	/// </summary>
+	[DownloaderName("Safebooru")]
 	public sealed class SafebooruImageDownloader : MoebooruImageDownloader<Model>
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="SafebooruImageDownloader"/>.
 		/// </summary>
-		public SafebooruImageDownloader() : base("Safebooru", int.MaxValue, false) { }
+		public SafebooruImageDownloader() : base(int.MaxValue, false) { }
 
 		/// <inheritdoc />
 		protected override Uri GenerateQuery(string tags, int page)

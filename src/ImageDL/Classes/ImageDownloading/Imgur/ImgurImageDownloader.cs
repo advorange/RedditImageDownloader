@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Imgur.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -16,6 +17,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	/// <summary>
 	/// Downloads images from Imgur.
 	/// </summary>
+	[DownloaderName("Imgur")]
 	public sealed class ImgurImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(ImgurImageDownloader);
@@ -34,7 +36,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <summary>
 		/// Creates an instance of <see cref="ImgurImageDownloader"/>.
 		/// </summary>
-		public ImgurImageDownloader() : base("Imgur")
+		public ImgurImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Tags) }, x => Tags = x)
 			{

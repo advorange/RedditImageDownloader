@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Vsco.Models;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
@@ -17,6 +18,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	/// <summary>
 	/// Downloads images from Vsco.
 	/// </summary>
+	[DownloaderName("Vsco")]
 	public sealed class VscoImageDownloader : ImageDownloader
 	{
 		private static readonly Type _Type = typeof(VscoImageDownloader);
@@ -35,7 +37,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <summary>
 		/// Creates an instance of <see cref="VscoImageDownloader"/>.
 		/// </summary>
-		public VscoImageDownloader() : base("Vsco")
+		public VscoImageDownloader()
 		{
 			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
 			{
