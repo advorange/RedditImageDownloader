@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,39 +6,57 @@ using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
+using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
 {
 	/// <summary>
 	/// Compare images so duplicates don't get downloaded or kept.
 	/// </summary>
-	public abstract class ImageComparer : IImageComparer
+	public abstract class ImageComparer : IImageComparer, IDisposable
 	{
-		/// <inheritdoc />
-		public int StoredImages => Images.Count;
-		/// <inheritdoc />
-		public int ThumbnailSize { get; set; } = 32;
+		/// <summary>
+		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
+		/// </summary>
+		protected int ThumbnailSize;
+		/// <summary>
+		/// The database holding all of the images.
+		/// </summary>
+		protected LiteDatabase Database;
 
 		/// <summary>
-		/// The images which have currently been cached.
+		/// Creates an instance of <see cref="ImageComparer"/>.
 		/// </summary>
-		protected ConcurrentDictionary<string, ImageDetails> Images = new ConcurrentDictionary<string, ImageDetails>();
+		/// <param name="databasePath">The path to the database. Cannot stay null.</param>
+		/// <param name="thumbnailSize">The size to make the thumbnail hashes.</param>
+		public ImageComparer(string databasePath, int thumbnailSize = 32)
+		{
+			databasePath = databasePath ?? throw new ArgumentException("The database directory cannot be null.");
+			Database = new LiteDatabase($"filename={databasePath};mode=exclusive;");
+			ThumbnailSize = thumbnailSize;
+		}
 
 		/// <inheritdoc />
-		public bool TryStore(Uri url, FileInfo file, Stream stream, int width, int height, out string error)
+		public bool TryStore(FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
-			stream.Seek(0, SeekOrigin.Begin);
-			if (Images.TryGetValue(hash, out var value))
+			var col = Database.GetCollection<ImageDetails>(GetCollectionName(file.Directory));
+			if (col.FindById(hash) is ImageDetails entry)
 			{
-				error = $"{url} had a matching hash with {value.File}.";
-				return false;
+				//Only return false if the file still exists
+				if (File.Exists(entry.FilePath))
+				{
+					error = $"had a matching hash with {entry.FilePath}.";
+					return false;
+				}
 			}
 
 			try
 			{
 				error = null;
-				return Images.TryAdd(hash, new ImageDetails(url, file, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
+				stream.Seek(0, SeekOrigin.Begin);
+				col.Upsert(new ImageDetails(hash, file.FullName, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
+				return true;
 			}
 			catch (Exception e)
 			{
@@ -53,31 +70,34 @@ namespace ImageDL.Classes.ImageComparing
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
 			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
-			var alreadyCached = Images.Select(x => x.Value.File.FullName);
+			var col = Database.GetCollection<ImageDetails>(GetCollectionName(directory));
+			col.Delete(x => !File.Exists(x.FilePath)); //Remove all that don't exist anymore
+			var alreadyCached = col.FindAll().Select(x => x.FilePath);
 			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.FullName))
-				.OrderBy(x => x.CreationTimeUtc).ToArray();
-			var len = files.Length;
-			var grouped = files.Select((file, index) => new { file, index })
+				.OrderBy(x => x.CreationTimeUtc)
+				.Select((file, index) => new { file, index })
 				.GroupBy(x => x.index / imagesPerThread)
 				.Select(g => g.Select(obj => obj.file));
+			var fileCount = files.Count();
 			var count = 0;
-			var tasks = grouped.Select(group => Task.Run(() =>
+			var toDelete = new List<FileInfo>();
+			await Task.WhenAll(files.Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
 				{
 					token.ThrowIfCancellationRequested();
 					try
 					{
-						if (!TryCreateImageDetailsFromFile(file, ThumbnailSize, out var md5hash, out var details))
+						if (!TryCreateImageDetailsFromFile(file.FullName, ThumbnailSize, out var newEntry))
 						{
 							ConsoleUtils.WriteLine($"Failed to create a cached object of {file}.");
 						}
-						//If the file is already in there, delete whichever is worse
-						else if (Images.TryGetValue(md5hash, out var alreadyStoredVal))
+						else if (col.FindById(newEntry.Hash) is ImageDetails entry) //Delete new entry
 						{
-							details.DetermineWhichToDelete(alreadyStoredVal);
+							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will delete {newEntry}.");
+							toDelete.Add(new FileInfo(newEntry.FilePath));
 						}
-						else if (!Images.TryAdd(md5hash, details))
+						else if (col.Insert(newEntry) == null)
 						{
 							ConsoleUtils.WriteLine($"Failed to cache {file}.");
 						}
@@ -88,56 +108,63 @@ namespace ImageDL.Classes.ImageComparing
 					}
 
 					var c = Interlocked.Increment(ref count);
-					if (c % 25 == 0 || c == len)
+					if (c % 25 == 0 || c == fileCount)
 					{
-						ConsoleUtils.WriteLine($"{Math.Min(c, len)}/{len} images cached.");
+						ConsoleUtils.WriteLine($"{Math.Min(c, fileCount)}/{fileCount} images cached.");
 					}
 				}
-			}, token));
-			await Task.WhenAll(tasks).CAF();
+			}, token))).CAF();
+			RecyclingUtils.MoveFiles(toDelete);
 		}
 		/// <inheritdoc />
-		public void DeleteDuplicates(Percentage matchPercentage)
+		public void DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
-			var kvps = new List<ImageDetails>(Images.Values);
-			var kvpCount = kvps.Count;
-			var filesToDelete = new List<FileInfo>();
-			for (int i = kvpCount - 1; i > 0; --i)
+			var col = Database.GetCollection<ImageDetails>(GetCollectionName(directory));
+			col.Delete(x => !File.Exists(x.FilePath)); //Remove all that don't exist anymore
+			var details = new List<ImageDetails>(col.FindAll());
+			var count = details.Count;
+			var toDelete = new List<FileInfo>();
+			for (int i = count - 1; i > 0; --i)
 			{
-				if (i % 25 == 0 || i == kvpCount - 1)
+				if (i % 25 == 0 || i == count - 1)
 				{
 					ConsoleUtils.WriteLine($"{i + 1} image(s) left to check for duplicates.");
 				}
 
-				var iVal = kvps[i];
+				var iVal = details[i];
 				for (int j = i - 1; j >= 0; --j)
 				{
-					var jVal = kvps[j];
+					var jVal = details[j];
 					if (!iVal.Equals(jVal, matchPercentage))
 					{
 						continue;
 					}
 
 					//Check once again but with a higher resolution
-					var resToCheck = new[] { iVal.Width, iVal.Height, jVal.Width, jVal.Height, 512 }.Min();
-					if (!TryCreateImageDetailsFromFile(iVal.File, resToCheck, out var md5Hashi, out var newIVal) ||
-						!TryCreateImageDetailsFromFile(jVal.File, resToCheck, out var md5Hashj, out var newJVal) ||
+					var res = new[] { iVal.Width, iVal.Height, jVal.Width, jVal.Height, 512 }.Min();
+					if (!TryCreateImageDetailsFromFile(iVal.FilePath, res, out var newIVal) ||
+						!TryCreateImageDetailsFromFile(jVal.FilePath, res, out var newJVal) ||
 						!newIVal.Equals(newJVal, matchPercentage))
 					{
 						continue;
 					}
 
-					var detailsToDelete = iVal.DetermineWhichToDelete(jVal);
-					ConsoleUtils.WriteLine($"Certain match between {iVal.File.Name} and {jVal.File.Name}. Will delete {detailsToDelete.File.Name}.");
-					kvps.Remove(detailsToDelete);
-					filesToDelete.Add(detailsToDelete.File);
+					var delete = (iVal.Width * iVal.Height) < (jVal.Width * jVal.Height) ? iVal : jVal;
+					ConsoleUtils.WriteLine($"Certain match between {iVal} and {jVal}. Will delete {delete}.");
+					col.Delete(delete.Hash);
+					details.Remove(delete);
+					toDelete.Add(new FileInfo(delete.FilePath));
 				}
 			}
-
-			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
-			ConsoleUtils.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
+			RecyclingUtils.MoveFiles(toDelete.Distinct());
+			ConsoleUtils.WriteLine($"{toDelete.Count} match(es) found and deleted.");
+		}
+		/// <inheritdoc />
+		public void Dispose()
+		{
+			Database.Dispose();
 		}
 		/// <summary>
 		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
@@ -149,29 +176,72 @@ namespace ImageDL.Classes.ImageComparing
 		/// <summary>
 		/// Attempts to create image details from a file.
 		/// </summary>
-		/// <param name="file">The file to cache.</param>
+		/// <param name="filePath">The file to cache.</param>
 		/// <param name="thumbnailSize">The size to create the thumbnail.</param>
-		/// <param name="md5Hash">The hash of the image's stream.</param>
 		/// <param name="details">The details of the image.</param>
 		/// <returns></returns>
-		private bool TryCreateImageDetailsFromFile(FileInfo file, int thumbnailSize, out string md5Hash, out ImageDetails details)
+		private bool TryCreateImageDetailsFromFile(string filePath, int thumbnailSize, out ImageDetails details)
 		{
 			//The second check is because for some reason file.Exists will be true when the file does NOT exist
-			if (!file.FullName.IsImagePath() || !File.Exists(file.FullName))
+			if (!filePath.IsImagePath() || !File.Exists(filePath))
 			{
-				md5Hash = null;
 				details = default;
 				return false;
 			}
 
-			using (var fs = file.OpenRead())
+			using (var fs = File.OpenRead(filePath))
 			{
-				md5Hash = fs.GetMD5Hash();
-				fs.Seek(0, SeekOrigin.Begin);
 				var (width, height) = fs.GetImageSize();
 				fs.Seek(0, SeekOrigin.Begin);
-				details = new ImageDetails(new Uri(file.FullName), file, width, height, GenerateThumbnailHash(fs, thumbnailSize));
+				var hash = fs.GetMD5Hash();
+				fs.Seek(0, SeekOrigin.Begin);
+				details = new ImageDetails(hash, filePath, width, height, GenerateThumbnailHash(fs, thumbnailSize));
 				return true;
+			}
+		}
+		/// <summary>
+		/// Puts the name in a valid format.
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <returns></returns>
+		private string GetCollectionName(DirectoryInfo directory)
+		{
+			var col = Database.GetCollection<DirectoryCollection>("DirectoryNames");
+			var entry = col.FindById(directory.FullName);
+			if (entry.DirectoryPath != null)
+			{
+				return entry.Guid.ToString();
+			}
+
+			var directoryCollection = new DirectoryCollection(directory);
+			col.Insert(directoryCollection);
+			return directoryCollection.Guid.ToString();
+		}
+
+		/// <summary>
+		/// Maps a directory path to a guid 
+		/// </summary>
+		private struct DirectoryCollection
+		{
+			/// <summary>
+			/// The path of the directory.
+			/// </summary>
+			[BsonId, BsonField("DirectoryPath")]
+			public string DirectoryPath { get; set; }
+			/// <summary>
+			/// The id of the collection.
+			/// </summary>
+			[BsonField("Guid")]
+			public Guid Guid { get; set; }
+
+			/// <summary>
+			/// Creates an instance of <see cref="DirectoryCollection"/>.
+			/// </summary>
+			/// <param name="directory"></param>
+			public DirectoryCollection(DirectoryInfo directory)
+			{
+				DirectoryPath = directory.FullName;
+				Guid = Guid.NewGuid();
 			}
 		}
 	}

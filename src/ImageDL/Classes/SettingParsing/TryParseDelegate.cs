@@ -1,11 +1,10 @@
 ﻿namespace ImageDL.Classes.SettingParsing
 {
 	/// <summary>
-	/// Delegate used to try parse something.
+	/// Attempts to convert the string to the supplied type.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="s"></param>
-	/// <param name="result"></param>
 	/// <returns></returns>
-	public delegate bool TryParseDelegate<T>(string s, out T result);
+	public delegate (bool Success, T Value) TryParseDelegate<T>(string s);
 }

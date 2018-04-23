@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
+using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
 {
@@ -11,38 +12,44 @@ namespace ImageDL.Classes.ImageComparing
 	public sealed class ImageDetails
 	{
 		/// <summary>
-		/// The location of the source of the image.
+		/// The Md5 hash of the image. This is used as a key in the database.
 		/// </summary>
-		public Uri Url { get; private set; }
+		[BsonId, BsonField("Hash")]
+		public string Hash { get; set; }
 		/// <summary>
 		/// The location the image was saved to.
 		/// </summary>
-		public FileInfo File { get; private set; }
+		[BsonField("FilePath")]
+		public string FilePath { get; set; }
 		/// <summary>
 		/// The image's width;
 		/// </summary>
-		public int Width { get; private set; }
+		[BsonField("Width")]
+		public int Width { get; set; }
 		/// <summary>
 		/// The image's height;
 		/// </summary>
-		public int Height { get; private set; }
+		[BsonField("Height")]
+		public int Height { get; set; }
 		/// <summary>
 		/// The hash of the image's thumbnail in boolean form.
 		/// </summary>
-		public ImmutableArray<bool> HashedThumbnail { get; private set; }
+		[BsonField("HashedThumbnail")]
+		public IList<bool> HashedThumbnail { get; set; }
 		/// <summary>
 		/// The size of the image's thumbnail (the thumbnail is a square).
 		/// </summary>
-		public int ThumbnailSize { get; private set; }
+		[BsonIgnore]
+		public int ThumbnailSize => (int)Math.Ceiling(Math.Sqrt(HashedThumbnail.Count));
 
-		internal ImageDetails(Uri url, FileInfo file, int width, int height, IEnumerable<bool> hashedThumbnail)
+		internal ImageDetails() { }
+		internal ImageDetails(string md5, string filePath, int width, int height, IEnumerable<bool> hashedThumbnail)
 		{
-			Url = url;
-			File = file;
+			Hash = md5;
+			FilePath = filePath;
 			Width = width;
 			Height = height;
-			HashedThumbnail = hashedThumbnail.ToImmutableArray();
-			ThumbnailSize = (int)Math.Ceiling(Math.Sqrt(HashedThumbnail.Length));
+			HashedThumbnail = hashedThumbnail.ToList();
 		}
 
 		/// <summary>
@@ -79,18 +86,14 @@ namespace ImageDL.Classes.ImageComparing
 			}
 			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= matchPercentage.Value;
 		}
+
 		/// <summary>
-		/// Attempts to delete either this or the other image details. Whichever is lower res will be deleted and then returned.
+		/// Returns the file name.
 		/// </summary>
-		/// <param name="other">The other image details to compare and delete.</param>
 		/// <returns></returns>
-		public ImageDetails DetermineWhichToDelete(ImageDetails other)
+		public override string ToString()
 		{
-			//Delete/remove whatever is the smaller image
-			var firstPix = Width * Height;
-			var secondPix = other.Width * other.Height;
-			//If each image has the same pixel count then go by file creation time, if not then just go by pixel count
-			return (firstPix == secondPix ? File?.CreationTimeUtc < other.File?.CreationTimeUtc : firstPix < secondPix) ? this : other;
+			return Path.GetFileName(FilePath);
 		}
 	}
 }

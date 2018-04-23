@@ -25,22 +25,19 @@ namespace ImageDL.Classes.ImageDownloading
 		private static readonly string NLT = NL + "\t";
 
 		/// <summary>
-		/// The directory to save images to.
+		/// The path of the directory to save images to.
 		/// </summary>
-		public string Directory
+		public string SavePath
 		{
-			get => _Directory;
+			get => _SavePath;
 			set
 			{
 				if (!_CreateDirectory && !System.IO.Directory.Exists(value))
 				{
-					throw new ArgumentException($"{value} is not already created and -cd has not been used.", nameof(Directory));
+					throw new ArgumentException($"{value} is not already created and -cd has not been used.", nameof(SavePath));
 				}
-				else if (System.IO.Directory.CreateDirectory(value) is null)
-				{
-					throw new ArgumentException($"{value} is an invalid directory name.", nameof(Directory));
-				}
-				_Directory = value;
+				var dir = System.IO.Directory.CreateDirectory(value);
+				_SavePath = dir.FullName ?? throw new ArgumentException($"{value} is an invalid directory name.", nameof(SavePath));
 			}
 		}
 		/// <summary>
@@ -116,14 +113,6 @@ namespace ImageDL.Classes.ImageDownloading
 			set => _MaxAspectRatio = value;
 		}
 		/// <summary>
-		/// Indicates whether or not to add already saved images to the cache before downloading images.
-		/// </summary>
-		public bool CompareSavedImages
-		{
-			get => _CompareSavedImages;
-			set => _CompareSavedImages = value;
-		}
-		/// <summary>
 		/// Indicates whether or not to create the directory if it does not exist.
 		/// </summary>
 		public bool CreateDirectory
@@ -143,6 +132,10 @@ namespace ImageDL.Classes.ImageDownloading
 		/// The datetime of the oldest allowed posts. Is simply <see cref="DateTime.UtcNow"/> minus the amount of days.
 		/// </summary>
 		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
+		/// <summary>
+		/// The directory to save images to.
+		/// </summary>
+		public DirectoryInfo Directory => new DirectoryInfo(SavePath);
 		/// <inheritdoc />
 		public SettingParser SettingParser => _SettingParser;
 		/// <inheritdoc />
@@ -153,7 +146,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		protected List<ContentLink> Links = new List<ContentLink>();
 
-		private string _Directory;
+		private string _SavePath;
 		private int _AmountOfPostsToGather;
 		private int _MinWidth;
 		private int _MinHeight;
@@ -163,7 +156,6 @@ namespace ImageDL.Classes.ImageDownloading
 		private int _MinScore;
 		private AspectRatio _MinAspectRatio;
 		private AspectRatio _MaxAspectRatio;
-		private bool _CompareSavedImages;
 		private bool _CreateDirectory;
 		private bool _Start;
 		private SettingParser _SettingParser;
@@ -175,7 +167,7 @@ namespace ImageDL.Classes.ImageDownloading
 		{
 			_SettingParser = new SettingParser(new[] { "--", "-", "/" })
 			{
-				new Setting<string>(new[] { nameof(Directory), "dir" }, x => Directory = x)
+				new Setting<string>(new[] { nameof(SavePath), "path", "dir" }, x => SavePath = x)
 				{
 					Description = "The directory to save to.",
 				},
@@ -195,7 +187,8 @@ namespace ImageDL.Classes.ImageDownloading
 				{
 					Description = "The oldest an image can be before it won't be saved.",
 				},
-				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x, Percentage.TryParse)
+				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x,
+					s => (Percentage.TryParse(s, out var result), result))
 				{
 					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
 					DefaultValue = new Percentage(1),
@@ -210,21 +203,17 @@ namespace ImageDL.Classes.ImageDownloading
 					Description = "The minimum score for an image to have before being ignored.",
 					IsOptional = true,
 				},
-				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x, AspectRatio.TryParse)
+				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x,
+					s => (AspectRatio.TryParse(s, out var result), result))
 				{
 					Description = "The minimum aspect ratio for an image to have before being ignored.",
 					DefaultValue = new AspectRatio(0, 1),
 				},
-				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x, AspectRatio.TryParse)
+				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x, 
+					s => (AspectRatio.TryParse(s, out var result), result))
 				{
 					Description = "The maximum aspect ratio for an image to have before being ignored.",
 					DefaultValue = new AspectRatio(1, 0),
-				},
-				new Setting<bool>(new[] {nameof(CompareSavedImages), "csi" }, x => CompareSavedImages = x)
-				{
-					Description = "Whether or not to compare to already saved images.",
-					IsFlag = true,
-					IsOptional = true,
 				},
 				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
 				{
@@ -313,16 +302,17 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 			}
 
-			if (comparer != null && comparer.StoredImages > 0)
+			if (comparer != null)
 			{
-				if (CompareSavedImages)
+				ConsoleUtils.WriteLine("");
+				await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token);
+				ConsoleUtils.WriteLine("");
+				comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
+				ConsoleUtils.WriteLine("");
+				if (comparer is IDisposable disposable)
 				{
-					ConsoleUtils.WriteLine("");
-					await comparer.CacheSavedFilesAsync(new DirectoryInfo(Directory), ImagesCachedPerThread, token);
+					disposable.Dispose();
 				}
-				ConsoleUtils.WriteLine("");
-				comparer.DeleteDuplicates(MaxImageSimilarity);
-				ConsoleUtils.WriteLine("");
 			}
 			if (Links.Any())
 			{
@@ -339,7 +329,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <returns>A text response indicating what happened to the uri.</returns>
 		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, IPost post, Uri url)
 		{
-			var file = post.GenerateFileInfo(new DirectoryInfo(Directory), url);
+			var file = post.GenerateFileInfo(Directory, url);
 			if (File.Exists(file.FullName))
 			{
 				return new Response("Already Saved", $"{url} is already saved as {file}.", false);
@@ -380,11 +370,10 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 				//If the image comparer returns any errors when trying to store, then return that error
 				ms.Seek(0, SeekOrigin.Begin);
-				if (comparer != null && !comparer.TryStore(url, file, ms, width, height, out var cachingError))
+				if (comparer != null && !comparer.TryStore(file, ms, width, height, out var cachingError))
 				{
-					return new Response("Unable To Cache", cachingError, false);
+					return new Response("Unable To Cache", $"{url} {cachingError}", false);
 				}
-
 				//Save the file
 				ms.Seek(0, SeekOrigin.Begin);
 				await ms.CopyToAsync(fs = file.Create()).CAF();
@@ -437,7 +426,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		protected int SaveStoredContentLinks()
 		{
-			var file = new FileInfo(Path.Combine(Directory, "Links.txt"));
+			var file = new FileInfo(Path.Combine(SavePath, "Links.txt"));
 			var links = Links.GroupBy(x => x.Url).Select(x => x.First()).ToList();
 			//Only read once, make sure no duplicate uris will be added
 			if (file.Exists)
@@ -462,7 +451,6 @@ namespace ImageDL.Classes.ImageDownloading
 					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Url}");
 				return $"{g.Key.ToString().FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
 			});
-			//Only write for a short time
 			using (var writer = file.AppendText())
 			{
 				foreach (var line in groups)
@@ -488,7 +476,8 @@ namespace ImageDL.Classes.ImageDownloading
 			list.Add(post);
 			if (list.Count % 25 == 0)
 			{
-				ConsoleUtils.WriteLine($"{list.Count} {GetType().GetCustomAttribute<DownloaderNameAttribute>().Name} posts found.");
+				var name = GetType().GetCustomAttribute<DownloaderNameAttribute>()?.Name;
+				ConsoleUtils.WriteLine($"{list.Count}{(name != null ? $" {name}" : "")} posts found.");
 			}
 			return list.Count < AmountOfPostsToGather;
 		}

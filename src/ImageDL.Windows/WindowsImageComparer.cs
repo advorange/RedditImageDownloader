@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageDL.Classes.ImageComparing;
-using Media = System.Windows.Media;
 
 namespace ImageDL.Windows
 {
@@ -12,7 +12,15 @@ namespace ImageDL.Windows
 	/// </summary>
 	public sealed class WindowsImageComparer : ImageComparer
 	{
-		private static readonly Media.PixelFormat PIXEL_FORMAT = Media.PixelFormats.Bgra32;
+		/// <summary>
+		/// Creates an instance of <see cref="WindowsImageComparer"/> with the database path as a file in the current directory.
+		/// </summary>
+		public WindowsImageComparer() : this(Path.Combine(Directory.GetCurrentDirectory(), "ImageComparer.db")) { }
+		/// <summary>
+		/// Creates an instance of <see cref="WindowsImageComparer"/>
+		/// </summary>
+		/// <param name="databasePath"></param>
+		public WindowsImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
 		protected override IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
@@ -35,13 +43,13 @@ namespace ImageDL.Windows
 			var fcbm = new FormatConvertedBitmap();
 			fcbm.BeginInit();
 			fcbm.Source = bmi;
-			fcbm.DestinationFormat = PIXEL_FORMAT;
+			fcbm.DestinationFormat = PixelFormats.Bgra32;
 			fcbm.EndInit();
 			fcbm.Freeze();
 
 			//Copy the image's data to a new array
 			//Mostly gotten from here https://social.msdn.microsoft.com/Forums/vstudio/en-US/82a5731e-e201-4aaf-8d4b-062b138338fe/getting-pixel-information-from-a-bitmapimage?forum=wpf
-			var pixelSize = PIXEL_FORMAT.BitsPerPixel / 8;
+			var pixelSize = PixelFormats.Bgra32.BitsPerPixel / 8;
 			var stride = fcbm.PixelWidth * pixelSize;
 			var bytes = new byte[fcbm.PixelHeight * stride];
 			fcbm.CopyPixels(bytes, stride, 0);

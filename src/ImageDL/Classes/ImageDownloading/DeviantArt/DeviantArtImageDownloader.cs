@@ -85,7 +85,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			{
 				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
 			});
-			SettingParser.Add(new Setting<GatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, EnumParsingUtils.TryParseEnumCaseIns)
+			SettingParser.Add(new Setting<GatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out GatheringMethod result), result))
 			{
 				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});

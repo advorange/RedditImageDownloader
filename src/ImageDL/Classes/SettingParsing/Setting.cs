@@ -93,10 +93,15 @@ namespace ImageDL.Classes.SettingParsing
 			{
 				result = default;
 			}
-			if (!_Parser(value, out result))
+			else
 			{
-				response = $"Unable to convert '{value}' to type {typeof(T).Name}.";
-				return false;
+				var (Success, Value) = _Parser(value);
+				if (!Success)
+				{
+					response = $"Unable to convert '{value}' to type {typeof(T).Name}.";
+					return false;
+				}
+				result = Value;
 			}
 			if (result == null && CannotBeNull)
 			{
@@ -135,34 +140,34 @@ namespace ImageDL.Classes.SettingParsing
 			switch (typeof(T).Name)
 			{
 				case nameof(SByte):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<sbyte>(sbyte.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<sbyte>(s => (sbyte.TryParse(s, out var result), result));
 				case nameof(Byte):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<byte>(byte.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<byte>(s => (byte.TryParse(s, out var result), result));
 				case nameof(Int16):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<short>(short.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<short>(s => (short.TryParse(s, out var result), result));
 				case nameof(UInt16):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<ushort>(ushort.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<ushort>(s => (ushort.TryParse(s, out var result), result));
 				case nameof(Int32):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<int>(int.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<int>(s => (int.TryParse(s, out var result), result));
 				case nameof(UInt32):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<uint>(uint.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<uint>(s => (uint.TryParse(s, out var result), result));
 				case nameof(Int64):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<long>(long.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<long>(s => (long.TryParse(s, out var result), result));
 				case nameof(UInt64):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<ulong>(ulong.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<ulong>(s => (ulong.TryParse(s, out var result), result));
 				case nameof(Char):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<char>(char.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<char>(s => (char.TryParse(s, out var result), result));
 				case nameof(Single):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<float>(float.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<float>(s => (float.TryParse(s, out var result), result));
 				case nameof(Double):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<double>(double.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<double>(s => (double.TryParse(s, out var result), result));
 				case nameof(Boolean):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<bool>(bool.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<bool>(s => (bool.TryParse(s, out var result), result));
 				case nameof(Decimal):
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<decimal>(decimal.TryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<decimal>(s => (decimal.TryParse(s, out var result), result));
 				case nameof(String):
 					//Instead of having to do special checks, just use this dumb delegate
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<string>(StringTryParse);
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<string>(s => (StringTryParse(s, out var result), result));
 				default:
 					throw new ArgumentException($"Unable to find a primitive converter for the supplied type {typeof(T).Name}.");
 			}

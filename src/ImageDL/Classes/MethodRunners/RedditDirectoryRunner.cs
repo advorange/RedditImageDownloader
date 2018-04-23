@@ -25,7 +25,7 @@ namespace ImageDL.Classes.MethodRunners
 				{
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(arguments).ToString());
 					downloader.Subreddit = dir.Name;
-					downloader.Directory = dir.FullName;
+					downloader.SavePath = dir.FullName;
 				}
 				while (!downloader.CanStart)
 				{
