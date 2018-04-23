@@ -223,7 +223,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 					//If there's an error with the access token, try to get another one
 					if (result.Value.Contains("access_token"))
 					{
-						//TODO: change how key is set
 						//Means the access token cannot be gotten
 						if (!client.ApiKeys.ContainsKey(_Type))
 						{

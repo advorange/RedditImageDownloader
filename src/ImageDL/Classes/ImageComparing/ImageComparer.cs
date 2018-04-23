@@ -28,11 +28,11 @@ namespace ImageDL.Classes.ImageComparing
 		/// Creates an instance of <see cref="ImageComparer"/>.
 		/// </summary>
 		/// <param name="databasePath">The path to the database. Cannot stay null.</param>
-		/// <param name="thumbnailSize">The size to make the thumbnail hashes.</param>
+		/// <param name="thumbnailSize">The width and height to make the thumbnail hashes.</param>
 		public ImageComparer(string databasePath, int thumbnailSize = 32)
 		{
 			databasePath = databasePath ?? throw new ArgumentException("The database directory cannot be null.");
-			Database = new LiteDatabase($"filename={databasePath};mode=exclusive;");
+			Database = new LiteDatabase($"filename={databasePath};mode=exclusive;password=123;");
 			ThumbnailSize = thumbnailSize;
 		}
 
@@ -40,7 +40,7 @@ namespace ImageDL.Classes.ImageComparing
 		public bool TryStore(FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
-			var col = Database.GetCollection<ImageDetails>(GetCollectionName(file.Directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(file.Directory));
 			if (col.FindById(hash) is ImageDetails entry)
 			{
 				//Only return false if the file still exists
@@ -48,6 +48,12 @@ namespace ImageDL.Classes.ImageComparing
 				{
 					error = $"had a matching hash with {entry.FilePath}.";
 					return false;
+				}
+				else
+				{
+					error = null;
+					col.Upsert(new ImageDetails(hash, file.FullName, width, height, entry.HashedThumbnail));
+					return true;
 				}
 			}
 
@@ -70,7 +76,7 @@ namespace ImageDL.Classes.ImageComparing
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
 			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
-			var col = Database.GetCollection<ImageDetails>(GetCollectionName(directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(directory));
 			col.Delete(x => !File.Exists(x.FilePath)); //Remove all that don't exist anymore
 			var alreadyCached = col.FindAll().Select(x => x.FilePath);
 			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.FullName))
@@ -97,9 +103,9 @@ namespace ImageDL.Classes.ImageComparing
 							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will delete {newEntry}.");
 							toDelete.Add(new FileInfo(newEntry.FilePath));
 						}
-						else if (col.Insert(newEntry) == null)
+						else
 						{
-							ConsoleUtils.WriteLine($"Failed to cache {file}.");
+							col.Upsert(newEntry);
 						}
 					}
 					catch (ArgumentException)
@@ -114,14 +120,14 @@ namespace ImageDL.Classes.ImageComparing
 					}
 				}
 			}, token))).CAF();
-			RecyclingUtils.MoveFiles(toDelete);
+			RecyclingUtils.MoveFiles(toDelete.Distinct());
 		}
 		/// <inheritdoc />
 		public void DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
-			var col = Database.GetCollection<ImageDetails>(GetCollectionName(directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(directory));
 			col.Delete(x => !File.Exists(x.FilePath)); //Remove all that don't exist anymore
 			var details = new List<ImageDetails>(col.FindAll());
 			var count = details.Count;
@@ -164,7 +170,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <inheritdoc />
 		public void Dispose()
 		{
-			Database.Dispose();
+			Database?.Dispose();
 		}
 		/// <summary>
 		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
@@ -189,13 +195,13 @@ namespace ImageDL.Classes.ImageComparing
 				return false;
 			}
 
-			using (var fs = File.OpenRead(filePath))
+			using (var stream = File.OpenRead(filePath))
 			{
-				var (width, height) = fs.GetImageSize();
-				fs.Seek(0, SeekOrigin.Begin);
-				var hash = fs.GetMD5Hash();
-				fs.Seek(0, SeekOrigin.Begin);
-				details = new ImageDetails(hash, filePath, width, height, GenerateThumbnailHash(fs, thumbnailSize));
+				var (width, height) = stream.GetImageSize();
+				stream.Seek(0, SeekOrigin.Begin);
+				var hash = stream.GetMD5Hash();
+				stream.Seek(0, SeekOrigin.Begin);
+				details = new ImageDetails(hash, filePath, width, height, GenerateThumbnailHash(stream, thumbnailSize));
 				return true;
 			}
 		}
@@ -204,11 +210,10 @@ namespace ImageDL.Classes.ImageComparing
 		/// </summary>
 		/// <param name="directory"></param>
 		/// <returns></returns>
-		private string GetCollectionName(DirectoryInfo directory)
+		private string GetDirectoryTable(DirectoryInfo directory)
 		{
 			var col = Database.GetCollection<DirectoryCollection>("DirectoryNames");
-			var entry = col.FindById(directory.FullName);
-			if (entry.DirectoryPath != null)
+			if (col.FindById(directory.FullName) is DirectoryCollection entry)
 			{
 				return entry.Guid.ToString();
 			}
@@ -221,7 +226,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <summary>
 		/// Maps a directory path to a guid 
 		/// </summary>
-		private struct DirectoryCollection
+		private sealed class DirectoryCollection
 		{
 			/// <summary>
 			/// The path of the directory.
@@ -237,8 +242,16 @@ namespace ImageDL.Classes.ImageComparing
 			/// <summary>
 			/// Creates an instance of <see cref="DirectoryCollection"/>.
 			/// </summary>
+			internal DirectoryCollection()
+			{
+				DirectoryPath = null;
+				Guid = Guid.Empty;
+			}
+			/// <summary>
+			/// Creates an instance of <see cref="DirectoryCollection"/>.
+			/// </summary>
 			/// <param name="directory"></param>
-			public DirectoryCollection(DirectoryInfo directory)
+			internal DirectoryCollection(DirectoryInfo directory)
 			{
 				DirectoryPath = directory.FullName;
 				Guid = Guid.NewGuid();

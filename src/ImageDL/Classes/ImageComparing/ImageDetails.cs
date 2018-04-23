@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ImageDL.Interfaces;
 using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
@@ -9,7 +10,7 @@ namespace ImageDL.Classes.ImageComparing
 	/// <summary>
 	/// Holds information about an image.
 	/// </summary>
-	public sealed class ImageDetails
+	public sealed class ImageDetails : ISize
 	{
 		/// <summary>
 		/// The Md5 hash of the image. This is used as a key in the database.
@@ -21,14 +22,10 @@ namespace ImageDL.Classes.ImageComparing
 		/// </summary>
 		[BsonField("FilePath")]
 		public string FilePath { get; set; }
-		/// <summary>
-		/// The image's width;
-		/// </summary>
+		/// <inheritdoc />
 		[BsonField("Width")]
 		public int Width { get; set; }
-		/// <summary>
-		/// The image's height;
-		/// </summary>
+		/// <inheritdoc />
 		[BsonField("Height")]
 		public int Height { get; set; }
 		/// <summary>
