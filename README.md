@@ -1,7 +1,8 @@
 # ImageDL
 Mass download images from websites and compare for duplicates.
 
-Right now there is only a Windows version, but any other operating system that supports .Net Core/Standard only needs an implementation of the picture hashing.
+The image comparer database is a LiteDB database. There should not be any reason to edit the database, but if you need to, the password is "123".
+Right now there is only a Windows version, but any other operating system that supports .Net Core/Standard only needs an implementation of the picture bool hashing.
 
 **Currently supports:**
 * 4chan

@@ -18,10 +18,10 @@ namespace ImageDL.Classes.ImageComparing
 		[BsonId, BsonField("Hash")]
 		public string Hash { get; set; }
 		/// <summary>
-		/// The location the image was saved to.
+		/// The name of the file. This does not involve the directory.
 		/// </summary>
-		[BsonField("FilePath")]
-		public string FilePath { get; set; }
+		[BsonField("FileName")]
+		public string FileName { get; set; }
 		/// <inheritdoc />
 		[BsonField("Width")]
 		public int Width { get; set; }
@@ -40,10 +40,10 @@ namespace ImageDL.Classes.ImageComparing
 		public int ThumbnailSize => (int)Math.Ceiling(Math.Sqrt(HashedThumbnail.Count));
 
 		internal ImageDetails() { }
-		internal ImageDetails(string md5, string filePath, int width, int height, IEnumerable<bool> hashedThumbnail)
+		internal ImageDetails(string md5, string fileName, int width, int height, IEnumerable<bool> hashedThumbnail)
 		{
 			Hash = md5;
-			FilePath = filePath;
+			FileName = fileName;
 			Width = width;
 			Height = height;
 			HashedThumbnail = hashedThumbnail.ToList();
@@ -90,7 +90,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return Path.GetFileName(FilePath);
+			return FileName;
 		}
 	}
 }
