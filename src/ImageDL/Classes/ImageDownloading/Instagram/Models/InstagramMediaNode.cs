@@ -177,7 +177,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 			}
 			return VideoUrl != null
 				? ImageResponse.FromAnimated(VideoUrl)
-				: ImageResponse.FromUrl(PostUrl);
+				: ImageResponse.FromUrl(DisplayUrl);
 		}
 		/// <summary>
 		/// Returns the shortcode and type name.

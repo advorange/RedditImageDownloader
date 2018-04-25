@@ -78,16 +78,17 @@ namespace ImageDL.Classes.ImageComparing
 			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
 			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
-			var alreadyCached = col.FindAll().Select(x => x.FileName);
-			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name))
-				.OrderBy(x => x.CreationTimeUtc)
-				.Select((file, index) => new { File=file, Index=index })
+			var alreadyCached = col.FindAll().Select(x => x.FileName).ToList();
+			var files = directory.GetFiles().ToList();
+			var needToCache = files.Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name));
+			var ordered = needToCache.OrderBy(x => x.CreationTimeUtc);
+			var grouped = ordered.Select((file, index) => new { File=file, Index=index })
 				.GroupBy(x => x.Index / imagesPerThread)
 				.Select(g => g.Select(o => o.File));
 			var fileCount = files.Count();
 			var count = 0;
 			var filesToDelete = new List<FileInfo>();
-			await Task.WhenAll(files.Select(group => Task.Run(() =>
+			await Task.WhenAll(grouped.Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
 				{
@@ -129,7 +130,7 @@ namespace ImageDL.Classes.ImageComparing
 			//Start at the top and work the way down
 			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
-			var details = new List<ImageDetails>(col.FindAll());
+			var details = new List<ImageDetails>(col.FindAll().ToList());
 			var count = details.Count;
 			var filesToDelete = new List<FileInfo>();
 			for (int i = count - 1; i > 0; --i)
