@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Pixiv.Models;
@@ -23,6 +28,10 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 		private static readonly string _ClientId = "bYGKuGVw91e0NMfPGp44euvGt59s";
 		private static readonly string _ClientSecret = "HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK";
 		private static readonly Type _Type = typeof(PixivImageDownloader);
+		//Find _p0_ in a url so we can remove the stuff after it like _master1200
+		private static readonly Regex _FindP = new Regex(@"_p(\d*?)_", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		//Remove size arguments from an image (i.e. /c/600x600/ is saying to have a 600x600 image which we don't want)
+		private static readonly Regex _RemoveC = new Regex(@"\/c\/(\d*?)x(\d*?)\/", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		/// The username to login with.
@@ -168,6 +177,78 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				var expiresIn = TimeSpan.FromSeconds(jObj["response"]["expires_in"].ToObject<int>());
 				return (client.ApiKeys[_Type] = new ApiKey(accessToken, expiresIn));
 			}
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetPixivImagesAsync(IImageDownloaderClient client, Uri url)
+		{
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			if (!(HttpUtility.ParseQueryString(url.Query)["illust_id"] is string id))
+			{
+				return ImageResponse.FromUrl(url);
+			}
+			var mangaQuery = new Uri($"https://www.pixiv.net/member_illust.php?mode=manga&illust_id={id}");
+			var mangaResult = await client.GetHtmlAsync(() => client.GenerateReq(mangaQuery)).CAF();
+			if (mangaResult.IsSuccess)
+			{
+				//18+ filter
+				if (mangaResult.Value.DocumentNode.Descendants("p").Any(x => x.HasClass("title") && x.InnerText.Contains("R-18")))
+				{
+					return ImageResponse.FromException(url, new InvalidOperationException("Locked behind R18 filter."));
+				}
+
+				var div = mangaResult.Value.DocumentNode.Descendants("div");
+				var itemContainer = div.Where(x => x.GetAttributeValue("class", "") == "item-container");
+				var images = itemContainer.Select(x => x.Descendants("img").Single());
+				var imageUrls = images.Select(x => new Uri(FixPixivUrl(x.GetAttributeValue("data-src", ""))));
+				return ImageResponse.FromImages(imageUrls);
+			}
+			var mediumQuery = new Uri($"https://www.pixiv.net/member_illust.php?mode=medium&illust_id={id}");
+			var mediumResult = await client.GetHtmlAsync(() => client.GenerateReq(mediumQuery)).CAF();
+			if (mediumResult.IsSuccess)
+			{
+				//18+ filter
+				if (mediumResult.Value.DocumentNode.Descendants("p").Any(x => x.HasClass("title") && x.InnerText.Contains("R-18")))
+				{
+					return ImageResponse.FromException(url, new InvalidOperationException("Locked behind R18 filter."));
+				}
+
+				var div = mediumResult.Value.DocumentNode.Descendants("div");
+				var imgContainer = div.Single(x => x.GetAttributeValue("class", "") == "img-container");
+				var img = imgContainer.Descendants("img").Single();
+				var imageUrl = new Uri(FixPixivUrl(img.GetAttributeValue("src", "")));
+				return ImageResponse.FromUrl(imageUrl);
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+		/// <summary>
+		/// Removes arguments that make the picture smaller.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		private static string FixPixivUrl(string url)
+		{
+			//Converts top to bottom. If already in bottom format, then just return that
+			//https://i.pximg.net/img-master/img/2018/04/05/17/15/28/68087246_p0_master1200.png
+			//https://i.pximg.net/img-original/img/2018/04/05/17/15/28/68087246_p0.png
+			if (url.Contains("img-original"))
+			{
+				return url;
+			}
+			var pMatch = _FindP.Match(url);
+			if (pMatch.Index > -1)
+			{
+				url = $"{url.Substring(0, pMatch.Index + pMatch.Length - 1)}{Path.GetExtension(url)}";
+			}
+			return _RemoveC.Replace(url, "/").Replace("img-master", "img-original");
 		}
 	}
 }

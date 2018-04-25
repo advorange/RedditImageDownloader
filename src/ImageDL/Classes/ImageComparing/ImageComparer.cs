@@ -40,7 +40,7 @@ namespace ImageDL.Classes.ImageComparing
 		public bool TryStore(FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(file.Directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(file.Directory));
 			if (col.FindById(hash) is ImageDetails entry)
 			{
 				//Only return false if the file still exists
@@ -76,17 +76,17 @@ namespace ImageDL.Classes.ImageComparing
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
 			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var alreadyCached = col.FindAll().Select(x => x.FileName);
 			var files = directory.GetFiles().Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name))
 				.OrderBy(x => x.CreationTimeUtc)
-				.Select((file, index) => new { file, index })
-				.GroupBy(x => x.index / imagesPerThread)
-				.Select(g => g.Select(obj => obj.file));
+				.Select((file, index) => new { File=file, Index=index })
+				.GroupBy(x => x.Index / imagesPerThread)
+				.Select(g => g.Select(o => o.File));
 			var fileCount = files.Count();
 			var count = 0;
-			var toDelete = new List<FileInfo>();
+			var filesToDelete = new List<FileInfo>();
 			await Task.WhenAll(files.Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
@@ -101,7 +101,7 @@ namespace ImageDL.Classes.ImageComparing
 						else if (col.FindById(newEntry.Hash) is ImageDetails entry) //Delete new entry
 						{
 							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will delete {newEntry}.");
-							toDelete.Add(new FileInfo(Path.Combine(directory.FullName, newEntry.FileName)));
+							filesToDelete.Add(new FileInfo(Path.Combine(directory.FullName, newEntry.FileName)));
 						}
 						else
 						{
@@ -116,22 +116,22 @@ namespace ImageDL.Classes.ImageComparing
 					var c = Interlocked.Increment(ref count);
 					if (c % 25 == 0 || c == fileCount)
 					{
-						ConsoleUtils.WriteLine($"{Math.Min(c, fileCount)}/{fileCount} images cached.");
+						ConsoleUtils.WriteLine($"{c}/{fileCount} images cached.");
 					}
 				}
 			}, token))).CAF();
-			RecyclingUtils.MoveFiles(toDelete.Distinct());
+			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
 		}
 		/// <inheritdoc />
 		public void DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryTable(directory));
+			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var details = new List<ImageDetails>(col.FindAll());
 			var count = details.Count;
-			var toDelete = new List<FileInfo>();
+			var filesToDelete = new List<FileInfo>();
 			for (int i = count - 1; i > 0; --i)
 			{
 				if (i % 25 == 0 || i == count - 1)
@@ -161,11 +161,11 @@ namespace ImageDL.Classes.ImageComparing
 					ConsoleUtils.WriteLine($"Certain match between {iVal} and {jVal}. Will delete {delete}.");
 					col.Delete(delete.Hash);
 					details.Remove(delete);
-					toDelete.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));
+					filesToDelete.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));
 				}
 			}
-			RecyclingUtils.MoveFiles(toDelete.Distinct());
-			ConsoleUtils.WriteLine($"{toDelete.Count} match(es) found and deleted.");
+			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
+			ConsoleUtils.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
 		}
 		/// <inheritdoc />
 		public void Dispose()
@@ -210,7 +210,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// </summary>
 		/// <param name="directory"></param>
 		/// <returns></returns>
-		private string GetDirectoryTable(DirectoryInfo directory)
+		private string GetDirectoryCollectionName(DirectoryInfo directory)
 		{
 			var col = Database.GetCollection<DirectoryCollection>("DirectoryNames");
 			if (col.FindById(directory.FullName) is DirectoryCollection entry)
@@ -242,11 +242,7 @@ namespace ImageDL.Classes.ImageComparing
 			/// <summary>
 			/// Creates an instance of <see cref="DirectoryCollection"/>.
 			/// </summary>
-			internal DirectoryCollection()
-			{
-				DirectoryPath = null;
-				Guid = Guid.Empty;
-			}
+			internal DirectoryCollection() { }
 			/// <summary>
 			/// Creates an instance of <see cref="DirectoryCollection"/>.
 			/// </summary>

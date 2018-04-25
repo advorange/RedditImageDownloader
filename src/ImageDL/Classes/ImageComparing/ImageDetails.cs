@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using ImageDL.Interfaces;
 using LiteDB;
@@ -16,30 +15,41 @@ namespace ImageDL.Classes.ImageComparing
 		/// The Md5 hash of the image. This is used as a key in the database.
 		/// </summary>
 		[BsonId, BsonField("Hash")]
-		public string Hash { get; set; }
+		public string Hash { get; internal set; }
 		/// <summary>
 		/// The name of the file. This does not involve the directory.
 		/// </summary>
 		[BsonField("FileName")]
-		public string FileName { get; set; }
+		public string FileName { get; internal set; }
 		/// <inheritdoc />
 		[BsonField("Width")]
-		public int Width { get; set; }
+		public int Width { get; internal set; }
 		/// <inheritdoc />
 		[BsonField("Height")]
-		public int Height { get; set; }
+		public int Height { get; internal set; }
 		/// <summary>
 		/// The hash of the image's thumbnail in boolean form.
 		/// </summary>
 		[BsonField("HashedThumbnail")]
-		public IList<bool> HashedThumbnail { get; set; }
+		public IList<bool> HashedThumbnail { get; internal set; }
 		/// <summary>
 		/// The size of the image's thumbnail (the thumbnail is a square).
 		/// </summary>
 		[BsonIgnore]
 		public int ThumbnailSize => (int)Math.Ceiling(Math.Sqrt(HashedThumbnail.Count));
 
+		/// <summary>
+		/// Creates an instance of <see cref="ImageDetails"/>.
+		/// </summary>
 		internal ImageDetails() { }
+		/// <summary>
+		/// Creates an instance of <see cref="ImageDetails"/>.
+		/// </summary>
+		/// <param name="md5"></param>
+		/// <param name="fileName"></param>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <param name="hashedThumbnail"></param>
 		internal ImageDetails(string md5, string fileName, int width, int height, IEnumerable<bool> hashedThumbnail)
 		{
 			Hash = md5;
@@ -56,7 +66,6 @@ namespace ImageDL.Classes.ImageComparing
 		/// <param name="matchPercentage">The valid percentage for matching.</param>
 		/// <returns>Returns a boolean indicating whether or not the hashes match.</returns>
 		/// <exception cref="InvalidOperationException">Occurs when the thumbnail sizes do not match.</exception>
-		/// <exception cref="ArgumentException">Occurs when either image details are not initialized correctly.</exception>
 		public bool Equals(ImageDetails other, Percentage matchPercentage)
 		{
 			if (ThumbnailSize != other.ThumbnailSize)
@@ -83,7 +92,6 @@ namespace ImageDL.Classes.ImageComparing
 			}
 			return (matchCount / (float)(ThumbnailSize * ThumbnailSize)) >= matchPercentage.Value;
 		}
-
 		/// <summary>
 		/// Returns the file name.
 		/// </summary>
