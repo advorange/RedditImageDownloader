@@ -23,7 +23,7 @@ namespace ImageDL.Windows
 		public WindowsImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize)
+		protected override string GenerateThumbnailHash(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -69,7 +69,7 @@ namespace ImageDL.Windows
 				}
 			}
 			var avgBrightness = brightnesses.Average();
-			return brightnesses.Select(x => x > avgBrightness);
+			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
 		}
 	}
 }

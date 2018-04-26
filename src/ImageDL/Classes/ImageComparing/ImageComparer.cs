@@ -79,16 +79,16 @@ namespace ImageDL.Classes.ImageComparing
 			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var alreadyCached = col.FindAll().Select(x => x.FileName).ToList();
-			var files = directory.GetFiles().ToList();
-			var needToCache = files.Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name));
-			var ordered = needToCache.OrderBy(x => x.CreationTimeUtc);
-			var grouped = ordered.Select((file, index) => new { File=file, Index=index })
+			var files = directory.GetFiles()
+				.Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name))
+				.OrderBy(x => x.CreationTimeUtc)
+				.Select((f, i) => new { File=f, Index=i })
 				.GroupBy(x => x.Index / imagesPerThread)
 				.Select(g => g.Select(o => o.File));
 			var fileCount = files.Count();
 			var count = 0;
 			var filesToDelete = new List<FileInfo>();
-			await Task.WhenAll(grouped.Select(group => Task.Run(() =>
+			await Task.WhenAll(files.Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
 				{
@@ -179,7 +179,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <param name="s">The image's data.</param>
 		/// <param name="thumbnailSize">The size to make the image.</param>
 		/// <returns>The image's hash.</returns>
-		protected abstract IEnumerable<bool> GenerateThumbnailHash(Stream s, int thumbnailSize);
+		protected abstract string GenerateThumbnailHash(Stream s, int thumbnailSize);
 		/// <summary>
 		/// Attempts to create image details from a file.
 		/// </summary>
