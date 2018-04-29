@@ -3,7 +3,7 @@
 	/// <summary>
 	/// The method to gather posts with.
 	/// </summary>
-	public enum GatheringMethod
+	public enum DeviantArtGatheringMethod
 	{
 		/// <summary>
 		/// Scrape the website directly by parsing HTML.

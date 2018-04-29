@@ -55,7 +55,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <summary>
 		/// The method to gather images with.
 		/// </summary>
-		public GatheringMethod GatheringMethod
+		public DeviantArtGatheringMethod GatheringMethod
 		{
 			get => _GatheringMethod;
 			set => _GatheringMethod = value;
@@ -64,7 +64,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		private string _ClientId;
 		private string _ClientSecret;
 		private string _TagString;
-		private GatheringMethod _GatheringMethod;
+		private DeviantArtGatheringMethod _GatheringMethod;
 
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.
@@ -85,7 +85,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			{
 				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
 			});
-			SettingParser.Add(new Setting<GatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out GatheringMethod result), result))
+			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out DeviantArtGatheringMethod result), result))
 			{
 				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});
@@ -96,13 +96,13 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		{
 			switch (GatheringMethod)
 			{
-				case GatheringMethod.Scraping:
+				case DeviantArtGatheringMethod.Scraping:
 					await GetPostsThroughScraping(client, list);
 					return;
-				case GatheringMethod.Api:
+				case DeviantArtGatheringMethod.Api:
 					await GetPostsThroughApi(client, list);
 					return;
-				case GatheringMethod.Rss:
+				case DeviantArtGatheringMethod.Rss:
 					await GetPostsThroughRss(client, list);
 					return;
 			}

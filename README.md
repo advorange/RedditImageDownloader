@@ -18,6 +18,7 @@ Right now there is only a Windows version, but any other operating system that s
   * Konachan
   * Safebooru
   * Yandere
+* Pinterest
 * Pixiv
 * Reddit
 * Tumblr

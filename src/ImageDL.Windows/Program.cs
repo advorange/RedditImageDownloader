@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -28,17 +27,15 @@ namespace ImageDL.Windows
 				.AddTransient<IImageComparer, WindowsImageComparer>());
 
 			//If there are any args, try to find a matching method to run
-			if (args != null && args.Any())
+			switch (args != null && args.Length > 0 ? args[0] : null)
 			{
-				switch (args[0].ToLower())
-				{
-					case "RedditDirUpdate":
-						await new RedditDirectoryRunner().RunAsync(services).CAF();
-						return;
-				}
+				case "RedditDirUpdate":
+					await new RedditDirectoryRunner().RunAsync(services).CAF();
+					return;
+				default:
+					await new DefaultRunner().RunAsync(services).CAF();
+					return;
 			}
-			//Otherwise, just go with the default one
-			await new DefaultRunner().RunAsync(services).CAF();
 		}
 	}
 }
