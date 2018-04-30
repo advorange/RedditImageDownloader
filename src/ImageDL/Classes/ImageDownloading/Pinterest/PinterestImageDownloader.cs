@@ -87,7 +87,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 					case PinterestSearchType.Tags:
 						options.Add("query", Search); //Tags to search for
 						options.Add("scope", "pins"); //Specify to search through pins
-						query = $"/BaseSearchResource/get/?source_url=/search/pins/?q={Search}&rs=typed";
+						query += $"/BaseSearchResource/get/?source_url=/search/pins/?q={Search}&rs=typed";
 						break;
 					default:
 						throw new InvalidOperationException("Invalid search type provided.");

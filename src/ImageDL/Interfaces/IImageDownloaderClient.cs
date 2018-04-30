@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using ImageDL.Classes;
+using Newtonsoft.Json.Linq;
 
 namespace ImageDL.Interfaces
 {
@@ -39,21 +40,22 @@ namespace ImageDL.Interfaces
 		HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default);
 		/// <summary>
 		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
-		/// Will throw if tries are used up/all errors other than 421 and 429.
+		/// Will throw if tries are used up.
 		/// </summary>
-		/// <param name="reqFactory"></param>
-		/// <param name="wait">The amount of time to wait between retries. This will be doubled each retry.</param>
-		/// <param name="tries"></param>
-		/// <returns></returns>
+		/// <param name="reqFactory">Generates a request each time, because requests cannot be used more than once.</param>
+		/// <param name="wait">The amount of time to wait between rate limit retries. This will be doubled each retry.</param>
+		/// <param name="tries">How many times to try on rate limits.</param>
+		/// <returns>The text of a webpage.</returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
 		Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
 		/// <summary>
-		/// Gets the Html of a webpage.
-		/// </summary>
-		/// <param name="reqFactory"></param>
+		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
+		/// Will throw if tries are used up.
+		/// /// </summary>
+		/// <param name="reqFactory">Generates a request each time, because requests cannot be used more than once.</param>
 		/// <param name="wait">The amount of time to wait between retries. This will be doubled each retry.</param>
-		/// <param name="tries"></param>
-		/// /// <returns></returns>
+		/// <param name="tries">How many times to try on rate limits.</param>
+		/// <returns>The text of a webpage put into an <see cref="HtmlDocument"/>.</returns>
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
 		Task<ClientResult<HtmlDocument>> GetHtmlAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
 		/// <summary>
