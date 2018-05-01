@@ -7,7 +7,7 @@ using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
-using Model = ImageDL.Interfaces.IPost;
+using Model = ImageDL.Classes.ImageDownloading.Pinterest.Models.PinterestPost;
 using ImageDL.Enums;
 using System.Net;
 using ImageDL.Classes.ImageDownloading.Pinterest.Models;
@@ -57,7 +57,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<Model> list)
+		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var id = "";
 			//Iterate to deal with pagination
@@ -68,8 +68,9 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 				{
 					{ "page_size", 250 }, //Max allowed amount per iteration
 					{ "bookmarks", new string[] { bm } }, //Pagination
+					{ "field_set_key", "detailed" }, //Get the most information
 				};
-				var query = "https://www.pinterest.com/resource";
+				var endpoint = "";
 				switch (GatheringMethod)
 				{
 					case PinterestSearchType.Board:
@@ -78,26 +79,24 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 							id = await GetBoardId(client, new Uri($"https://www.pinterest.com/{Search.TrimStart('/')}"));
 						}
 						options.Add("board_id", id); //The id of the board to search
-						query += $"/BoardFeedResource/get/?source_url={WebUtility.UrlEncode($"/{Search.TrimStart('/')}")}";
+						endpoint = $"/BoardFeedResource/get/";
 						break;
 					case PinterestSearchType.User:
 						options.Add("username", Search); //User to search for
-						query += $"/UserPinsResource/get/?source_url=/{Search}/pins/";
+						endpoint = $"/UserPinsResource/get/";
 						break;
 					case PinterestSearchType.Tags:
 						options.Add("query", Search); //Tags to search for
 						options.Add("scope", "pins"); //Specify to search through pins
-						query += $"/BaseSearchResource/get/?source_url=/search/pins/?q={Search}&rs=typed";
+						endpoint = $"/BaseSearchResource/get/";
 						break;
 					default:
 						throw new InvalidOperationException("Invalid search type provided.");
 				}
 
-				query += $"&data={JsonConvert.SerializeObject(new Dictionary<string, object>{ { "options", options }, })}";
-				query += $"&_={(long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds}";
 				var result = await client.GetTextAsync(() =>
 				{
-					var req = client.GenerateReq(new Uri(query));
+					var req = client.GenerateReq(GenerateQuery(endpoint, options));
 					req.Headers.Add("X-Requested-With", "XMLHttpRequest");
 					return req;
 				});
@@ -108,15 +107,15 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 
 				var jObj = JObject.Parse(result.Value);
 				bm = jObj["resource"]["options"]["bookmarks"][0].ToObject<string>();
-				List<PinterestPost> posts;
+				List<Model> posts;
 				switch (GatheringMethod)
 				{
 					case PinterestSearchType.Board:
 					case PinterestSearchType.User:
-						posts = jObj["resource_response"]["data"].ToObject<List<PinterestPost>>();
+						posts = jObj["resource_response"]["data"].ToObject<List<Model>>();
 						break;
 					case PinterestSearchType.Tags:
-						posts = jObj["resource_response"]["data"]["results"].ToObject<List<PinterestPost>>();
+						posts = jObj["resource_response"]["data"]["results"].ToObject<List<Model>>();
 						break;
 					default:
 						throw new InvalidOperationException("Invalid search type provided.");
@@ -156,6 +155,40 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			return cut.Substring(0, cut.IndexOf('"'));
 		}
 		/// <summary>
+		/// Generates a query to access the Pinterest API.
+		/// </summary>
+		/// <param name="endpoint"></param>
+		/// <param name="options"></param>
+		/// <returns></returns>
+		private static Uri GenerateQuery(string endpoint, Dictionary<string, object> options)
+		{
+			return new Uri($"https://www.pinterest.com/resource{endpoint}" +
+				$"?data={JsonConvert.SerializeObject(new Dictionary<string, object> { { "options", options }, })}" +
+				$"&_={(long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds}");
+		}
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetPinterestPostAsync(IImageDownloaderClient client, string id)
+		{
+			var options = new Dictionary<string, object>
+			{
+				{ "id", id },
+				{ "field_set_key", "detailed" },
+			};
+			var endpoint = "/PinResource/get/";
+			var result = await client.GetTextAsync(() =>
+			{
+				var req = client.GenerateReq(GenerateQuery(endpoint, options));
+				req.Headers.Add("X-Requested-With", "XMLHttpRequest");
+				return req;
+			});
+			return result.IsSuccess ? JObject.Parse(result.Value)["resource_response"]["data"].ToObject<Model>() : null;
+		}
+		/// <summary>
 		/// Gets the images from the specified url.
 		/// </summary>
 		/// <param name="client"></param>
@@ -163,7 +196,21 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		/// <returns></returns>
 		public static async Task<ImageResponse> GetPinterestImagesAsync(IImageDownloaderClient client, Uri url)
 		{
-			throw new NotImplementedException();
+			var u = ImageDownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/pin/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split('/')[0];
+				if (await GetPinterestPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }
