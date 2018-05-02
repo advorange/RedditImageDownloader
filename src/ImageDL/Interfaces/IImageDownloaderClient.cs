@@ -39,7 +39,7 @@ namespace ImageDL.Interfaces
 		/// <returns></returns>
 		HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default);
 		/// <summary>
-		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
+		/// Sends a request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up.
 		/// </summary>
 		/// <param name="reqFactory">Generates a request each time, because requests cannot be used more than once.</param>
@@ -49,7 +49,7 @@ namespace ImageDL.Interfaces
 		/// <exception cref="HttpRequestException">If unable to get the request after all retries have been used up.</exception>
 		Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3);
 		/// <summary>
-		/// Sends a GET request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
+		/// Sends a request to get the main text of the link. Waits for the passed in wait time multiplied by 2 for each failure.
 		/// Will throw if tries are used up.
 		/// /// </summary>
 		/// <param name="reqFactory">Generates a request each time, because requests cannot be used more than once.</param>

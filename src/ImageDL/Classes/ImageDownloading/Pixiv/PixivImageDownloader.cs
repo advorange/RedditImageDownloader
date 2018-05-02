@@ -160,23 +160,22 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				{ "username", username },
 				{ "password", password },
 			});
-
 			var query = new Uri("https://oauth.secure.pixiv.net/auth/token");
-			var req = client.GenerateReq(query, HttpMethod.Post);
-			req.Content = data;
-
-			using (var resp = await client.SendAsync(req).CAF())
+			var result = await client.GetTextAsync(() =>
 			{
-				if (!resp.IsSuccessStatusCode)
-				{
-					throw new InvalidOperationException("Unable to login to Pixiv.");
-				}
-
-				var jObj = JObject.Parse(await resp.Content.ReadAsStringAsync().CAF());
-				var accessToken = jObj["response"]["access_token"].ToObject<string>();
-				var expiresIn = TimeSpan.FromSeconds(jObj["response"]["expires_in"].ToObject<int>());
-				return (client.ApiKeys[_Type] = new ApiKey(accessToken, expiresIn));
+				var req = client.GenerateReq(query, HttpMethod.Post);
+				req.Content = data;
+				return req;
+			}).CAF();
+			if (!result.IsSuccess)
+			{
+				throw new InvalidOperationException("Unable to login to Pixiv.");
 			}
+
+			var jObj = JObject.Parse(result.Value);
+			var accessToken = jObj["response"]["access_token"].ToObject<string>();
+			var expiresIn = TimeSpan.FromSeconds(jObj["response"]["expires_in"].ToObject<int>());
+			return (client.ApiKeys[_Type] = new ApiKey(accessToken, expiresIn));
 		}
 		/// <summary>
 		/// Gets the images from the specified url.

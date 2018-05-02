@@ -5,13 +5,11 @@ using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
-using Model = ImageDL.Classes.ImageDownloading.Pinterest.Models.PinterestPost;
-using ImageDL.Enums;
-using System.Net;
-using ImageDL.Classes.ImageDownloading.Pinterest.Models;
 using Newtonsoft.Json.Linq;
+using Model = ImageDL.Classes.ImageDownloading.Pinterest.Models.PinterestPost;
 
 namespace ImageDL.Classes.ImageDownloading.Pinterest
 {
