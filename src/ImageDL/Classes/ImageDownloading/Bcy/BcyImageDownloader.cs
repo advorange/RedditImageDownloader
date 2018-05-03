@@ -45,6 +45,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 		{
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || true); ++i)
 			{
+				//https://bcy.net/home/space/ajaxShowWorkPosts?wid=6332&type=illust&ur_id=393979
 				var data = new FormUrlEncodedContent(new Dictionary<string, string>
 				{
 					{ "uid", UserId.ToString() },
