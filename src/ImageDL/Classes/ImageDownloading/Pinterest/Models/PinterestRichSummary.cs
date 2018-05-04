@@ -7,7 +7,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Summary information for a Pinterest post.
 	/// </summary>
-	public class PinterestRichSummary
+	public sealed class PinterestRichSummary
 	{
 		/// <summary>
 		/// The site name.

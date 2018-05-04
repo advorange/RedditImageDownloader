@@ -131,12 +131,6 @@ namespace ImageDL.Classes.SettingParsing
 
 		private TryParseDelegate<T> GetPrimitiveParser()
 		{
-			bool StringTryParse(string s, out string result)
-			{
-				result = s;
-				return true;
-			}
-
 			switch (typeof(T).Name)
 			{
 				case nameof(SByte):
@@ -167,7 +161,7 @@ namespace ImageDL.Classes.SettingParsing
 					return (TryParseDelegate<T>)(object)new TryParseDelegate<decimal>(s => (decimal.TryParse(s, out var result), result));
 				case nameof(String):
 					//Instead of having to do special checks, just use this dumb delegate
-					return (TryParseDelegate<T>)(object)new TryParseDelegate<string>(s => (StringTryParse(s, out var result), result));
+					return (TryParseDelegate<T>)(object)new TryParseDelegate<string>(s => (true, s));
 				default:
 					throw new ArgumentException($"Unable to find a primitive converter for the supplied type {typeof(T).Name}.");
 			}

@@ -5,7 +5,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// The user who posted the Pinterest post.
 	/// </summary>
-	public class PinterestUser
+	public struct PinterestUser
 	{
 		/// <summary>
 		/// The user's display name.

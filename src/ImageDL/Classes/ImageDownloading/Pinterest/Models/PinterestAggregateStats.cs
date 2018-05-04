@@ -5,7 +5,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Stats for a Pinterest post.
 	/// </summary>
-	public class PinterestAggregateStats
+	public struct PinterestAggregateStats
 	{
 		/// <summary>
 		/// How many saves this post has had.

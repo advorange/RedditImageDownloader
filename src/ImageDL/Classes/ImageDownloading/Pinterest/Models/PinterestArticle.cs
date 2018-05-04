@@ -6,7 +6,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Article metadata for a post.
 	/// </summary>
-	public class PinterestArticle
+	public struct PinterestArticle
 	{
 		/// <summary>
 		/// The article's description.

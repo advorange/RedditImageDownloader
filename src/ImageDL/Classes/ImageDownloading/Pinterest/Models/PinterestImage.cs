@@ -7,7 +7,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// An image from Pinterest.
 	/// </summary>
-	public class PinterestImage : ISize
+	public struct PinterestImage : ISize
 	{
 		/// <summary>
 		/// The direct link to the image.

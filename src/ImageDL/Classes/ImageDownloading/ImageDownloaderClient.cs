@@ -16,7 +16,7 @@ namespace ImageDL.Classes.ImageDownloading
 	public class ImageDownloaderClient : HttpClient, IImageDownloaderClient
 	{
 		/// <inheritdoc />
-		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36 OPR/52.0.2871 (+https://github.com/advorange/ImageDL)";
+		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36 OPR/52.0.2871.64 (+https://github.com/advorange/ImageDL)";
 		/// <inheritdoc />
 		public List<IImageGatherer> Gatherers { get; }
 		/// <inheritdoc />
@@ -40,8 +40,15 @@ namespace ImageDL.Classes.ImageDownloading
 			ApiKeys = new Dictionary<Type, ApiKey>();
 			Cookies = cookies;
 			Timeout = TimeSpan.FromMilliseconds(1000 * 60 * 5);
+
+			DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+			DefaultRequestHeaders.Add("Accept-Encoding", "gzip, default, br");
+			DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9"); //Make sure we get English results
+			DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+			DefaultRequestHeaders.Add("Connection", "keep-alive");
+			DefaultRequestHeaders.Add("pragma", "no-cache");
+			DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
 			DefaultRequestHeaders.Add("User-Agent", UserAgent);
-			DefaultRequestHeaders.Add("Accept-Language", "en-US"); //Make sure we get English results
 		}
 
 		/// <summary>

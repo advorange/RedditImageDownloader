@@ -5,7 +5,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Data for a Pinterest post.
 	/// </summary>
-	public class PinterestAggregatePostData
+	public struct PinterestAggregatePostData
 	{
 		/// <summary>
 		/// Random needless nesting.

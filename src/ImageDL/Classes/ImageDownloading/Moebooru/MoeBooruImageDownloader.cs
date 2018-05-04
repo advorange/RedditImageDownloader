@@ -98,7 +98,6 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru
 				}
 			}
 		}
-
 		/// <summary>
 		/// Generates the search query to get images from.
 		/// Keep the limit to 100 otherwise some logic may not work in <see cref="GatherPostsAsync"/>.

@@ -5,7 +5,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// The id of the pin in the current language.
 	/// </summary>
-	public class PinterestCanonicalPin
+	public struct PinterestCanonicalPin
 	{
 		/// <summary>
 		/// The id of the pin.

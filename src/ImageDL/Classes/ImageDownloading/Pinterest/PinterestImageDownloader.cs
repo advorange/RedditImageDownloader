@@ -59,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		{
 			var id = "";
 			//Iterate to deal with pagination
-			for (string bm = ""; list.Count < AmountOfPostsToGather && bm != "-end";) //-end- is used to indicate the pagination is done
+			for (string bm = ""; list.Count < AmountOfPostsToGather && bm != "-end-";) //-end- is used to indicate the pagination is done
 			{
 				//Every search method has these tags, so they're outside the switch
 				var options = new Dictionary<string, object>
@@ -125,7 +125,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 					{
 						return;
 					}
-					if (!HasValidSize(post.LargestImage, out _))
+					if (!HasValidSize(post.LargestImage, out _) || post.Score < MinScore)
 					{
 						continue;
 					}

@@ -6,7 +6,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// The board of aPinterest post.
 	/// </summary>
-	public class PinterestBoard
+	public struct PinterestBoard
 	{
 		/// <summary>
 		/// The category the board is in.

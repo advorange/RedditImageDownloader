@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Pinterest post information about localization and tags.
 	/// </summary>
-	public class PinterestPinJoin
+	public struct PinterestPinJoin
 	{
 		/// <summary>
 		/// The ids of the pin in various localizations.

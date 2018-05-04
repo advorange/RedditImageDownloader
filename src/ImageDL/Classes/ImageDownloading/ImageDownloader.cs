@@ -351,7 +351,9 @@ namespace ImageDL.Classes.ImageDownloading
 				{
 					return ImageResponse.FromAnimated(url);
 				}
-				if (!contentType.Contains("image/"))
+				//If the content type is image, then we know it's an image
+				//If the content type is octet-stream then we need to check the url path and assume its extension is correct
+				if (!contentType.Contains("image/") && !(contentType == "application/octet-stream" && url.ToString().IsImagePath()))
 				{
 					return new Response("Not An Image", $"{url} did not lead to an image.", false);
 				}
