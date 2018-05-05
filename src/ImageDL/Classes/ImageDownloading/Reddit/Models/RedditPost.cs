@@ -44,15 +44,15 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 		/// <inheritdoc />
 		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
 		{
-			if (Post.Url.ToString().IsImagePath())
+			if (PostUrl.ToString().IsImagePath())
 			{
-				return ImageResponse.FromUrl(Post.Url);
+				return ImageResponse.FromUrl(PostUrl);
 			}
-			else if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(Post.Url)) is IImageGatherer gatherer)
+			if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(PostUrl)) is IImageGatherer gatherer)
 			{
-				return await gatherer.FindImagesAsync(client, Post.Url).CAF();
+				return await gatherer.FindImagesAsync(client, PostUrl).CAF();
 			}
-			return ImageResponse.FromNotFound(Post.Url);
+			return ImageResponse.FromNotFound(PostUrl);
 		}
 		/// <summary>
 		/// Returns the id.

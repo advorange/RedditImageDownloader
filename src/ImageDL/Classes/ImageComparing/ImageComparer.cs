@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
+using ImageDL.Utilities;
 using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
@@ -71,7 +72,7 @@ namespace ImageDL.Classes.ImageComparing
 			}
 		}
 		/// <inheritdoc />
-		public async Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default)
+		public async Task<int> CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default)
 		{
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
@@ -81,14 +82,12 @@ namespace ImageDL.Classes.ImageComparing
 			var alreadyCached = col.FindAll().Select(x => x.FileName).ToList();
 			var files = directory.GetFiles()
 				.Where(x => x.FullName.IsImagePath() && !alreadyCached.Contains(x.Name))
-				.OrderBy(x => x.CreationTimeUtc)
-				.Select((f, i) => new { File=f, Index=i })
-				.GroupBy(x => x.Index / imagesPerThread)
-				.Select(g => g.Select(o => o.File));
+				.OrderBy(x => x.CreationTimeUtc);
 			var fileCount = files.Count();
 			var count = 0;
+			var successCount = 0;
 			var filesToDelete = new List<FileInfo>();
-			await Task.WhenAll(files.Select(group => Task.Run(() =>
+			await Task.WhenAll(files.GroupInto(imagesPerThread).Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
 				{
@@ -107,6 +106,7 @@ namespace ImageDL.Classes.ImageComparing
 						else
 						{
 							col.Upsert(newEntry);
+							Interlocked.Increment(ref successCount);
 						}
 					}
 					catch (ArgumentException)
@@ -122,9 +122,10 @@ namespace ImageDL.Classes.ImageComparing
 				}
 			}, token))).CAF();
 			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
+			return successCount;
 		}
 		/// <inheritdoc />
-		public void DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
+		public int DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
@@ -166,7 +167,7 @@ namespace ImageDL.Classes.ImageComparing
 				}
 			}
 			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
-			ConsoleUtils.WriteLine($"{filesToDelete.Count} match(es) found and deleted.");
+			return filesToDelete.Count;
 		}
 		/// <inheritdoc />
 		public void Dispose()

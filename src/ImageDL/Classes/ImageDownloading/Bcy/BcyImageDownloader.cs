@@ -141,7 +141,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 			var img = result.Value.DocumentNode.Descendants("img");
 			var details = img.Where(x => x.GetAttributeValue("class", "").CaseInsContains("detail_std"));
 			var src = details.Select(x => x.GetAttributeValue("src", ""));
-			var urls = src.Select(x => new Uri(x.Substring(0, x.LastIndexOf('/')).Replace("img5", "img9")));
+			var urls = src.Select(x => new Uri(x.Substring(0, x.LastIndexOf('/'))));
 			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
 		}
 	}

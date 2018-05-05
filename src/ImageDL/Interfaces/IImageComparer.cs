@@ -26,14 +26,14 @@ namespace ImageDL.Interfaces
 		/// <param name="directory">The directory to cache files from.</param>
 		/// <param name="imagesPerThread">How many images to cache per thread. Lower = faster, but more CPU/Disk usage</param>
 		/// <param name="token">The token used to cancel caching files.</param>
-		/// <returns></returns>
-		Task CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default);
+		/// <returns>The amount of images successfully cached.</returns>
+		Task<int> CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default);
 		/// <summary>
 		/// Checks each image against every other image in order to detect duplicates.
 		/// </summary>
 		/// <param name="directory">The directory to check for duplicates.</param>
 		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
 		/// <returns>The amount of duplicates deleted.</returns>
-		void DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage);
+		int DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage);
 	}
 }

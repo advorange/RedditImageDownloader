@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Model = ImageDL.Interfaces.IPost;
 
 namespace ImageDL.Classes.ImageDownloading.Pixiv
 {

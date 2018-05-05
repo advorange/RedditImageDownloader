@@ -31,10 +31,5 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		/// <returns></returns>
 		Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client);
-		/// <summary>
-		/// Returns a string representing the post.
-		/// </summary>
-		/// <returns></returns>
-		string ToString();
 	}
 }

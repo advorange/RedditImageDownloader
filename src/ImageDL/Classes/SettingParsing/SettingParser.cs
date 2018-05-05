@@ -161,6 +161,15 @@ namespace ImageDL.Classes.SettingParsing
 			}
 		}
 		/// <summary>
+		/// Gets a setting with the supplied name.
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
+		public ISetting GetSetting(string name)
+		{
+			return _NameMap.TryGetValue(name, out var guid) ? _SettingMap[guid] : null;
+		}
+		/// <summary>
 		/// Adds the setting to the dictionary and maps it by its names.
 		/// </summary>
 		/// <param name="setting"></param>

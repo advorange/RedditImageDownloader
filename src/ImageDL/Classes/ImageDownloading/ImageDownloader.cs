@@ -252,7 +252,7 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 
 			var sorted = posts.GroupBy(x => x.Id).Select(x => x.First()).OrderByDescending(x => x.Score).ToList();
-			ConsoleUtils.WriteLine($"{NL}Found {sorted.Count} posts.");
+			ConsoleUtils.WriteLine($"Found {sorted.Count} posts.{NL}");
 			if (!sorted.Any())
 			{
 				return;
@@ -273,42 +273,48 @@ namespace ImageDL.Classes.ImageDownloading
 					continue;
 				}
 
-				for (int j = 0; j < images.ImageUrls.Length; ++j)
+				//Put the images into groups of 5
+				var count = 0;
+				foreach (var group in images.ImageUrls.GroupInto(5))
 				{
-					try
+					//Download every image in that group of 5 at the same time to speed up downloading
+					await Task.WhenAll(group.Select(async x =>
 					{
-						var result = await DownloadImageAsync(client, comparer, post, images.ImageUrls[j]).CAF();
-						var text = $"\t[#{j + 1}] {result.Text.Replace(NL, NLT)}";
-						if (result.IsSuccess == true)
+						try
 						{
-							ConsoleUtils.WriteLine(text);
+							var result = await DownloadImageAsync(client, comparer, post, x).CAF();
+							var text = $"\t[#{Interlocked.Increment(ref count)}] {result.Text.Replace(NL, NLT)}";
+							if (result.IsSuccess == true)
+							{
+								ConsoleUtils.WriteLine(text);
+							}
+							else if (result.IsSuccess == false)
+							{
+								ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
+								Links.Add(post.CreateContentLink(x, result));
+							}
+							else
+							{
+								ConsoleUtils.WriteLine(text, ConsoleColor.Cyan);
+							}
 						}
-						else if (result.IsSuccess == false)
+						//Catch all so they can be written and logged as a failed download
+						catch (Exception e)
 						{
-							ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-							Links.Add(post.CreateContentLink(images.ImageUrls[j], result));
+							e.Write();
+							Links.Add(post.CreateContentLink(x, new Response(ImageResponse.EXCEPTION, e.Message, false)));
 						}
-						else
-						{
-							ConsoleUtils.WriteLine(text, ConsoleColor.Cyan);
-						}
-					}
-					//Catch all so they can be written and logged as a failed download
-					catch (Exception e)
-					{
-						e.Write();
-						Links.Add(post.CreateContentLink(images.ImageUrls[j], new Response(ImageResponse.EXCEPTION, e.Message, false)));
-					}
+					})).CAF();
 				}
 			}
+			ConsoleUtils.WriteLine("");
 
 			if (comparer != null)
 			{
-				ConsoleUtils.WriteLine("");
-				await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token);
-				ConsoleUtils.WriteLine("");
-				comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
-				ConsoleUtils.WriteLine("");
+				var cached = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
+				ConsoleUtils.WriteLine($"{cached} images successfully cached from file.{NL}");
+				var deleted = comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
+				ConsoleUtils.WriteLine($"{deleted} match(es) found and deleted.{NL}");
 				if (comparer is IDisposable disposable)
 				{
 					disposable.Dispose();
@@ -316,7 +322,7 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			if (Links.Any())
 			{
-				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} link(s) to file.");
+				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} link(s) to file.{NL}");
 			}
 		}
 		/// <summary>
