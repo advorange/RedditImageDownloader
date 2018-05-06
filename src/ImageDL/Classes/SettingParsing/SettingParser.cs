@@ -13,7 +13,7 @@ namespace ImageDL.Classes.SettingParsing
 	/// Parses options and then sets them.
 	/// </summary>
 	/// <remarks>Reserved setting names: help, h</remarks>
-	public sealed class SettingParser : IEnumerable<ISetting>
+	public sealed class SettingParser : ICollection<ISetting>
 	{
 		/// <summary>
 		/// Valid prefixes for a setting.
@@ -24,6 +24,10 @@ namespace ImageDL.Classes.SettingParsing
 		/// </summary>
 		/// <returns></returns>
 		public bool AllSet => !_SettingMap.Values.Any(x => !(x.HasBeenSet || x.IsOptional));
+		/// <inheritdoc />
+		public bool IsReadOnly => false;
+		/// <inheritdoc />
+		public int Count => _SettingMap.Count;
 
 		private readonly Dictionary<string, Guid> _NameMap = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 		private readonly Dictionary<Guid, ISetting> _SettingMap = new Dictionary<Guid, ISetting>();
@@ -32,7 +36,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// Creates an instance of <see cref="SettingParser"/>.
 		/// </summary>
 		/// <param name="prefixes"></param>
-		public SettingParser(IEnumerable<string> prefixes)
+		public SettingParser(params string[] prefixes)
 		{
 			Prefixes = prefixes.ToImmutableArray();
 			Add(new Setting<string>(new[] { "Help", "h" }, x => { })
@@ -169,10 +173,7 @@ namespace ImageDL.Classes.SettingParsing
 		{
 			return _NameMap.TryGetValue(name, out var guid) ? _SettingMap[guid] : null;
 		}
-		/// <summary>
-		/// Adds the setting to the dictionary and maps it by its names.
-		/// </summary>
-		/// <param name="setting"></param>
+		/// <inheritdoc />
 		public void Add(ISetting setting)
 		{
 			var guid = Guid.NewGuid();
@@ -182,11 +183,7 @@ namespace ImageDL.Classes.SettingParsing
 			}
 			_SettingMap.Add(guid, setting);
 		}
-		/// <summary>
-		/// Removes the setting from the dictionary and unmaps all its names.
-		/// </summary>
-		/// <param name="setting"></param>
-		/// <returns></returns>
+		/// <inheritdoc />
 		public bool Remove(ISetting setting)
 		{
 			if (!_NameMap.TryGetValue(setting.Names[0], out var guid))
@@ -198,6 +195,22 @@ namespace ImageDL.Classes.SettingParsing
 				_NameMap.Remove(name);
 			}
 			return _SettingMap.Remove(guid);
+		}
+		/// <inheritdoc />
+		public bool Contains(ISetting setting)
+		{
+			return _SettingMap.Values.Contains(setting);
+		}
+		/// <inheritdoc />
+		public void Clear()
+		{
+			_NameMap.Clear();
+			_SettingMap.Clear();
+		}
+		/// <inheritdoc />
+		public void CopyTo(ISetting[] array, int index)
+		{
+			_SettingMap.Values.CopyTo(array, index);
 		}
 		/// <inheritdoc />
 		public IEnumerator<ISetting> GetEnumerator()

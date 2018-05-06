@@ -13,7 +13,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
 		{
-			return url.Host.Contains("bcy.net");
+			return url.Host.CaseInsContains("bcy.net");
 		}
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)

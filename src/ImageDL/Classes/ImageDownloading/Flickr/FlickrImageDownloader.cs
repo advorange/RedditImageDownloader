@@ -65,7 +65,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 			//Iterate to get the next page of results
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
-				var query = await GenerateApiQuery(client, i).CAF();
+				var query = await GenerateApiQueryAsync(client, i).CAF();
 				switch (GatheringMethod)
 				{
 					case FlickrGatheringMethod.Tags:
@@ -75,7 +75,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 					case FlickrGatheringMethod.User:
 						if (String.IsNullOrWhiteSpace(userId))
 						{
-							userId = await GetUserId(client, Search).CAF();
+							userId = await GetUserIdAsync(client, Search).CAF();
 						}
 						query += $"&method=flickr.people.getPhotos";
 						query += $"&user_id={userId}";
@@ -123,7 +123,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <param name="client"></param>
 		/// <param name="page"></param>
 		/// <returns></returns>
-		private static async Task<string> GenerateApiQuery(IImageDownloaderClient client, int page)
+		private static async Task<string> GenerateApiQueryAsync(IImageDownloaderClient client, int page)
 		{
 			return $"https://api.flickr.com/services/rest" +
 				$"?sort=date-posted-desc" +
@@ -166,7 +166,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		private static async Task<string> GetUserId(IImageDownloaderClient client, string username)
+		private static async Task<string> GetUserIdAsync(IImageDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.flickr.com/photos/{username}");
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
@@ -187,7 +187,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <returns></returns>
 		public static async Task<Model> GetFlickrPostAsync(IImageDownloaderClient client, string id)
 		{
-			var query = new Uri($"{await GenerateApiQuery(client, 0).CAF()}&method=flickr.photos.getInfo&photo_id={id}");
+			var query = new Uri($"{await GenerateApiQueryAsync(client, 0).CAF()}&method=flickr.photos.getInfo&photo_id={id}");
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{

@@ -13,7 +13,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
 		{
-			return url.Host.Contains("pixiv.net");
+			return url.Host.CaseInsContains("pixiv.net");
 		}
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)

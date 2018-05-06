@@ -26,8 +26,9 @@ namespace ImageDL.Utilities
 			doc.LoadXml(xml);
 			var builder = new StringBuilder();
 			using (var writer = new StringWriter(builder))
+			using (var jWriter = new CustomJsonWriter(writer))
 			{
-				JsonSerializer.Create().Serialize(new CustomJsonWriter(writer), doc);
+				JsonSerializer.Create().Serialize(jWriter, doc);
 				return builder.ToString();
 			}
 		}

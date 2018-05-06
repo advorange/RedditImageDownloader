@@ -103,11 +103,11 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		public static Uri GetFullSizeTumblrImage(Uri url)
 		{
 			//Can't get the raw for inline, and static.tumblr is already full size because they're used for themes.
-			if (url.AbsolutePath.Contains("inline") || url.Host.Contains("static.tumblr"))
+			if (url.AbsolutePath.CaseInsContains("inline") || url.Host.CaseInsContains("static.tumblr"))
 			{
 				return url;
 			}
-			if (url.Host.Contains("media.tumblr"))
+			if (url.Host.CaseInsContains("media.tumblr"))
 			{
 				//Example:
 				//https://78.media.tumblr.com/475ede973aab130576a77789c82925b9/tumblr_p5xxjlVAK91td53jko1_1280.jpg

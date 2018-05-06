@@ -13,7 +13,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <inheritdoc />
 		public bool IsFromWebsite(Uri url)
 		{
-			return url.Host.Contains("flickr.com");
+			return url.Host.CaseInsContains("flickr.com");
 		}
 		/// <inheritdoc />
 		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
