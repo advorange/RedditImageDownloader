@@ -255,7 +255,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var search = "/p/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetInstagramPostAsync(client, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

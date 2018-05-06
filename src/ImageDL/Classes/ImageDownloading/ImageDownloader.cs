@@ -355,7 +355,7 @@ namespace ImageDL.Classes.ImageDownloading
 				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
 				if (contentType.Contains("video/") || contentType == "image/gif")
 				{
-					return ImageResponse.FromAnimated(url);
+					return new Response(ImageResponse.ANIMATED, $"{url} is either a video or a gif.", false);
 				}
 				//If the content type is image, then we know it's an image
 				//If the content type is octet-stream then we need to check the url path and assume its extension is correct
@@ -370,8 +370,20 @@ namespace ImageDL.Classes.ImageDownloading
 				await (rs = await resp.Content.ReadAsStreamAsync().CAF()).CopyToAsync(ms = new MemoryStream());
 
 				//If image is too small, don't bother saving
-				ms.Seek(0, SeekOrigin.Begin);
-				var (width, height) = ms.GetImageSize();
+				var width = -1;
+				var height = -1;
+				if (post is ISize size)
+				{
+					width = size.Width;
+					height = size.Height;
+				}
+				else
+				{
+					ms.Seek(0, SeekOrigin.Begin);
+					var (w, h) = ms.GetImageSize();
+					width = w;
+					height = h;
+				}
 				if (!HasValidSize(width, height, out var sizeError))
 				{
 					return new Response("Does Not Meet Size Reqs", $"{url} {sizeError}", false);

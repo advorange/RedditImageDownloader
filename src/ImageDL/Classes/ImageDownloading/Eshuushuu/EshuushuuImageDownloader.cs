@@ -164,7 +164,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			var search = "/image/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetEshuushuuPostAsync(client, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

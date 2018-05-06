@@ -189,7 +189,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			{
 				return ImageResponse.FromUrl(new Uri(u));
 			}
-			var id = u.Split('/').Last();
+			var id = u.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
 			var images = await GetImgurImagesByCode(client, id).CAF();
 			if (images.Any())
 			{

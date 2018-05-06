@@ -82,7 +82,7 @@ namespace ImageDL.Classes.ImageDownloading.Moebooru.Yandere
 			var search = "/post/show/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetYanderePostAsync(client, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

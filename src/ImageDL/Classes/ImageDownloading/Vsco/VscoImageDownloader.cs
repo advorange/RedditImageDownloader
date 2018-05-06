@@ -158,7 +158,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			var search = "/media/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetVscoPostAsync(client, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

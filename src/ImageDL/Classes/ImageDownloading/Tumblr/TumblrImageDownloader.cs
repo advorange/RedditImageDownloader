@@ -158,7 +158,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var username = url.Host.Split('.')[0];
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetTumblrPostAsync(client, username, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

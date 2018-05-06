@@ -30,14 +30,14 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		/// <summary>
 		/// How to use the search string.
 		/// </summary>
-		public PinterestSearchType GatheringMethod
+		public PinterestGatheringMethod GatheringMethod
 		{
 			get => _GatheringMethod;
 			set => _GatheringMethod = value;
 		}
 
 		private string _Search;
-		private PinterestSearchType _GatheringMethod;
+		private PinterestGatheringMethod _GatheringMethod;
 
 		/// <summary>
 		/// Creates an instance of <see cref="PinterestImageDownloader"/>.
@@ -48,7 +48,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			{
 				Description = $"The text to search for. Can be a board, user, or tags. The respective type must be set in {GatheringMethod}.",
 			});
-			SettingParser.Add(new Setting<PinterestSearchType>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out PinterestSearchType result), result))
+			SettingParser.Add(new Setting<PinterestGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out PinterestGatheringMethod result), result))
 			{
 				Description = $"How to use {Search} to search through Pinterest.",
 			});
@@ -71,7 +71,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 				var endpoint = "";
 				switch (GatheringMethod)
 				{
-					case PinterestSearchType.Board:
+					case PinterestGatheringMethod.Board:
 						if (id == "")
 						{
 							id = await GetBoardId(client, new Uri($"https://www.pinterest.com/{Search.TrimStart('/')}"));
@@ -79,11 +79,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 						options.Add("board_id", id); //The id of the board to search
 						endpoint = $"/BoardFeedResource/get/";
 						break;
-					case PinterestSearchType.User:
+					case PinterestGatheringMethod.User:
 						options.Add("username", Search); //User to search for
 						endpoint = $"/UserPinsResource/get/";
 						break;
-					case PinterestSearchType.Tags:
+					case PinterestGatheringMethod.Tags:
 						options.Add("query", Search); //Tags to search for
 						options.Add("scope", "pins"); //Specify to search through pins
 						endpoint = $"/BaseSearchResource/get/";
@@ -108,11 +108,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 				List<Model> posts;
 				switch (GatheringMethod)
 				{
-					case PinterestSearchType.Board:
-					case PinterestSearchType.User:
+					case PinterestGatheringMethod.Board:
+					case PinterestGatheringMethod.User:
 						posts = jObj["resource_response"]["data"].ToObject<List<Model>>();
 						break;
-					case PinterestSearchType.Tags:
+					case PinterestGatheringMethod.Tags:
 						posts = jObj["resource_response"]["data"]["results"].ToObject<List<Model>>();
 						break;
 					default:
@@ -202,7 +202,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			var search = "/pin/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
-				var id = u.Substring(index + search.Length).Split('/')[0];
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
 				if (await GetPinterestPostAsync(client, id).CAF() is Model post)
 				{
 					return await post.GetImagesAsync(client).CAF();

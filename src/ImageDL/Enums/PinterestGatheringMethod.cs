@@ -3,7 +3,7 @@
 	/// <summary>
 	/// How to use the string to search Pinterest.
 	/// </summary>
-	public enum PinterestSearchType
+	public enum PinterestGatheringMethod
 	{
 		/// <summary>
 		/// Indicates to search for everything a user has on their page.
