@@ -43,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new TumblrPage();
 			//Iterate because the results are in pages

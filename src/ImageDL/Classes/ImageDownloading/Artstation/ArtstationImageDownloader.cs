@@ -41,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new ArtstationPage();
 			//Iterate to get the next page of results

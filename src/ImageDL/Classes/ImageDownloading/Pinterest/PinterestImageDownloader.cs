@@ -55,7 +55,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var id = "";
 			//Iterate to deal with pagination

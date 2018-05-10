@@ -41,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();

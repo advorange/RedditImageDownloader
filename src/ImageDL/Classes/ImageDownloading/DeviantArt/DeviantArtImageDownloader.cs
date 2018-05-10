@@ -92,7 +92,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			switch (GatheringMethod)
 			{

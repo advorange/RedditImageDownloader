@@ -80,7 +80,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new PixivPage();
 			//Iterate because it's easy and has less strain

@@ -58,7 +58,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var userId = "";
 			var parsed = new List<Model>();

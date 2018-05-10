@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ImageDL.Classes;
 using ImageDL.Classes.SettingParsing;
 
 namespace ImageDL.Interfaces
@@ -25,6 +26,6 @@ namespace ImageDL.Interfaces
 		/// <param name="services">Holds the services. Should at least hold a downloader client.</param>
 		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
-		Task StartAsync(IServiceProvider services, CancellationToken token = default);
+		Task<DownloaderResponse> StartAsync(IServiceProvider services, CancellationToken token = default);
 	}
 }

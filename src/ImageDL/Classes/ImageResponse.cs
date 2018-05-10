@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
 using AdvorangesUtils;
-using ImageDL.Enums;
 
 namespace ImageDL.Classes
 {

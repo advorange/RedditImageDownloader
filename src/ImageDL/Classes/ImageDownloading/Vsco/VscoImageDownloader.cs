@@ -46,7 +46,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var userId = 0UL;
 			var parsed = new VscoPage();

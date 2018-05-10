@@ -43,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new TwitterScrapedPage();
 			//Iterate to update the pagination start point.

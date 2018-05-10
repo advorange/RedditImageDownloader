@@ -141,11 +141,6 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
 
-		/// <summary>
-		/// Links to content that is animated, failed to download, etc.
-		/// </summary>
-		protected List<ContentLink> Links = new List<ContentLink>();
-
 		private string _SavePath;
 		private int _AmountOfPostsToGather;
 		private int _MinWidth;
@@ -227,15 +222,12 @@ namespace ImageDL.Classes.ImageDownloading
 					IsFlag = true,
 				},
 			};
-
-			//Save on close in case program is closed while running
-			AppDomain.CurrentDomain.ProcessExit += (sender, e) => SaveStoredContentLinks();
 		}
 
 		/// <inheritdoc />
-		public async Task StartAsync(IServiceProvider provider, CancellationToken token = default)
+		public async Task<DownloaderResponse> StartAsync(IServiceProvider provider, CancellationToken token = default)
 		{
-			//Client should NOT be null
+			//Client cannot NOT be null
 			var client = provider.GetRequiredService<IImageDownloaderClient>();
 			//Comparer can be null
 			var comparer = provider.GetService<IImageComparer>();
@@ -243,7 +235,6 @@ namespace ImageDL.Classes.ImageDownloading
 			var posts = new List<IPost>();
 			try
 			{
-				ConsoleUtils.WriteLine($"Starting to find posts.");
 				await GatherPostsAsync(client, posts).CAF();
 			}
 			catch (Exception e)
@@ -255,20 +246,21 @@ namespace ImageDL.Classes.ImageDownloading
 			ConsoleUtils.WriteLine($"Found {sorted.Count} posts.{NL}");
 			if (!sorted.Any())
 			{
-				return;
+				return DownloaderResponse.FromNoPostsFound();
 			}
 
-			for (int i = 0; i < sorted.Count; ++i)
+			var downloadedCount = 0;
+			var links = new List<ContentLink>();
+			foreach (var (Post, Index) in sorted.Select((x, i) => (Post: x, Index: i)))
 			{
 				token.ThrowIfCancellationRequested();
-				var post = sorted[i];
-				ConsoleUtils.WriteLine(post.Format(i + 1));
+				ConsoleUtils.WriteLine(Post.Format(Index + 1));
 
-				var images = await post.GetImagesAsync(client).CAF();
+				var images = await Post.GetImagesAsync(client).CAF();
 				//If wasn't success, log it, keep the 
 				if (images.IsSuccess == false)
 				{
-					Links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images)));
+					links.AddRange(images.ImageUrls.Select(x => Post.CreateContentLink(x, images)));
 					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
 					continue;
 				}
@@ -278,20 +270,21 @@ namespace ImageDL.Classes.ImageDownloading
 				foreach (var group in images.ImageUrls.GroupInto(5))
 				{
 					//Download every image in that group of 5 at the same time to speed up downloading
-					await Task.WhenAll(group.Select(async x =>
+					var tasks = group.Select(async x =>
 					{
 						try
 						{
-							var result = await DownloadImageAsync(client, comparer, post, x).CAF();
+							var result = await DownloadImageAsync(client, comparer, Post, x).CAF();
 							var text = $"\t[#{Interlocked.Increment(ref count)}] {result.Text.Replace(NL, NLT)}";
 							if (result.IsSuccess == true)
 							{
 								ConsoleUtils.WriteLine(text);
+								Interlocked.Increment(ref downloadedCount);
 							}
 							else if (result.IsSuccess == false)
 							{
 								ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-								Links.Add(post.CreateContentLink(x, result));
+								links.Add(Post.CreateContentLink(x, result));
 							}
 							else
 							{
@@ -302,28 +295,74 @@ namespace ImageDL.Classes.ImageDownloading
 						catch (Exception e)
 						{
 							e.Write();
-							Links.Add(post.CreateContentLink(x, new Response(ImageResponse.EXCEPTION, e.Message, false)));
+							links.Add(Post.CreateContentLink(x, new Response(ImageResponse.EXCEPTION, e.Message, false)));
 						}
-					})).CAF();
+					});
+					await Task.WhenAll(tasks).CAF();
 				}
 			}
 			ConsoleUtils.WriteLine("");
 
+			var cachedCount = 0;
+			var deletedCount = 0;
 			if (comparer != null)
 			{
-				var cached = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
-				ConsoleUtils.WriteLine($"{cached} images successfully cached from file.{NL}");
-				var deleted = comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
-				ConsoleUtils.WriteLine($"{deleted} match(es) found and deleted.{NL}");
+				cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
+				ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
+				deletedCount = comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
+				ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
 				if (comparer is IDisposable disposable)
 				{
 					disposable.Dispose();
 				}
 			}
-			if (Links.Any())
+			var linkCount = 0;
+			if (links.Any())
 			{
-				ConsoleUtils.WriteLine($"Added {SaveStoredContentLinks()} link(s) to file.{NL}");
+				linkCount = SaveStoredContentLinks(Directory, links);
+				ConsoleUtils.WriteLine($"Added {linkCount} link(s) to file.{NL}");
 			}
+			return DownloaderResponse.FromFinished(posts.Count, downloadedCount, cachedCount, deletedCount, linkCount);
+		}
+		/// <summary>
+		/// Gathers the posts which match the supplied settings.
+		/// </summary>
+		/// <param name="client">The client to gather posts with.</param>
+		/// <param name="list">The list to add values to.</param>
+		/// <returns></returns>
+		public abstract Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list);
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
+		/// <param name="size"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		public bool HasValidSize(ISize size, out string error)
+		{
+			return HasValidSize(size.Width, size.Height, out error);
+		}
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		public bool HasValidSize(int width, int height, out string error)
+		{
+			if (width < MinWidth || height < MinHeight)
+			{
+				error = $"is too small ({width}x{height}).";
+				return false;
+			}
+			var aspectRatio = width / (double)height;
+			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
+			{
+				error = $"does not fit in the aspect ratio restrictions ({width}x{height}).";
+				return false;
+			}
+			error = null;
+			return true;
 		}
 		/// <summary>
 		/// Downloads an image from <paramref name="url"/> and saves it. Returns a text response.
@@ -333,7 +372,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="post">The post to save from.</param>
 		/// <param name="url">The location to the file to save.</param>
 		/// <returns>A text response indicating what happened to the uri.</returns>
-		private async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, IPost post, Uri url)
+		protected async Task<Response> DownloadImageAsync(IImageDownloaderClient client, IImageComparer comparer, IPost post, Uri url)
 		{
 			var file = post.GenerateFileInfo(Directory, url);
 			if (File.Exists(file.FullName))
@@ -408,63 +447,32 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 		}
 		/// <summary>
-		/// Checks min width, min height, and the min/max aspect ratios.
-		/// </summary>
-		/// <param name="size"></param>
-		/// <param name="error"></param>
-		/// <returns></returns>
-		protected bool HasValidSize(ISize size, out string error)
-		{
-			return HasValidSize(size.Width, size.Height, out error);
-		}
-		/// <summary>
-		/// Checks min width, min height, and the min/max aspect ratios.
-		/// </summary>
-		/// <param name="width"></param>
-		/// <param name="height"></param>
-		/// <param name="error"></param>
-		/// <returns></returns>
-		protected bool HasValidSize(int width, int height, out string error)
-		{
-			if (width < MinWidth || height < MinHeight)
-			{
-				error = $"is too small ({width}x{height}).";
-				return false;
-			}
-			var aspectRatio = width / (double)height;
-			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
-			{
-				error = $"does not fit in the aspect ratio restrictions ({width}x{height}).";
-				return false;
-			}
-			error = null;
-			return true;
-		}
-		/// <summary>
 		/// Saves the stored content links to file.
 		/// Returns the amount of links put into the file.
+		/// <paramref name="diretory"></paramref>
+		/// <paramref name="links"></paramref>
 		/// </summary>
-		protected int SaveStoredContentLinks()
+		protected int SaveStoredContentLinks(DirectoryInfo diretory, List<ContentLink> links)
 		{
-			var file = new FileInfo(Path.Combine(SavePath, "Links.txt"));
-			var links = Links.GroupBy(x => x.Url).Select(x => x.First()).ToList();
+			var file = new FileInfo(Path.Combine(diretory.FullName, "Links.txt"));
+			var filteredLinks = links.GroupBy(x => x.Url).Select(x => x.First()).ToList();
 			//Only read once, make sure no duplicate uris will be added
 			if (file.Exists)
 			{
 				using (var reader = new StreamReader(file.OpenRead()))
 				{
 					var text = reader.ReadToEnd();
-					for (int i = links.Count - 1; i >= 0; --i)
+					for (int i = filteredLinks.Count - 1; i >= 0; --i)
 					{
-						if (text.Contains(links[i].Url.ToString()))
+						if (text.Contains(filteredLinks[i].Url.ToString()))
 						{
-							links.RemoveAt(i);
+							filteredLinks.RemoveAt(i);
 						}
 					}
 				}
 			}
 			//Put all of the links with the same reasons together, ordered by score
-			var groups = links.GroupBy(x => x.Reason).Select(g =>
+			var groups = filteredLinks.GroupBy(x => x.Reason).Select(g =>
 			{
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
@@ -478,7 +486,7 @@ namespace ImageDL.Classes.ImageDownloading
 					writer.WriteLine(line);
 				}
 			}
-			return links.Count;
+			return filteredLinks.Count;
 		}
 		/// <summary>
 		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
@@ -501,12 +509,5 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			return list.Count < AmountOfPostsToGather;
 		}
-		/// <summary>
-		/// Gathers the posts which match the supplied settings.
-		/// </summary>
-		/// <param name="client">The client to gather posts with.</param>
-		/// <param name="list">The list to add values to.</param>
-		/// <returns></returns>
-		protected abstract Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list);
 	}
 }

@@ -62,7 +62,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var id = 0UL;
 			var rhx = "";

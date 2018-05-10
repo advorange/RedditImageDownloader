@@ -49,7 +49,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new List<Model>();
 			//Iterate to get the next page of results

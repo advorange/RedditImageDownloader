@@ -41,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var parsed = new AnimePicturesPage();
 			//Iterate because there's a limit of around 100 per request

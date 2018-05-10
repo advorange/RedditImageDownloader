@@ -52,7 +52,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			if (ThreadId > 0)
 			{

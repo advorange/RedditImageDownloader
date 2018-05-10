@@ -44,7 +44,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override async Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();

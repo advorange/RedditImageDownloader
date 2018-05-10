@@ -40,7 +40,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 		}
 
 		/// <inheritdoc />
-		protected override Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
+		public override Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list)
 		{
 			list.Add(new Model(Url));
 			return Task.FromResult(0);
