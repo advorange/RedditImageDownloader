@@ -1,0 +1,28 @@
+﻿using ImageDL.Interfaces;
+using Newtonsoft.Json;
+
+namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
+{
+	/// <summary>
+	/// The size of an image.
+	/// </summary>
+	public struct PawooImageSize : ISize
+	{
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
+		/// <summary>
+		/// The width x the height.
+		/// </summary>
+		[JsonProperty("size")]
+		public string Size { get; private set; }
+		/// <summary>
+		/// The aspect ratio.
+		/// </summary>
+		[JsonProperty("aspect")]
+		public double Aspect { get; private set; }
+	}
+}

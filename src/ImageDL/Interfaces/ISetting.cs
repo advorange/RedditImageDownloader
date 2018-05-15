@@ -41,6 +41,10 @@ namespace ImageDL.Interfaces
 		/// The names of this command.
 		/// </summary>
 		ImmutableArray<string> Names { get; }
+		/// <summary>
+		/// The current value of the setting.
+		/// </summary>
+		object CurrentValue { get; }
 
 		/// <summary>
 		/// Sets the value back to its default value.

@@ -70,7 +70,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			//Iterate to update the pagination start point
 			for (string end = ""; list.Count < AmountOfPostsToGather && (end == "" || parsed.PageInfo.HasNextPage); end = parsed.PageInfo.EndCursor)
 			{
-				//If the id is 0 either this just started or it was reset due to the key becoming invalid
+				//If the id is 0 this just started so it should be gotten
 				if (id == 0UL)
 				{
 					var (Id, Rhx) = await GetUserIdAndRhx(client, Username).CAF();

@@ -13,7 +13,7 @@ namespace ImageDL.Tests.SettingParsingTests
 		public SettingParsingTest()
 		{
 			TestStruct = new TestStruct();
-			SettingParser = new SettingParser("--", "-", "/")
+			SettingParser = new SettingParser
 			{
 				new Setting<string>(new[] { nameof(TestStruct.StringValue), }, x => TestStruct.StringValue = x),
 				new Setting<int>(new[] { nameof(TestStruct.IntValue), }, x => TestStruct.IntValue = x),

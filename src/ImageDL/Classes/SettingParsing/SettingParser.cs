@@ -33,17 +33,31 @@ namespace ImageDL.Classes.SettingParsing
 		private readonly Dictionary<Guid, ISetting> _SettingMap = new Dictionary<Guid, ISetting>();
 
 		/// <summary>
+		/// Creates an instance of <see cref="SettingParser"/> with -, --, and / as valid prefixes and adds a help command.
+		/// </summary>
+		public SettingParser() : this(true, "-", "--", "/") { }
+		/// <summary>
 		/// Creates an instance of <see cref="SettingParser"/>.
 		/// </summary>
+		/// <param name="addHelp"></param>
 		/// <param name="prefixes"></param>
-		public SettingParser(params string[] prefixes)
+		public SettingParser(bool addHelp, params char[] prefixes) : this(addHelp, prefixes.Select(x => x.ToString()).ToArray()) { }
+		/// <summary>
+		/// Creates an instance of <see cref="SettingParser"/>.
+		/// </summary>
+		/// <param name="addHelp"></param>
+		/// <param name="prefixes"></param>
+		public SettingParser(bool addHelp, params string[] prefixes)
 		{
-			Prefixes = prefixes.ToImmutableArray();
-			Add(new Setting<string>(new[] { "Help", "h" }, x => { })
+			if (addHelp)
 			{
-				Description = "Gives you help. Can't fix your life.",
-				IsOptional = true,
-			});
+				Add(new Setting<string>(new[] { "Help", "h" }, x => { })
+				{
+					Description = "Gives you help. Can't fix your life.",
+					IsOptional = true,
+				});
+			}
+			Prefixes = prefixes.ToImmutableArray();
 		}
 
 		/// <summary>
@@ -87,7 +101,7 @@ namespace ImageDL.Classes.SettingParsing
 				//If it's a flag set its value to true then go to the next part
 				else if (setting.IsFlag)
 				{
-					value = Boolean.TrueString;
+					value = (bool)setting.CurrentValue == true ? Boolean.TrueString : Boolean.FalseString;
 				}
 				//If there's one more and it's not a setting use that
 				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is ISetting throwaway))

@@ -160,7 +160,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		public ImageDownloader()
 		{
-			_SettingParser = new SettingParser(new[] { "--", "-", "/" })
+			_SettingParser = new SettingParser
 			{
 				new Setting<string>(new[] { nameof(SavePath), "path", "dir" }, x => SavePath = x)
 				{
@@ -324,12 +324,7 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			return DownloaderResponse.FromFinished(posts.Count, downloadedCount, cachedCount, deletedCount, linkCount);
 		}
-		/// <summary>
-		/// Gathers the posts which match the supplied settings.
-		/// </summary>
-		/// <param name="client">The client to gather posts with.</param>
-		/// <param name="list">The list to add values to.</param>
-		/// <returns></returns>
+		/// <inheritdoc />
 		public abstract Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list);
 		/// <summary>
 		/// Checks min width, min height, and the min/max aspect ratios.
@@ -337,7 +332,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="size"></param>
 		/// <param name="error"></param>
 		/// <returns></returns>
-		public bool HasValidSize(ISize size, out string error)
+		protected bool HasValidSize(ISize size, out string error)
 		{
 			return HasValidSize(size.Width, size.Height, out error);
 		}
@@ -348,7 +343,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="height"></param>
 		/// <param name="error"></param>
 		/// <returns></returns>
-		public bool HasValidSize(int width, int height, out string error)
+		protected bool HasValidSize(int width, int height, out string error)
 		{
 			if (width < MinWidth || height < MinHeight)
 			{

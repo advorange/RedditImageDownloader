@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Interfaces;
-using ImageDL.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ImageDL.Tests.ImageDownloadingTests
 {
+	//TODO: implement this for every downloader
+	//TODO: also implement unit tests for every image gatherer
 	//Not sure exactly how to unit test a downloader considering it relies on posts from the internet which are random
 	//Maybe just have the downloader verify the post count and not the cached/deleted/link counts
 	[TestClass]
@@ -23,11 +21,9 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		private const int MIN_HEIGHT = 350;
 		private const int MAX_AGE = int.MaxValue;
 
-		public async Task Downloader_Test<T>(string specificArgs) where T : IImageDownloader, new()
+		private async Task Downloader_Test<T>(string specificArgs) where T : IImageDownloader, new()
 		{
-			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
-				.AddSingleton<IImageDownloaderClient, ImageDownloaderClient>()
-				.AddTransient<IImageComparer, WindowsImageComparer>());
+			var client = new ImageDownloaderClient();
 			var downloader = new T();
 
 			var genericArgsResult = downloader.SettingParser.Parse(GenerateGenericArgs<T>());
@@ -35,14 +31,15 @@ namespace ImageDL.Tests.ImageDownloadingTests
 			var specificArgsResult = downloader.SettingParser.Parse(specificArgs);
 			Assert.AreEqual(0, specificArgsResult.Errors.Length + specificArgsResult.UnusedParts.Length);
 
-			var downloaderResults = await downloader.StartAsync(services).CAF();
-			Assert.AreEqual(AMOUNT, downloaderResults.GatheredPostCount);
+			var list = new List<IPost>();
+			await downloader.GatherPostsAsync(client, list).CAF();
+			Assert.AreEqual(AMOUNT, list.Count);
 		}
-		public string GetDirectory<T>() where T : IImageDownloader
+		private string GetDirectory<T>() where T : IImageDownloader
 		{
 			return Path.Combine(Directory.GetCurrentDirectory(), typeof(T).Name);
 		}
-		public string GenerateGenericArgs<T>() where T : IImageDownloader
+		private string GenerateGenericArgs<T>() where T : IImageDownloader
 		{
 			return $"-cd" +
 				$"-dir \"{GetDirectory<T>()}\"" +

@@ -33,7 +33,18 @@ namespace ImageDL.Classes.SettingParsing
 			}
 		}
 		/// <inheritdoc />
-		public bool IsFlag { get; set; }
+		public bool IsFlag
+		{
+			get => _IsFlag;
+			set
+			{
+				if (value && typeof(T) != typeof(bool))
+				{
+					throw new InvalidOperationException($"The generic type of setting must be bool if {nameof(IsFlag)} is set as true.");
+				}
+				_IsFlag = value;
+			}
+		}
 		/// <inheritdoc />
 		public bool IsOptional { get; set; }
 		/// <inheritdoc />
@@ -44,6 +55,8 @@ namespace ImageDL.Classes.SettingParsing
 		public bool IsHelp => Names.Any(x => x.CaseInsEquals("help") || x.CaseInsEquals("h"));
 		/// <inheritdoc />
 		public ImmutableArray<string> Names { get; }
+		/// <inheritdoc />
+		public object CurrentValue => _CurrentValue;
 		/// <summary>
 		/// Default value of the setting. This will indicate the setting is optional, but has a value other than the default value of the type.
 		/// </summary>
@@ -61,6 +74,8 @@ namespace ImageDL.Classes.SettingParsing
 		private readonly TryParseDelegate<T> _Parser;
 		private readonly Action<T> _Setter;
 		private T _DefaultValue;
+		private T _CurrentValue;
+		private bool _IsFlag;
 
 		/// <summary>
 		/// Creates an instance of <see cref="Setting{T}"/>.
@@ -84,6 +99,7 @@ namespace ImageDL.Classes.SettingParsing
 		public void SetDefault()
 		{
 			_Setter(DefaultValue);
+			_CurrentValue = DefaultValue;
 		}
 		/// <inheritdoc />
 		public bool TrySetValue(string value, out string response)
@@ -112,6 +128,7 @@ namespace ImageDL.Classes.SettingParsing
 			try
 			{
 				_Setter(result);
+				_CurrentValue = result;
 			}
 			//Catch all because who knows what exceptions will happen, and it's user input
 			catch (Exception e)

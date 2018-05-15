@@ -123,10 +123,10 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 						continue;
 					}
 					//Don't think the API has an endpoint that holds the sizes of every image?
-					if (!HasValidSize(post, out _))
-					{
-						continue;
-					}
+					//if (!HasValidSize(post, out _))
+					//{
+					//	continue;
+					//}
 					if (!Add(list, post))
 					{
 						return;
@@ -134,7 +134,6 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				}
 			}
 		}
-
 		/// <summary>
 		/// Logs into pixiv, generating an access token.
 		/// </summary>

@@ -20,6 +20,7 @@ This will run on any operating system that supports .Net Core as long as an impl
   * Konachan
   * Safebooru
   * Yandere
+* Pawoo
 * Pinterest
 * Pixiv
 * Reddit

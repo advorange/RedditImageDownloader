@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageDL.Classes;
@@ -27,5 +28,12 @@ namespace ImageDL.Interfaces
 		/// <param name="token">Cancellation token for a semaphore slim that makes sure only one instance of downloading is happening.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
 		Task<DownloaderResponse> StartAsync(IServiceProvider services, CancellationToken token = default);
+		/// <summary>
+		/// Gathers the posts which match the supplied settings.
+		/// </summary>
+		/// <param name="client">The client to gather posts with.</param>
+		/// <param name="list">The list to add values to.</param>
+		/// <returns></returns>
+		Task GatherPostsAsync(IImageDownloaderClient client, List<IPost> list);
 	}
 }
