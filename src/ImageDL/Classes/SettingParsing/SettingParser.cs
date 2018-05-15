@@ -101,7 +101,7 @@ namespace ImageDL.Classes.SettingParsing
 				//If it's a flag set its value to true then go to the next part
 				else if (setting.IsFlag)
 				{
-					value = (bool)setting.CurrentValue == true ? Boolean.TrueString : Boolean.FalseString;
+					value = (bool)setting.CurrentValue == true ? Boolean.FalseString : Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
 				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is ISetting throwaway))
