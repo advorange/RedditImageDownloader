@@ -54,6 +54,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			{
 				Description = "Whether to search through replies in addition to regular posts.",
 				IsFlag = true,
+				DefaultValue = false,
 			});
 		}
 
@@ -131,7 +132,8 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 				return key;
 			}
 			//Load a random user's page so we can scrape the API key from it
-			var query = new Uri($"https://pawoo.net/web/accounts/{new Random().Next(100000)}");
+			//TODO: either supply logging in or find a way around that
+			var query = new Uri($"https://pawoo.net/web/accounts/42");
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
