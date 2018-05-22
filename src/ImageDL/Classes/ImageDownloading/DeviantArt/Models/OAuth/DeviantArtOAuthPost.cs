@@ -111,7 +111,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 		public long PublishedTimestamp { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(Content.Source));
 		}

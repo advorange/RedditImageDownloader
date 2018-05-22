@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 			return url.Host.CaseInsContains("e-shuushuu.net");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await EshuushuuImageDownloader.GetEshuushuuImagesAsync(client, url).CAF();
+			return await EshuushuuPostDownloader.GetEshuushuuImagesAsync(client, url).CAF();
 		}
 	}
 }

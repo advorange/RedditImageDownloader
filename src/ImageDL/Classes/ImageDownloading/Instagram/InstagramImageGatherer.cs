@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			return url.Host.CaseInsContains("instagram.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await InstagramImageDownloader.GetInstagramImagesAsync(client, url).CAF();
+			return await InstagramPostDownloader.GetInstagramImagesAsync(client, url).CAF();
 		}
 	}
 }

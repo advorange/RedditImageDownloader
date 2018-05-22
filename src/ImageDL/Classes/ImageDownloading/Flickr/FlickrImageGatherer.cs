@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 			return url.Host.CaseInsContains("flickr.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await FlickrImageDownloader.GetFlickrImagesAsync(client, url).CAF();
+			return await FlickrPostDownloader.GetFlickrImagesAsync(client, url).CAF();
 		}
 	}
 }

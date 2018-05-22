@@ -23,7 +23,7 @@ namespace ImageDL.Windows
 
 			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
-				.AddSingleton<IImageDownloaderClient, ImageDownloaderClient>()
+				.AddSingleton<IDownloaderClient, DownloaderClient>()
 				.AddTransient<IImageComparer, WindowsImageComparer>());
 
 			//If there are any args, try to find a matching method to run

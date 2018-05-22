@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			return url.Host.CaseInsContains("deviantart.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await DeviantArtImageDownloader.GetDeviantArtImagesAsync(client, url).CAF();
+			return await DeviantArtPostDownloader.GetDeviantArtImagesAsync(client, url).CAF();
 		}
 	}
 }

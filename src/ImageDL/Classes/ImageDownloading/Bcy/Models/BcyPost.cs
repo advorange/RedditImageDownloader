@@ -109,9 +109,9 @@ namespace ImageDL.Classes.ImageDownloading.Bcy.Models
 		public string OUsername { get; private set; }
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
-			return await BcyImageDownloader.GetBcyImagesAsync(client, PostUrl).CAF();
+			return await BcyPostDownloader.GetBcyImagesAsync(client, PostUrl).CAF();
 		}
 		/// <summary>
 		/// Returns the post url.

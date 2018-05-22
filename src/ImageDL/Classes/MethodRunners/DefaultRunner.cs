@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Attributes;
+using ImageDL.Classes.ImageDownloading;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.MethodRunners
@@ -21,13 +22,13 @@ namespace ImageDL.Classes.MethodRunners
 		{
 			while (true)
 			{
-				var downloader = (IImageDownloader)Activator.CreateInstance(GetDownloaderType());
+				var downloader = (PostDownloader)Activator.CreateInstance(GetDownloaderType());
 				while (!downloader.CanStart)
 				{
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await downloader.StartAsync(services).CAF();
+				await downloader.DownloadAsync(services).CAF();
 			}
 		}
 		private Type GetDownloaderType()
@@ -44,8 +45,8 @@ namespace ImageDL.Classes.MethodRunners
 		}
 		private static SortedDictionary<string, Type> GetDownloaders()
 		{
-			var types = typeof(IImageDownloader).Assembly.DefinedTypes;
-			var dls = types.Where(x => !x.IsAbstract && typeof(IImageDownloader).IsAssignableFrom(x));
+			var types = typeof(PostDownloader).Assembly.DefinedTypes;
+			var dls = types.Where(x => !x.IsAbstract && typeof(PostDownloader).IsAssignableFrom(x));
 			var dict = dls.ToDictionary(x => x.GetCustomAttribute<DownloaderNameAttribute>().Name, x => x.AsType());
 			return new SortedDictionary<string, Type>(dict, StringComparer.OrdinalIgnoreCase);
 		}

@@ -108,7 +108,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		public string Description { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(MediaContent.Url));
 		}

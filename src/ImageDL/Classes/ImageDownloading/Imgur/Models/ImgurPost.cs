@@ -78,20 +78,20 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// </summary>
 		/// <param name="client"></param>
 		/// <returns></returns>
-		public async Task SetAllImages(IImageDownloaderClient client)
+		public async Task SetAllImages(IDownloaderClient client)
 		{
 			if (!IsAlbum || ImagesCount == Images.Count)
 			{
 				return;
 			}
 			Images.Clear();
-			foreach (var image in await ImgurImageDownloader.GetImgurImagesByCode(client, Id).CAF())
+			foreach (var image in await ImgurPostDownloader.GetImgurImagesByCode(client, Id).CAF())
 			{
 				Images.Add(image);
 			}
 		}
 		/// <inheritdoc />
-		public override async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public override async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			if (IsAlbum)
 			{

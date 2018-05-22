@@ -129,7 +129,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		public string SanityLevel { get; private set; }
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			//Only one image, so return the one image's url
 			if (PageCount == 1)
@@ -140,7 +140,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 			else if (Metadata == null)
 			{
 				var query = new Uri($"https://public-api.secure.pixiv.net/v1/works/{Id}.json" +
-					$"?access_token={client.ApiKeys[typeof(PixivImageDownloader)]}" +
+					$"?access_token={client.ApiKeys[typeof(PixivPostDownloader)]}" +
 					$"&include_stats=1" +
 					$"&include_sanity_level=1" +
 					$"&image_sizes=large" +

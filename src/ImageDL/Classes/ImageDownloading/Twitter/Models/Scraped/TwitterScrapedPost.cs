@@ -55,7 +55,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 		public int CommentCount { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromImages(ImageUrls));
 		}

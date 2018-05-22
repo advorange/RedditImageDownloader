@@ -143,7 +143,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr.Models
 		private int? _MHeight { get; set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(ImageUrl));
 		}

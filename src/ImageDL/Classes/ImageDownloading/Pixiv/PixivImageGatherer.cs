@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 			return url.Host.CaseInsContains("pixiv.net");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await PixivImageDownloader.GetPixivImagesAsync(client, url).CAF();
+			return await PixivPostDownloader.GetPixivImagesAsync(client, url).CAF();
 		}
 	}
 }

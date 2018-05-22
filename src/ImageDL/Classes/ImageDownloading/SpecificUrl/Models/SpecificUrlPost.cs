@@ -50,7 +50,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 		}
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			if (PostUrl.ToString().IsImagePath())
 			{

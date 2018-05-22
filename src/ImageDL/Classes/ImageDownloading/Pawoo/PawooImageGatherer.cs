@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			return url.Host.CaseInsContains("pawoo.net");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await PawooImageDownloader.GetPawooImagesAsync(client, url).CAF();
+			return await PawooPostDownloader.GetPawooImagesAsync(client, url).CAF();
 		}
 	}
 }

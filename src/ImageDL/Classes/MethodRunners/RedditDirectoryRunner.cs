@@ -20,7 +20,7 @@ namespace ImageDL.Classes.MethodRunners
 
 			foreach (var dir in GetDirectory().GetDirectories())
 			{
-				var downloader = new RedditImageDownloader();
+				var downloader = new RedditPostDownloader();
 				if (arguments != null)
 				{
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(arguments).ToString());
@@ -32,7 +32,7 @@ namespace ImageDL.Classes.MethodRunners
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await downloader.StartAsync(services).CAF();
+				await downloader.DownloadAsync(services).CAF();
 			}
 		}
 		private DirectoryInfo GetDirectory()

@@ -145,7 +145,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		public readonly long DateTimeTimestamp;
 
 		/// <inheritdoc />
-		public abstract Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client);
+		public abstract Task<ImageResponse> GetImagesAsync(IDownloaderClient client);
 		/// <summary>
 		/// Returns the id.
 		/// </summary>

@@ -125,7 +125,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed
 		public int ThumbnailHeight { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(ImageUrl));
 		}

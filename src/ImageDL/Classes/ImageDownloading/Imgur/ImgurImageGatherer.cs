@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			return url.Host.CaseInsContains("imgur.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await ImgurImageDownloader.GetImgurImagesAsync(client, url).CAF();
+			return await ImgurPostDownloader.GetImgurImagesAsync(client, url).CAF();
 		}
 	}
 }

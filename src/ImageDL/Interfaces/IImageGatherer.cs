@@ -22,6 +22,6 @@ namespace ImageDL.Interfaces
 		/// <param name="client"></param>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url);
+		Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url);
 	}
 }

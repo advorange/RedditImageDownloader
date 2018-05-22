@@ -151,7 +151,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		public int NumberId { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			var images = Assets.Where(x => x.AssetType == "image").Select(x => x.ImageUrl);
 			return Task.FromResult(ImageResponse.FromImages(images));

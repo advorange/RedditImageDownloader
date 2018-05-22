@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 			return url.Host.CaseInsContains("artstation.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await ArtstationImageDownloader.GetArtstationImagesAsync(client, url).CAF();
+			return await ArtstationPostDownloader.GetArtstationImagesAsync(client, url).CAF();
 		}
 	}
 }

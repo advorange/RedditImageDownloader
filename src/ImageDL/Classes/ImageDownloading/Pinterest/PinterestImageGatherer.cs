@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			return url.Host.CaseInsContains("pinterest.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await PinterestImageDownloader.GetPinterestImagesAsync(client, url).CAF();
+			return await PinterestPostDownloader.GetPinterestImagesAsync(client, url).CAF();
 		}
 	}
 }

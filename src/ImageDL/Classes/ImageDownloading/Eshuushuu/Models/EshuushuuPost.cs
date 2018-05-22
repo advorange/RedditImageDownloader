@@ -127,7 +127,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		public string ImageRating { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(new Uri($"http://e-shuushuu.net/images/{Filename}")));
 		}

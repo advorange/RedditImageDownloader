@@ -47,7 +47,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		public bool HasSound { get; private set; }
 
 		/// <inheritdoc />
-		public override Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public override Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Mp4Url != null
 				? Task.FromResult(ImageResponse.FromAnimated(Mp4Url))

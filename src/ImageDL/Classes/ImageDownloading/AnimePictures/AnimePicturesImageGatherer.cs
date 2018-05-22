@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 			return url.Host.CaseInsContains("anime-pictures.net");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await AnimePicturesImageDownloader.GetAnimePicturesImagesAsync(client, url).CAF();
+			return await AnimePicturesPostDownloader.GetAnimePicturesImagesAsync(client, url).CAF();
 		}
 	}
 }

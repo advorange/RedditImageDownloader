@@ -42,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 		}
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			if (PostUrl.ToString().IsImagePath())
 			{

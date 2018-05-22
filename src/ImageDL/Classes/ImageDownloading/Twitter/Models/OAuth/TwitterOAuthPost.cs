@@ -197,7 +197,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		public object Geo { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			if (ExtendedEntities.Media == null)
 			{

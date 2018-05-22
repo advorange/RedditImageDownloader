@@ -52,7 +52,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan.Models
 		}
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(Post.HasImage
 				? ImageResponse.FromUrl(new Uri($"http://i.4cdn.org/{Post.Board}/{Post.FileName}{Post.FileExtension}"))

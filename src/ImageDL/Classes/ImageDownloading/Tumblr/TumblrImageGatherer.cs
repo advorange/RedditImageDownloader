@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			return url.Host.CaseInsContains("tumblr.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await TumblrImageDownloader.GetTumblrImagesAsync(client, url).CAF();
+			return await TumblrPostDownloader.GetTumblrImagesAsync(client, url).CAF();
 		}
 	}
 }

@@ -145,7 +145,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		private string _FileUrl = null;
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(FileUrl));
 		}

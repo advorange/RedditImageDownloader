@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 			return url.Host.CaseInsContains("vsco.co");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await VscoImageDownloader.GetVscoImagesAsync(client, url).CAF();
+			return await VscoPostDownloader.GetVscoImagesAsync(client, url).CAF();
 		}
 	}
 }

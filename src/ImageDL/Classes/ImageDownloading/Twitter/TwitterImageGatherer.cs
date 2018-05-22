@@ -16,9 +16,9 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 			return url.Host.CaseInsContains("twitter.com");
 		}
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IImageDownloaderClient client, Uri url)
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
 		{
-			return await TwitterImageDownloader.GetTwitterImagesAsync(client, url).CAF();
+			return await TwitterPostDownloader.GetTwitterImagesAsync(client, url).CAF();
 		}
 	}
 }

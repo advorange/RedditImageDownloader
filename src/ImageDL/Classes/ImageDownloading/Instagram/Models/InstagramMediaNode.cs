@@ -167,7 +167,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		public Uri DisplayUrl { get; private set; }
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			if (ChildrenInfo.Nodes != null)
 			{

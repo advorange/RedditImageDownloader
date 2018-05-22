@@ -34,6 +34,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// The link to the raw image.
 		/// </summary>
 		[JsonIgnore]
-		public Uri FullSizeImageUrl => TumblrImageDownloader.GetFullSizeTumblrImage(RegularImageUrl);
+		public Uri FullSizeImageUrl => TumblrPostDownloader.GetFullSizeTumblrImage(RegularImageUrl);
 	}
 }

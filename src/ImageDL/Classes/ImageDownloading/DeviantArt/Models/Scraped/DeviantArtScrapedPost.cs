@@ -71,7 +71,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		public Uri Source { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(Source));
 		}

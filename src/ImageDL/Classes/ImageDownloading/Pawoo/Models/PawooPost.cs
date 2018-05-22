@@ -136,7 +136,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		public IList<PawooEmoji> Emojis { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client)
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromImages(MediaAttachments.Select(x => x.Url)));
 		}

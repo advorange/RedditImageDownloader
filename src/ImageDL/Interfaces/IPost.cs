@@ -30,6 +30,6 @@ namespace ImageDL.Interfaces
 		/// Returns all the images from the post.
 		/// </summary>
 		/// <returns></returns>
-		Task<ImageResponse> GetImagesAsync(IImageDownloaderClient client);
+		Task<ImageResponse> GetImagesAsync(IDownloaderClient client);
 	}
 }
