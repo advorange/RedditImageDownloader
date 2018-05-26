@@ -56,19 +56,13 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 					$"&limit=20" +
 					$"&source=all" +
 					$"&filter=origin");
-				var result = await client.GetTextAsync(() =>
-				{
-					var req = client.GenerateReq(query, HttpMethod.Get);
-					req.Headers.Add("X-Requested-With", "XMLHttpRequest");
-					return req;
-				}).CAF();
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
 				}
 
-				//TODO: remake models because they were changed
-				parsed = JObject.Parse(result.Value)["data"].ToObject<List<Model>>();
+				parsed = JObject.Parse(result.Value)["data"].Select(x => x["item_detail"].ToObject<Model>()).ToList();
 				foreach (var post in parsed)
 				{
 					token.ThrowIfCancellationRequested();
@@ -77,8 +71,8 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 						return;
 					}
 					//First check indicates the post doesn't have any images
-					//Due to the way this site's api is set up, we can't get all images and check ahead of time
-					if (post.Details.FirstImage.Width == 0 || !HasValidSize(post.Details.FirstImage, out _) || post.Score < MinScore)
+					//Due to the way this site's api is set up can't check image sizes
+					if (post.PicNum < 1 || post.Score < MinScore)
 					{
 						continue;
 					}

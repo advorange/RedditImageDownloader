@@ -153,7 +153,7 @@ namespace ImageDL.Classes.ImageDownloading
 		private AspectRatio _MaxAspectRatio;
 		private bool _CreateDirectory;
 		private bool _Start;
-		private SettingParser _SettingParser;
+		private readonly SettingParser _SettingParser;
 
 		/// <summary>
 		/// Creates an instance of <see cref="PostDownloader"/>.
