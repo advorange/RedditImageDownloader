@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using HtmlAgilityPack;
@@ -110,7 +111,9 @@ namespace ImageDL.Classes.ImageDownloading
 						continue;
 					}
 
-					return new ClientResult<string>(await resp.Content.ReadAsStringAsync().CAF(), resp.StatusCode, resp.IsSuccessStatusCode);
+					var bytes = await resp.Content.ReadAsByteArrayAsync().CAF();
+					var text = Encoding.UTF8.GetString(bytes);
+					return new ClientResult<string>(text, resp.StatusCode, resp.IsSuccessStatusCode);
 				}
 			}
 			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");

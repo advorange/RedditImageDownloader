@@ -10,6 +10,7 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Artstation
 * Bcy
 * DeviantArt
+* Diyidan
 * Eshuushuu
 * Flickr
 * Imgur
