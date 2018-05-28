@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading;
@@ -13,6 +11,7 @@ using ImageDL.Classes.ImageDownloading.Booru.Konachan;
 using ImageDL.Classes.ImageDownloading.Booru.Safebooru;
 using ImageDL.Classes.ImageDownloading.Booru.Yandere;
 using ImageDL.Classes.ImageDownloading.DeviantArt;
+using ImageDL.Classes.ImageDownloading.Diyidan;
 using ImageDL.Classes.ImageDownloading.Eshuushuu;
 using ImageDL.Classes.ImageDownloading.Flickr;
 using ImageDL.Classes.ImageDownloading.FourChan;
@@ -97,6 +96,11 @@ namespace ImageDL.Tests.ImageDownloadingTests
 				$"-{nameof(DeviantArtPostDownloader.GatheringMethod)} {DeviantArtGatheringMethod.Scraping}").CAF();
 		}
 		[TestMethod]
+		public async Task Diyidan_Test()
+		{
+			await Downloader_Test<DiyidanPostDownloader>($"-{nameof(DiyidanPostDownloader.Username)} 6294196636885527271");
+		}
+		[TestMethod]
 		public async Task Eshuushuu_Test()
 		{
 			await Downloader_Test<EshuushuuPostDownloader>($"-{nameof(EshuushuuPostDownloader.Tags)} 169").CAF();
@@ -150,7 +154,10 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		[TestMethod]
 		public async Task Twitter_Test()
 		{
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__").CAF();
+			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__" +
+				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.User}").CAF();
+			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs" +
+				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.Search}").CAF();
 		}
 		[TestMethod]
 		public async Task Vsco_Test()

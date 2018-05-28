@@ -50,7 +50,7 @@ namespace ImageDL.Classes.MethodRunners
 				}
 				catch (OperationCanceledException)
 				{
-					ConsoleUtils.WriteLine($"The downloading was cancelled.{Environment.NewLine}");
+					ConsoleUtils.WriteLine($"The downloading was canceled.{Environment.NewLine}");
 				}
 			}
 		}

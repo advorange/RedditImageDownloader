@@ -48,23 +48,35 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		{
 			var valid = new CancellationTokenSource();
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
-			await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, int.MaxValue).ForEachAsync(post =>
+			try
 			{
-				valid.Token.ThrowIfCancellationRequested();
-				token.ThrowIfCancellationRequested();
-				if (post.CreatedUTC < OldestAllowed)
+				await subreddit.GetPosts(RedditSharp.Things.Subreddit.Sort.New, int.MaxValue).ForEachAsync(post =>
 				{
-					valid.Cancel();
-				}
-				else if (post.IsStickied || post.IsSelfPost || post.Score < MinScore)
+					valid.Token.ThrowIfCancellationRequested();
+					token.ThrowIfCancellationRequested();
+					if (post.CreatedUTC < OldestAllowed)
+					{
+						valid.Cancel();
+					}
+					else if (post.IsStickied || post.IsSelfPost || post.Score < MinScore)
+					{
+						return;
+					}
+					else if (!Add(list, new Model(post)))
+					{
+						valid.Cancel();
+					}
+				}, valid.Token).CAF();
+			}
+			catch (OperationCanceledException)
+			{
+				//Since either this inner token can throw for the foreachasync being done, or the passed in one for whatever reason
+				//We need to catch any operationcanceledexception, but only rethrow if the passed in one is canceled
+				if (token.IsCancellationRequested)
 				{
-					return;
+					throw;
 				}
-				else if (!Add(list, new Model(post)))
-				{
-					valid.Cancel();
-				}
-			}, valid.Token).CAF();
+			}
 		}
 	}
 }

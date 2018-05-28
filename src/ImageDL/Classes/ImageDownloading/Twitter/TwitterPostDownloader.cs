@@ -119,7 +119,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <returns></returns>
 		private static Uri GenerateQuery(TwitterGatheringMethod method, string search, string min, bool includeRetweets)
 		{
-			string query;
 			switch (method)
 			{
 				//Why does Twitter's public search API have to be so terrible?
@@ -127,26 +126,22 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 				case TwitterGatheringMethod.Search:
 					if (min == "")
 					{
-						query = $"https://twitter.com/search" +
+						return new Uri($"https://twitter.com/search" +
 							$"?f=tweets" +
 							$"&vertical=default" +
-							$"&q={WebUtility.UrlEncode(search)}";
+							$"&q={WebUtility.UrlEncode(search)}");
 					}
-					else
-					{
-						query = "https://twitter.com/i/search/timeline" +
-							$"?f=tweets" +
-							$"&vertical=default" +
-							$"&include_available_features=1" +
-							$"&include_entities=1" +
-							$"&reset_error_state=false" +
-							$"&src=typd" +
-							$"&max_position={min}" +
-							$"&q={WebUtility.UrlEncode(search)}";
-					}
-					break;
+					return new Uri("https://twitter.com/i/search/timeline" +
+						$"?f=tweets" +
+						$"&vertical=default" +
+						$"&include_available_features=1" +
+						$"&include_entities=1" +
+						$"&reset_error_state=false" +
+						$"&src=typd" +
+						$"&max_position={min}" +
+						$"&q={WebUtility.UrlEncode(search)}");
 				case TwitterGatheringMethod.User:
-					query = $"https://twitter.com/i/profiles/show/{search}/" +
+					var query = $"https://twitter.com/i/profiles/show/{search}/" +
 						$"{(includeRetweets ? "timeline" : "media_timeline")}" +
 						$"?include_available_features=1" +
 						$"&include_entities=1" +
@@ -155,11 +150,10 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					{
 						query += $"&max_position={min}";
 					}
-					break;
+					return new Uri(query);
 				default:
 					throw new ArgumentException("Invalid gathering method supplied.");
 			}
-			return new Uri(query);
 		}
 		/// <summary>
 		/// Gets the post with the specified id.
