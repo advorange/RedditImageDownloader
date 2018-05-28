@@ -150,7 +150,7 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		[TestMethod]
 		public async Task Twitter_Test()
 		{
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Username)} hews__").CAF();
+			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__").CAF();
 		}
 		[TestMethod]
 		public async Task Vsco_Test()

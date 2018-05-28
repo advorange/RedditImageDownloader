@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
+using ImageDL.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -15,86 +17,86 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 	public struct TwitterScrapedPage
 	{
 		/// <summary>
-		/// The lowest value id of the items.
+		/// The posts from this iteration.
+		/// </summary>
+		[JsonProperty("items")]
+		public IList<TwitterScrapedPost> Items { get; private set; }
+		/// <summary>
+		/// The minimum position, used in pagination.
 		/// </summary>
 		[JsonProperty("min_position")]
-		public string MinimumPosition
-		{
-			get => _MinimumPosition ?? ItemIds.Last();
-			private set => _MinimumPosition = value;
-		}
+		public string MinimumPosition { get; private set; }
 		/// <summary>
 		/// Whether more items can be gotten.
 		/// </summary>
 		[JsonProperty("has_more_items")]
 		public bool HasMoreItems { get; private set; }
+
 		/// <summary>
-		/// The html of the items.
+		/// Creates an instance of <see cref="TwitterScrapedPage"/>.
 		/// </summary>
-		[JsonProperty("items_html")]
-		public string ItemsHtml
+		/// <param name="method"></param>
+		/// <param name="text"></param>
+		public TwitterScrapedPage(TwitterGatheringMethod method, string text)
 		{
-			get => _ItemsHtml;
-			private set
+			switch (method)
 			{
-				_ItemsHtml = Regex.Replace(Regex.Unescape(WebUtility.HtmlDecode(value)), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
+				//Brackets because otherwise jObj is in same space each time
+				case TwitterGatheringMethod.Search:
 				{
-					return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
-				});
-
-				var doc = new HtmlDocument();
-				doc.LoadHtml(_ItemsHtml);
-
-				var li = doc.DocumentNode.Descendants("li");
-				var tweets = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item"));
-				Items = tweets.Select(t =>
-				{
-					var div = t.Descendants("div");
-					var span = t.Descendants("span");
-
-					var imageUrls = div.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"))
-						?.Descendants("img")?.Select(x => x.GetAttributeValue("src", null))?.Where(x => x != null) ?? new string[0];
-					var tweetInfo = div.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
-					var timestamp = span.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"));
-					var likes = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--favorite"))
-						.Descendants("span").First();
-					var retweets = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--retweet"))
-						.Descendants("span").First();
-					var replies = span.Single(x => x.GetAttributeValue("class", "").Contains("ProfileTweet-action--reply"))
-						.Descendants("span").First();
-
-					return new JObject
+					try
 					{
-						{ nameof(TwitterScrapedPost.ImageUrls), JArray.FromObject(imageUrls) },
-						{ nameof(TwitterScrapedPost.Id), tweetInfo.GetAttributeValue("data-tweet-id", null) },
-						{ nameof(TwitterScrapedPost.Username), tweetInfo.GetAttributeValue("data-screen-name", null) },
-						{ nameof(TwitterScrapedPost.CreatedAtTimestamp), timestamp.GetAttributeValue("data-time", 0) },
-						{ nameof(TwitterScrapedPost.FavoriteCount), likes.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(TwitterScrapedPost.RetweetCount), retweets.GetAttributeValue("data-tweet-stat-count", -1) },
-						{ nameof(TwitterScrapedPost.CommentCount), replies.GetAttributeValue("data-tweet-stat-count", -1) },
-					}.ToObject<TwitterScrapedPost>();
-				}).ToList();
-				ItemIds = Items.Select(x => x.Id).ToList();
+						var jObj = JObject.Parse(text);
+						Items = GetPostsFromHtml(UnescapeHtml(jObj["items_html"].ToObject<string>()));
+						MinimumPosition = jObj["min_position"].ToObject<string>();
+						HasMoreItems = Items.Count > 0; //For some reason this field is always false in the json
+					}
+					catch (JsonReaderException)
+					{
+						Items = GetPostsFromHtml(text);
+						MinimumPosition = $"TWEET-{Items.Last().Id}-{Items.First().Id}";
+						HasMoreItems = true; //Just assume it's true
+					}
+					return;
+				}
+				case TwitterGatheringMethod.User:
+				{
+					var jObj = JObject.Parse(text);
+					Items = GetPostsFromHtml(UnescapeHtml(jObj["items_html"].ToObject<string>()));
+					MinimumPosition = jObj["min_position"]?.ToObject<string>() ?? Items.Last().Id;
+					HasMoreItems = jObj["has_more_items"].ToObject<bool>();
+					return;
+				}
+				default:
+					throw new ArgumentException("Invalid method supplied.");
 			}
 		}
+
 		/// <summary>
-		/// The html converted to objects.
+		/// Unescapes the html correctly.
 		/// </summary>
-		[JsonIgnore]
-		public IList<string> ItemIds { get; private set; }
+		/// <param name="html"></param>
+		/// <returns></returns>
+		public static string UnescapeHtml(string html)
+		{
+			return Regex.Replace(WebUtility.HtmlDecode(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
+			{
+				return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
+			});
+		}
 		/// <summary>
-		/// The posts.
+		/// Gets the posts from the html.
 		/// </summary>
-		[JsonIgnore]
-		public IList<TwitterScrapedPost> Items { get; private set; }
-		/// <summary>
-		/// The amount of posts gotten.
-		/// </summary>
-		[JsonProperty("new_latent_count")]
-		public int NewLatentCount { get; private set; }
-		[JsonIgnore]
-		private string _ItemsHtml;
-		[JsonIgnore]
-		private string _MinimumPosition;
+		/// <param name="html"></param>
+		/// <returns></returns>
+		public static List<TwitterScrapedPost> GetPostsFromHtml(string html)
+		{
+			var doc = new HtmlDocument();
+			doc.LoadHtml(html);
+
+			var li = doc.DocumentNode.Descendants("li");
+			var tweets = li.Where(x => x.GetAttributeValue("data-item-type", null) == "tweet");
+			return tweets.Select(x => new TwitterScrapedPost(x)).ToList();
+		}
 	}
 }

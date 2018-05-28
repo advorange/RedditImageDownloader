@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Attributes;
@@ -28,7 +29,29 @@ namespace ImageDL.Classes.MethodRunners
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await downloader.DownloadAsync(services).CAF();
+
+				var source = new CancellationTokenSource();
+				var running = true;
+				var f = Task.Run(() =>
+				{
+					while (running)
+					{
+						if (Console.ReadKey().Key == ConsoleKey.X)
+						{
+							source.Cancel();
+						}
+					}
+				});
+
+				try
+				{
+					await downloader.DownloadAsync(services, source.Token).CAF();
+					running = false;
+				}
+				catch (OperationCanceledException)
+				{
+					ConsoleUtils.WriteLine($"The downloading was cancelled.{Environment.NewLine}");
+				}
 			}
 		}
 		private Type GetDownloaderType()

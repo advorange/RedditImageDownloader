@@ -127,7 +127,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				}
 			}
 		}
-
 		/// <summary>
 		/// Gets an api key for Instagram.
 		/// </summary>

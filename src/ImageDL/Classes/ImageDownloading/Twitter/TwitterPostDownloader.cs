@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -7,6 +9,7 @@ using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
 
@@ -22,24 +25,52 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		private static readonly string _Token = "AAAAAAAAAAAAAAAAAAAAAPYXBAAAAAAACLXUNDekMxqa8h%2F40K4moUkGsoc%3DTYfbDKbT3jJPCEVnMYqilB28NHfOPqkca3qaAxGfsyKCs0wRbw";
 
 		/// <summary>
-		/// The name of the user to download images from.
+		/// The term to search for.
 		/// </summary>
-		public string Username
+		public string Search
 		{
-			get => _Username;
-			set => _Username = value;
+			get => _Search;
+			set => _Search = value;
+		}
+		/// <summary>
+		/// Whether or not to include retweets.
+		/// </summary>
+		public bool IncludeRetweets
+		{
+			get => _IncludeRetweets;
+			set => _IncludeRetweets = value;
+		}
+		/// <summary>
+		/// The method to gather images with.
+		/// </summary>
+		public TwitterGatheringMethod GatheringMethod
+		{
+			get => _GatheringMethod;
+			set => _GatheringMethod = value;
 		}
 
-		private string _Username;
+		private string _Search;
+		private bool _IncludeRetweets;
+		private TwitterGatheringMethod _GatheringMethod;
 
 		/// <summary>
 		/// Creates an instance of <see cref="TwitterPostDownloader"/>.
 		/// </summary>
 		public TwitterPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
+			SettingParser.Add(new Setting<string>(new[] { nameof(Search), }, x => Search = x)
 			{
-				Description = "The name of the user to download images from.",
+				Description = "The term to search for. Can be a username if the method username is used, otherwise will be searched for regualarly.",
+			});
+			SettingParser.Add(new Setting<bool>(new[] { nameof(IncludeRetweets), "retweets", }, x => IncludeRetweets = x)
+			{
+				Description = "Whether or not to include retweets when getting tweets from a user. This does nothing if searching is used instead.",
+				IsFlag = true,
+				IsOptional = true,
+			});
+			SettingParser.Add(new Setting<TwitterGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out TwitterGatheringMethod result), result))
+			{
+				Description = "How to gather posts. Will either use the search feature or go through the user's posts.",
 			});
 		}
 
@@ -51,22 +82,14 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 			for (string min = ""; list.Count < AmountOfPostsToGather && (min == "" || parsed.HasMoreItems); min = parsed.MinimumPosition)
 			{
 				token.ThrowIfCancellationRequested();
-				var query = $"https://twitter.com/i/profiles/show/{Username}/media_timeline" +
-					$"?include_available_features=1" +
-					$"&include_entities=1" +
-					$"&reset_error_state=false" +
-					$"&count=100";
-				if (min != "")
-				{
-					query += $"&max_position={min}";
-				}
-				var result = await client.GetTextAsync(() => client.GenerateReq(new Uri(query)), TimeSpan.FromSeconds(60)).CAF();
+				var query = GenerateQuery(GatheringMethod, Search, min, IncludeRetweets);
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
 				}
 
-				parsed = JsonConvert.DeserializeObject<TwitterScrapedPage>(result.Value);
+				parsed = new TwitterScrapedPage(GatheringMethod, result.Value);
 				foreach (var post in parsed.Items)
 				{
 					token.ThrowIfCancellationRequested();
@@ -75,7 +98,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					{
 						return;
 					}
-					if (post.FavoriteCount < MinScore)
+					if (!post.ImageUrls.Any() || (!IncludeRetweets && post.IsRetweet) || post.FavoriteCount < MinScore)
 					{
 						continue;
 					}
@@ -85,6 +108,58 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 					}
 				}
 			}
+		}
+		/// <summary>
+		/// Generates a url to search with.
+		/// </summary>
+		/// <param name="method"></param>
+		/// <param name="search"></param>
+		/// <param name="min"></param>
+		/// <param name="includeRetweets"></param>
+		/// <returns></returns>
+		private static Uri GenerateQuery(TwitterGatheringMethod method, string search, string min, bool includeRetweets)
+		{
+			string query;
+			switch (method)
+			{
+				//Why does Twitter's public search API have to be so terrible?
+				//Is it maybe to make people not use it, and instead use the actual API?
+				case TwitterGatheringMethod.Search:
+					if (min == "")
+					{
+						query = $"https://twitter.com/search" +
+							$"?f=tweets" +
+							$"&vertical=default" +
+							$"&q={WebUtility.UrlEncode(search)}";
+					}
+					else
+					{
+						query = "https://twitter.com/i/search/timeline" +
+							$"?f=tweets" +
+							$"&vertical=default" +
+							$"&include_available_features=1" +
+							$"&include_entities=1" +
+							$"&reset_error_state=false" +
+							$"&src=typd" +
+							$"&max_position={min}" +
+							$"&q={WebUtility.UrlEncode(search)}";
+					}
+					break;
+				case TwitterGatheringMethod.User:
+					query = $"https://twitter.com/i/profiles/show/{search}/" +
+						$"{(includeRetweets ? "timeline" : "media_timeline")}" +
+						$"?include_available_features=1" +
+						$"&include_entities=1" +
+						$"&reset_error_state=false";
+					if (min != "")
+					{
+						query += $"&max_position={min}";
+					}
+					break;
+				default:
+					throw new ArgumentException("Invalid gathering method supplied.");
+			}
+			return new Uri(query);
 		}
 		/// <summary>
 		/// Gets the post with the specified id.

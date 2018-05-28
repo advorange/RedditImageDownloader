@@ -320,7 +320,10 @@ namespace ImageDL.Classes.ImageDownloading
 			{
 				await GatherAsync(client, posts, token).CAF();
 			}
-			catch (OperationCanceledException) { } //Eat it since this is an unimportant exception
+			catch (OperationCanceledException)
+			{
+				throw;
+			}
 			catch (Exception e)
 			{
 				e.Write();
