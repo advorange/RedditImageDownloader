@@ -22,5 +22,14 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// </summary>
 		[JsonProperty("num")]
 		public int Num { get; private set; }
+
+		/// <summary>
+		/// Returns the name and value.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Name} ({Num})";
+		}
 	}
 }

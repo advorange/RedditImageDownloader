@@ -17,5 +17,14 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		/// </summary>
 		[JsonProperty("private")]
 		public int Private { get; private set; }
+
+		/// <summary>
+		/// Returns the total count of favorites.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return (Public + Private).ToString();
+		}
 	}
 }

@@ -35,5 +35,14 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// </summary>
 		[JsonIgnore]
 		public Uri FullSizeImageUrl => TumblrPostDownloader.GetFullSizeTumblrImage(RegularImageUrl);
+
+		/// <summary>
+		/// Returns the url, width, and height.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{FullSizeImageUrl} ({Width}x{Height})";
+		}
 	}
 }

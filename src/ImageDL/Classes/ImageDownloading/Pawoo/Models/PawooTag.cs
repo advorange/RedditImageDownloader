@@ -18,5 +18,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("url")]
 		public Uri Url { get; private set; }
+
+		/// <summary>
+		/// Returns the name.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 }

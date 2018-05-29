@@ -156,5 +156,13 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 			}
 			return ImageResponse.FromImages(Metadata.Pages.Select(x => x.ImageUrls["large"]));
 		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Id;
+		}
 	}
 }

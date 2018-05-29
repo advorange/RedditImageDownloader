@@ -140,7 +140,6 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// </summary>
 		[JsonIgnore]
 		public Uri FileUrl => new Uri(_FileUrl.Replace("?", "").Replace(" ", "+"));
-
 		[JsonProperty("file_url")]
 		private string _FileUrl = null;
 
@@ -148,6 +147,14 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
 			return Task.FromResult(ImageResponse.FromUrl(FileUrl));
+		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Id;
 		}
 	}
 }

@@ -48,5 +48,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("description")]
 		public object Description { get; private set; }
+
+		/// <summary>
+		/// Returns the url.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Url.ToString();
+		}
 	}
 }

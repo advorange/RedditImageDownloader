@@ -17,5 +17,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("provider")]
 		public string Provider { get; private set; }
+
+		/// <summary>
+		/// Returns the provider and uid.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Provider} ({Uid})";
+		}
 	}
 }

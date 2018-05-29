@@ -89,5 +89,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("oauth_authentications")]
 		public IList<PawooOAuthAuthentication> OauthAuthentications { get; private set; }
+
+		/// <summary>
+		/// Returns the display name, and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{DisplayName} ({Id})";
+		}
 	}
 }

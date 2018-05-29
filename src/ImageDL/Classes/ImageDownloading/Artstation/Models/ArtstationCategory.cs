@@ -16,6 +16,15 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// The value of the category.
 		/// </summary>
 		[JsonProperty("id")]
-		public long Id { get; private set; }
+		public int Id { get; private set; }
+
+		/// <summary>
+		/// Returns the name and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Name} ({Id})";
+		}
 	}
 }

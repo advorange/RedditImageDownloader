@@ -106,7 +106,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 			try
 			{
 				var a = result.Value.DocumentNode.Descendants("a");
-				var user = a.Single(x => x.GetAttributeValue("title", "").CaseInsEquals(username));
+				var user = a.First(x => x.GetAttributeValue("title", "").CaseInsEquals(username));
 				return Convert.ToUInt64(user.GetAttributeValue("href", null).Replace("/u/", ""));
 			}
 			catch (Exception e)

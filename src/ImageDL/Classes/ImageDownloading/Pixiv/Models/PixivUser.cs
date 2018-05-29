@@ -59,5 +59,14 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		/// </summary>
 		[JsonProperty("profile")]
 		public PixivUserProfile Profile { get; private set; }
+
+		/// <summary>
+		/// Returns the name, and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Name} ({Id})";
+		}
 	}
 }

@@ -17,5 +17,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("website")]
 		public string Website { get; private set; }
+
+		/// <summary>
+		/// Returns website, and name.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Website} ({Name})";
+		}
 	}
 }

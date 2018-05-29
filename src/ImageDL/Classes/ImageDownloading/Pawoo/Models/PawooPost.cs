@@ -140,5 +140,13 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		{
 			return Task.FromResult(ImageResponse.FromImages(MediaAttachments.Select(x => x.Url)));
 		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Id;
+		}
 	}
 }

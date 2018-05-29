@@ -38,5 +38,14 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// </summary>
 		[JsonProperty("avatar_url_512")]
 		public Uri AvatarUrl { get; private set; }
+
+		/// <summary>
+		/// Returns the name.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Name;
+		}
 	}
 }

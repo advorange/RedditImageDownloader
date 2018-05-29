@@ -51,21 +51,12 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
-			var id = 0UL;
-			var rhx = "";
+			var (id, rhx) = await GetUserIdAndRhxAsync(client, Username).CAF();
 			var parsed = new InstagramMediaTimeline();
 			//Iterate to update the pagination start point
 			for (string end = ""; list.Count < AmountOfPostsToGather && (end == "" || parsed.PageInfo.HasNextPage); end = parsed.PageInfo.EndCursor)
 			{
 				token.ThrowIfCancellationRequested();
-				//If the id is 0 this just started so it should be gotten
-				if (id == 0UL)
-				{
-					var (Id, Rhx) = await GetUserIdAndRhx(client, Username).CAF();
-					id = Id;
-					rhx = Rhx;
-				}
-
 				var variables = JsonConvert.SerializeObject(new Dictionary<string, object>
 				{
 					{ "id", id }, //The id of the user to search
@@ -101,7 +92,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 					{
 						return;
 					}
-					if (p.LikeInfo.Count < MinScore)
+					if (p.Score < MinScore)
 					{
 						continue;
 					}
@@ -193,7 +184,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <param name="client"></param>
 		/// <param name="username"></param>
 		/// <returns></returns>
-		private static async Task<(ulong Id, string Rhx)> GetUserIdAndRhx(IDownloaderClient client, string username)
+		private static async Task<(ulong Id, string Rhx)> GetUserIdAndRhxAsync(IDownloaderClient client, string username)
 		{
 			var query = new Uri($"https://www.instagram.com/{username}/?hl=en");
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();

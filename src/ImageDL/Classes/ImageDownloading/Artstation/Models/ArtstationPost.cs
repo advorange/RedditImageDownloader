@@ -156,5 +156,13 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 			var images = Assets.Where(x => x.AssetType == "image").Select(x => x.ImageUrl);
 			return Task.FromResult(ImageResponse.FromImages(images));
 		}
+		/// <summary>
+		/// Returns the id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Id;
+		}
 	}
 }

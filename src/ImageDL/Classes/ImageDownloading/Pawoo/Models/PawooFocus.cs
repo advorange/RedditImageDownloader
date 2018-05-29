@@ -17,5 +17,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("y")]
 		public double Y { get; private set; }
+
+		/// <summary>
+		/// Returns X, and Y.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"({X},{Y})";
+		}
 	}
 }

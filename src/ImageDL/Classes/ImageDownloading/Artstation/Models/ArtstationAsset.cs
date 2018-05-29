@@ -39,7 +39,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// The id of the image.
 		/// </summary>
 		[JsonProperty("id")]
-		public long Id { get; private set; }
+		public string Id { get; private set; }
 		/// <summary>
 		/// The title of the image. This is in HTML.
 		/// </summary>
@@ -65,5 +65,14 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// </summary>
 		[JsonProperty("viewport_constraint_type")]
 		public string ViewportConstraintType { get; private set; }
+
+		/// <summary>
+		/// Returns the url, width, and height.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{ImageUrl} ({Width}x{Height})";
+		}
 	}
 }

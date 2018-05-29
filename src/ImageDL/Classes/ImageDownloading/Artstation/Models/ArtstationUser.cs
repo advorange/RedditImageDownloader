@@ -63,5 +63,14 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// </summary>
 		[JsonProperty("pro_member")]
 		public bool ProMember { get; private set; }
+
+		/// <summary>
+		/// Returns the username, and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Username} ({Id})";
+		}
 	}
 }

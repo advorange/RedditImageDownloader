@@ -24,6 +24,7 @@ using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Classes.ImageDownloading.Tumblr;
 using ImageDL.Classes.ImageDownloading.Twitter;
 using ImageDL.Classes.ImageDownloading.Vsco;
+using ImageDL.Classes.ImageDownloading.Weibo;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Windows;
@@ -164,6 +165,11 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		{
 			await Downloader_Test<VscoPostDownloader>($"-{nameof(VscoPostDownloader.Username)} kusumadjaja").CAF();
 		}
+		[TestMethod]
+		public async Task Weibo_Test()
+		{
+			await Downloader_Test<WeiboPostDownloader>($"-{nameof(WeiboPostDownloader.Username)} 1632765501").CAF();
+		}
 		private async Task Downloader_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
 		{
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
@@ -186,16 +192,16 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		}
 		private string GenerateGenericArgs<T>()
 		{
-			return $"-cd " +
-				$"-dir \"{GetDirectory<T>()}\" " +
-				$"-amt {AMOUNT} " +
-				$"-ms {MIN_SCORE} " +
-				$"-mh {MIN_HEIGHT} " +
-				$"-mw {MIN_WIDTH} " +
-				$"-age {MAX_AGE} " +
-				$"-sim 990 " +
-				$"-icpt 4 " +
-				$"-s";
+			return $"-{nameof(PostDownloader.CreateDirectory)} " +
+				$"-{nameof(PostDownloader.SavePath)} \"{GetDirectory<T>()}\" " +
+				$"-{nameof(PostDownloader.AmountOfPostsToGather)} {AMOUNT} " +
+				$"-{nameof(PostDownloader.MinScore)} {MIN_SCORE} " +
+				$"-{nameof(PostDownloader.MinHeight)} {MIN_HEIGHT} " +
+				$"-{nameof(PostDownloader.MinWidth)} {MIN_WIDTH} " +
+				$"-{nameof(PostDownloader.MaxDaysOld)} {MAX_AGE} " +
+				$"-{nameof(PostDownloader.MaxImageSimilarity)} 990 " +
+				$"-{nameof(PostDownloader.ImagesCachedPerThread)} 4 " +
+				$"-{nameof(PostDownloader.Start)}";
 		}
 	}
 }

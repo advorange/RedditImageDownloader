@@ -24,5 +24,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("aspect")]
 		public double Aspect { get; private set; }
+
+		/// <summary>
+		/// Returns the width and height.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Width}x{Height}";
+		}
 	}
 }

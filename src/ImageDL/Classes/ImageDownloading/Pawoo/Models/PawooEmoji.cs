@@ -28,5 +28,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("visible_in_picker")]
 		public bool VisibleInPicker { get; private set; }
+
+		/// <summary>
+		/// Returns the url.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return Url.ToString();
+		}
 	}
 }

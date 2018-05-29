@@ -235,7 +235,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
 		/// </summary>
 		[JsonProperty("file_size")]
 		public long FileSize { get; private set; }
-
 		[JsonProperty("created_at")]
 		private DateTime _CreatedAt = default;
 		[JsonProperty("image_width")]

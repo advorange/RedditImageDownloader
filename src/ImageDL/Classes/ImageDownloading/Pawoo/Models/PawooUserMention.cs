@@ -28,5 +28,14 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("acct")]
 		public string Acct { get; private set; }
+
+		/// <summary>
+		/// Returns the username, and id.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return $"{Username} ({Id})";
+		}
 	}
 }
