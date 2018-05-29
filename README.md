@@ -14,7 +14,7 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Eshuushuu
 * Flickr
 * Imgur
-* Instagram (likely to have breaking changes in their API soon)
+* Instagram
 * Booru
   * Danbooru
   * Gelbooru
@@ -28,5 +28,6 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Tumblr
 * Twitter
 * Vsco
+* Weibo
 
 *This program is not in any way affiliated with any of the above services.*

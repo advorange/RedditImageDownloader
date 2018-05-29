@@ -48,7 +48,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 			{
 				return ImageResponse.FromUrl(PostUrl);
 			}
-			if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(PostUrl)) is IImageGatherer gatherer)
+			if (client.Gatherers.SingleOrDefault(x => x.IsFromWebsite(Post.Url)) is IImageGatherer gatherer)
 			{
 				return await gatherer.FindImagesAsync(client, PostUrl).CAF();
 			}

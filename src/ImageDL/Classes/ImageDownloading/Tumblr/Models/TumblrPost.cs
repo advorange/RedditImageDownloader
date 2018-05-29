@@ -179,7 +179,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// <inheritdoc />
 		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
 		{
-			if (Photos != null)
+			if (Photos != null && Photos.Any())
 			{
 				var urls = Photos.Select(x => x.FullSizeImageUrl).ToArray();
 				return Task.FromResult(ImageResponse.FromImages(urls));

@@ -58,7 +58,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		/// <returns></returns>
 		private static List<Model> ParseGelbooruPosts(string text)
 		{
-			return JObject.Parse(JsonUtils.ConvertXmlToJson(text))["posts"]["post"].ToObject<List<Model>>();
+			var posts = JObject.Parse(JsonUtils.ConvertXmlToJson(text))["posts"];
+			var count = posts["count"].ToObject<int>();
+			return count == 1 ? new List<Model> { posts["post"].ToObject<Model>() } : posts["post"].ToObject<List<Model>>();
 		}
 		/// <summary>
 		/// Gets the post with the specified id.

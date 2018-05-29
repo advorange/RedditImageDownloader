@@ -31,13 +31,12 @@ using ImageDL.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ImageDL.Tests.ImageDownloadingTests
+namespace ImageDL.Tests.PostGatheringTests
 {
-	//TODO: also implement unit tests for every image gatherer
 	//Not sure exactly how to unit test a downloader considering it relies on posts from the internet which are random
 	//Maybe just have the downloader verify the post count and not the cached/deleted/link counts
 	[TestClass]
-	public class ImageGatheringTests
+	public class PostGatheringTests
 	{
 		private const int AMOUNT = 5;
 		private const int MIN_SCORE = 0;
@@ -155,9 +154,9 @@ namespace ImageDL.Tests.ImageDownloadingTests
 		[TestMethod]
 		public async Task Twitter_Test()
 		{
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__" +
+			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__ " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.User}").CAF();
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs" +
+			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.Search}").CAF();
 		}
 		[TestMethod]
@@ -175,15 +174,15 @@ namespace ImageDL.Tests.ImageDownloadingTests
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
 				.AddSingleton<IDownloaderClient, DownloaderClient>()
 				.AddTransient<IImageComparer, WindowsImageComparer>());
-			var downloader = new T();
+			var gatherer = new T();
 
-			var genericArgsResult = downloader.SettingParser.Parse(GenerateGenericArgs<T>());
+			var genericArgsResult = gatherer.SettingParser.Parse(GenerateGenericArgs<T>());
 			Assert.AreEqual(0, genericArgsResult.Errors.Length + genericArgsResult.UnusedParts.Length, $"Generic args failed in {typeof(T).Name}");
-			var specificArgsResult = downloader.SettingParser.Parse(specificArgs);
+			var specificArgsResult = gatherer.SettingParser.Parse(specificArgs);
 			Assert.AreEqual(0, specificArgsResult.Errors.Length + specificArgsResult.UnusedParts.Length, $"Specific args failed in {typeof(T).Name}");
-			Assert.IsTrue(downloader.CanStart, $"Not all arguments set in {typeof(T).Name}");
+			Assert.IsTrue(gatherer.CanStart, $"Not all arguments set in {typeof(T).Name}");
 
-			var list = await downloader.GatherAsync(services).CAF();
+			var list = await gatherer.GatherAsync(services).CAF();
 			Assert.AreEqual(AMOUNT, list.Count, $"Not enough posts gotten in {typeof(T).Name}");
 		}
 		private string GetDirectory<T>()

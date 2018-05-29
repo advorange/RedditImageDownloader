@@ -97,7 +97,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 				}
 			}
 		}
-
 		/// <summary>
 		/// Gets the link to the full size image.
 		/// </summary>
@@ -135,7 +134,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 			if (result.IsSuccess)
 			{
-				var post = JObject.Parse(result.Value)["posts"].First;
+				var post = JObject.Parse(result.Value.Split(new[] { '=' }, 2)[1].Trim().TrimEnd(';'))["posts"].First;
 				//If the id doesn't match, then that means it just got random values and the id is invalid
 				if (post["id"].ToString() == id)
 				{
@@ -157,14 +156,17 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			{
 				return ImageResponse.FromUrl(new Uri(u));
 			}
-			var search = "/image/";
-			if (u.CaseInsIndexOf(search, out var index))
+			var searches = new[] { "/image/", "/post/" };
+			foreach (var search in searches)
 			{
-				var username = url.Host.Split('.')[0];
-				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
-				if (await GetTumblrPostAsync(client, username, id).CAF() is Model post)
+				if (u.CaseInsIndexOf(search, out var index))
 				{
-					return await post.GetImagesAsync(client).CAF();
+					var username = url.Host.Split('.')[0];
+					var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
+					if (await GetTumblrPostAsync(client, username, id).CAF() is Model post)
+					{
+						return await post.GetImagesAsync(client).CAF();
+					}
 				}
 			}
 			return ImageResponse.FromNotFound(url);
