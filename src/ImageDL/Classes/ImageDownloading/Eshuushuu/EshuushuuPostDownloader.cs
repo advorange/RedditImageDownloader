@@ -110,7 +110,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 
 			var jObj = new JObject
 			{
-				{ nameof(Model.Id), id }
+				{ nameof(Model.Id).ToLower(), id }
 			};
 
 			//dt is the name (datatype?) dd is the value (datadata?)

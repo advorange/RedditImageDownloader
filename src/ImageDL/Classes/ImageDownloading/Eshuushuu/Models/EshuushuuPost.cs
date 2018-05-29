@@ -13,7 +13,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 	public sealed class EshuushuuPost : IPost, ISize
 	{
 		/// <inheritdoc />
-		[JsonProperty(nameof(Id))]
+		[JsonProperty("id")]
 		public string Id { get; private set; }
 		/// <inheritdoc />
 		[JsonIgnore]

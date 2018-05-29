@@ -43,8 +43,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 
 		private string _Tags;
 		private int _Page;
-		private int _TagLimit;
-		private bool _Json;
+		private readonly int _TagLimit;
+		private readonly bool _Json;
 
 		/// <summary>
 		/// Creats an instance of <see cref="BooruPostDownloader{T}"/>.

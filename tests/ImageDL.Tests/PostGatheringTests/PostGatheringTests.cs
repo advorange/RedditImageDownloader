@@ -25,6 +25,7 @@ using ImageDL.Classes.ImageDownloading.Tumblr;
 using ImageDL.Classes.ImageDownloading.Twitter;
 using ImageDL.Classes.ImageDownloading.Vsco;
 using ImageDL.Classes.ImageDownloading.Weibo;
+using ImageDL.Classes.ImageDownloading.Zerochan;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Windows;
@@ -47,129 +48,134 @@ namespace ImageDL.Tests.PostGatheringTests
 		[TestMethod]
 		public async Task FourChan_Test()
 		{
-			await Downloader_Test<FourChanPostDownloader>($"-{nameof(FourChanPostDownloader.Board)} a").CAF();
+			await Gatherer_Test<FourChanPostDownloader>($"-{nameof(FourChanPostDownloader.Board)} a").CAF();
 		}
 		[TestMethod]
 		public async Task AnimePictures_Test()
 		{
-			await Downloader_Test<AnimePicturesPostDownloader>($"-{nameof(AnimePicturesPostDownloader.Tags)} blonde").CAF();
+			await Gatherer_Test<AnimePicturesPostDownloader>($"-{nameof(AnimePicturesPostDownloader.Tags)} blonde").CAF();
 		}
 		[TestMethod]
 		public async Task Artstation_Test()
 		{
-			await Downloader_Test<ArtstationPostDownloader>($"-{nameof(ArtstationPostDownloader.Username)} jakubrozalski").CAF();
+			await Gatherer_Test<ArtstationPostDownloader>($"-{nameof(ArtstationPostDownloader.Username)} jakubrozalski").CAF();
 		}
 		[TestMethod]
 		public async Task Bcy_Test()
 		{
-			await Downloader_Test<BcyPostDownloader>($"-{nameof(BcyPostDownloader.Username)} 319378").CAF();
+			await Gatherer_Test<BcyPostDownloader>($"-{nameof(BcyPostDownloader.Username)} 319378").CAF();
 		}
 		[TestMethod]
 		public async Task Danbooru_Test()
 		{
-			await Downloader_Test<DanbooruPostDownloader>($"-{nameof(DanbooruPostDownloader.Tags)} blonde").CAF();
+			await Gatherer_Test<DanbooruPostDownloader>($"-{nameof(DanbooruPostDownloader.Tags)} blonde").CAF();
 		}
 		[TestMethod]
 		public async Task Gelbooru_Test()
 		{
-			await Downloader_Test<GelbooruPostDownloader>($"-{nameof(GelbooruPostDownloader.Tags)} blonde").CAF();
+			await Gatherer_Test<GelbooruPostDownloader>($"-{nameof(GelbooruPostDownloader.Tags)} blonde").CAF();
 		}
 		[TestMethod]
 		public async Task Konachan_Test()
 		{
-			await Downloader_Test<KonachanPostDownloader>($"-{nameof(KonachanPostDownloader.Tags)} dress").CAF();
+			await Gatherer_Test<KonachanPostDownloader>($"-{nameof(KonachanPostDownloader.Tags)} dress").CAF();
 		}
 		[TestMethod]
 		public async Task Safebooru_Test()
 		{
-			await Downloader_Test<SafebooruPostDownloader>($"-{nameof(SafebooruPostDownloader.Tags)} blonde").CAF();
+			await Gatherer_Test<SafebooruPostDownloader>($"-{nameof(SafebooruPostDownloader.Tags)} blonde").CAF();
 		}
 		[TestMethod]
 		public async Task Yandere_Test()
 		{
-			await Downloader_Test<YanderePostDownloader>($"-{nameof(YanderePostDownloader.Tags)} dress").CAF();
+			await Gatherer_Test<YanderePostDownloader>($"-{nameof(YanderePostDownloader.Tags)} dress").CAF();
 		}
 		[TestMethod]
 		public async Task DeviantArt_Test()
 		{
-			await Downloader_Test<DeviantArtPostDownloader>($"-{nameof(DeviantArtPostDownloader.Tags)} by:disharmonica " +
+			await Gatherer_Test<DeviantArtPostDownloader>($"-{nameof(DeviantArtPostDownloader.Tags)} by:disharmonica " +
 				$"-{nameof(DeviantArtPostDownloader.GatheringMethod)} {DeviantArtGatheringMethod.Scraping}").CAF();
 		}
 		[TestMethod]
 		public async Task Diyidan_Test()
 		{
-			await Downloader_Test<DiyidanPostDownloader>($"-{nameof(DiyidanPostDownloader.Username)} 6294196636885527271");
+			await Gatherer_Test<DiyidanPostDownloader>($"-{nameof(DiyidanPostDownloader.Username)} 6294196636885527271");
 		}
 		[TestMethod]
 		public async Task Eshuushuu_Test()
 		{
-			await Downloader_Test<EshuushuuPostDownloader>($"-{nameof(EshuushuuPostDownloader.Tags)} 169").CAF();
+			await Gatherer_Test<EshuushuuPostDownloader>($"-{nameof(EshuushuuPostDownloader.Tags)} 169").CAF();
 		}
 		[TestMethod]
 		public async Task Flickr_Test()
 		{
-			await Downloader_Test<FlickrPostDownloader>($"-{nameof(FlickrPostDownloader.Search)} portrait " +
+			await Gatherer_Test<FlickrPostDownloader>($"-{nameof(FlickrPostDownloader.Search)} portrait " +
 				$"-{nameof(FlickrPostDownloader.GatheringMethod)} {FlickrGatheringMethod.Tags}").CAF();
 		}
 		[TestMethod]
 		public async Task Imgur_Test()
 		{
-			await Downloader_Test<ImgurPostDownloader>($"-{nameof(ImgurPostDownloader.Tags)} dogs").CAF();
+			await Gatherer_Test<ImgurPostDownloader>($"-{nameof(ImgurPostDownloader.Tags)} dogs").CAF();
 		}
 		[TestMethod]
 		public async Task Instagram_Test()
 		{
-			await Downloader_Test<InstagramPostDownloader>($"-{nameof(InstagramPostDownloader.Username)} instagram").CAF();
+			await Gatherer_Test<InstagramPostDownloader>($"-{nameof(InstagramPostDownloader.Username)} instagram").CAF();
 		}
 		[TestMethod]
 		public async Task Pawoo_Test()
 		{
-			await Downloader_Test<PawooPostDownloader>($"-{nameof(PawooPostDownloader.Username)} @pixiv " +
+			await Gatherer_Test<PawooPostDownloader>($"-{nameof(PawooPostDownloader.Username)} @pixiv " +
 				$"-{nameof(PawooPostDownloader.LoginUsername)} h2821117@nwytg.com " +
 				$"-{nameof(PawooPostDownloader.LoginPassword)} password").CAF();
 		}
 		[TestMethod]
 		public async Task Pinterest_Test()
 		{
-			await Downloader_Test<PinterestPostDownloader>($"-{nameof(PinterestPostDownloader.Search)} dogs " +
+			await Gatherer_Test<PinterestPostDownloader>($"-{nameof(PinterestPostDownloader.Search)} dogs " +
 				$"-{nameof(PinterestPostDownloader.GatheringMethod)} {PinterestGatheringMethod.Tags}").CAF();
 		}
 		[TestMethod]
 		public async Task Pixiv_Test()
 		{
-			await Downloader_Test<PixivPostDownloader>($"-{nameof(PixivPostDownloader.UserId)} 4338012 " +
+			await Gatherer_Test<PixivPostDownloader>($"-{nameof(PixivPostDownloader.UserId)} 4338012 " +
 				$"-{nameof(PixivPostDownloader.LoginUsername)} h2821117@nwytg.com " +
 				$"-{nameof(PixivPostDownloader.LoginPassword)} password").CAF();
 		}
 		[TestMethod]
 		public async Task Reddit_Test()
 		{
-			await Downloader_Test<RedditPostDownloader>($"-{nameof(RedditPostDownloader.Subreddit)} pics").CAF();
+			await Gatherer_Test<RedditPostDownloader>($"-{nameof(RedditPostDownloader.Subreddit)} pics").CAF();
 		}
 		[TestMethod]
 		public async Task Tumblr_Test()
 		{
-			await Downloader_Test<TumblrPostDownloader>($"-{nameof(TumblrPostDownloader.Username)} moxie2d").CAF();
+			await Gatherer_Test<TumblrPostDownloader>($"-{nameof(TumblrPostDownloader.Username)} moxie2d").CAF();
 		}
 		[TestMethod]
 		public async Task Twitter_Test()
 		{
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__ " +
+			await Gatherer_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__ " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.User}").CAF();
-			await Downloader_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs " +
+			await Gatherer_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.Search}").CAF();
 		}
 		[TestMethod]
 		public async Task Vsco_Test()
 		{
-			await Downloader_Test<VscoPostDownloader>($"-{nameof(VscoPostDownloader.Username)} kusumadjaja").CAF();
+			await Gatherer_Test<VscoPostDownloader>($"-{nameof(VscoPostDownloader.Username)} kusumadjaja").CAF();
 		}
 		[TestMethod]
 		public async Task Weibo_Test()
 		{
-			await Downloader_Test<WeiboPostDownloader>($"-{nameof(WeiboPostDownloader.Username)} 1632765501").CAF();
+			await Gatherer_Test<WeiboPostDownloader>($"-{nameof(WeiboPostDownloader.Username)} 1632765501").CAF();
 		}
-		private async Task Downloader_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
+		[TestMethod]
+		public async Task Zerochan_Test()
+		{
+			await Gatherer_Test<ZerochanPostDownloader>($"-{nameof(ZerochanPostDownloader.Tags)} Dress").CAF();
+		}
+		private async Task Gatherer_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
 		{
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
 				.AddSingleton<IDownloaderClient, DownloaderClient>()

@@ -29,5 +29,6 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Twitter
 * Vsco
 * Weibo
+* Zerochan
 
 *This program is not in any way affiliated with any of the above services.*

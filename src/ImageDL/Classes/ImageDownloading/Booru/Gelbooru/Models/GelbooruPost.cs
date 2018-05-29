@@ -27,7 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru.Models
 				{
 					return dt;
 				}
-				else if (DateTime.TryParseExact(CreatedAtString, FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+				if (DateTime.TryParseExact(CreatedAtString, FORMAT, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
 				{
 					return dt;
 				}
