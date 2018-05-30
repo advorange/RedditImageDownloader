@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="AdvorangesUtils" Version="1.0.4" />
+    <PackageReference Include="BrotliSharpLib" Version="0.2.1" />
     <PackageReference Include="FChan.Library" Version="2.0.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.8.4" />
     <PackageReference Include="LiteDB" Version="4.1.3" />
@@ -23,6 +24,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
     <PackageReference Include="RedditSharp" Version="2.0.0-CI00065" />
     <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Classes\ImageDownloading\TheAnimeGallery\Models\" />
   </ItemGroup>
 
 </Project>

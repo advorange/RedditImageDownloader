@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using AdvorangesUtils;
+using BrotliSharpLib;
 using HtmlAgilityPack;
 using ImageDL.Interfaces;
 
@@ -17,7 +20,7 @@ namespace ImageDL.Classes.ImageDownloading
 	public class DownloaderClient : HttpClient, IDownloaderClient
 	{
 		/// <inheritdoc />
-		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36 OPR/52.0.2871.64 (+https://github.com/advorange/ImageDL)";
+		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36 OPR/53.0.2907.68 (+https://github.com/advorange/ImageDL)";
 		/// <inheritdoc />
 		public List<IImageGatherer> Gatherers { get; }
 		/// <inheritdoc />
@@ -109,6 +112,17 @@ namespace ImageDL.Classes.ImageDownloading
 						nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i)));
 						ConsoleUtils.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
 						continue;
+					}
+
+					//Means this is using the brotli compression method, which isn't implemented into HttpClient yet
+					if (resp.Content.Headers.TryGetValues("Content-Encoding", out var val) && val.Any(x => x == "br"))
+					{
+						using (var s = await resp.Content.ReadAsStreamAsync().CAF())
+						using (var br = new BrotliStream(s, CompressionMode.Decompress))
+						using (var r = new StreamReader(br))
+						{
+							return new ClientResult<string>(await r.ReadToEndAsync().CAF(), resp.StatusCode, resp.IsSuccessStatusCode);
+						}
 					}
 
 					var bytes = await resp.Content.ReadAsByteArrayAsync().CAF();

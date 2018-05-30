@@ -21,6 +21,7 @@ using ImageDL.Classes.ImageDownloading.Pawoo;
 using ImageDL.Classes.ImageDownloading.Pinterest;
 using ImageDL.Classes.ImageDownloading.Pixiv;
 using ImageDL.Classes.ImageDownloading.Reddit;
+using ImageDL.Classes.ImageDownloading.TheAnimeGallery;
 using ImageDL.Classes.ImageDownloading.Tumblr;
 using ImageDL.Classes.ImageDownloading.Twitter;
 using ImageDL.Classes.ImageDownloading.Vsco;
@@ -146,6 +147,13 @@ namespace ImageDL.Tests.PostGatheringTests
 		public async Task Reddit_Test()
 		{
 			await Gatherer_Test<RedditPostDownloader>($"-{nameof(RedditPostDownloader.Subreddit)} pics").CAF();
+		}
+		[TestMethod]
+		public async Task TheAnimeGallery_Test()
+		{
+			await Gatherer_Test<TheAnimeGalleryPostDownloader>($"-{nameof(TheAnimeGalleryPostDownloader.Search)} blonde " +
+				$"-{nameof(TheAnimeGalleryPostDownloader.GatheringMethod)} {TAGGatheringMethod.Tag} " +
+				$"-{nameof(TheAnimeGalleryPostDownloader.ContentFilter)} {TAGContentFilter.Adult}").CAF();
 		}
 		[TestMethod]
 		public async Task Tumblr_Test()
