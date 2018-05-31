@@ -295,7 +295,7 @@ namespace ImageDL.Classes.ImageDownloading
 			{
 				cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
 				ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
-				deletedCount = comparer.DeleteDuplicates(Directory, MaxImageSimilarity);
+				deletedCount = comparer.HandleDuplicates(Directory, MaxImageSimilarity);
 				ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
 				if (comparer is IDisposable disposable)
 				{

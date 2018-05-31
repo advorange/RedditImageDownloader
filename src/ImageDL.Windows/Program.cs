@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,14 +13,16 @@ namespace ImageDL.Windows
 {
 	public class Program
 	{
+		//TODO: rework this main method since most can be put into where .Net Core and Framework will intersect
+		//TODO: appropriately name the recycling bin method since it causes exception in .net core
 		public static async Task Main(string[] args)
 		{
 			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
-			ConsoleUtils.LogTimeAndCaller = false;
-			ConsoleUtils.RemoveMarkdown = false;
-			ConsoleUtils.RemoveDuplicateNewLines = true;
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(1024), Console.InputEncoding, false, 1024));
 			Console.OutputEncoding = Encoding.UTF8;
+			ConsoleUtils.PrintingFlags = 0
+				| ConsolePrintingFlags.Print
+				| ConsolePrintingFlags.RemoveDuplicateNewLines;
 
 			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
 			var services = new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()

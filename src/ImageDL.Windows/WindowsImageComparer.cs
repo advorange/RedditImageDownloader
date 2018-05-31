@@ -8,14 +8,14 @@ using ImageDL.Classes.ImageComparing;
 namespace ImageDL.Windows
 {
 	/// <summary>
-	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="GenerateThumbnailHash(Stream, int)"/>.
+	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="GetThumbnailBytes(Stream, int)"/>.
 	/// </summary>
 	public sealed class WindowsImageComparer : ImageComparer
 	{
 		/// <summary>
 		/// Creates an instance of <see cref="WindowsImageComparer"/> with the database path as a file in the current directory.
 		/// </summary>
-		public WindowsImageComparer() : this(Path.Combine(Directory.GetCurrentDirectory(), "ImageComparer.db")) { }
+		public WindowsImageComparer() : this(Path.Combine(Directory.GetCurrentDirectory(), DATABASE_NAME)) { }
 		/// <summary>
 		/// Creates an instance of <see cref="WindowsImageComparer"/>
 		/// </summary>
@@ -23,7 +23,7 @@ namespace ImageDL.Windows
 		public WindowsImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override string GenerateThumbnailHash(Stream s, int thumbnailSize)
+		protected override string GetThumbnailBytes(Stream s, int thumbnailSize)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -54,22 +54,7 @@ namespace ImageDL.Windows
 			var bytes = new byte[fcbm.PixelHeight * stride];
 			fcbm.CopyPixels(bytes, stride, 0);
 
-			var brightnesses = new List<float>();
-			for (int y = 0; y < fcbm.PixelHeight; ++y)
-			{
-				for (int x = 0; x < fcbm.PixelWidth; ++x)
-				{
-					var index = y * stride + x * pixelSize;
-					var r = bytes[index];
-					var g = bytes[index + 1];
-					var b = bytes[index + 2];
-					var a = bytes[index + 3];
-					//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
-					brightnesses.Add((0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f));
-				}
-			}
-			var avgBrightness = brightnesses.Average();
-			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
+			return HashThumbnailBytes(bytes, pixelSize, thumbnailSize, thumbnailSize);
 		}
 	}
 }

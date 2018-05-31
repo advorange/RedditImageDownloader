@@ -17,6 +17,10 @@ namespace ImageDL.Classes.ImageComparing
 	public abstract class ImageComparer : IImageComparer, IDisposable
 	{
 		/// <summary>
+		/// The base name for the database.
+		/// </summary>
+		protected const string DATABASE_NAME = "ImageComparer.db";
+		/// <summary>
 		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
 		/// </summary>
 		protected int ThumbnailSize;
@@ -62,7 +66,7 @@ namespace ImageDL.Classes.ImageComparing
 			{
 				error = null;
 				stream.Seek(0, SeekOrigin.Begin);
-				col.Upsert(new ImageDetails(hash, file.Name, width, height, GenerateThumbnailHash(stream, ThumbnailSize)));
+				col.Upsert(new ImageDetails(hash, file.Name, width, height, GetThumbnailBytes(stream, ThumbnailSize)));
 				return true;
 			}
 			catch (Exception e)
@@ -86,7 +90,7 @@ namespace ImageDL.Classes.ImageComparing
 			var fileCount = files.Count();
 			var count = 0;
 			var successCount = 0;
-			var filesToDelete = new List<FileInfo>();
+			var duplicates = new List<FileInfo>();
 			await Task.WhenAll(files.GroupInto(imagesPerThread).Select(group => Task.Run(() =>
 			{
 				foreach (var file in group)
@@ -101,7 +105,7 @@ namespace ImageDL.Classes.ImageComparing
 						else if (col.FindById(newEntry.Hash) is ImageDetails entry) //Delete new entry
 						{
 							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will delete {newEntry}.");
-							filesToDelete.Add(new FileInfo(Path.Combine(directory.FullName, newEntry.FileName)));
+							duplicates.Add(new FileInfo(Path.Combine(directory.FullName, newEntry.FileName)));
 						}
 						else
 						{
@@ -121,11 +125,11 @@ namespace ImageDL.Classes.ImageComparing
 					}
 				}
 			}, token))).CAF();
-			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
+			RemoveDuplicates(directory, duplicates.Distinct());
 			return successCount;
 		}
 		/// <inheritdoc />
-		public int DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage)
+		public int HandleDuplicates(DirectoryInfo directory, Percentage matchPercentage)
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
@@ -133,7 +137,7 @@ namespace ImageDL.Classes.ImageComparing
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var details = new List<ImageDetails>(col.FindAll().ToList());
 			var count = details.Count;
-			var filesToDelete = new List<FileInfo>();
+			var duplicates = new List<FileInfo>();
 			for (int i = count - 1; i > 0; --i)
 			{
 				if (i % 25 == 0 || i == count - 1)
@@ -163,11 +167,11 @@ namespace ImageDL.Classes.ImageComparing
 					ConsoleUtils.WriteLine($"Certain match between {iVal} and {jVal}. Will delete {delete}.");
 					col.Delete(delete.Hash);
 					details.Remove(delete);
-					filesToDelete.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));
+					duplicates.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));
 				}
 			}
-			RecyclingUtils.MoveFiles(filesToDelete.Distinct());
-			return filesToDelete.Count;
+			RemoveDuplicates(directory, duplicates.Distinct());
+			return duplicates.Count;
 		}
 		/// <inheritdoc />
 		public void Dispose()
@@ -175,12 +179,74 @@ namespace ImageDL.Classes.ImageComparing
 			Database?.Dispose();
 		}
 		/// <summary>
+		/// Removes the duplicates from the current folder.
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <param name="files"></param>
+		protected virtual void RemoveDuplicates(DirectoryInfo directory, IEnumerable<FileInfo> files)
+		{
+			var duplicateDirectory = Path.Combine(directory.FullName, "Duplicates");
+			foreach (var file in files)
+			{
+				file.MoveTo(Path.Combine(duplicateDirectory, file.Name));
+			}
+		}
+		/// <summary>
+		/// Generates a hash from an image's bytes.
+		/// </summary>
+		/// <param name="bytes"></param>
+		/// <param name="pixelSize"></param>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <returns></returns>
+		protected virtual string HashThumbnailBytes(byte[] bytes, int pixelSize, int width, int height)
+		{
+			var stride = width * pixelSize;
+			var brightnesses = new List<float>();
+			switch (pixelSize)
+			{
+				case 4: //RGBA
+					for (int y = 0; y < height; ++y)
+					{
+						for (int x = 0; x < width; ++x)
+						{
+							var index = y * stride + x * pixelSize;
+							var r = bytes[index];
+							var g = bytes[index + 1];
+							var b = bytes[index + 2];
+							var a = bytes[index + 3];
+							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
+							brightnesses.Add((0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f));
+						}
+					}
+					break;
+				case 3: //RGB
+					for (int y = 0; y < height; ++y)
+					{
+						for (int x = 0; x < width; ++x)
+						{
+							var index = y * stride + x * pixelSize;
+							var r = bytes[index];
+							var g = bytes[index + 1];
+							var b = bytes[index + 2];
+							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
+							brightnesses.Add(0.299f * r + 0.587f * g + 0.114f * b);
+						}
+					}
+					break;
+				default:
+					throw new NotSupportedException("The default implementation of this method only supports 24 and 32 bit pixels.");
+			}
+			var avgBrightness = brightnesses.Average();
+			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
+		}
+		/// <summary>
 		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
 		/// </summary>
 		/// <param name="s">The image's data.</param>
 		/// <param name="thumbnailSize">The size to make the image.</param>
 		/// <returns>The image's hash.</returns>
-		protected abstract string GenerateThumbnailHash(Stream s, int thumbnailSize);
+		protected abstract string GetThumbnailBytes(Stream s, int thumbnailSize);
 		/// <summary>
 		/// Attempts to create image details from a file.
 		/// </summary>
@@ -203,7 +269,7 @@ namespace ImageDL.Classes.ImageComparing
 				stream.Seek(0, SeekOrigin.Begin);
 				var hash = stream.GetMD5Hash();
 				stream.Seek(0, SeekOrigin.Begin);
-				details = new ImageDetails(hash, Path.GetFileName(filePath), width, height, GenerateThumbnailHash(stream, thumbnailSize));
+				details = new ImageDetails(hash, Path.GetFileName(filePath), width, height, GetThumbnailBytes(stream, thumbnailSize));
 				return true;
 			}
 		}

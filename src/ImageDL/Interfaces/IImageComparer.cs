@@ -34,6 +34,6 @@ namespace ImageDL.Interfaces
 		/// <param name="directory">The directory to check for duplicates.</param>
 		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>
 		/// <returns>The amount of duplicates deleted.</returns>
-		int DeleteDuplicates(DirectoryInfo directory, Percentage matchPercentage);
+		int HandleDuplicates(DirectoryInfo directory, Percentage matchPercentage);
 	}
 }

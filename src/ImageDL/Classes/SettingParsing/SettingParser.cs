@@ -66,6 +66,15 @@ namespace ImageDL.Classes.SettingParsing
 		/// <param name="input"></param>
 		public SettingParserResults Parse(string input)
 		{
+			return Parse(input.SplitLikeCommandLine());
+		}
+		/// <summary>
+		/// Finds settings and then sets their value.
+		/// </summary>
+		/// <param name="input"></param>
+		/// <returns></returns>
+		public SettingParserResults Parse(string[] input)
+		{
 			//Try to find the setting, will only use the first match, even if there are multiple matches
 			ISetting GetSetting(string part)
 			{
@@ -87,10 +96,9 @@ namespace ImageDL.Classes.SettingParsing
 			var successes = new List<string>();
 			var errors = new List<string>();
 			var help = new List<string>();
-			var parts = input.SplitLikeCommandLine();
-			for (int i = 0; i < parts.Length; ++i)
+			for (int i = 0; i < input.Length; ++i)
 			{
-				var part = parts[i];
+				var part = input[i];
 				string value;
 				//No setting was gotten, so just skip this part
 				if (!(GetSetting(part) is ISetting setting))
@@ -104,9 +112,9 @@ namespace ImageDL.Classes.SettingParsing
 					value = (bool)setting.CurrentValue == true ? Boolean.FalseString : Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
-				else if (parts.Length - 1 > i && !(GetSetting(parts[i + 1]) is ISetting throwaway))
+				else if (input.Length - 1 > i && !(GetSetting(input[i + 1]) is ISetting throwaway))
 				{
-					value = parts[++i]; //Make sure to increment i since the part is being used as a setting
+					value = input[++i]; //Make sure to increment i since the part is being used as a setting
 				}
 				//If help and had argument, would have gone into the above statement.
 				//This means it has gotten to the flag aspect of it, so null can just be passed in.

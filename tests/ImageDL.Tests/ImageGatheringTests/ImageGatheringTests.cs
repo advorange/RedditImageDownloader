@@ -14,7 +14,6 @@ using ImageDL.Classes.ImageDownloading.DeviantArt;
 using ImageDL.Classes.ImageDownloading.Diyidan;
 using ImageDL.Classes.ImageDownloading.Eshuushuu;
 using ImageDL.Classes.ImageDownloading.Flickr;
-using ImageDL.Classes.ImageDownloading.FourChan;
 using ImageDL.Classes.ImageDownloading.Imgur;
 using ImageDL.Classes.ImageDownloading.Instagram;
 using ImageDL.Classes.ImageDownloading.Pawoo;
@@ -26,10 +25,7 @@ using ImageDL.Classes.ImageDownloading.Twitter;
 using ImageDL.Classes.ImageDownloading.Vsco;
 using ImageDL.Classes.ImageDownloading.Weibo;
 using ImageDL.Classes.ImageDownloading.Zerochan;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
-using ImageDL.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ImageDL.Tests.ImageGatheringTests
