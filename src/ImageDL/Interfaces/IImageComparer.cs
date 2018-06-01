@@ -30,6 +30,7 @@ namespace ImageDL.Interfaces
 		Task<int> CacheSavedFilesAsync(DirectoryInfo directory, int imagesPerThread, CancellationToken token = default);
 		/// <summary>
 		/// Checks each image against every other image in order to detect duplicates.
+		/// After all duplicates are found they are removed from the passed in directory.
 		/// </summary>
 		/// <param name="directory">The directory to check for duplicates.</param>
 		/// <param name="matchPercentage">How close an image can be percentage wise before being considered a duplicate.</param>

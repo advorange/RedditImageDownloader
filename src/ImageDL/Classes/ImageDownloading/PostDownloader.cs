@@ -235,32 +235,45 @@ namespace ImageDL.Classes.ImageDownloading
 			var client = services.GetRequiredService<IDownloaderClient>(); //Cannot be null, 100% necessary for downloading
 			var comparer = services.GetService<IImageComparer>(); //Can be null
 
-			var downloadedCount = 0;
-			var links = new List<ContentLink>();
-			foreach (var (Post, Index) in posts.Select((x, i) => (Post: x, Index: i)))
+			try
 			{
-				token.ThrowIfCancellationRequested();
-				ConsoleUtils.WriteLine(Post.Format(Index + 1));
-
-				var images = await Post.GetImagesAsync(client).CAF();
-				//If wasn't success, log it, keep the 
-				if (images.IsSuccess == false)
+				var downloadedCount = 0;
+				var links = new List<ContentLink>();
+				for (int i = 0; i < posts.Count; ++i)
 				{
-					links.AddRange(images.ImageUrls.Select(x => Post.CreateContentLink(x, images)));
-					ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
-					continue;
-				}
+					var post = posts[i];
+					token.ThrowIfCancellationRequested();
+					ConsoleUtils.WriteLine(post.Format(i + 1));
 
-				//Put the images into groups of 5
-				var count = 0;
-				foreach (var group in images.ImageUrls.GroupInto(5))
-				{
-					//Download every image in that group of 5 at the same time to speed up downloading
-					var tasks = group.Select(async x =>
+					var images = await post.GetImagesAsync(client).CAF();
+					//If wasn't success, log it, keep the 
+					if (images.IsSuccess == false)
 					{
-						try
+						links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images)));
+						ConsoleUtils.WriteLine($"\t{images.Text.Replace(NL, NLT)}", ConsoleColor.Yellow);
+						continue;
+					}
+
+					//Put the images into groups of 5
+					var count = 0;
+					foreach (var group in images.ImageUrls.GroupInto(5))
+					{
+						//Download every image in that group of 5 at the same time to speed up downloading
+						await Task.WhenAll(group.Select(async x =>
 						{
-							var result = await DownloadImageAsync(client, comparer, Post, x).CAF();
+							Response result;
+							try
+							{
+								result = await DownloadImageAsync(client, comparer, post, x).CAF();
+							}
+							//Catch all so they can be written and logged as a failed download
+							catch (Exception e)
+							{
+								e.Write();
+								links.Add(post.CreateContentLink(x, new Response(ImageResponse.EXCEPTION, e.Message, false)));
+								return;
+							}
+
 							var text = $"\t[#{Interlocked.Increment(ref count)}] {result.Text.Replace(NL, NLT)}";
 							if (result.IsSuccess == true)
 							{
@@ -270,45 +283,41 @@ namespace ImageDL.Classes.ImageDownloading
 							else if (result.IsSuccess == false)
 							{
 								ConsoleUtils.WriteLine(text, ConsoleColor.Yellow);
-								links.Add(Post.CreateContentLink(x, result));
+								links.Add(post.CreateContentLink(x, result));
 							}
 							else
 							{
 								ConsoleUtils.WriteLine(text, ConsoleColor.Cyan);
 							}
-						}
-						//Catch all so they can be written and logged as a failed download
-						catch (Exception e)
-						{
-							e.Write();
-							links.Add(Post.CreateContentLink(x, new Response(ImageResponse.EXCEPTION, e.Message, false)));
-						}
-					});
-					await Task.WhenAll(tasks).CAF();
+						})).CAF();
+					}
 				}
-			}
-			ConsoleUtils.WriteLine("");
+				ConsoleUtils.WriteLine("");
 
-			var cachedCount = 0;
-			var deletedCount = 0;
-			if (comparer != null)
-			{
-				cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
-				ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
-				deletedCount = comparer.HandleDuplicates(Directory, MaxImageSimilarity);
-				ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
-				if (comparer is IDisposable disposable)
+				var cachedCount = 0;
+				var deletedCount = 0;
+				if (comparer != null)
 				{
-					disposable.Dispose();
+					cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
+					ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
+					deletedCount = comparer.HandleDuplicates(Directory, MaxImageSimilarity);
+					ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
+				}
+				var linkCount = 0;
+				if (links.Any())
+				{
+					linkCount = SaveStoredContentLinks(Directory, links);
+					ConsoleUtils.WriteLine($"Added {linkCount} link(s) to file.{NL}");
+				}
+				return DownloaderResponse.FromFinished(posts.Count, downloadedCount, cachedCount, deletedCount, linkCount);
+			}
+			finally
+			{
+				if (comparer is IDisposable disposableComparer)
+				{
+					disposableComparer.Dispose();
 				}
 			}
-			var linkCount = 0;
-			if (links.Any())
-			{
-				linkCount = SaveStoredContentLinks(Directory, links);
-				ConsoleUtils.WriteLine($"Added {linkCount} link(s) to file.{NL}");
-			}
-			return DownloaderResponse.FromFinished(posts.Count, downloadedCount, cachedCount, deletedCount, linkCount);
 		}
 		/// <inheritdoc />
 		public async Task<List<IPost>> GatherAsync(IServiceProvider services, CancellationToken token = default)

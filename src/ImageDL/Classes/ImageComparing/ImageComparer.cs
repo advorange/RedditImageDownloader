@@ -37,7 +37,12 @@ namespace ImageDL.Classes.ImageComparing
 		public ImageComparer(string databasePath, int thumbnailSize = 32)
 		{
 			databasePath = databasePath ?? throw new ArgumentException("The database directory cannot be null.");
-			Database = new LiteDatabase($"filename={databasePath};mode=exclusive;password=123;");
+			Database = new LiteDatabase(new ConnectionString
+			{
+				Filename = databasePath,
+				Mode = LiteDB.FileMode.Exclusive,
+				Password = "123",
+			});
 			ThumbnailSize = thumbnailSize;
 		}
 
@@ -66,7 +71,7 @@ namespace ImageDL.Classes.ImageComparing
 			{
 				error = null;
 				stream.Seek(0, SeekOrigin.Begin);
-				col.Upsert(new ImageDetails(hash, file.Name, width, height, GetThumbnailBytes(stream, ThumbnailSize)));
+				col.Upsert(new ImageDetails(hash, file.Name, width, height, HashImageStream(stream)));
 				return true;
 			}
 			catch (Exception e)
@@ -192,14 +197,14 @@ namespace ImageDL.Classes.ImageComparing
 			}
 		}
 		/// <summary>
-		/// Generates a hash from an image's bytes.
+		/// Generates a hash from an image's bytes. Only supports 32bpp and 24bpp by default.
 		/// </summary>
-		/// <param name="bytes"></param>
-		/// <param name="pixelSize"></param>
-		/// <param name="width"></param>
-		/// <param name="height"></param>
+		/// <param name="bytes">The data for the image.</param>
+		/// <param name="pixelSize">The size of each pixel. E.G. for RGBA32 it's 32 bits, so 4 bytes.</param>
+		/// <param name="width">The width of the image.</param>
+		/// <param name="height">The height of the image.</param>
 		/// <returns></returns>
-		protected virtual string HashThumbnailBytes(byte[] bytes, int pixelSize, int width, int height)
+		protected virtual string HashBytes(byte[] bytes, int pixelSize, int width, int height)
 		{
 			var stride = width * pixelSize;
 			var brightnesses = new List<float>();
@@ -235,18 +240,17 @@ namespace ImageDL.Classes.ImageComparing
 					}
 					break;
 				default:
-					throw new NotSupportedException("The default implementation of this method only supports 24 and 32 bit pixels.");
+					throw new NotSupportedException("The default implementation of this method only supports 32 and 24 bit pixels.");
 			}
 			var avgBrightness = brightnesses.Average();
 			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
 		}
 		/// <summary>
-		/// Generates a hash where true = light, false = dark. Used in comparing images for mostly similar instead of exactly similar.
+		/// Generates a hash of an image. Used in comparing images for mostly similar instead of exactly similar.
 		/// </summary>
 		/// <param name="s">The image's data.</param>
-		/// <param name="thumbnailSize">The size to make the image.</param>
 		/// <returns>The image's hash.</returns>
-		protected abstract string GetThumbnailBytes(Stream s, int thumbnailSize);
+		protected abstract string HashImageStream(Stream s);
 		/// <summary>
 		/// Attempts to create image details from a file.
 		/// </summary>
@@ -269,7 +273,7 @@ namespace ImageDL.Classes.ImageComparing
 				stream.Seek(0, SeekOrigin.Begin);
 				var hash = stream.GetMD5Hash();
 				stream.Seek(0, SeekOrigin.Begin);
-				details = new ImageDetails(hash, Path.GetFileName(filePath), width, height, GetThumbnailBytes(stream, thumbnailSize));
+				details = new ImageDetails(hash, Path.GetFileName(filePath), width, height, HashImageStream(stream));
 				return true;
 			}
 		}
@@ -292,7 +296,7 @@ namespace ImageDL.Classes.ImageComparing
 		}
 
 		/// <summary>
-		/// Maps a directory path to a guid 
+		/// Maps a directory path to a guid.
 		/// </summary>
 		private sealed class DirectoryCollection
 		{

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using ImageDL.Classes.ImageComparing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -10,7 +8,7 @@ using SixLabors.ImageSharp.Processing.Transforms;
 namespace ImageDL.Test
 {
 	/// <summary>
-	/// Holds details about images which have been downloaded, while using ImageSharp for <see cref="GetThumbnailBytes(Stream, int)"/>.
+	/// Holds details about images which have been downloaded, while using ImageSharp for <see cref="HashImageStream(Stream)"/>.
 	/// </summary>
 	/// <remarks>This uses a high amount of RAM, but is quicker than the Windows implementation.</remarks>
 	public sealed class ImageSharpImageComparer : ImageComparer
@@ -26,7 +24,7 @@ namespace ImageDL.Test
 		public ImageSharpImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override string GetThumbnailBytes(Stream s, int thumbnailSize)
+		protected override string HashImageStream(Stream s)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 			
@@ -37,12 +35,12 @@ namespace ImageDL.Test
 			{
 				img.Mutate(x =>
 				{
-					x.Resize(thumbnailSize, thumbnailSize);
+					x.Resize(ThumbnailSize, ThumbnailSize);
 				});
 				bytes = img.SavePixelData();
 			}
 
-			return HashThumbnailBytes(bytes, 4, thumbnailSize, thumbnailSize);
+			return HashBytes(bytes, 4, ThumbnailSize, ThumbnailSize);
 		}
 	}
 }

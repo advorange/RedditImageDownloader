@@ -16,6 +16,11 @@ namespace ImageDL.Classes.SettingParsing
 	public sealed class SettingParser : ICollection<ISetting>
 	{
 		/// <summary>
+		/// The default prefixes used for setting parsing.
+		/// </summary>
+		public static readonly ImmutableArray<string> DefaultPrefixes = new[] { "-", "--", "/" }.ToImmutableArray();
+
+		/// <summary>
 		/// Valid prefixes for a setting.
 		/// </summary>
 		public ImmutableArray<string> Prefixes { get; }
@@ -35,7 +40,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// <summary>
 		/// Creates an instance of <see cref="SettingParser"/> with -, --, and / as valid prefixes and adds a help command.
 		/// </summary>
-		public SettingParser() : this(true, "-", "--", "/") { }
+		public SettingParser() : this(true, DefaultPrefixes.ToArray()) { }
 		/// <summary>
 		/// Creates an instance of <see cref="SettingParser"/>.
 		/// </summary>
@@ -61,6 +66,51 @@ namespace ImageDL.Classes.SettingParsing
 		}
 
 		/// <summary>
+		/// Returns a dictionary of names and their values. Names are only counted if they begin with passed in a prefix.
+		/// </summary>
+		/// <param name="prefixes"></param>
+		/// <param name="input"></param>
+		/// <returns></returns>
+		public static Dictionary<string, string> Parse(string[] prefixes, string input)
+		{
+			return Parse(prefixes, input.SplitLikeCommandLine());
+		}
+		/// <summary>
+		/// Returns a dictionary of names and their values. Names are only counted if they begin with a passed in prefix.
+		/// </summary>
+		/// <param name="prefixes"></param>
+		/// <param name="input"></param>
+		/// <returns></returns>
+		public static Dictionary<string, string> Parse(string[] prefixes, string[] input)
+		{
+			bool HasPrefix(string[] p, string i)
+			{
+				return p.Any(x => i.CaseInsStartsWith(x));
+			}
+
+			var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			for (int i = 0; i < input.Length; ++i)
+			{
+				var part = input[i];
+				if (!HasPrefix(prefixes, part))
+				{
+					continue;
+				}
+
+				//Part following is not a setting, so it must be the value.
+				if (input.Length - 1 > i && !HasPrefix(prefixes, input[i + 1]))
+				{
+					dict.Add(part, input[++i]);
+				}
+				//Otherwise there is no value
+				else
+				{
+					dict.Add(part, null);
+				}
+			}
+			return dict;
+		}
+		/// <summary>
 		/// Finds settings and then sets their value.
 		/// </summary>
 		/// <param name="input"></param>
@@ -75,23 +125,6 @@ namespace ImageDL.Classes.SettingParsing
 		/// <returns></returns>
 		public SettingParserResults Parse(string[] input)
 		{
-			//Try to find the setting, will only use the first match, even if there are multiple matches
-			ISetting GetSetting(string part)
-			{
-				foreach (var prefix in Prefixes)
-				{
-					if (!part.CaseInsStartsWith(prefix))
-					{
-						continue;
-					}
-					if (_NameMap.TryGetValue(part.Substring(prefix.Length), out var guid))
-					{
-						return _SettingMap[guid];
-					}
-				}
-				return null;
-			}
-
 			var unusedParts = new List<string>();
 			var successes = new List<string>();
 			var errors = new List<string>();
@@ -106,10 +139,11 @@ namespace ImageDL.Classes.SettingParsing
 					unusedParts.Add(part);
 					continue;
 				}
+
 				//If it's a flag set its value to true then go to the next part
-				else if (setting.IsFlag)
+				if (setting.IsFlag)
 				{
-					value = (bool)setting.CurrentValue == true ? Boolean.FalseString : Boolean.TrueString;
+					value = (bool)setting.CurrentValue ? Boolean.FalseString : Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
 				else if (input.Length - 1 > i && !(GetSetting(input[i + 1]) is ISetting throwaway))
@@ -165,11 +199,11 @@ namespace ImageDL.Classes.SettingParsing
 		/// <summary>
 		/// Gets the help information associated with this setting name.
 		/// </summary>
-		/// <param name="input"></param>
+		/// <param name="name"></param>
 		/// <returns></returns>
-		public string GetHelp(string input)
+		public string GetHelp(string name)
 		{
-			if (String.IsNullOrWhiteSpace(input))
+			if (String.IsNullOrWhiteSpace(name))
 			{
 				var vals = _SettingMap.Values.Select(x =>
 				{
@@ -177,14 +211,7 @@ namespace ImageDL.Classes.SettingParsing
 				});
 				return $"All Settings:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", vals)}";
 			}
-			else if (_NameMap.TryGetValue(input, out var guid))
-			{
-				return _SettingMap[guid].Information;
-			}
-			else
-			{
-				return $"'{input}' is not a valid setting.";
-			}
+			return GetSetting(name) is ISetting setting ? setting.Information : $"'{name}' is not a valid setting.";
 		}
 		/// <summary>
 		/// Gets a setting with the supplied name.
@@ -193,7 +220,22 @@ namespace ImageDL.Classes.SettingParsing
 		/// <returns></returns>
 		public ISetting GetSetting(string name)
 		{
-			return _NameMap.TryGetValue(name, out var guid) ? _SettingMap[guid] : null;
+			if (_NameMap.TryGetValue(name, out var guid))
+			{
+				return _SettingMap[guid];
+			}
+			foreach (var prefix in Prefixes)
+			{
+				if (!name.CaseInsStartsWith(prefix))
+				{
+					continue;
+				}
+				if (_NameMap.TryGetValue(name.Substring(prefix.Length), out guid))
+				{
+					return _SettingMap[guid];
+				}
+			}
+			return null;
 		}
 		/// <inheritdoc />
 		public void Add(ISetting setting)

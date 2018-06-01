@@ -8,7 +8,7 @@ using ImageDL.Classes.ImageComparing;
 namespace ImageDL.Windows
 {
 	/// <summary>
-	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="GetThumbnailBytes(Stream, int)"/>.
+	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="HashImageStream(Stream, int)"/>.
 	/// </summary>
 	public sealed class WindowsImageComparer : ImageComparer
 	{
@@ -23,7 +23,7 @@ namespace ImageDL.Windows
 		public WindowsImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override string GetThumbnailBytes(Stream s, int thumbnailSize)
+		protected override string HashImageStream(Stream s)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -34,8 +34,8 @@ namespace ImageDL.Windows
 			};
 			bmi.BeginInit();
 			bmi.StreamSource = s;
-			bmi.DecodePixelWidth = thumbnailSize;
-			bmi.DecodePixelHeight = thumbnailSize;
+			bmi.DecodePixelWidth = ThumbnailSize;
+			bmi.DecodePixelHeight = ThumbnailSize;
 			bmi.EndInit();
 			bmi.Freeze();
 
@@ -54,7 +54,7 @@ namespace ImageDL.Windows
 			var bytes = new byte[fcbm.PixelHeight * stride];
 			fcbm.CopyPixels(bytes, stride, 0);
 
-			return HashThumbnailBytes(bytes, pixelSize, thumbnailSize, thumbnailSize);
+			return HashBytes(bytes, pixelSize, ThumbnailSize, ThumbnailSize);
 		}
 	}
 }
