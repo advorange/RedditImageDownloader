@@ -11,7 +11,7 @@ using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
-using Model = ImageDL.Interfaces.IPost;
+using Model = ImageDL.Classes.ImageDownloading.TheAnimeGallery.Models.TheAnimeGalleryPost;
 
 namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 {
@@ -21,6 +21,8 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 	[DownloaderName("TheAnimeGallery")]
 	public sealed class TheAnimeGalleryPostDownloader : PostDownloader
 	{
+		private static TAGContentFilter CurrentContentFilter = TAGContentFilter.Safe;
+
 		/// <summary>
 		/// The filter for content.
 		/// </summary>
@@ -73,7 +75,11 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
-			await SetContentFilter(client, ContentFilter).CAF();
+			if (CurrentContentFilter != ContentFilter)
+			{
+				await SetContentFilter(client, ContentFilter).CAF();
+			}
+
 			var search = await GetSearchTerm(client, Search, GatheringMethod).CAF();
 			var parsed = new List<Model>();
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 12); ++i)
@@ -87,6 +93,36 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 				if (!result.IsSuccess)
 				{
 					return;
+				}
+
+				var div = result.Value.DocumentNode.Descendants("div");
+				var thumbnails = div.Where(x => x.GetAttributeValue("class", null) == "thumbimage");
+				var ids = thumbnails.Select(x => x.Descendants("a").Single().GetAttributeValue("rel", -1)).Where(x => x > -1).Distinct();
+				var tasks = ids.GroupInto(4).Select(async x =>
+				{
+					var tmp = new List<Model>();
+					foreach (var id in x)
+					{
+						tmp.Add(await GetTAGPostAsync(client, id.ToString()).CAF());
+					}
+					return tmp;
+				});
+				parsed = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x).ToList();
+				foreach (var post in parsed)
+				{
+					token.ThrowIfCancellationRequested();
+					if (post.CreatedAt < OldestAllowed)
+					{
+						return;
+					}
+					if (!HasValidSize(post, out _) || post.Score < MinScore)
+					{
+						continue;
+					}
+					if (!Add(list, post))
+					{
+						return;
+					}
 				}
 			}
 		}
@@ -173,6 +209,48 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 			{
 				throw new InvalidOperationException("Unable to set the content filter to the supplied value.");
 			}
+			CurrentContentFilter = filter;
+		}
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetTAGPostAsync(IDownloaderClient client, string id)
+		{
+			if (CurrentContentFilter != TAGContentFilter.Adult)
+			{
+				await SetContentFilter(client, TAGContentFilter.Adult).CAF();
+			}
+
+			var query = new Uri($"http://www.theanimegallery.com/gallery/image:{id}");
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
+			return result.IsSuccess ? new Model(result.Value.DocumentNode) : null;
+		}
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetTAGImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var search = "/image:";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
+				if (await GetTAGPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

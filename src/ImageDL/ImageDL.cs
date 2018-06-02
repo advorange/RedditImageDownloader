@@ -150,22 +150,14 @@ namespace ImageDL
 				}
 			});
 
-			if (catchException)
-			{
-				try
-				{
-					await f(services, source.Token).CAF();
-					running = false;
-				}
-				catch (OperationCanceledException) //Assume this is something we want to catch and not some random uncaught exception
-				{
-					ConsoleUtils.WriteLine($"The downloading was canceled.{Environment.NewLine}");
-				}
-			}
-			else
+			try
 			{
 				await f(services, source.Token).CAF();
 				running = false;
+			}
+			catch (OperationCanceledException) when (catchException)
+			{
+				ConsoleUtils.WriteLine($"The downloading was canceled.{Environment.NewLine}");
 			}
 		}
 		/// <summary>

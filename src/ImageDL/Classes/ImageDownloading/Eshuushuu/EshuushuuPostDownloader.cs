@@ -68,12 +68,19 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 					return;
 				}
 
-				parsed = (await Task.WhenAll(result.Value.DocumentNode.Descendants("div")
-					.Where(x => x.GetAttributeValue("class", null) == "display")
-					.Select(x => x.Id.TrimStart('i'))
-					.Where(x => !String.IsNullOrWhiteSpace(x))
-					.Distinct()
-					.Select(async x => await GetEshuushuuPostAsync(client, x).CAF())).CAF()).ToList();
+				var div = result.Value.DocumentNode.Descendants("div");
+				var thumbnails = div.Where(x => x.GetAttributeValue("class", null) == "display");
+				var ids = thumbnails.Select(x => x.Id.TrimStart('i')).Where(x => !String.IsNullOrWhiteSpace(x)).Distinct();
+				var tasks = ids.GroupInto(4).Select(async x =>
+				{
+					var tmp = new List<Model>();
+					foreach (var id in x)
+					{
+						tmp.Add(await GetEshuushuuPostAsync(client, id).CAF());
+					}
+					return tmp;
+				});
+				parsed = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x).ToList();
 				foreach (var post in parsed)
 				{
 					token.ThrowIfCancellationRequested();
@@ -92,7 +99,6 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				}
 			}
 		}
-
 		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>

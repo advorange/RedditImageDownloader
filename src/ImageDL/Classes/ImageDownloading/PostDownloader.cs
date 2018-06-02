@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -416,20 +417,14 @@ namespace ImageDL.Classes.ImageDownloading
 			try
 			{
 				resp = await client.SendAsync(client.GenerateReq(url)).CAF();
-				if (!resp.IsSuccessStatusCode)
+				switch (DetermineIfValid(url, resp))
 				{
-					return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:{NL}{resp}", false);
-				}
-				var contentType = resp.Content.Headers.GetValues("Content-Type").First();
-				if (contentType.Contains("video/") || contentType == "image/gif")
-				{
-					return new Response(ImageResponse.ANIMATED, $"{url} is either a video or a gif.", false);
-				}
-				//If the content type is image, then we know it's an image
-				//If the content type is octet-stream then we need to check the url path and assume its extension is correct
-				if (!contentType.Contains("image/") && !(contentType == "application/octet-stream" && url.ToString().IsImagePath()))
-				{
-					return new Response("Not An Image", $"{url} did not lead to an image.", false);
+					case ValidityType.Fail:
+						return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:{NL}{resp}", false);
+					case ValidityType.Animated:
+						return new Response(ImageResponse.ANIMATED, $"{url} is either a video or a gif.", false);
+					case ValidityType.NotImage:
+						return new Response("Not An Image", $"{url} did not lead to an image.", false);
 				}
 
 				//Need to use a memory stream and copy to it
@@ -537,6 +532,49 @@ namespace ImageDL.Classes.ImageDownloading
 				ConsoleUtils.WriteLine($"{list.Count}{(name != null ? $" {name}" : "")} posts found.");
 			}
 			return list.Count < AmountOfPostsToGather;
+		}
+		/// <summary>
+		/// Determines if the data is a valid image to download.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="resp"></param>
+		/// <returns></returns>
+		private ValidityType DetermineIfValid(Uri url, HttpResponseMessage resp)
+		{
+			if (!resp.IsSuccessStatusCode)
+			{
+				return ValidityType.Fail;
+			}
+			var ct = resp.Content.Headers.GetValues("Content-Type").First();
+			if (ct.Contains("video/") || ct == "image/gif")
+			{
+				return ValidityType.Animated;
+			}
+			//If the content type is image, then we know it's an image
+			if (ct.Contains("image/"))
+			{
+				return ValidityType.Image;
+			}
+			//If the content type is octet-stream then we need to check the url path and assume its extension is correct
+			if (ct == "application/octet-stream" && url.ToString().IsImagePath())
+			{
+				return ValidityType.Image;
+			}
+			//If the content type is force download then we need to check the content disposition
+			if (ct == "application/force-download" && resp.Content.Headers.TryGetValues("Content-Disposition", out var cd)
+				&& new ContentDisposition(cd.Single()).FileName.IsImagePath())
+			{
+				return ValidityType.Image;
+			}
+			return ValidityType.NotImage;
+		}
+
+		private enum ValidityType
+		{
+			Image,
+			NotImage,
+			Animated,
+			Fail,
 		}
 	}
 }
