@@ -25,6 +25,7 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Pinterest
 * Pixiv
 * Reddit
+* TheAnimeGallery
 * Tumblr
 * Twitter
 * Vsco

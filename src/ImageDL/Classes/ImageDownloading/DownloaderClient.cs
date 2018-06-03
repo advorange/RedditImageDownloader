@@ -64,6 +64,11 @@ namespace ImageDL.Classes.ImageDownloading
 		{
 			return new Uri(url.ToString().Split('?', '#')[0]);
 		}
+		/// <summary>
+		/// Generates the default client handler for the client.
+		/// </summary>
+		/// <param name="cookies"></param>
+		/// <returns></returns>
 		private static HttpClientHandler GetDefaultClientHandler(CookieContainer cookies)
 		{
 			cookies.Add(new Cookie("agegate_state", "1", "/", ".deviantart.com")); //DeviantArt 18+ filter
@@ -150,7 +155,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <inheritdoc />
 		public void AddGatherer<T>() where T : IImageGatherer, new()
 		{
-			Gatherers.Add(Activator.CreateInstance<T>());
+			Gatherers.Add(new T());
 		}
 		/// <inheritdoc />
 		public void RemoveGatherer<T>() where T : IImageGatherer, new()

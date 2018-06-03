@@ -191,6 +191,11 @@ namespace ImageDL.Classes.ImageComparing
 		protected virtual void RemoveDuplicates(DirectoryInfo directory, IEnumerable<FileInfo> files)
 		{
 			var duplicateDirectory = Path.Combine(directory.FullName, "Duplicates");
+			if (!Directory.Exists(duplicateDirectory))
+			{
+				Directory.CreateDirectory(duplicateDirectory);
+			}
+
 			foreach (var file in files)
 			{
 				file.MoveTo(Path.Combine(duplicateDirectory, file.Name));
