@@ -87,15 +87,15 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				foreach (var post in parsed.Posts)
 				{
 					token.ThrowIfCancellationRequested();
-					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
-					if (p.CreatedAt < OldestAllowed)
+					if (post.Node.CreatedAt < OldestAllowed)
 					{
 						return;
 					}
-					if (p.Score < MinScore)
+					if (post.Node.Score < MinScore)
 					{
 						continue;
 					}
+					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
 					if (p.ChildrenInfo.Nodes != null &&  p.ChildrenInfo.Nodes.Any()) //Only if children exist
 					{
 						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(x.Child.Dimensions, out _)).ToList())
@@ -197,7 +197,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 				throw new HttpRequestException("Unable to access this profile due to age restrictions.");
 			}
 
-			var idSearch = "owner\":{\"id\":\"";
+			var idSearch = "profilePage_";
 			var idCut = result.Value.Substring(result.Value.IndexOf(idSearch) + idSearch.Length);
 			var id = Convert.ToUInt64(idCut.Substring(0, idCut.IndexOf('"')));
 
