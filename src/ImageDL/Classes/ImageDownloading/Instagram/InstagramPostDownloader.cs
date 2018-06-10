@@ -150,7 +150,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			}
 
 			//Read ProfilePageContainer.js and find the query id
-			var qSearch = "0:n.pagination},queryId:\"";
+			var qSearch = "pagination},queryId:\"";
 			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
 			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
 		}

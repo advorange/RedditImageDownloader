@@ -214,23 +214,19 @@ namespace ImageDL.Classes.SettingParsing
 			return GetSetting(name) is ISetting setting ? setting.Information : $"'{name}' is not a valid setting.";
 		}
 		/// <summary>
-		/// Gets a setting with the supplied name.
+		/// Gets a setting with the supplied name. The setting must start with a prefix.
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
 		public ISetting GetSetting(string name)
 		{
-			if (_NameMap.TryGetValue(name, out var guid))
-			{
-				return _SettingMap[guid];
-			}
 			foreach (var prefix in Prefixes)
 			{
 				if (!name.CaseInsStartsWith(prefix))
 				{
 					continue;
 				}
-				if (_NameMap.TryGetValue(name.Substring(prefix.Length), out guid))
+				if (_NameMap.TryGetValue(name.Substring(prefix.Length), out var guid))
 				{
 					return _SettingMap[guid];
 				}

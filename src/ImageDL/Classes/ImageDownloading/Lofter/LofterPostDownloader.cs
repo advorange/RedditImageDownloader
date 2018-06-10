@@ -47,12 +47,13 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>
+		/// <param name="username"></param>
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetLofterPostAsync(IDownloaderClient client, string id)
+		public static async Task<Model> GetLofterPostAsync(IDownloaderClient client, string username, string id)
 		{
-			var query = new Uri($"http://monsterlei.lofter.com/post/{id}");
+			var query = new Uri($"http://{username}.lofter.com/post/{id}");
 			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 			//return result.IsSuccess ? new Model(result.Value.DocumentNode) : null;
 			throw new NotImplementedException();
