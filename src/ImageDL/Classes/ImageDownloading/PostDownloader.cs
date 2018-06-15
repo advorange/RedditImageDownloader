@@ -300,15 +300,24 @@ namespace ImageDL.Classes.ImageDownloading
 				if (comparer != null)
 				{
 					cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
-					ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
+					if (cachedCount != 0)
+					{
+						ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
+					}
 					deletedCount = comparer.HandleDuplicates(Directory, MaxImageSimilarity);
-					ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
+					if (deletedCount != 0)
+					{
+						ConsoleUtils.WriteLine($"{deletedCount} match(es) found and deleted.{NL}");
+					}
 				}
 				var linkCount = 0;
 				if (links.Any())
 				{
 					linkCount = SaveStoredContentLinks(Directory, links);
-					ConsoleUtils.WriteLine($"Added {linkCount} link(s) to file.{NL}");
+					if (linkCount != 0)
+					{
+						ConsoleUtils.WriteLine($"{linkCount} link(s) added to file.{NL}");
+					}
 				}
 				return DownloaderResponse.FromFinished(posts.Count, downloadedCount, cachedCount, deletedCount, linkCount);
 			}
