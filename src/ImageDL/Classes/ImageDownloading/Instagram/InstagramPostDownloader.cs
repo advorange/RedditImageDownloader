@@ -150,7 +150,9 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			}
 
 			//Read ProfilePageContainer.js and find the query id
-			var qSearch = "pagination},queryId:\"";
+			//There are multiple query ids in this file, but only one works for getting posts from a user,
+			//which is why the search string is so long, because some of the others have similar starts
+			var qSearch = "(n=e.profilePosts.byUserId.get(t))||void 0===n?void 0:n.pagination},queryId:\"";
 			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
 			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
 		}
