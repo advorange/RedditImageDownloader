@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -150,10 +151,13 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			}
 
 			//Read ProfilePageContainer.js and find the query id
-			//There are multiple query ids in this file, but only one works for getting posts from a user,
-			//which is why the search string is so long, because some of the others have similar starts
-			var qSearch = "(n=e.profilePosts.byUserId.get(t))||void 0===n?void 0:n.pagination},queryId:\"";
-			var qCut = jsResult.Value.Substring(jsResult.Value.IndexOf(qSearch) + qSearch.Length);
+			//There are multiple query ids in this file, and Instagram likes changing the location of each valid one,
+			//so we have to do some searching with long strings and regex
+			//(o=e.profilePosts.byUserId.get(t))||void 0===o?void 0:o.pagination},queryId:\"
+			//(n=e.profilePosts.byUserId.get(t))||void 0===n?void 0:n.pagination},queryId:\"
+			var qSearch = @"\([a-zA-Z]=e\.profilePosts\.byUserId\.get\(t\)\)\|\|void 0===[a-zA-Z]\?void 0:[a-zA-Z]\.pagination},queryId:""";
+			var qMatch = Regex.Matches(jsResult.Value, qSearch).Cast<Match>().Single();
+			var qCut = jsResult.Value.Substring(qMatch.Index + qMatch.Length);
 			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
 		}
 		/// <summary>
