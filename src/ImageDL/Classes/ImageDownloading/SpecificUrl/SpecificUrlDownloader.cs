@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.SpecificUrl.Models.SpecificUrlPost;
 
@@ -35,9 +36,9 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 			{
 				Description = "The url to download images from. If this url does not have an associated image gatherer, all images will be downloaded.",
 			});
-			SettingParser.Remove(SettingParser.GetSetting(nameof(AmountOfPostsToGather)));
-			SettingParser.Remove(SettingParser.GetSetting(nameof(MinScore)));
-			SettingParser.Remove(SettingParser.GetSetting(nameof(MaxDaysOld)));
+			SettingParser.Remove(SettingParser.GetSetting(nameof(AmountOfPostsToGather), PrefixState.NotPrefixed));
+			SettingParser.Remove(SettingParser.GetSetting(nameof(MinScore), PrefixState.NotPrefixed));
+			SettingParser.Remove(SettingParser.GetSetting(nameof(MaxDaysOld), PrefixState.NotPrefixed));
 		}
 
 		/// <inheritdoc />

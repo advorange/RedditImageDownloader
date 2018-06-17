@@ -109,7 +109,7 @@ namespace ImageDL.Classes.ImageComparing
 						}
 						else if (col.FindById(newEntry.Hash) is ImageDetails entry) //Delete new entry
 						{
-							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will delete {newEntry}.");
+							ConsoleUtils.WriteLine($"Certain match between {newEntry} and {entry}. Will remove {newEntry}.");
 							duplicates.Add(new FileInfo(Path.Combine(directory.FullName, newEntry.FileName)));
 						}
 						else
@@ -169,7 +169,7 @@ namespace ImageDL.Classes.ImageComparing
 					}
 
 					var delete = (iVal.Width * iVal.Height) < (jVal.Width * jVal.Height) ? iVal : jVal;
-					ConsoleUtils.WriteLine($"Certain match between {iVal} and {jVal}. Will delete {delete}.");
+					ConsoleUtils.WriteLine($"Certain match between {iVal} and {jVal}. Will remove {delete}.");
 					col.Delete(delete.Hash);
 					details.Remove(delete);
 					duplicates.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));

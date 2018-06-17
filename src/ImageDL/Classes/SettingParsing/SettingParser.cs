@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using AdvorangesUtils;
+using ImageDL.Enums;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.SettingParsing
@@ -134,7 +135,7 @@ namespace ImageDL.Classes.SettingParsing
 				var part = input[i];
 				string value;
 				//No setting was gotten, so just skip this part
-				if (!(GetSetting(part) is ISetting setting))
+				if (!(GetSetting(part, PrefixState.Required) is ISetting setting))
 				{
 					unusedParts.Add(part);
 					continue;
@@ -146,7 +147,7 @@ namespace ImageDL.Classes.SettingParsing
 					value = (bool)setting.CurrentValue ? Boolean.FalseString : Boolean.TrueString;
 				}
 				//If there's one more and it's not a setting use that
-				else if (input.Length - 1 > i && !(GetSetting(input[i + 1]) is ISetting throwaway))
+				else if (input.Length - 1 > i && !(GetSetting(input[i + 1], PrefixState.Required) is ISetting throwaway))
 				{
 					value = input[++i]; //Make sure to increment i since the part is being used as a setting
 				}
@@ -211,22 +212,40 @@ namespace ImageDL.Classes.SettingParsing
 				});
 				return $"All Settings:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", vals)}";
 			}
-			return GetSetting(name) is ISetting setting ? setting.Information : $"'{name}' is not a valid setting.";
+			return GetSetting(name, PrefixState.NotPrefixed) is ISetting setting
+				? setting.Information
+				: $"'{name}' is not a valid setting.";
 		}
 		/// <summary>
 		/// Gets a setting with the supplied name. The setting must start with a prefix.
 		/// </summary>
 		/// <param name="name"></param>
+		/// <param name="state"></param>
 		/// <returns></returns>
-		public ISetting GetSetting(string name)
+		public ISetting GetSetting(string name, PrefixState state)
 		{
 			foreach (var prefix in Prefixes)
 			{
-				if (!name.CaseInsStartsWith(prefix))
+				string val;
+				switch (state)
 				{
-					continue;
+					case PrefixState.Required:
+						if (!name.CaseInsStartsWith(prefix))
+						{
+							continue;
+						}
+						val = name.Substring(prefix.Length);
+						break;
+					case PrefixState.Optional:
+						val = name.CaseInsStartsWith(prefix) ? name.Substring(prefix.Length) : name;
+						break;
+					case PrefixState.NotPrefixed:
+						val = name;
+						break;
+					default:
+						throw new InvalidOperationException("Invalid prefix state provided.");
 				}
-				if (_NameMap.TryGetValue(name.Substring(prefix.Length), out var guid))
+				if (_NameMap.TryGetValue(val, out var guid))
 				{
 					return _SettingMap[guid];
 				}
