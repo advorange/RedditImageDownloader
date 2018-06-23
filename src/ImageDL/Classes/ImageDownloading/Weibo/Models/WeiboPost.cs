@@ -27,12 +27,18 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		{
 			get
 			{
-				var parts = CreatedAtDate.Split('-').Select(x => Convert.ToInt32(x)).ToArray();
+				var parts = CreatedAtDate.Split('-').Select(x =>
+				{
+					var valid = new string(x.TakeWhile(c => Char.IsNumber(c)).ToArray());
+					return Convert.ToInt32(valid);
+				}).ToArray();
 				switch (parts.Length)
 				{
-					case 2:
+					case 1: //E.G. "14chinese" means 14 hours ago
+						return DateTime.UtcNow - TimeSpan.FromHours(parts[0]);
+					case 2: //E.G. "5-20" means May 20th
 						return new DateTime(DateTime.UtcNow.Year, parts[0], parts[1]);
-					case 3:
+					case 3: //E.G. "17-5-20" means May 20th, 2017
 						return new DateTime(parts[0], parts[1], parts[2]);
 					default:
 						throw new InvalidOperationException($"Invalid {nameof(CreatedAtDate)} received.");
