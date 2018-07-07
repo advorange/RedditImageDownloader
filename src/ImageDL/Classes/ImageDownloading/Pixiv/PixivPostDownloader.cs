@@ -151,20 +151,19 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				return key;
 			}
 
-			var data = new FormUrlEncodedContent(new Dictionary<string, string>
-			{
-				{ "get_secure_url", "1" },
-				{ "client_id", _ClientId },
-				{ "client_secret", _ClientSecret },
-				{ "grant_type", "password" },
-				{ "username", username },
-				{ "password", password },
-			});
 			var query = new Uri("https://oauth.secure.pixiv.net/auth/token");
 			var result = await client.GetTextAsync(() =>
 			{
 				var req = client.GenerateReq(query, HttpMethod.Post);
-				req.Content = data;
+				req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+				{
+					{ "get_secure_url", "1" },
+					{ "client_id", _ClientId },
+					{ "client_secret", _ClientSecret },
+					{ "grant_type", "password" },
+					{ "username", username },
+					{ "password", password },
+				});
 				return req;
 			}).CAF();
 			if (!result.IsSuccess)

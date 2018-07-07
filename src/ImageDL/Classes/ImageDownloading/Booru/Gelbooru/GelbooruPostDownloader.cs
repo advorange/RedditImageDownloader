@@ -49,7 +49,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 				$"&json=0" +
 				$"&limit=100" +
 				$"&tags={WebUtility.UrlEncode(tags)}" +
-				$"&pid={page - 1}");
+				$"&pid={Math.Max(0, page - 1)}"); //Pages on Gelbooru are 0 based
 		}
 		/// <summary>
 		/// Parses Gelbooru posts from the supplied text.
