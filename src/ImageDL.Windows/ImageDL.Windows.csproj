@@ -36,8 +36,8 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AdvorangesUtils, Version=1.0.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\AdvorangesUtils.1.0.6\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
+    <Reference Include="AdvorangesUtils, Version=1.0.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AdvorangesUtils.1.0.9\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
     </Reference>
     <Reference Include="BrotliSharpLib, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\BrotliSharpLib.0.3.0\lib\net462\BrotliSharpLib.dll</HintPath>

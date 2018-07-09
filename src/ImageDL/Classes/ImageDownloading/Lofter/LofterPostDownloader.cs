@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Model = ImageDL.Interfaces.IPost;
+using Model = ImageDL.Classes.ImageDownloading.Lofter.Models.LofterPost;
 
 namespace ImageDL.Classes.ImageDownloading.Lofter
 {
@@ -49,6 +49,7 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			var parsed = new List<Model>();
 			for (long ts = 0; list.Count < AmountOfPostsToGather && (ts == 0 || parsed.Count >= 50); ts = parsed.Last().CreatedAt.Millisecond)
 			{
+				token.ThrowIfCancellationRequested();
 				//Info: https://www.litreily.top/2018/03/17/lofter/
 				ts = ts == 0 ? ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeMilliseconds() : ts;
 
@@ -72,6 +73,33 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 					});
 					return req;
 				}).CAF();
+
+				parsed = JsonConvert.DeserializeObject<List<Model>>(ConvertJsToJson(result.Value));
+				foreach (var post in parsed)
+				{
+					token.ThrowIfCancellationRequested();
+					if (post.CreatedAt < OldestAllowed)
+					{
+						return;
+					}
+					if (post.Score < MinScore)
+					{
+						continue;
+					}
+					await post.FillPost(client).CAF();
+					foreach (var image in post.Images.Where(x => !HasValidSize(x, out _)).ToList())
+					{
+						post.Images.Remove(image);
+					}
+					if (!post.Images.Any())
+					{
+						continue;
+					}
+					if (!Add(list, post))
+					{
+						return;
+					}
+				}
 			}
 		}
 		/// <summary>
@@ -90,19 +118,37 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			return cut.Substring(0, cut.IndexOf('"'));
 		}
 		/// <summary>
-		/// Converts 
+		/// Converts the supplied Javascript object creation to JSON.
 		/// </summary>
-		/// <param name="html"></param>
+		/// <param name="js"></param>
 		/// <returns></returns>
-		private static JObject ConvertJsToJson(string html)
+		private static string ConvertJsToJson(string js)
 		{
 			//The request gives back Javascript object creation instead of JSON (no clue why, so we need to do this)
-			var parts = html.SplitLikeCommandLine(new[] { ';' }).Select(x => x.Trim());
-			var jObj = new JObject();
+			var split = js.ComplexSplit(new[] { ';' }, new[] { '"' }, true).Select(x => x.Trim());
+			var jArray = new JArray();
 			for (int i = 0; i < 50; ++i)
 			{
-				var info = parts.Where(x => x.StartsWith($"s{i}.") || x.StartsWith($"s{i + 50}."));
+				var jObjInner = new JObject();
+				foreach (var part in split.Where(x => x.StartsWith($"s{i}.") || x.StartsWith($"s{i + 50}.")))
+				{
+					var kvp = part.Substring(part.IndexOf('.') + 1).Split(new[] { '=' }, 2);
+					//First value is the name, second value is the actual value
+					var name = kvp[0].FormatTitle().Replace(' ', '_').ToLower(); //Put into standard JSON title format
+					var value = kvp[1];
+					if (value.StartsWith("\""))
+					{
+						value = value.Substring(1);
+					}
+					if (value.EndsWith("\""))
+					{
+						value = value.Substring(0, value.Length - 1);
+					}
+					jObjInner.Add(name, value);
+				}
+				jArray.Add(jObjInner);
 			}
+			return jArray.ToString();
 		}
 		/// <summary>
 		/// Gets the post with the specified id.

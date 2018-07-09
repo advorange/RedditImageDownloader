@@ -117,7 +117,7 @@ namespace ImageDL.Classes.SettingParsing
 		/// <param name="input"></param>
 		public SettingParserResults Parse(string input)
 		{
-			return Parse(input.SplitLikeCommandLine());
+			return Parse(input.ComplexSplit(new[] { ' ' }, new[] { '"' }, true));
 		}
 		/// <summary>
 		/// Finds settings and then sets their value.

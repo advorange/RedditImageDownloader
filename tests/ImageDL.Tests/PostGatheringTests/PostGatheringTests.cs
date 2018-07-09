@@ -17,6 +17,7 @@ using ImageDL.Classes.ImageDownloading.Flickr;
 using ImageDL.Classes.ImageDownloading.FourChan;
 using ImageDL.Classes.ImageDownloading.Imgur;
 using ImageDL.Classes.ImageDownloading.Instagram;
+using ImageDL.Classes.ImageDownloading.Lofter;
 using ImageDL.Classes.ImageDownloading.Pawoo;
 using ImageDL.Classes.ImageDownloading.Pinterest;
 using ImageDL.Classes.ImageDownloading.Pixiv;
@@ -122,6 +123,11 @@ namespace ImageDL.Tests.PostGatheringTests
 		public async Task Instagram_Test()
 		{
 			await Gatherer_Test<InstagramPostDownloader>($"-{nameof(InstagramPostDownloader.Username)} instagram").CAF();
+		}
+		[TestMethod]
+		public async Task Lofter_Test()
+		{
+			await Gatherer_Test<LofterPostDownloader>($"-{nameof(LofterPostDownloader.Username)} monsterlei").CAF();
 		}
 		[TestMethod]
 		public async Task Pawoo_Test()
