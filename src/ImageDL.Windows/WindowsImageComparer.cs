@@ -11,10 +11,6 @@ namespace ImageDL.Windows
 	public sealed class WindowsImageComparer : ImageComparer
 	{
 		/// <summary>
-		/// Creates an instance of <see cref="WindowsImageComparer"/> with the database path as a file in the current directory.
-		/// </summary>
-		public WindowsImageComparer() : this(Path.Combine(Directory.GetCurrentDirectory(), DATABASE_NAME)) { }
-		/// <summary>
 		/// Creates an instance of <see cref="WindowsImageComparer"/>
 		/// </summary>
 		/// <param name="databasePath"></param>

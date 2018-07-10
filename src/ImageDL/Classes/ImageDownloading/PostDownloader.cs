@@ -234,7 +234,8 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 
 			var client = services.GetRequiredService<IDownloaderClient>(); //Cannot be null, 100% necessary for downloading
-			var comparer = services.GetService<IImageComparer>(); //Can be null
+			var comparerFactory = services.GetService<IImageComparerFactory>(); //Can be null
+			var comparer = comparerFactory.CreateComparer(Path.Combine(SavePath, ".ImageDL.db"));
 
 			try
 			{

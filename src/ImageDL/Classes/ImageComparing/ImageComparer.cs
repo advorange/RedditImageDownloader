@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Interfaces;
-using ImageDL.Utilities;
 using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
@@ -16,10 +15,6 @@ namespace ImageDL.Classes.ImageComparing
 	/// </summary>
 	public abstract class ImageComparer : IImageComparer, IDisposable
 	{
-		/// <summary>
-		/// The base name for the database.
-		/// </summary>
-		protected const string DATABASE_NAME = "ImageComparer.db";
 		/// <summary>
 		/// The size of the thumbnail. Bigger = more accurate, but slowness grows at n^2.
 		/// </summary>
@@ -50,7 +45,7 @@ namespace ImageDL.Classes.ImageComparing
 		public bool TryStore(FileInfo file, Stream stream, int width, int height, out string error)
 		{
 			var hash = stream.GetMD5Hash();
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(file.Directory));
+			var col = Database.GetCollection<ImageDetails>(/*GetDirectoryCollectionName(file.Directory)*/);
 			if (col.FindById(hash) is ImageDetails entry)
 			{
 				//Only return false if the file still exists
@@ -86,7 +81,7 @@ namespace ImageDL.Classes.ImageComparing
 			//Don't cache files which have already been cached
 			//Accidentally left this not get checked before, which led to me trying to delete 600 files in separate actions
 			//Which froze my PC weirdly. My mouse could move/keep hearing the video I was watching, but I had a ~3 minute input lag
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
+			var col = Database.GetCollection<ImageDetails>(/*GetDirectoryCollectionName(directory)*/);
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var alreadyCached = col.FindAll().Select(x => x.FileName).ToList();
 			var files = directory.GetFiles()
@@ -138,7 +133,7 @@ namespace ImageDL.Classes.ImageComparing
 		{
 			//Put the kvp values in a separate list so they can be iterated through
 			//Start at the top and work the way down
-			var col = Database.GetCollection<ImageDetails>(GetDirectoryCollectionName(directory));
+			var col = Database.GetCollection<ImageDetails>(/*GetDirectoryCollectionName(directory)*/);
 			col.Delete(x => !File.Exists(Path.Combine(directory.FullName, x.FileName))); //Remove all that don't exist anymore
 			var details = new List<ImageDetails>(col.FindAll().ToList());
 			var count = details.Count;
@@ -287,6 +282,7 @@ namespace ImageDL.Classes.ImageComparing
 				return true;
 			}
 		}
+		/*
 		/// <summary>
 		/// Puts the name in a valid format.
 		/// </summary>
@@ -334,6 +330,6 @@ namespace ImageDL.Classes.ImageComparing
 				DirectoryPath = directory.FullName;
 				Guid = Guid.NewGuid();
 			}
-		}
+		}*/
 	}
 }

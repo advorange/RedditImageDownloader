@@ -16,10 +16,12 @@ using ImageDL.Classes.ImageDownloading.Eshuushuu;
 using ImageDL.Classes.ImageDownloading.Flickr;
 using ImageDL.Classes.ImageDownloading.Imgur;
 using ImageDL.Classes.ImageDownloading.Instagram;
+using ImageDL.Classes.ImageDownloading.Lofter;
 using ImageDL.Classes.ImageDownloading.Pawoo;
 using ImageDL.Classes.ImageDownloading.Pinterest;
 using ImageDL.Classes.ImageDownloading.Pixiv;
 using ImageDL.Classes.ImageDownloading.Reddit;
+using ImageDL.Classes.ImageDownloading.TheAnimeGallery;
 using ImageDL.Classes.ImageDownloading.Tumblr;
 using ImageDL.Classes.ImageDownloading.Twitter;
 using ImageDL.Classes.ImageDownloading.Vsco;
@@ -112,6 +114,11 @@ namespace ImageDL.Tests.ImageGatheringTests
 			await Gatherer_Test<InstagramImageGatherer>("https://www.instagram.com/p/BjGVyd4DBUm/").CAF();
 		}
 		[TestMethod]
+		public async Task Lofter_Test()
+		{
+			await Gatherer_Test<LofterImageGatherer>("http://monsterlei.lofter.com/post/467bec_f7d3a9f").CAF();
+		}
+		[TestMethod]
 		public async Task Pawoo_Test()
 		{
 			await Gatherer_Test<PawooImageGatherer>("https://pawoo.net/@pixiv/99851091445887348").CAF();
@@ -130,6 +137,11 @@ namespace ImageDL.Tests.ImageGatheringTests
 		public async Task Reddit_Test()
 		{
 			await Gatherer_Test<RedditImageGatherer>("https://www.reddit.com/6z699p").CAF();
+		}
+		[TestMethod]
+		public async Task TheAnimeGallery_Test()
+		{
+			await Gatherer_Test<TheAnimeGalleryImageGatherer>("http://www.theanimegallery.com/gallery/image:198513").CAF();
 		}
 		[TestMethod]
 		public async Task Tumblr_Test()

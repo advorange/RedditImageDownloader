@@ -1,11 +1,10 @@
 ﻿using System.IO;
-using ImageDL.Classes.ImageComparing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Transforms;
 
-namespace ImageDL.Test
+namespace ImageDL.Classes.ImageComparing.Implementations
 {
 	/// <summary>
 	/// Holds details about images which have been downloaded, while using ImageSharp for <see cref="HashImageStream(Stream)"/>.
@@ -13,10 +12,6 @@ namespace ImageDL.Test
 	/// <remarks>This uses a high amount of RAM, but is quicker than the Windows implementation.</remarks>
 	public sealed class ImageSharpImageComparer : ImageComparer
 	{
-		/// <summary>
-		/// Creates an instance of <see cref="ImageSharpImageComparer"/> with the database path as a file in the current directory.
-		/// </summary>
-		public ImageSharpImageComparer() : this(Path.Combine(Directory.GetCurrentDirectory(), DATABASE_NAME)) { }
 		/// <summary>
 		/// Creates an instance of <see cref="ImageSharpImageComparer"/>
 		/// </summary>

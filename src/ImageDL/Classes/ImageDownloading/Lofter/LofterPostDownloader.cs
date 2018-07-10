@@ -151,20 +151,6 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			return jArray.ToString();
 		}
 		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="username"></param>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetLofterPostAsync(IDownloaderClient client, string username, string id)
-		{
-			var query = new Uri($"http://{username}.lofter.com/post/{id}");
-			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
-			//return result.IsSuccess ? new Model(result.Value.DocumentNode) : null;
-			throw new NotImplementedException();
-		}
-		/// <summary>
 		/// Gets the images from the specified url.
 		/// </summary>
 		/// <param name="client"></param>
@@ -172,7 +158,11 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 		/// <returns></returns>
 		public static async Task<ImageResponse> GetLofterImagesAsync(IDownloaderClient client, Uri url)
 		{
-			throw new NotImplementedException();
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
+			var div = result.Value.DocumentNode.Descendants("div");
+			var pics = div.Where(x => x.GetAttributeValue("class", null) == "pic").Select(x => x.Descendants("a").Single());
+			var urls = pics.Select(x => new Uri(x.GetAttributeValue("bigimgsrc", null).Split('?')[0]));
+			return ImageResponse.FromImages(urls);
 		}
 	}
 }
