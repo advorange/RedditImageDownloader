@@ -10,11 +10,6 @@ namespace ImageDL.Classes.ImageComparing
 	public sealed class ImageComparerFactory<T> : IImageComparerFactory where T : IImageComparer
 	{
 		/// <summary>
-		/// Creates an instance of <see cref="ImageComparerFactory{T}"/>.
-		/// </summary>
-		public ImageComparerFactory() { }
-
-		/// <summary>
 		/// Creates a comparer.
 		/// </summary>
 		/// <param name="databasePath"></param>

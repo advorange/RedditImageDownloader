@@ -233,9 +233,10 @@ namespace ImageDL.Classes.ImageDownloading
 				return DownloaderResponse.FromNoPostsFound();
 			}
 
-			var client = services.GetRequiredService<IDownloaderClient>(); //Cannot be null, 100% necessary for downloading
-			var comparerFactory = services.GetService<IImageComparerFactory>(); //Can be null
-			var comparer = comparerFactory.CreateComparer(Path.Combine(SavePath, ".ImageDL.db"));
+			//This cannot be null, a client is necessary for downloading
+			var client = services.GetRequiredService<IDownloaderClient>();
+			//This can be null, image comparing is not critical
+			var comparer = services.GetService<IImageComparerFactory>()?.CreateComparer(Path.Combine(SavePath, ".ImageDL.db"));
 
 			try
 			{
@@ -248,7 +249,7 @@ namespace ImageDL.Classes.ImageDownloading
 					ConsoleUtils.WriteLine(post.Format(i + 1));
 
 					var images = await post.GetImagesAsync(client).CAF();
-					//If wasn't success, log it, keep the 
+					//If wasn't success, log it
 					if (images.IsSuccess == false)
 					{
 						links.AddRange(images.ImageUrls.Select(x => post.CreateContentLink(x, images)));
@@ -303,7 +304,7 @@ namespace ImageDL.Classes.ImageDownloading
 					cachedCount = await comparer.CacheSavedFilesAsync(Directory, ImagesCachedPerThread, token).CAF();
 					if (cachedCount != 0)
 					{
-						ConsoleUtils.WriteLine($"{cachedCount} images successfully cached from file.{NL}");
+						ConsoleUtils.WriteLine($"{cachedCount} image(s) successfully cached from file.{NL}");
 					}
 					deletedCount = comparer.HandleDuplicates(Directory, MaxImageSimilarity);
 					if (deletedCount != 0)

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Interfaces;

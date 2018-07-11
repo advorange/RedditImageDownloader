@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using ImageDL.Classes;
-using Newtonsoft.Json.Linq;
 
 namespace ImageDL.Interfaces
 {

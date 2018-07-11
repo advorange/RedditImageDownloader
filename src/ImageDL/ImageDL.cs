@@ -141,8 +141,8 @@ namespace ImageDL
 			{
 				while (running)
 				{
-					//Console.KeyAvailable to not have Console.ReadKey take eat the next key after the downloader is complete
-					//True in Console.ReadKey to not have x show up in the console when pressed
+					//Console.KeyAvailable to not have Console.ReadKey eat the next key after the downloader is complete
+					//True in Console.ReadKey to not have the key show up in the console when pressed
 					if (Console.KeyAvailable && Console.ReadKey(true).Key == cancelKey)
 					{
 						source.Cancel();
