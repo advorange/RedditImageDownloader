@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using ImageDL.Utilities;
 
 namespace ImageDL.Windows
 {
@@ -7,7 +6,7 @@ namespace ImageDL.Windows
 	{
 		public static async Task Main(string[] args)
 		{
-			await new ImageDL().RunFromArguments(DIUtils.CreateServices<WindowsImageComparer>(), args);
+			await new ImageDL().RunFromArguments(ImageDL.CreateServices<WindowsImageComparer>(), args);
 		}
 	}
 }

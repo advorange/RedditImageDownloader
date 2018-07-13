@@ -36,7 +36,6 @@ namespace ImageDL.Classes.ImageComparing
 			{
 				Filename = databasePath,
 				Mode = LiteDB.FileMode.Exclusive,
-				Password = "123",
 			});
 			ThumbnailSize = thumbnailSize;
 		}

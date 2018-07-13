@@ -8,9 +8,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
 using ImageDL.Attributes;
+using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Classes.SettingParsing;
+using ImageDL.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL
 {
@@ -22,11 +25,10 @@ namespace ImageDL
 		/// <summary>
 		/// Various downloaders used to download things.
 		/// </summary>
-		private static SortedDictionary<string, Type> _ImageDownloaders = new SortedDictionary<string, Type>(typeof(PostDownloader)
-			.Assembly.DefinedTypes
+		public static SortedDictionary<string, Type> ImageDownloaders { get; set; } = new SortedDictionary<string, Type>(
+			typeof(PostDownloader).Assembly.DefinedTypes
 			.Where(x => !x.IsAbstract && typeof(PostDownloader).IsAssignableFrom(x))
 			.ToDictionary(x => x.GetCustomAttribute<DownloaderNameAttribute>().Name, x => x.AsType()), StringComparer.OrdinalIgnoreCase);
-
 		/// <summary>
 		/// The key users can press to cancel a downloader.
 		/// </summary>
@@ -45,6 +47,18 @@ namespace ImageDL
 				| ConsolePrintingFlags.RemoveDuplicateNewLines;
 		}
 
+		/// <summary>
+		/// Creates a service provider using the specified image comparer.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public static IServiceProvider CreateServices<T>() where T : IImageComparer
+		{
+			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
+			return new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
+				.AddSingleton<IDownloaderClient, DownloaderClient>()
+				.AddSingleton<IImageComparerFactory, ImageComparerFactory<T>>());
+		}
 		/// <summary>
 		/// Runs a method from the passed in arguments.
 		/// </summary>
@@ -185,8 +199,8 @@ namespace ImageDL
 		/// <returns></returns>
 		protected static Type GetDownloaderType()
 		{
-			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", _ImageDownloaders.Keys)}'");
-			if (_ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
+			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
+			if (ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
 			{
 				return downloaderType;
 			}

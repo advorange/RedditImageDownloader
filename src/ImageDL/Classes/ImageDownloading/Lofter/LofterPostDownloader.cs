@@ -47,10 +47,9 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();
-			for (long ts = 0; list.Count < AmountOfPostsToGather && (ts == 0 || parsed.Count >= 50); ts = parsed.Last().CreatedAt.Millisecond)
+			for (long ts = 0; list.Count < AmountOfPostsToGather && (ts == 0 || parsed.Count >= 50); ts = parsed.Last().CreatedAtTimestamp)
 			{
 				token.ThrowIfCancellationRequested();
-				//Info: https://www.litreily.top/2018/03/17/lofter/
 				ts = ts == 0 ? ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeMilliseconds() : ts;
 
 				var query = new Uri($"http://{Username}.lofter.com/dwr/call/plaincall/ArchiveBean.getArchivePostByTime.dwr");

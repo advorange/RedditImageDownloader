@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 using AdvorangesUtils;
-using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.AnimePictures;
 using ImageDL.Classes.ImageDownloading.Artstation;
@@ -30,9 +29,7 @@ using ImageDL.Classes.ImageDownloading.Weibo;
 using ImageDL.Classes.ImageDownloading.Zerochan;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
-using ImageDL.Utilities;
 using ImageDL.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ImageDL.Tests.PostGatheringTests
@@ -195,7 +192,7 @@ namespace ImageDL.Tests.PostGatheringTests
 		}
 		private async Task Gatherer_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
 		{
-			var services = DIUtils.CreateServices<WindowsImageComparer>();
+			var services = ImageDL.CreateServices<WindowsImageComparer>();
 			var gatherer = new T();
 
 			var genericArgsResult = gatherer.SettingParser.Parse(GenerateGenericArgs<T>());

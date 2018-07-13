@@ -141,6 +141,7 @@ namespace ImageDL.Tests.ImageGatheringTests
 		[TestMethod]
 		public async Task TheAnimeGallery_Test()
 		{
+			//This test doesn't always work on the first try. Maybe something to do with setting the content filter
 			await Gatherer_Test<TheAnimeGalleryImageGatherer>("http://www.theanimegallery.com/gallery/image:198513").CAF();
 		}
 		[TestMethod]

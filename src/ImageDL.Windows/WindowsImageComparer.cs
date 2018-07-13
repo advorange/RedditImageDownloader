@@ -8,6 +8,9 @@ namespace ImageDL.Windows
 	/// <summary>
 	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="HashImageStream(Stream, int)"/>.
 	/// </summary>
+	/// <remarks>
+	/// This is roughly 4x slower than <see cref="Classes.ImageComparing.Implementations.ImageSharpImageComparer"/> but uses 10x less memory.
+	/// </remarks>
 	public sealed class WindowsImageComparer : ImageComparer
 	{
 		/// <summary>
