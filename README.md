@@ -1,26 +1,24 @@
 # ImageDL
 Mass download images from websites and compare for duplicates.
 
-The image comparer database is a LiteDB database and the password is "123"
-This will run on any operating system that supports .Net Core as long as an implementation of the thumbnail hashing is provided.
-
 **Currently supports:**
 * 4chan
 * Anime-Pictures
 * Artstation
 * Bcy
-* DeviantArt
-* Diyidan
-* Eshuushuu
-* Flickr
-* Imgur
-* Instagram
 * Booru
   * Danbooru
   * Gelbooru
   * Konachan
   * Safebooru
   * Yandere
+* DeviantArt
+* ~~Diyidan~~ Not sure what's broken
+* Eshuushuu
+* Flickr
+* Imgur
+* Instagram
+* Lofter
 * Pawoo
 * Pinterest
 * Pixiv
@@ -33,3 +31,10 @@ This will run on any operating system that supports .Net Core as long as an impl
 * Zerochan
 
 *This program is not in any way affiliated with any of the above services.*
+
+ImageDL.Core can run on any OS supporting .Net Core.
+ImageDL.Windows can only run on OS which support .Net Framework.
+
+In a small image caching test of 274 images totaling 93.2MB the results were:
+* ImageDL.Core took 10 seconds and used up to 2GB of RAM.
+* ImageDL.Windows took 40 seconds and used up to 200MB of RAM.
