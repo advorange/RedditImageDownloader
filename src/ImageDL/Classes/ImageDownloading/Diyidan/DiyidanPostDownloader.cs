@@ -4,9 +4,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser;
 using AdvorangesUtils;
 using ImageDL.Attributes;
-using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.Diyidan.Models.DiyidanPost;
 

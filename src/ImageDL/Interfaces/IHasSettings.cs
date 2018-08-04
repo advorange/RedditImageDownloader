@@ -1,4 +1,4 @@
-﻿using ImageDL.Classes.SettingParsing;
+﻿using AdvorangesSettingParser;
 
 namespace ImageDL.Interfaces
 {

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Booru.Models;
-using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Booru

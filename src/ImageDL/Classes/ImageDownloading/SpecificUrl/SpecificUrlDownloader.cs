@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser;
 using ImageDL.Attributes;
-using ImageDL.Classes.SettingParsing;
-using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.SpecificUrl.Models.SpecificUrlPost;
 

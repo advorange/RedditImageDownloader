@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser;
 using AdvorangesUtils;
 using FChan.Library;
 using ImageDL.Attributes;
-using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.FourChan.Models.FourChanPost;
 

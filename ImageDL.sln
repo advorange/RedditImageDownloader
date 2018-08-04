@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageDL.Tests", "tests\Imag
 		{895DEFB0-35D6-46F1-8C8B-987380A79D28} = {895DEFB0-35D6-46F1-8C8B-987380A79D28}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDL.Core", "src\ImageDL.Core\ImageDL.Core.csproj", "{8AE2EDCE-C021-4B90-A45B-6AA48E71FC4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageDL.Core", "src\ImageDL.Core\ImageDL.Core.csproj", "{8AE2EDCE-C021-4B90-A45B-6AA48E71FC4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

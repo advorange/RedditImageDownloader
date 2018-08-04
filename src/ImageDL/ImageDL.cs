@@ -6,12 +6,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.Reddit;
-using ImageDL.Classes.SettingParsing;
 using ImageDL.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
