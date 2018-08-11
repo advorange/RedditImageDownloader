@@ -167,6 +167,7 @@ namespace ImageDL.Classes.ImageComparing
 					col.Delete(delete.Hash);
 					details.Remove(delete);
 					duplicates.Add(new FileInfo(Path.Combine(directory.FullName, delete.FileName)));
+					--i;
 				}
 			}
 			RemoveDuplicates(directory, duplicates.Distinct());
