@@ -22,13 +22,7 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures
 		/// <summary>
 		/// The terms to search with.
 		/// </summary>
-		public string Tags
-		{
-			get => _Tags;
-			set => _Tags = value;
-		}
-
-		private string _Tags;
+		public string Tags { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="AnimePicturesPostDownloader"/>.

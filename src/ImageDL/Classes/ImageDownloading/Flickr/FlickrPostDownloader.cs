@@ -26,22 +26,11 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <summary>
 		/// The tags to search for posts with.
 		/// </summary>
-		public string Search
-		{
-			get => _Search;
-			set => _Search = value;
-		}
+		public string Search { get; set; }
 		/// <summary>
 		/// The method to gather images with.
 		/// </summary>
-		public FlickrGatheringMethod GatheringMethod
-		{
-			get => _GatheringMethod;
-			set => _GatheringMethod = value;
-		}
-
-		private string _Search;
-		private FlickrGatheringMethod _GatheringMethod;
+		public FlickrGatheringMethod GatheringMethod { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="FlickrPostDownloader"/>.

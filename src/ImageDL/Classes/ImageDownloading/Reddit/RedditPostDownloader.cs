@@ -23,13 +23,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// <summary>
 		/// The subreddit to download images from.
 		/// </summary>
-		public string Subreddit
-		{
-			get => _Subreddit;
-			set => _Subreddit = value;
-		}
-
-		private string _Subreddit;
+		public string Subreddit { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="RedditPostDownloader"/>.

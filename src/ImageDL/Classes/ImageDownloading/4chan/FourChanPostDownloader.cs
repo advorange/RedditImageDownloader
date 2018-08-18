@@ -19,22 +19,11 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		/// <summary>
 		/// The board to download images from.
 		/// </summary>
-		public string Board
-		{
-			get => _Board;
-			set => _Board = value;
-		}
+		public string Board { get; set; }
 		/// <summary>
 		/// The thread to download images from.
 		/// </summary>
-		public int ThreadId
-		{
-			get => _ThreadId;
-			set => _ThreadId = value;
-		}
-
-		private string _Board;
-		private int _ThreadId;
+		public int ThreadId { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="FourChanPostDownloader"/>.

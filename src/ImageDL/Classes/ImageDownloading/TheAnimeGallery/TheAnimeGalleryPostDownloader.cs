@@ -26,31 +26,15 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 		/// <summary>
 		/// The filter for content.
 		/// </summary>
-		public TAGContentFilter ContentFilter
-		{
-			get => _ContentFilter;
-			set => _ContentFilter = value;
-		}
+		public TAGContentFilter ContentFilter { get; set; }
 		/// <summary>
 		/// How to search for content.
 		/// </summary>
-		public TAGGatheringMethod GatheringMethod
-		{
-			get => _GatheringMethod;
-			set => _GatheringMethod = value;
-		}
+		public TAGGatheringMethod GatheringMethod { get; set; }
 		/// <summary>
 		/// The thing to search for.
 		/// </summary>
-		public string Search
-		{
-			get => _Search;
-			set => _Search = value;
-		}
-
-		private TAGContentFilter _ContentFilter;
-		private TAGGatheringMethod _GatheringMethod;
-		private string _Search;
+		public string Search { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="TheAnimeGalleryPostDownloader"/>.

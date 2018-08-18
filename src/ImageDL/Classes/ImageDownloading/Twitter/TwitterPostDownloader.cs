@@ -27,31 +27,15 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 		/// <summary>
 		/// The term to search for.
 		/// </summary>
-		public string Search
-		{
-			get => _Search;
-			set => _Search = value;
-		}
+		public string Search { get; set; }
 		/// <summary>
 		/// Whether or not to include retweets.
 		/// </summary>
-		public bool IncludeRetweets
-		{
-			get => _IncludeRetweets;
-			set => _IncludeRetweets = value;
-		}
+		public bool IncludeRetweets { get; set; }
 		/// <summary>
 		/// The method to gather images with.
 		/// </summary>
-		public TwitterGatheringMethod GatheringMethod
-		{
-			get => _GatheringMethod;
-			set => _GatheringMethod = value;
-		}
-
-		private string _Search;
-		private bool _IncludeRetweets;
-		private TwitterGatheringMethod _GatheringMethod;
+		public TwitterGatheringMethod GatheringMethod { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="TwitterPostDownloader"/>.

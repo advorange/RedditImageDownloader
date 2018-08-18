@@ -35,31 +35,15 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 		/// <summary>
 		/// The username to login with.
 		/// </summary>
-		public string LoginUsername
-		{
-			get => _LoginUsername;
-			set => _LoginUsername = value;
-		}
+		public string LoginUsername { get; set; }
 		/// <summary>
 		/// The password to login with.
 		/// </summary>
-		public string LoginPassword
-		{
-			get => _LoginPassword;
-			set => _LoginPassword = value;
-		}
+		public string LoginPassword { get; set; }
 		/// <summary>
 		/// The id of the user to search for.
 		/// </summary>
-		public ulong UserId
-		{
-			get => _UserId;
-			set => _UserId = value;
-		}
-
-		private string _LoginUsername;
-		private string _LoginPassword;
-		private ulong _UserId;
+		public ulong UserId { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="PixivPostDownloader"/>.

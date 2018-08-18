@@ -27,13 +27,7 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 		/// <summary>
 		/// The name of the user to download images from.
 		/// </summary>
-		public string Username
-		{
-			get => _Username;
-			set => _Username = value;
-		}
-
-		private string _Username;
+		public string Username { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="VscoPostDownloader"/>.

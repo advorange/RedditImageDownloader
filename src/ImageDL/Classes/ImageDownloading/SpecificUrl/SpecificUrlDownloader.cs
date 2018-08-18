@@ -18,13 +18,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 		/// <summary>
 		/// The url to download images from.
 		/// </summary>
-		public Uri Url
-		{
-			get => _Url;
-			set => _Url = value;
-		}
-
-		private Uri _Url;
+		public Uri Url { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="SpecificUrlDownloader"/>.

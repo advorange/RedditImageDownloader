@@ -33,7 +33,7 @@ namespace ImageDL.Classes.ImageDownloading
 			get => _SavePath;
 			set
 			{
-				if (!_CreateDirectory && !System.IO.Directory.Exists(value))
+				if (!CreateDirectory && !System.IO.Directory.Exists(value))
 				{
 					throw new ArgumentException($"{value} is not already created and -cd has not been used.", nameof(SavePath));
 				}
@@ -76,11 +76,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// The maximum allowed image similarity before an image is considered a duplicate.
 		/// </summary>
-		public Percentage MaxImageSimilarity
-		{
-			get => _MaxImageSimilarity;
-			set => _MaxImageSimilarity = value;
-		}
+		public Percentage MaxImageSimilarity { get; set; }
 		/// <summary>
 		/// How many images to cache per thread. Lower = faster, but more CPU.
 		/// </summary>
@@ -100,35 +96,19 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// The minimum aspect ratio an image can have.
 		/// </summary>
-		public AspectRatio MinAspectRatio
-		{
-			get => _MinAspectRatio;
-			set => _MinAspectRatio = value;
-		}
+		public AspectRatio MinAspectRatio { get; set; }
 		/// <summary>
 		/// The maximum aspect ratio an image can have.
 		/// </summary>
-		public AspectRatio MaxAspectRatio
-		{
-			get => _MaxAspectRatio;
-			set => _MaxAspectRatio = value;
-		}
+		public AspectRatio MaxAspectRatio { get; set; }
 		/// <summary>
 		/// Indicates whether or not to create the directory if it does not exist.
 		/// </summary>
-		public bool CreateDirectory
-		{
-			get => _CreateDirectory;
-			set => _CreateDirectory = value;
-		}
+		public bool CreateDirectory { get; set; }
 		/// <summary>
 		/// Indicates the user wants the downloader to start.
 		/// </summary>
-		public bool Start
-		{
-			get => _Start;
-			set => _Start = value;
-		}
+		public bool Start { get; set; }
 		/// <summary>
 		/// The datetime of the oldest allowed posts. Is simply <see cref="DateTime.UtcNow"/> minus the amount of days.
 		/// </summary>
@@ -138,7 +118,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		public DirectoryInfo Directory => new DirectoryInfo(SavePath);
 		/// <inheritdoc />
-		public SettingParser SettingParser => _SettingParser;
+		public SettingParser SettingParser { get; }
 		/// <inheritdoc />
 		public bool CanStart => Start && SettingParser.AllSet;
 
@@ -147,21 +127,15 @@ namespace ImageDL.Classes.ImageDownloading
 		private int _MinWidth;
 		private int _MinHeight;
 		private int _MaxDaysOld;
-		private Percentage _MaxImageSimilarity;
 		private int _ImagesCachedPerThread;
 		private int _MinScore;
-		private AspectRatio _MinAspectRatio;
-		private AspectRatio _MaxAspectRatio;
-		private bool _CreateDirectory;
-		private bool _Start;
-		private readonly SettingParser _SettingParser;
 
 		/// <summary>
 		/// Creates an instance of <see cref="PostDownloader"/>.
 		/// </summary>
 		public PostDownloader()
 		{
-			_SettingParser = new SettingParser
+			SettingParser = new SettingParser
 			{
 				new Setting<string>(new[] { nameof(SavePath), "path", "dir" }, x => SavePath = x)
 				{

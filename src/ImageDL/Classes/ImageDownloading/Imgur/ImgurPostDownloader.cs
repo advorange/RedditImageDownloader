@@ -26,13 +26,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// <summary>
 		/// The tags to search for posts with.
 		/// </summary>
-		public string Tags
-		{
-			get => _Tags;
-			set => _Tags = value;
-		}
-
-		private string _Tags;
+		public string Tags { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="ImgurPostDownloader"/>.

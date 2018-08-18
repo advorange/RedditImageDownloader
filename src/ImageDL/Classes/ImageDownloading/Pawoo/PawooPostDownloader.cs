@@ -24,40 +24,19 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 		/// <summary>
 		/// The user to search for images from.
 		/// </summary>
-		public string Username
-		{
-			get => _Username;
-			set => _Username = value;
-		}
+		public string Username { get; set; }
 		/// <summary>
 		/// Whether or not to include replies when searching through a user's posts.
 		/// </summary>
-		public bool IncludeReplies
-		{
-			get => _IncludeReplies;
-			set => _IncludeReplies = value;
-		}
+		public bool IncludeReplies { get; set; }
 		/// <summary>
 		/// Username to login with.
 		/// </summary>
-		public string LoginUsername
-		{
-			get => _LoginUsername;
-			set => _LoginUsername = value;
-		}
+		public string LoginUsername { get; set; }
 		/// <summary>
 		/// Password to login with.
 		/// </summary>
-		public string LoginPassword
-		{
-			get => _LoginPassword;
-			set => _LoginPassword = value;
-		}
-
-		private string _Username;
-		private bool _IncludeReplies;
-		private string _LoginUsername;
-		private string _LoginPassword;
+		public string LoginPassword { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="PawooPostDownloader"/>.

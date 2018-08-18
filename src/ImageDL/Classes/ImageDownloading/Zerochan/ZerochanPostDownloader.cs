@@ -22,13 +22,7 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 		/// <summary>
 		/// The terms to search for.
 		/// </summary>
-		public string Tags
-		{
-			get => _Tags;
-			set => _Tags = value;
-		}
-
-		private string _Tags;
+		public string Tags { get; set; }
 
 		/// <summary>
 		/// Creats an instance of <see cref="ZerochanPostDownloader"/>.

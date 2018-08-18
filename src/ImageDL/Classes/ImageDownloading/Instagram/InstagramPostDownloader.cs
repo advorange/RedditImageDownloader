@@ -30,13 +30,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 		/// <summary>
 		/// The name of the user to search for.
 		/// </summary>
-		public string Username
-		{
-			get => _Username;
-			set => _Username = value;
-		}
-
-		private string _Username;
+		public string Username { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="InstagramPostDownloader"/>.

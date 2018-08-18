@@ -198,7 +198,16 @@ namespace ImageDL.Classes.ImageComparing
 
 			foreach (var file in files)
 			{
-				file.MoveTo(Path.Combine(duplicateDirectory, file.Name));
+				if (!file.Exists)
+				{
+					continue;
+				}
+
+				try
+				{
+					file.MoveTo(Path.Combine(duplicateDirectory, file.Name));
+				}
+				catch (FileNotFoundException) { }
 			}
 		}
 		/// <summary>

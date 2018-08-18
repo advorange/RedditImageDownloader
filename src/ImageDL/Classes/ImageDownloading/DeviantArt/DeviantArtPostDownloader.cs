@@ -32,40 +32,19 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// <summary>
 		/// The client id to get the authorization token from.
 		/// </summary>
-		public string ClientId
-		{
-			get => _ClientId;
-			set => _ClientId = value;
-		}
+		public string ClientId { get; set; }
 		/// <summary>
 		/// The redirection website. Must be a valid website supplied in 
 		/// </summary>
-		public string ClientSecret
-		{
-			get => _ClientSecret;
-			set => _ClientSecret = value;
-		}
+		public string ClientSecret { get; set; }
 		/// <summary>
 		/// The tags to search for.
 		/// </summary>
-		public string Tags
-		{
-			get => _TagString;
-			set => _TagString = value;
-		}
+		public string Tags { get; set; }
 		/// <summary>
 		/// The method to gather images with.
 		/// </summary>
-		public DeviantArtGatheringMethod GatheringMethod
-		{
-			get => _GatheringMethod;
-			set => _GatheringMethod = value;
-		}
-
-		private string _ClientId;
-		private string _ClientSecret;
-		private string _TagString;
-		private DeviantArtGatheringMethod _GatheringMethod;
+		public DeviantArtGatheringMethod GatheringMethod { get; set; }
 
 		/// <summary>
 		/// Creates an image downloader for DeviantArt.

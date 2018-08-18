@@ -23,22 +23,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		/// <summary>
 		/// The value to search for. Can be a user, board, or tags.
 		/// </summary>
-		public string Search
-		{
-			get => _Search;
-			set => _Search = value;
-		}
+		public string Search { get; set; }
 		/// <summary>
 		/// How to use the search string.
 		/// </summary>
-		public PinterestGatheringMethod GatheringMethod
-		{
-			get => _GatheringMethod;
-			set => _GatheringMethod = value;
-		}
-
-		private string _Search;
-		private PinterestGatheringMethod _GatheringMethod;
+		public PinterestGatheringMethod GatheringMethod { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="PinterestPostDownloader"/>.
