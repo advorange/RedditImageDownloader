@@ -39,10 +39,10 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); ++i)
+			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
 			{
 				token.ThrowIfCancellationRequested();
-				var query = new Uri($"https://www.diyidan.com/user/posts/{userId}/{i}");
+				var query = new Uri($"https://www.diyidan.com/user/posts/{userId}/{i + 1}");
 				var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
@@ -136,7 +136,8 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan
 				return ImageResponse.FromNotFound(url);
 			}
 			var img = content.Descendants("img");
-			var src = img.Select(x => x.GetAttributeValue("src", ""));
+			var postImages = img.Where(x => x.GetAttributeValue("class", null) != "mb-img");
+			var src = postImages.Select(x => x.GetAttributeValue("src", ""));
 			var urls = src.Select(x => new Uri($"https:{x.Substring(0, x.LastIndexOf('!'))}"));
 			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
 		}

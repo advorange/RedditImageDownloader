@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -33,8 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ImageDL.Windows\ImageDL.Windows.csproj" />
-    <ProjectReference Include="..\..\src\ImageDL\ImageDL.csproj" />
+    <ProjectReference Include="..\..\src\ImageDL.NetFramework\ImageDL.NetFramework.csproj" />
+    <ProjectReference Include="..\..\src\ImageDL.Core\ImageDL.Core.csproj" />
   </ItemGroup>
 
 </Project>

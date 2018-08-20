@@ -3,7 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageDL.Classes.ImageComparing;
 
-namespace ImageDL.Windows
+namespace ImageDL
 {
 	/// <summary>
 	/// Holds details about images which have been downloaded, while using a Windows specific implementation of <see cref="HashImageStream(Stream, int)"/>.
@@ -11,13 +11,13 @@ namespace ImageDL.Windows
 	/// <remarks>
 	/// This is roughly 4x slower than <see cref="Classes.ImageComparing.Implementations.ImageSharpImageComparer"/> but uses 10x less memory.
 	/// </remarks>
-	public sealed class WindowsImageComparer : ImageComparer
+	public sealed class NetFrameworkImageComparer : ImageComparer
 	{
 		/// <summary>
-		/// Creates an instance of <see cref="WindowsImageComparer"/>
+		/// Creates an instance of <see cref="NetFrameworkImageComparer"/>
 		/// </summary>
 		/// <param name="databasePath"></param>
-		public WindowsImageComparer(string databasePath) : base(databasePath) { }
+		public NetFrameworkImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
 		protected override string HashImageStream(Stream s)

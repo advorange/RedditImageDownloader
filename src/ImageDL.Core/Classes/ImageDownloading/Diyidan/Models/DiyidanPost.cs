@@ -32,8 +32,9 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
 			{
 				//Get date posted based off of thumbnail url, can't get more accurate though
 				//E.G: //image.diyidan.net/post/2018/5/20/VuQFHKpxqiSHjWFZ.jpg!webindex
-				var parts = ThumbnailUrl.ToString().Split(new[] { "/post/", "/shortvideo/" }, StringSplitOptions.RemoveEmptyEntries)[1].Split('/');
-				return new DateTime(Convert.ToInt32(parts[0]), Convert.ToInt32(parts[1]), Convert.ToInt32(parts[2]));
+				var parts = ThumbnailUrl.ToString().Split(new[] { "/post/", "/shortvideo/", "/video/" }, StringSplitOptions.RemoveEmptyEntries)[1].Split('/');
+				var date = parts.Take(3).Select(x => Convert.ToInt32(x)).ToArray();
+				return new DateTime(date[0], date[1], date[2]);
 			}
 		}
 		/// <summary>

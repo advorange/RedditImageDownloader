@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using ImageDL.Classes.ImageComparing.Implementations;
 
-namespace ImageDL.Core
+namespace ImageDL
 {
 	public class Program
 	{

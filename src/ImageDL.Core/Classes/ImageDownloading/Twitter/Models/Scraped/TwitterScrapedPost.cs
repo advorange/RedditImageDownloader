@@ -75,14 +75,22 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 			var div = node.Descendants("div");
 			var span = node.Descendants("span");
 
+			var tweetInfo = div.SingleOrDefault(x =>
+			{
+				var attr = x.GetAttributeValue("class", "");
+				return attr.Contains("js-stream-tweet") || attr.Contains("js-original-tweet");
+			});
+			if (tweetInfo == null)
+			{
+				return;
+			}
+			Id = tweetInfo.GetAttributeValue("data-tweet-id", null);
+			Username = tweetInfo.GetAttributeValue("data-screen-name", null);
+
 			var media = div.SingleOrDefault(x => x.GetAttributeValue("class", "").Contains("AdaptiveMedia-container"));
 			ImageUrls = (media?.Descendants("img")?.Select(x => x.GetAttributeValue("src", null)) ?? new string[0])
 				.Where(x => x != null)
 				.Select(x => new Uri(x)).ToList();
-
-			var tweetInfo = div.Single(x => x.GetAttributeValue("class", "").Contains("js-stream-tweet"));
-			Id = tweetInfo.GetAttributeValue("data-tweet-id", null);
-			Username = tweetInfo.GetAttributeValue("data-screen-name", null);
 
 			CreatedAtTimestamp = (ulong)span.Single(x => x.GetAttributeValue("class", "").Contains("js-short-timestamp"))
 				.GetAttributeValue("data-time", -1);

@@ -11,6 +11,7 @@ using ImageDL.Classes.ImageDownloading.Booru.Konachan;
 using ImageDL.Classes.ImageDownloading.Booru.Safebooru;
 using ImageDL.Classes.ImageDownloading.Booru.Yandere;
 using ImageDL.Classes.ImageDownloading.DeviantArt;
+using ImageDL.Classes.ImageDownloading.Diyidan;
 using ImageDL.Classes.ImageDownloading.Eshuushuu;
 using ImageDL.Classes.ImageDownloading.Flickr;
 using ImageDL.Classes.ImageDownloading.FourChan;
@@ -29,7 +30,6 @@ using ImageDL.Classes.ImageDownloading.Weibo;
 using ImageDL.Classes.ImageDownloading.Zerochan;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
-using ImageDL.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ImageDL.Tests.PostGatheringTests
@@ -97,12 +97,9 @@ namespace ImageDL.Tests.PostGatheringTests
 				$"-{nameof(DeviantArtPostDownloader.GatheringMethod)} {DeviantArtGatheringMethod.Scraping}").CAF();
 		}
 		[TestMethod]
-		public Task Diyidan_Test()
+		public async Task Diyidan_Test()
 		{
-			//Not sure why, but the site just doesn't show a single post from any user when you go to their profile
-			//Seems like the problem is on their end, not mine. Will probably have to rewrite this when they fix theirs.
-			//await Gatherer_Test<DiyidanPostDownloader>($"-{nameof(DiyidanPostDownloader.Username)} 6294196636885527271");
-			return Task.FromResult(0);
+			await Gatherer_Test<DiyidanPostDownloader>($"-{nameof(DiyidanPostDownloader.Username)} 6293615542255832232");
 		}
 		[TestMethod]
 		public async Task Eshuushuu_Test()
@@ -192,7 +189,7 @@ namespace ImageDL.Tests.PostGatheringTests
 		}
 		private async Task Gatherer_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
 		{
-			var services = ImageDL.CreateServices<WindowsImageComparer>();
+			var services = ImageDL.CreateServices<NetFrameworkImageComparer>();
 			var gatherer = new T();
 
 			var genericArgsResult = gatherer.SettingParser.Parse(GenerateGenericArgs<T>());

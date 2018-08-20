@@ -95,8 +95,17 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 			doc.LoadHtml(html);
 
 			var li = doc.DocumentNode.Descendants("li");
-			var tweets = li.Where(x => x.GetAttributeValue("data-item-type", null) == "tweet");
-			return tweets.Select(x => new TwitterScrapedPost(x)).ToList();
+			var tweets = li.Where(x => x.GetAttributeValue("class", "").Contains("js-stream-item") && x.GetAttributeValue("data-item-type", null) == "tweet");
+			var list = new List<TwitterScrapedPost>();
+			foreach (var tweet in tweets)
+			{
+				var obj = new TwitterScrapedPost(tweet);
+				if (obj.Id != null)
+				{
+					list.Add(obj);
+				}
+			}
+			return list;
 		}
 	}
 }

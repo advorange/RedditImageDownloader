@@ -268,9 +268,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ImageDL\ImageDL.csproj">
+    <ProjectReference Include="..\ImageDL.Core\ImageDL.Core.csproj">
       <Project>{2d097060-95df-4d63-82c3-d72182ece92f}</Project>
-      <Name>ImageDL</Name>
+      <Name>ImageDL.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
