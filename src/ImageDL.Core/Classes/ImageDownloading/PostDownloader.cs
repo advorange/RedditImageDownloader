@@ -486,7 +486,7 @@ namespace ImageDL.Classes.ImageDownloading
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
 					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Url}");
-				return $"{g.Key.ToString().FormatTitle()} - {Formatting.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
+				return $"{g.Key.ToString().FormatTitle()} - {FormattingUtils.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
 			});
 			using (var writer = file.AppendText())
 			{

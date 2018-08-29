@@ -39,8 +39,8 @@
     <Reference Include="AdvorangesSettingParser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\AdvorangesSettingParser.1.0.0\lib\netstandard2.0\AdvorangesSettingParser.dll</HintPath>
     </Reference>
-    <Reference Include="AdvorangesUtils, Version=1.0.9.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\AdvorangesUtils.1.0.9\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
+    <Reference Include="AdvorangesUtils, Version=1.0.11.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AdvorangesUtils.1.0.11\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
     </Reference>
     <Reference Include="BrotliSharpLib, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\BrotliSharpLib.0.3.0\lib\net462\BrotliSharpLib.dll</HintPath>
@@ -48,8 +48,8 @@
     <Reference Include="FChan.Library, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\FChan.Library.2.0.0\lib\netstandard2.0\FChan.Library.dll</HintPath>
     </Reference>
-    <Reference Include="HtmlAgilityPack, Version=1.8.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\HtmlAgilityPack.1.8.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    <Reference Include="HtmlAgilityPack, Version=1.8.7.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\HtmlAgilityPack.1.8.7\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
     <Reference Include="LiteDB, Version=4.1.4.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
       <HintPath>..\..\packages\LiteDB.4.1.4\lib\net40\LiteDB.dll</HintPath>

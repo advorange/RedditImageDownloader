@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Processing.Transforms;
 
 namespace ImageDL.Classes.ImageComparing.Implementations
 {
@@ -22,20 +25,23 @@ namespace ImageDL.Classes.ImageComparing.Implementations
 		protected override string HashImageStream(Stream s)
 		{
 			s.Seek(0, SeekOrigin.Begin);
-			
+
 			//Not sure if there is a better way to do this or not
 			//The speed is good, but the memory usage is really high
-			byte[] bytes;
+			Span<Rgba32> pixels;
 			using (var img = Image.Load<Rgba32>(s))
 			{
-				img.Mutate(x =>
-				{
-					x.Resize(ThumbnailSize, ThumbnailSize);
-				});
-				bytes = img.SavePixelData();
+				img.Mutate(x => x.Resize(ThumbnailSize, ThumbnailSize));
+				pixels = img.GetPixelSpan();
 			}
 
-			return HashBytes(bytes, 4, ThumbnailSize, ThumbnailSize);
+			var brightnesses = new List<float>();
+			foreach (var pixel in pixels)
+			{
+				brightnesses.Add(CalculateBrightness(pixel.A, pixel.R, pixel.G, pixel.B));
+			}
+			var avgBrightness = brightnesses.Average();
+			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
 		}
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -203,9 +204,25 @@ namespace ImageDL.Classes.ImageComparing
 					continue;
 				}
 
+				var newPath = Path.Combine(duplicateDirectory, file.Name);
+				if (File.Exists(newPath))
+				{
+					for (int i = 1; i < int.MaxValue; ++i)
+					{
+						var newPathName = Path.GetFileNameWithoutExtension(newPath);
+						var newPathExt = Path.GetExtension(newPath);
+						var incrementedPath = $"{newPathName} ({i}){newPathExt}";
+						if (!File.Exists(incrementedPath))
+						{
+							newPath = incrementedPath;
+							break;
+						}
+					}
+				}
+
 				try
 				{
-					file.MoveTo(Path.Combine(duplicateDirectory, file.Name));
+					file.MoveTo(newPath);
 				}
 				catch (FileNotFoundException) { }
 			}
@@ -235,7 +252,7 @@ namespace ImageDL.Classes.ImageComparing
 							var b = bytes[index + 2];
 							var a = bytes[index + 3];
 							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
-							brightnesses.Add((0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f));
+							brightnesses.Add(CalculateBrightness(a, r, g, b));
 						}
 					}
 					break;
@@ -249,7 +266,7 @@ namespace ImageDL.Classes.ImageComparing
 							var g = bytes[index + 1];
 							var b = bytes[index + 2];
 							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
-							brightnesses.Add(0.299f * r + 0.587f * g + 0.114f * b);
+							brightnesses.Add(CalculateBrightness(255, r, g, b));
 						}
 					}
 					break;
@@ -258,6 +275,19 @@ namespace ImageDL.Classes.ImageComparing
 			}
 			var avgBrightness = brightnesses.Average();
 			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
+		}
+		/// <summary>
+		/// Calculates a single float value for the specified ARGB values representing the brightness of the pixel
+		/// </summary>
+		/// <param name="a"></param>
+		/// <param name="r"></param>
+		/// <param name="g"></param>
+		/// <param name="b"></param>
+		/// <returns></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		protected float CalculateBrightness(byte a, byte r, byte g, byte b)
+		{
+			return (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
 		}
 		/// <summary>
 		/// Generates a hash of an image. Used in comparing images for mostly similar instead of exactly similar.
@@ -291,54 +321,5 @@ namespace ImageDL.Classes.ImageComparing
 				return true;
 			}
 		}
-		/*
-		/// <summary>
-		/// Puts the name in a valid format.
-		/// </summary>
-		/// <param name="directory"></param>
-		/// <returns></returns>
-		private string GetDirectoryCollectionName(DirectoryInfo directory)
-		{
-			var col = Database.GetCollection<DirectoryCollection>("DirectoryNames");
-			if (col.FindById(directory.FullName) is DirectoryCollection entry)
-			{
-				return entry.Guid.ToString();
-			}
-
-			var directoryCollection = new DirectoryCollection(directory);
-			col.Insert(directoryCollection);
-			return directoryCollection.Guid.ToString();
-		}
-
-		/// <summary>
-		/// Maps a directory path to a guid.
-		/// </summary>
-		private sealed class DirectoryCollection
-		{
-			/// <summary>
-			/// The path of the directory.
-			/// </summary>
-			[BsonId, BsonField("DirectoryPath")]
-			public string DirectoryPath { get; set; }
-			/// <summary>
-			/// The id of the collection.
-			/// </summary>
-			[BsonField("Guid")]
-			public Guid Guid { get; set; }
-
-			/// <summary>
-			/// Creates an instance of <see cref="DirectoryCollection"/>.
-			/// </summary>
-			internal DirectoryCollection() { }
-			/// <summary>
-			/// Creates an instance of <see cref="DirectoryCollection"/>.
-			/// </summary>
-			/// <param name="directory"></param>
-			internal DirectoryCollection(DirectoryInfo directory)
-			{
-				DirectoryPath = directory.FullName;
-				Guid = Guid.NewGuid();
-			}
-		}*/
 	}
 }

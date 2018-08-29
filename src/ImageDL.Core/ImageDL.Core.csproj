@@ -17,15 +17,15 @@
 
   <ItemGroup>
     <PackageReference Include="AdvorangesSettingParser" Version="1.0.0" />
-    <PackageReference Include="AdvorangesUtils" Version="1.0.9" />
+    <PackageReference Include="AdvorangesUtils" Version="1.0.11" />
     <PackageReference Include="BrotliSharpLib" Version="0.3.0" />
     <PackageReference Include="FChan.Library" Version="2.0.0" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.8.5" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.7" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="MetadataExtractor" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
     <PackageReference Include="RedditSharp" Version="2.0.0-CI00065" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0004" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0005" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
   </ItemGroup>
 
