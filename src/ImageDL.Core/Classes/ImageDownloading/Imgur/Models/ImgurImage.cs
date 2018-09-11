@@ -57,9 +57,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// Returns the id, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{Id} ({Width}x{Height})";
 	}
 }

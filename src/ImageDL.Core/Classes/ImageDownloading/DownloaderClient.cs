@@ -60,10 +60,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// </summary>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		public static Uri RemoveQuery(Uri url)
-		{
-			return new Uri(url.ToString().Split('?', '#')[0]);
-		}
+		public static Uri RemoveQuery(Uri url) => new Uri(url.ToString().Split('?', '#')[0]);
 		/// <summary>
 		/// Generates the default client handler for the client.
 		/// </summary>
@@ -153,14 +150,8 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 		}
 		/// <inheritdoc />
-		public void AddGatherer<T>() where T : IImageGatherer, new()
-		{
-			Gatherers.Add(new T());
-		}
+		public void AddGatherer<T>() where T : IImageGatherer, new() => Gatherers.Add(new T());
 		/// <inheritdoc />
-		public void RemoveGatherer<T>() where T : IImageGatherer, new()
-		{
-			Gatherers.RemoveAll(x => x is T);
-		}
+		public void RemoveGatherer<T>() where T : IImageGatherer, new() => Gatherers.RemoveAll(x => x is T);
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -59,8 +58,6 @@ namespace ImageDL.Classes.ImageDownloading.Reddit.Models
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString()
-		{
-			return Id;
-		}
+			=> Id;
 	}
 }

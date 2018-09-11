@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the end position.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return EndCursor;
-		}
+		public override string ToString() => EndCursor;
 	}
 }

@@ -54,9 +54,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		/// Returns the page url.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return PageUrl.ToString();
-		}
+		public override string ToString() => PageUrl.ToString();
 	}
 }

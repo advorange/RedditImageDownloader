@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the position and the text.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Position} {Text}";
-		}
+		public override string ToString() => $"{Position} {Text}";
 	}
 }

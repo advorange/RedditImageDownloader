@@ -34,9 +34,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the expanded url.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return ExpandedUrl.ToString();
-		}
+		public override string ToString() => ExpandedUrl.ToString();
 	}
 }

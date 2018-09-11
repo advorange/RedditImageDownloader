@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 	public struct WeiboImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("weibo.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("weibo.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await WeiboPostDownloader.GetWeiboImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await WeiboPostDownloader.GetWeiboImagesAsync(client, url).CAF();
 	}
 }

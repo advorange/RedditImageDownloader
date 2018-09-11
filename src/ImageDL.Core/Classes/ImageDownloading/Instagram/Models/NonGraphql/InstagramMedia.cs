@@ -17,9 +17,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// Returns the media as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Node.ToString();
-		}
+		public override string ToString() => Node.ToString();
 	}
 }

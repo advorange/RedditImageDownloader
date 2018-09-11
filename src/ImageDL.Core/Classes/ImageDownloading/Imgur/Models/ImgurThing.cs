@@ -150,9 +150,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

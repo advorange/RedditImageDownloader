@@ -33,9 +33,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns the username, and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Username} ({Id})";
-		}
+		public override string ToString() => $"{Username} ({Id})";
 	}
 }

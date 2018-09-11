@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 	public struct BcyImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("bcy.net");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("bcy.net");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await BcyPostDownloader.GetBcyImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await BcyPostDownloader.GetBcyImagesAsync(client, url).CAF();
 	}
 }

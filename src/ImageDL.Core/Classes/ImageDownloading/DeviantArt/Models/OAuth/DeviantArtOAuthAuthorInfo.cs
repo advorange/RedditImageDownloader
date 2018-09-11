@@ -32,9 +32,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 		/// Returns the user's name.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Username;
-		}
+		public override string ToString() => Username;
 	}
 }

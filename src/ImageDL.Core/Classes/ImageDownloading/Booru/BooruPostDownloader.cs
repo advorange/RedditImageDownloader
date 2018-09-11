@@ -60,7 +60,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			SettingParser.Add(new Setting<int>(new[] { nameof(Page), }, x => Page = x)
 			{
 				Description = "The page to start from.",
-				DefaultValue = 1, //Start on the first page
+				DefaultValueFactory = () => 1, //Start on the first page
 			});
 
 			_TagLimit = tagLimit;

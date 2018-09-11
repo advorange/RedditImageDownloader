@@ -28,9 +28,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		/// Returns the url and resolution.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Url} {Geo}";
-		}
+		public override string ToString() => $"{Url} {Geo}";
 	}
 }

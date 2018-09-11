@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 	public struct FlickrImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("flickr.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("flickr.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await FlickrPostDownloader.GetFlickrImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await FlickrPostDownloader.GetFlickrImagesAsync(client, url).CAF();
 	}
 }

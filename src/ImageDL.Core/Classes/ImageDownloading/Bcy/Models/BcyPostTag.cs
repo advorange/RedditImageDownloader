@@ -38,9 +38,6 @@ namespace ImageDL.Classes.ImageDownloading.Bcy.Models
 		/// Returns the tag name and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{TagName} ({TagId})";
-		}
+		public override string ToString() => $"{TagName} ({TagId})";
 	}
 }

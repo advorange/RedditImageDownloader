@@ -23,9 +23,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the latitude and longitude in non degree format.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Coordinates[0]}x{Coordinates[1]}";
-		}
+		public override string ToString() => $"{Coordinates[0]}x{Coordinates[1]}";
 	}
 }

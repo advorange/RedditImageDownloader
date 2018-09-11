@@ -106,17 +106,11 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 		}
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromImages(ImageUrls));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromImages(ImageUrls));
 		/// <summary>
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

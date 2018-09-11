@@ -144,17 +144,11 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		private string _FileUrl = null;
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(FileUrl));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(FileUrl));
 		/// <summary>
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

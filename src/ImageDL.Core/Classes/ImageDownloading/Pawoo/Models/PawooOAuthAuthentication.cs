@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns the provider and uid.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Provider} ({Uid})";
-		}
+		public override string ToString() => $"{Provider} ({Uid})";
 	}
 }

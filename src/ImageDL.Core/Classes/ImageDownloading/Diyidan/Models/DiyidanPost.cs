@@ -119,17 +119,11 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
 		}
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return await DiyidanPostDownloader.GetDiyidanImagesAsync(client, PostUrl).CAF();
-		}
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => await DiyidanPostDownloader.GetDiyidanImagesAsync(client, PostUrl).CAF();
 		/// <summary>
 		/// Returns the post id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

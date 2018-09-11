@@ -142,17 +142,11 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan.Models
 		public IList<string> Tags { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(ContentUrl));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(ContentUrl));
 		/// <summary>
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

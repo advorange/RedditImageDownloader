@@ -67,9 +67,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the username and user id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Username} ({Id})";
-		}
+		public override string ToString() => $"{Username} ({Id})";
 	}
 }

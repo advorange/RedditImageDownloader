@@ -14,9 +14,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql
 		public InstagramMediaNode ShortcodeMedia { get; private set; }
 
 		/// <inheritdoc />
-		public override string ToString()
-		{
-			return ShortcodeMedia.ToString();
-		}
+		public override string ToString() => ShortcodeMedia.ToString();
 	}
 }

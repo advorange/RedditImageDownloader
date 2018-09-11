@@ -108,10 +108,7 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 		/// <param name="client"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public static async Task<Model> GetZerochanPostAsync(IDownloaderClient client, string id)
-		{
-			return await GenerateModel(client, new JObject { { "id", id } }).CAF();
-		}
+		public static async Task<Model> GetZerochanPostAsync(IDownloaderClient client, string id) => await GenerateModel(client, new JObject { { "id", id } }).CAF();
 		/// <summary>
 		/// Gets the images from the specified url.
 		/// </summary>

@@ -51,9 +51,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the width and the height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Width}x{Height}";
-		}
+		public override string ToString() => $"{Width}x{Height}";
 	}
 }

@@ -36,8 +36,8 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AdvorangesSettingParser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\AdvorangesSettingParser.1.0.0\lib\netstandard2.0\AdvorangesSettingParser.dll</HintPath>
+    <Reference Include="AdvorangesSettingParser, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AdvorangesSettingParser.1.0.2\lib\netstandard2.0\AdvorangesSettingParser.dll</HintPath>
     </Reference>
     <Reference Include="AdvorangesUtils, Version=1.0.11.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\AdvorangesUtils.1.0.11\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>

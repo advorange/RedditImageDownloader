@@ -53,9 +53,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns the url.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Url.ToString();
-		}
+		public override string ToString() => Url.ToString();
 	}
 }

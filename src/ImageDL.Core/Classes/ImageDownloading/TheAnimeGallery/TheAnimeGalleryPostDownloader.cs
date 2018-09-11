@@ -45,12 +45,14 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 			{
 				Description = "What to search for."
 			});
-			SettingParser.Add(new Setting<TAGContentFilter>(new[] { nameof(ContentFilter), "filter" }, x => ContentFilter = x, s => (Enum.TryParse(s, true, out TAGContentFilter result), result))
+			SettingParser.Add(new Setting<TAGContentFilter>(new[] { nameof(ContentFilter), "filter" }, x => ContentFilter = x,
+				parser: s => (Enum.TryParse(s, true, out TAGContentFilter result), result))
 			{
 				Description = "The filter to use when gathering posts. The default value is safe.",
-				DefaultValue = TAGContentFilter.Safe,
+				DefaultValueFactory = () => TAGContentFilter.Safe,
 			});
-			SettingParser.Add(new Setting<TAGGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out TAGGatheringMethod result), result))
+			SettingParser.Add(new Setting<TAGGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
+				parser: s => (Enum.TryParse(s, true, out TAGGatheringMethod result), result))
 			{
 				Description = "How to gather posts, either through a series or a tag.",
 			});

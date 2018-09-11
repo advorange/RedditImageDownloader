@@ -52,7 +52,8 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 				IsFlag = true,
 				IsOptional = true,
 			});
-			SettingParser.Add(new Setting<TwitterGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out TwitterGatheringMethod result), result))
+			SettingParser.Add(new Setting<TwitterGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
+				parser: s => (Enum.TryParse(s, true, out TwitterGatheringMethod result), result))
 			{
 				Description = "How to gather posts. Will either use the search feature or go through the user's posts.",
 			});

@@ -211,9 +211,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the username and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Name} ({IdStr})";
-		}
+		public override string ToString() => $"{Name} ({IdStr})";
 	}
 }

@@ -90,9 +90,6 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 		/// Returns the post url.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return PostUrl.ToString();
-		}
+		public override string ToString() => PostUrl.ToString();
 	}
 }

@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns website, and name.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Website} ({Name})";
-		}
+		public override string ToString() => $"{Website} ({Name})";
 	}
 }

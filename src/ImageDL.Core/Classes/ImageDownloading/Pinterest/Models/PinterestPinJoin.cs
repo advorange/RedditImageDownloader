@@ -40,9 +40,6 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// Returns <see cref="CanonicalPin"/> as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return CanonicalPin.ToString();
-		}
+		public override string ToString() => CanonicalPin.ToString();
 	}
 }

@@ -35,10 +35,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the like as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Like.ToString();
-		}
+		public override string ToString() => Like.ToString();
 	}
 
 	/// <summary>
@@ -66,9 +63,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the username and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Username} ({Id})";
-		}
+		public override string ToString() => $"{Username} ({Id})";
 	}
 }

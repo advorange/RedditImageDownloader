@@ -24,15 +24,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Gelbooru
 		public GelbooruPostDownloader() : base(int.MaxValue, false) { }
 
 		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page)
-		{
-			return GenerateGelbooruQuery(tags, page);
-		}
+		protected override Uri GenerateQuery(string tags, int page) => GenerateGelbooruQuery(tags, page);
 		/// <inheritdoc />
-		protected override List<Model> Parse(string text)
-		{
-			return ParseGelbooruPosts(text);
-		}
+		protected override List<Model> Parse(string text) => ParseGelbooruPosts(text);
 
 		/// <summary>
 		/// Generates a search uri.

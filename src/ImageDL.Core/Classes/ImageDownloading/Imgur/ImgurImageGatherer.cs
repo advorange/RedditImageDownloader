@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 	public struct ImgurImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("imgur.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("imgur.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await ImgurPostDownloader.GetImgurImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await ImgurPostDownloader.GetImgurImagesAsync(client, url).CAF();
 	}
 }

@@ -30,10 +30,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the user as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return TaggedUser.ToString();
-		}
+		public override string ToString() => TaggedUser.ToString();
 	}
 
 	/// <summary>
@@ -61,9 +58,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the user as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return User.ToString();
-		}
+		public override string ToString() => User.ToString();
 	}
 }

@@ -18,9 +18,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		/// Returns the stream url.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return StreamUrl.ToString();
-		}
+		public override string ToString() => StreamUrl.ToString();
 	}
 }

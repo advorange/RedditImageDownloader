@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 	public struct ZerochanImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("zerochan.net");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("zerochan.net");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await ZerochanPostDownloader.GetZerochanImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await ZerochanPostDownloader.GetZerochanImagesAsync(client, url).CAF();
 	}
 }

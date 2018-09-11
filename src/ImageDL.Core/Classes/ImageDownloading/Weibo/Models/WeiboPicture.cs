@@ -38,9 +38,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		/// Returns the string value of the large image.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Large.ToString();
-		}
+		public override string ToString() => Large.ToString();
 	}
 }

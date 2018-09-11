@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	public struct VscoImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("vsco.co");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("vsco.co");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await VscoPostDownloader.GetVscoImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await VscoPostDownloader.GetVscoImagesAsync(client, url).CAF();
 	}
 }

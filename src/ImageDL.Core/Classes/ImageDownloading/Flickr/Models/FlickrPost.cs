@@ -143,17 +143,11 @@ namespace ImageDL.Classes.ImageDownloading.Flickr.Models
 		private int? _MHeight { get; set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(ImageUrl));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(ImageUrl));
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{Id} ({Width}x{Height})";
 	}
 }

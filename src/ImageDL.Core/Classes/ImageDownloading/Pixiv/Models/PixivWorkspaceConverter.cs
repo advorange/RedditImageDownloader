@@ -8,10 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 	/// </summary>
 	internal class PixivWorkspaceConverter : JsonConverter
 	{
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-		{
-			throw new NotImplementedException();
-		}
+		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 		{
 			if (reader.TokenType == JsonToken.StartObject)
@@ -24,9 +21,6 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 				return new PixivWorkspace();
 			}
 		}
-		public override bool CanConvert(Type objectType)
-		{
-			return true;
-		}
+		public override bool CanConvert(Type objectType) => true;
 	}
 }

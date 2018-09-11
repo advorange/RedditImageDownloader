@@ -30,9 +30,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the image as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Child.ToString();
-		}
+		public override string ToString() => Child.ToString();
 	}
 }

@@ -40,9 +40,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr.Models
 		/// Returns the url, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{FullSizeImageUrl} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{FullSizeImageUrl} ({Width}x{Height})";
 	}
 }

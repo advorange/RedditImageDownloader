@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
 	public struct SafebooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("safebooru.org");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("safebooru.org");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await SafebooruPostDownloader.GetSafebooruImagesAsync(client, url);
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await SafebooruPostDownloader.GetSafebooruImagesAsync(client, url);
 	}
 }

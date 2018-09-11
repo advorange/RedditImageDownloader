@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 	public struct RedditImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("reddit.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("reddit.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await RedditPostDownloader.GetRedditImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await RedditPostDownloader.GetRedditImagesAsync(client, url).CAF();
 	}
 }

@@ -38,9 +38,6 @@ namespace ImageDL.Classes
 		/// Returns the number and the uri.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{AssociatedNumber} {Url}";
-		}
+		public override string ToString() => $"{AssociatedNumber} {Url}";
 	}
 }

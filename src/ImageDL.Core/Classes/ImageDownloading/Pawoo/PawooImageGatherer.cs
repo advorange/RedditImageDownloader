@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 	public struct PawooImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("pawoo.net");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("pawoo.net");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await PawooPostDownloader.GetPawooImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await PawooPostDownloader.GetPawooImagesAsync(client, url).CAF();
 	}
 }

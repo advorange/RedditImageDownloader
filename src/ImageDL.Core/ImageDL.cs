@@ -91,7 +91,7 @@ namespace ImageDL
 				var downloader = (PostDownloader)Activator.CreateInstance(GetDownloaderType());
 				while (!downloader.CanStart)
 				{
-					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
+					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
 
@@ -123,7 +123,7 @@ namespace ImageDL
 				}
 				while (!downloader.CanStart)
 				{
-					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings());
+					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
 

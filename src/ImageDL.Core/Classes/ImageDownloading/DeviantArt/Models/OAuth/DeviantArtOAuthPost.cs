@@ -111,17 +111,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 		public long PublishedTimestamp { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(Content.Source));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(Content.Source));
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({Content.Width}x{Content.Height})";
-		}
+		public override string ToString() => $"{Id} ({Content.Width}x{Content.Height})";
 	}
 }

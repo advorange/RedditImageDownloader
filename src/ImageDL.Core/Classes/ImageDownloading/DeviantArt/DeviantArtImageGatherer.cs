@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 	public struct DeviantArtImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("deviantart.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("deviantart.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await DeviantArtPostDownloader.GetDeviantArtImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await DeviantArtPostDownloader.GetDeviantArtImagesAsync(client, url).CAF();
 	}
 }

@@ -23,9 +23,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the text.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Text;
-		}
+		public override string ToString() => Text;
 	}
 }

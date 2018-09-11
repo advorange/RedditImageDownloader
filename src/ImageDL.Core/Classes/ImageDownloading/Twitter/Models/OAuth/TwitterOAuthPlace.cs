@@ -57,9 +57,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the fullname of the place.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return FullName;
-		}
+		public override string ToString() => FullName;
 	}
 }

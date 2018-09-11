@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 	public struct DanbooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("donmai.us");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("donmai.us");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await DanbooruPostDownloader.GetDanbooruImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await DanbooruPostDownloader.GetDanbooruImagesAsync(client, url).CAF();
 	}
 }

@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Yandere
 	public struct YandereImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("yande.re");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("yande.re");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await YanderePostDownloader.GetYandereImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await YanderePostDownloader.GetYandereImagesAsync(client, url).CAF();
 	}
 }

@@ -55,10 +55,7 @@ namespace ImageDL.Classes
 		/// Returns a downloader response indicating no posts were found.
 		/// </summary>
 		/// <returns></returns>
-		public static DownloaderResponse FromNoPostsFound()
-		{
-			return new DownloaderResponse("None Found", "Unable to find any new posts.", false, 0, 0, 0, 0, 0);
-		}
+		public static DownloaderResponse FromNoPostsFound() => new DownloaderResponse("None Found", "Unable to find any new posts.", false, 0, 0, 0, 0, 0);
 		/// <summary>
 		/// Returns a downloader response indicating the downloader is finished.
 		/// </summary>
@@ -68,9 +65,6 @@ namespace ImageDL.Classes
 		/// <param name="deleted"></param>
 		/// <param name="links"></param>
 		/// <returns></returns>
-		public static DownloaderResponse FromFinished(int gathered, int downloaded, int cached, int deleted, int links)
-		{
-			return new DownloaderResponse("Finished", "Done downloading all images from the gathered posts.", true, gathered, downloaded, cached, deleted, links);
-		}
+		public static DownloaderResponse FromFinished(int gathered, int downloaded, int cached, int deleted, int links) => new DownloaderResponse("Finished", "Done downloading all images from the gathered posts.", true, gathered, downloaded, cached, deleted, links);
 	}
 }

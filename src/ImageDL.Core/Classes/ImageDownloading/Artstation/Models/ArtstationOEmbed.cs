@@ -24,9 +24,6 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// Returns the provider name, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{ProviderName} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{ProviderName} ({Width}x{Height})";
 	}
 }

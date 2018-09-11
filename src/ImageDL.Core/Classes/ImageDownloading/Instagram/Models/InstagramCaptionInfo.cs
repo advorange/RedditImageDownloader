@@ -30,10 +30,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the caption as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Caption.ToString();
-		}
+		public override string ToString() => Caption.ToString();
 	}
 
 	/// <summary>
@@ -51,9 +48,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the text.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Text;
-		}
+		public override string ToString() => Text;
 	}
 }

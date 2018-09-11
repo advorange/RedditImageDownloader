@@ -99,9 +99,6 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// Returns the site name, and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{SiteName} ({Id})";
-		}
+		public override string ToString() => $"{SiteName} ({Id})";
 	}
 }

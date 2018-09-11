@@ -120,7 +120,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <inheritdoc />
 		public SettingParser SettingParser { get; }
 		/// <inheritdoc />
-		public bool CanStart => Start && SettingParser.AllSet;
+		public bool CanStart => Start && SettingParser.AreAllSet();
 
 		private string _SavePath;
 		private int _AmountOfPostsToGather;
@@ -158,15 +158,15 @@ namespace ImageDL.Classes.ImageDownloading
 					Description = "The oldest an image can be before it won't be saved.",
 				},
 				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x,
-					s => (Percentage.TryParse(s, out var result), result))
+					parser: s => (Percentage.TryParse(s, out var result), result))
 				{
 					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
-					DefaultValue = new Percentage(1),
+					DefaultValueFactory = () => new Percentage(1),
 				},
 				new Setting<int>(new[] {nameof(ImagesCachedPerThread), "icpt" }, x => ImagesCachedPerThread = x)
 				{
 					Description = "How many images to cache on each thread (lower = faster but more CPU).",
-					DefaultValue = 50,
+					DefaultValueFactory = () => 50,
 				},
 				new Setting<int>(new[] {nameof(MinScore), "mins", "ms" }, x => MinScore = x)
 				{
@@ -174,16 +174,16 @@ namespace ImageDL.Classes.ImageDownloading
 					IsOptional = true,
 				},
 				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x,
-					s => (AspectRatio.TryParse(s, out var result), result))
+					parser: s => (AspectRatio.TryParse(s, out var result), result))
 				{
 					Description = "The minimum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(0, 1),
+					DefaultValueFactory = () => new AspectRatio(0, 1),
 				},
-				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x, 
-					s => (AspectRatio.TryParse(s, out var result), result))
+				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x,
+					parser: s => (AspectRatio.TryParse(s, out var result), result))
 				{
 					Description = "The maximum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(1, 0),
+					DefaultValueFactory = () => new AspectRatio(1, 0),
 				},
 				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
 				{
@@ -335,9 +335,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="token"></param>
 		/// <returns></returns>
 		public async Task<DownloaderResponse> DownloadAsync(IServiceProvider services, CancellationToken token = default)
-		{
-			return await DownloadAsync(await GatherAsync(services, token).CAF(), services, token).CAF();
-		}
+			=> await DownloadAsync(await GatherAsync(services, token).CAF(), services, token).CAF();
 		/// <summary>
 		/// Actual implementation of <see cref="GatherAsync(IServiceProvider, CancellationToken)"/>.
 		/// </summary>
@@ -353,9 +351,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="error"></param>
 		/// <returns></returns>
 		protected bool HasValidSize(ISize size, out string error)
-		{
-			return HasValidSize(size.Width, size.Height, out error);
-		}
+			=> HasValidSize(size.Width, size.Height, out error);
 		/// <summary>
 		/// Checks min width, min height, and the min/max aspect ratios.
 		/// </summary>
@@ -486,7 +482,7 @@ namespace ImageDL.Classes.ImageDownloading
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
 					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Url}");
-				return $"{g.Key.ToString().FormatTitle()} - {FormattingUtils.ToSaving()}{NL}{String.Join(NL, format)}{NL}";
+				return $"{g.Key.ToString().FormatTitle()} - {FormattingUtils.ToSaving()}{NL}{string.Join(NL, format)}{NL}";
 			});
 			using (var writer = file.AppendText())
 			{

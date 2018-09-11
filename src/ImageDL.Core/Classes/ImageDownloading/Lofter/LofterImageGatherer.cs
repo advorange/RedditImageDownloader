@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 	public struct LofterImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("lofter.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("lofter.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await LofterPostDownloader.GetLofterImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await LofterPostDownloader.GetLofterImagesAsync(client, url).CAF();
 	}
 }

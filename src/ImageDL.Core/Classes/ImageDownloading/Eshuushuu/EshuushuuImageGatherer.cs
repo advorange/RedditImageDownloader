@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	public struct EshuushuuImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("e-shuushuu.net");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("e-shuushuu.net");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await EshuushuuPostDownloader.GetEshuushuuImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await EshuushuuPostDownloader.GetEshuushuuImagesAsync(client, url).CAF();
 	}
 }

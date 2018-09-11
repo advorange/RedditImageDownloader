@@ -183,9 +183,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the shortcode and type name.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Shortcode} ({Typename})";
-		}
+		public override string ToString() => $"{Shortcode} ({Typename})";
 	}
 }

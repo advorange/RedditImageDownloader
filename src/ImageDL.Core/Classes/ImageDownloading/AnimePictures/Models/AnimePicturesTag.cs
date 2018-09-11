@@ -27,9 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// Returns the name and value.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Name} ({Num})";
-		}
+		public override string ToString() => $"{Name} ({Num})";
 	}
 }

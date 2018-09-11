@@ -17,9 +17,6 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// Returns <see cref="AggregatedStats"/> as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return AggregatedStats.ToString();
-		}
+		public override string ToString() => AggregatedStats.ToString();
 	}
 }

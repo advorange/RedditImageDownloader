@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 	public struct ArtstationImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("artstation.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("artstation.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await ArtstationPostDownloader.GetArtstationImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await ArtstationPostDownloader.GetArtstationImagesAsync(client, url).CAF();
 	}
 }

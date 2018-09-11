@@ -41,7 +41,8 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 			{
 				Description = $"What to search for, can be a username or tags.",
 			});
-			SettingParser.Add(new Setting<FlickrGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out FlickrGatheringMethod result), result))
+			SettingParser.Add(new Setting<FlickrGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
+				parser: s => (Enum.TryParse(s, true, out FlickrGatheringMethod result), result))
 			{
 				Description = $"How to use {Search} for searching.",
 			});

@@ -210,9 +210,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return IdString;
-		}
+		public override string ToString() => IdString;
 	}
 }

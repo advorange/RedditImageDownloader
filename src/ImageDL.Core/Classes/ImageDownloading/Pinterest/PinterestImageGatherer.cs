@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 	public struct PinterestImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("pinterest.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("pinterest.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await PinterestPostDownloader.GetPinterestImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await PinterestPostDownloader.GetPinterestImagesAsync(client, url).CAF();
 	}
 }

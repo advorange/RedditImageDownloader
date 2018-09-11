@@ -22,15 +22,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		public KonachanPostDownloader() : base(6) { }
 
 		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page)
-		{
-			return GenerateKonachanQuery(tags, page);
-		}
+		protected override Uri GenerateQuery(string tags, int page) => GenerateKonachanQuery(tags, page);
 		/// <inheritdoc />
-		protected override List<Model> Parse(string text)
-		{
-			return ParseKonachanPosts(text);
-		}
+		protected override List<Model> Parse(string text) => ParseKonachanPosts(text);
 
 		/// <summary>
 		/// Generates a search url.
@@ -52,10 +46,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Konachan
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private static List<Model> ParseKonachanPosts(string text)
-		{
-			return JsonConvert.DeserializeObject<List<Model>>(text);
-		}
+		private static List<Model> ParseKonachanPosts(string text) => JsonConvert.DeserializeObject<List<Model>>(text);
 		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>

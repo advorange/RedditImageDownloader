@@ -74,9 +74,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// Returns the url to the media.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return MediaUrlHttps.ToString();
-		}
+		public override string ToString() => MediaUrlHttps.ToString();
 	}
 }

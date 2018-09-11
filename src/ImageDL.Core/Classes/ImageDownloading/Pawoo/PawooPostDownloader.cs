@@ -44,7 +44,8 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 		public PawooPostDownloader()
 		{
 			//Make sure the username always has an @ in front of it
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user", }, x => Username = x, s => (true, s.StartsWith("@") ? s : $"@{s}"))
+			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user", }, x => Username = x,
+				parser: s => (true, s.StartsWith("@") ? s : $"@{s}"))
 			{
 				Description = "The user to search for. Will end up with an @ in front of it if one is not supplied.",
 			});

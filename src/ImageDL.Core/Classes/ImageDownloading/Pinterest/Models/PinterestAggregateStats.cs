@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// Returns the saves.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Saves.ToString();
-		}
+		public override string ToString() => Saves.ToString();
 	}
 }

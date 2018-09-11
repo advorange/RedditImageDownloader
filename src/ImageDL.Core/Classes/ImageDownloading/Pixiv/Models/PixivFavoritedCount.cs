@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		/// Returns the total count of favorites.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return (Public + Private).ToString();
-		}
+		public override string ToString() => (Public + Private).ToString();
 	}
 }

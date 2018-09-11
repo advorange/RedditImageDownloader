@@ -62,9 +62,6 @@ namespace ImageDL.Classes.ImageDownloading.FourChan.Models
 		/// Returns the id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

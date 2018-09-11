@@ -32,9 +32,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// Returns the width and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Width}x{Height}";
-		}
+		public override string ToString() => $"{Width}x{Height}";
 	}
 }

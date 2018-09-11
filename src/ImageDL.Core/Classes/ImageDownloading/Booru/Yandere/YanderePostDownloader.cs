@@ -22,15 +22,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Yandere
 		public YanderePostDownloader() : base(6) { }
 
 		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page)
-		{
-			return GenerateYandereQuery(tags, page);
-		}
+		protected override Uri GenerateQuery(string tags, int page) => GenerateYandereQuery(tags, page);
 		/// <inheritdoc />
-		protected override List<Model> Parse(string text)
-		{
-			return ParseYanderePosts(text);
-		}
+		protected override List<Model> Parse(string text) => ParseYanderePosts(text);
 
 		/// <summary>
 		/// Generates a search url.
@@ -50,10 +44,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Yandere
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private static List<Model> ParseYanderePosts(string text)
-		{
-			return JsonConvert.DeserializeObject<List<Model>>(text);
-		}
+		private static List<Model> ParseYanderePosts(string text) => JsonConvert.DeserializeObject<List<Model>>(text);
 		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>

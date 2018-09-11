@@ -41,10 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the comment as a string.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Comment.ToString();
-		}
+		public override string ToString() => Comment.ToString();
 	}
 
 	/// <summary>
@@ -82,9 +79,6 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// Returns the user as a string and the time the comment was made.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Owner} ({CreatedAt})";
-		}
+		public override string ToString() => $"{Owner} ({CreatedAt})";
 	}
 }

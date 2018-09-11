@@ -41,19 +41,13 @@ namespace ImageDL.Utilities
 		/// <param name="url"></param>
 		/// <param name="response"></param>
 		/// <returns></returns>
-		public static ContentLink CreateContentLink(this IPost post, Uri url, Response response)
-		{
-			return new ContentLink(url, post.Score, response.ReasonType);
-		}
+		public static ContentLink CreateContentLink(this IPost post, Uri url, Response response) => new ContentLink(url, post.Score, response.ReasonType);
 		/// <summary>
 		/// Returns the count, the score, and the ToString() of the post.
 		/// </summary>
 		/// <param name="post"></param>
 		/// <param name="count"></param>
 		/// <returns></returns>
-		public static string Format(this IPost post, int count)
-		{
-			return $"[#{count}{(post.Score >= 0 ? $"|\u2191{post.Score}" : "")}] {post.PostUrl}";
-		}
+		public static string Format(this IPost post, int count) => $"[#{count}{(post.Score >= 0 ? $"|\u2191{post.Score}" : "")}] {post.PostUrl}";
 	}
 }

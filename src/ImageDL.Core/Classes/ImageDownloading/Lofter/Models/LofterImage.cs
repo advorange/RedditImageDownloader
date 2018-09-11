@@ -44,9 +44,6 @@ namespace ImageDL.Classes.ImageDownloading.Lofter.Models
 		/// Returns the full image url, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{FullImageUrl} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{FullImageUrl} ({Width}x{Height})";
 	}
 }

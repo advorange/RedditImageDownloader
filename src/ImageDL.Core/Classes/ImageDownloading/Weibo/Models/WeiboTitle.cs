@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		/// Returns the text.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Text;
-		}
+		public override string ToString() => Text;
 	}
 }

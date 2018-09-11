@@ -141,17 +141,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		public PinterestRichSummary RichSummary { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(LargestImage.Url));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(LargestImage.Url));
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({LargestImage.Width}x{LargestImage.Height})";
-		}
+		public override string ToString() => $"{Id} ({LargestImage.Width}x{LargestImage.Height})";
 	}
 }

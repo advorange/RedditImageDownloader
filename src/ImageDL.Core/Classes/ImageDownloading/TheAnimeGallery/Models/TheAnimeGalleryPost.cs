@@ -176,17 +176,11 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery.Models
 			return num;
 		}
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(ImageUrl));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(ImageUrl));
 		/// <summary>
 		/// Returns the post id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

@@ -25,9 +25,6 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// Returns the url, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Url} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{Url} ({Width}x{Height})";
 	}
 }

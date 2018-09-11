@@ -186,6 +186,11 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				{
 					return ImageResponse.FromException(url, new InvalidOperationException("Locked behind R18 filter."));
 				}
+				//Sign up menu
+				if (mangaResult.Value.DocumentNode.Descendants("div").Any(x => x.HasClass("signup-form")))
+				{
+					return ImageResponse.FromException(url, new InvalidOperationException("Locked behind R18 filter or is private."));
+				}
 
 				var div = mangaResult.Value.DocumentNode.Descendants("div");
 				var itemContainer = div.Where(x => x.GetAttributeValue("class", "") == "item-container");

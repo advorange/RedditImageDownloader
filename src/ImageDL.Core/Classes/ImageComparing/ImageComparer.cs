@@ -176,9 +176,7 @@ namespace ImageDL.Classes.ImageComparing
 		}
 		/// <inheritdoc />
 		public void Dispose()
-		{
-			Database?.Dispose();
-		}
+			=> Database?.Dispose();
 		/// <summary>
 		/// Removes the duplicates from the current folder.
 		/// </summary>
@@ -286,9 +284,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <returns></returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected float CalculateBrightness(byte a, byte r, byte g, byte b)
-		{
-			return (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
-		}
+			=> (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
 		/// <summary>
 		/// Generates a hash of an image. Used in comparing images for mostly similar instead of exactly similar.
 		/// </summary>

@@ -94,9 +94,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns the display name, and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{DisplayName} ({Id})";
-		}
+		public override string ToString() => $"{DisplayName} ({Id})";
 	}
 }

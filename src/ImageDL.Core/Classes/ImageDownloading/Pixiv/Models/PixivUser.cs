@@ -64,9 +64,6 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		/// Returns the name, and id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Name} ({Id})";
-		}
+		public override string ToString() => $"{Name} ({Id})";
 	}
 }

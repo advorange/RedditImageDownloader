@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	public struct InstagramImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("instagram.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("instagram.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await InstagramPostDownloader.GetInstagramImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await InstagramPostDownloader.GetInstagramImagesAsync(client, url).CAF();
 	}
 }

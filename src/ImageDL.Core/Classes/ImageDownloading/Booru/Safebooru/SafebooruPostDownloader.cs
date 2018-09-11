@@ -24,15 +24,9 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
 		public SafebooruPostDownloader() : base(int.MaxValue, false) { }
 
 		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page)
-		{
-			return GenerateSafebooruQuery(tags, page);
-		}
+		protected override Uri GenerateQuery(string tags, int page) => GenerateSafebooruQuery(tags, page);
 		/// <inheritdoc />
-		protected override List<Model> Parse(string text)
-		{
-			return ParseSafebooruPosts(text);
-		}
+		protected override List<Model> Parse(string text) => ParseSafebooruPosts(text);
 
 		/// <summary>
 		/// Generates a search uri.

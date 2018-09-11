@@ -111,17 +111,11 @@ namespace ImageDL.Classes.ImageDownloading.Bcy.Models
 		public string Avatar { get; private set; }
 
 		/// <inheritdoc />
-		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return await BcyPostDownloader.GetBcyImagesAsync(client, PostUrl).CAF();
-		}
+		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => await BcyPostDownloader.GetBcyImagesAsync(client, PostUrl).CAF();
 		/// <summary>
 		/// Returns the post id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Id;
-		}
+		public override string ToString() => Id;
 	}
 }

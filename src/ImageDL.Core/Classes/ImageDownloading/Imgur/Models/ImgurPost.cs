@@ -107,9 +107,6 @@ namespace ImageDL.Classes.ImageDownloading.Imgur.Models
 		/// Returns the id and image count.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({Images.Count})";
-		}
+		public override string ToString() => $"{Id} ({Images.Count})";
 	}
 }

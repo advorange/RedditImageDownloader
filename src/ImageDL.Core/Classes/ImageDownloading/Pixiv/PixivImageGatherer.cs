@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 	public struct PixivImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("pixiv.net");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("pixiv.net");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await PixivPostDownloader.GetPixivImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await PixivPostDownloader.GetPixivImagesAsync(client, url).CAF();
 	}
 }

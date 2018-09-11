@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns X, and Y.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"({X},{Y})";
-		}
+		public override string ToString() => $"({X},{Y})";
 	}
 }

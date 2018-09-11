@@ -17,9 +17,6 @@ namespace ImageDL.Classes.ImageDownloading.Bcy.Models
 		/// Returns the path.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return Path;
-		}
+		public override string ToString() => Path;
 	}
 }

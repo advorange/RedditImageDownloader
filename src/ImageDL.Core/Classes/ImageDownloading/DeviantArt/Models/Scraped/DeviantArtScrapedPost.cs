@@ -71,17 +71,11 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		public Uri Source { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
-		{
-			return Task.FromResult(ImageResponse.FromUrl(Source));
-		}
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromUrl(Source));
 		/// <summary>
 		/// Returns the id, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Id} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{Id} ({Width}x{Height})";
 	}
 }

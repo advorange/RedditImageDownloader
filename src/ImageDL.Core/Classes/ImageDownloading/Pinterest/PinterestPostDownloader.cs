@@ -38,7 +38,8 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			{
 				Description = $"The text to search for. Can be a board, user, or tags. The respective type must be set in {GatheringMethod}.",
 			});
-			SettingParser.Add(new Setting<PinterestGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out PinterestGatheringMethod result), result))
+			SettingParser.Add(new Setting<PinterestGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
+				parser: s => (Enum.TryParse(s, true, out PinterestGatheringMethod result), result))
 			{
 				Description = $"How to use {Search} to search through Pinterest.",
 			});

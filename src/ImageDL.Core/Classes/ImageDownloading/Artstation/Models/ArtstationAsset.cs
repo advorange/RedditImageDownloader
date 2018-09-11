@@ -70,9 +70,6 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// Returns the url, width, and height.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{ImageUrl} ({Width}x{Height})";
-		}
+		public override string ToString() => $"{ImageUrl} ({Width}x{Height})";
 	}
 }

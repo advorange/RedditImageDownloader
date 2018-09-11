@@ -22,9 +22,6 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 		/// Returns the name and value.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Name} ({Value})";
-		}
+		public override string ToString() => $"{Name} ({Value})";
 	}
 }

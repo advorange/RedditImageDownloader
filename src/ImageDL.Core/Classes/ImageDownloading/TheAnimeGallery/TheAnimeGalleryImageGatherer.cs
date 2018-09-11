@@ -11,14 +11,8 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 	public struct TheAnimeGalleryImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url)
-		{
-			return url.Host.CaseInsContains("theanimegallery.com");
-		}
+		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("theanimegallery.com");
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
-		{
-			return await TheAnimeGalleryPostDownloader.GetTAGImagesAsync(client, url).CAF();
-		}
+		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await TheAnimeGalleryPostDownloader.GetTAGImagesAsync(client, url).CAF();
 	}
 }

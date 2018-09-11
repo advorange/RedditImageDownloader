@@ -42,9 +42,6 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped
 		/// Returns the username and user id.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Username} ({UserId})";
-		}
+		public override string ToString() => $"{Username} ({UserId})";
 	}
 }

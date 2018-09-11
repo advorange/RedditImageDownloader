@@ -65,7 +65,8 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			{
 				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
 			});
-			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, s => (Enum.TryParse(s, true, out DeviantArtGatheringMethod result), result))
+			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, 
+				parser: s => (Enum.TryParse(s, true, out DeviantArtGatheringMethod result), result))
 			{
 				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});

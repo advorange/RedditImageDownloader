@@ -27,9 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// Returns the image size and focus.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return $"{Original} {Focus}";
-		}
+		public override string ToString() => $"{Original} {Focus}";
 	}
 }

@@ -91,9 +91,6 @@ namespace ImageDL.Classes.ImageComparing
 		/// Returns the file name.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString()
-		{
-			return FileName;
-		}
+		public override string ToString() => FileName;
 	}
 }
