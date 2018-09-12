@@ -29,7 +29,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation
 		/// </summary>
 		public ArtstationPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user", }, x => Username = x)
+			SettingParser.Add(new Setting<string>(() => Username, new[] { "user" })
 			{
 				Description = "The user to search for.",
 			});

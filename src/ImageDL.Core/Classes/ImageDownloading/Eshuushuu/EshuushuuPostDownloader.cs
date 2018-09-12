@@ -43,7 +43,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 		/// </summary>
 		public EshuushuuPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
+			SettingParser.Add(new Setting<string>(() => Tags)
 			{
 				Description = "The tags to search for. Must be numbers joined with +. Use http://e-shuushuu.net/search/ for help.",
 			});

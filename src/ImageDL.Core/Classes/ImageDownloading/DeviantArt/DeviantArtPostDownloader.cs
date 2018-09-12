@@ -11,6 +11,7 @@ using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
+using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
@@ -51,22 +52,21 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 		/// </summary>
 		public DeviantArtPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(ClientId), "id" }, x => ClientId = x)
+			SettingParser.Add(new Setting<string>(() => ClientId, new[] { "id" })
 			{
 				Description = $"The id of the client to get authentication from. For additional help, visit {API}.",
 				IsOptional = true,
 			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(ClientSecret), "secret" }, x => ClientSecret = x)
+			SettingParser.Add(new Setting<string>(() => ClientSecret, new[] { "secret" })
 			{
 				Description = $"The secret of the client to get authentication from. For additional help, visit {API}.",
 				IsOptional = true,
 			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
+			SettingParser.Add(new Setting<string>(() => Tags)
 			{
 				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
 			});
-			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x, 
-				parser: s => (Enum.TryParse(s, true, out DeviantArtGatheringMethod result), result))
+			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
 			{
 				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});

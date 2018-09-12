@@ -30,11 +30,11 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		/// </summary>
 		public FourChanPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Board), }, x => Board = x)
+			SettingParser.Add(new Setting<string>(() => Board)
 			{
 				Description = "The board to download images from.",
 			});
-			SettingParser.Add(new Setting<int>(new[] { nameof(ThreadId), }, x => ThreadId = x)
+			SettingParser.Add(new Setting<int>(() => ThreadId)
 			{
 				Description = "The id of the thread to download images from. If left default, will download all threads.",
 				IsOptional = true,

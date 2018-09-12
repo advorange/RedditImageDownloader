@@ -31,7 +31,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 		/// </summary>
 		public TumblrPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
+			SettingParser.Add(new Setting<string>(() => Username, new[] { "user" })
 			{
 				Description = "The name of the user to download images from.",
 			});

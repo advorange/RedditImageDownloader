@@ -50,15 +50,15 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 		/// </summary>
 		public PixivPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(LoginUsername), }, x => LoginUsername = x)
+			SettingParser.Add(new Setting<string>(() => LoginUsername)
 			{
 				Description = "The username to login with. This is what you use to login to Pixiv regularly.",
 			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(LoginPassword), }, x => LoginPassword = x)
+			SettingParser.Add(new Setting<string>(() => LoginPassword)
 			{
 				Description = "The password to login with. This is what you use to login to Pixiv regularly.",
 			});
-			SettingParser.Add(new Setting<ulong>(new[] { nameof(UserId), "id" }, x => UserId = x)
+			SettingParser.Add(new Setting<ulong>(() => UserId, new[] { "id" })
 			{
 				Description = "The id of the user to search for.",
 			});

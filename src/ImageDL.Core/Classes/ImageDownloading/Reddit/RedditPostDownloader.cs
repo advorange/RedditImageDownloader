@@ -30,7 +30,7 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 		/// </summary>
 		public RedditPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Subreddit), "sr" }, x => Subreddit = x)
+			SettingParser.Add(new Setting<string>(() => Subreddit, new[] { "sr" })
 			{
 				Description = "The subreddit to download images from.",
 			});

@@ -25,8 +25,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 		/// </summary>
 		public SpecificUrlDownloader()
 		{
-			SettingParser.Add(new Setting<Uri>(new[] { nameof(Url), }, x => Url = x,
-				parser: s => (Uri.TryCreate(s, UriKind.Absolute, out var result), result))
+			SettingParser.Add(new Setting<Uri>(() => Url, parser: TryParseUri)
 			{
 				Description = "The url to download images from. If this url does not have an associated image gatherer, all images will be downloaded.",
 			});
@@ -42,5 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 			list.Add(new Model(Url));
 			return Task.FromResult(0);
 		}
+		private bool TryParseUri(string s, out Uri value)
+			=> Uri.TryCreate(s, UriKind.Absolute, out value);
 	}
 }

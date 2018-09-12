@@ -44,22 +44,21 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 		public PawooPostDownloader()
 		{
 			//Make sure the username always has an @ in front of it
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user", }, x => Username = x,
-				parser: s => (true, s.StartsWith("@") ? s : $"@{s}"))
+			SettingParser.Add(new Setting<string>(() => Username, new[] { "user" }, parser: TryParseId)
 			{
 				Description = "The user to search for. Will end up with an @ in front of it if one is not supplied.",
 			});
-			SettingParser.Add(new Setting<bool>(new[] { nameof(IncludeReplies), "replies", }, x => IncludeReplies = x)
+			SettingParser.Add(new Setting<bool>(() => IncludeReplies, new[] { "replies" })
 			{
 				Description = "Whether to search through replies in addition to regular posts.",
 				IsFlag = true,
 				IsOptional = true,
 			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(LoginUsername), }, x => LoginUsername = x)
+			SettingParser.Add(new Setting<string>(() => LoginUsername)
 			{
 				Description = "The username to login with. This is what you use to login to Pawoo regularly.",
 			});
-			SettingParser.Add(new Setting<string>(new[] { nameof(LoginPassword), }, x => LoginPassword = x)
+			SettingParser.Add(new Setting<string>(() => LoginPassword)
 			{
 				Description = "The password to login with. This is what you use to login to Pawoo regularly.",
 			});
@@ -250,6 +249,11 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 				}
 			}
 			return ImageResponse.FromNotFound(url);
+		}
+		private static bool TryParseId(string s, out string value)
+		{
+			value = s.StartsWith("@") ? s : $"@{s}";
+			return true;
 		}
 	}
 }

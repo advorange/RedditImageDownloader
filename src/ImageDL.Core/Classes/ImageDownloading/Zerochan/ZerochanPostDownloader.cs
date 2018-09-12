@@ -29,7 +29,7 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 		/// </summary>
 		public ZerochanPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
+			SettingParser.Add(new Setting<string>(() => Tags)
 			{
 				Description = "The tags to search for.",
 			});

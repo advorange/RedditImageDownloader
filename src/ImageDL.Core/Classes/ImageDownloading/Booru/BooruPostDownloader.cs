@@ -53,14 +53,14 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
 		public BooruPostDownloader(int tagLimit, bool json = true)
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Tags), }, x => Tags = x)
+			SettingParser.Add(new Setting<string>(() => Tags)
 			{
 				Description = "The tags to search for.",
 			});
-			SettingParser.Add(new Setting<int>(new[] { nameof(Page), }, x => Page = x)
+			SettingParser.Add(new Setting<int>(() => Page)
 			{
 				Description = "The page to start from.",
-				DefaultValueFactory = () => 1, //Start on the first page
+				DefaultValue = 1, //Start on the first page
 			});
 
 			_TagLimit = tagLimit;

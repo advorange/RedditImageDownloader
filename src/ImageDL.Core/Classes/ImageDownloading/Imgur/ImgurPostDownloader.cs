@@ -33,7 +33,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// </summary>
 		public ImgurPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Tags) }, x => Tags = x)
+			SettingParser.Add(new Setting<string>(() => Tags)
 			{
 				Description = $"The tags to search for. For help see https://apidocs.imgur.com/#3c981acf-47aa-488f-b068-269f65aee3ce.",
 			});

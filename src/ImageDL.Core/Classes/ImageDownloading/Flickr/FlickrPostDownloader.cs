@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AdvorangesSettingParser;
 using AdvorangesUtils;
 using ImageDL.Attributes;
+using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
@@ -37,12 +38,11 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// </summary>
 		public FlickrPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Search), }, x => Search = x)
+			SettingParser.Add(new Setting<string>(() => Search)
 			{
 				Description = $"What to search for, can be a username or tags.",
 			});
-			SettingParser.Add(new Setting<FlickrGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
-				parser: s => (Enum.TryParse(s, true, out FlickrGatheringMethod result), result))
+			SettingParser.Add(new Setting<FlickrGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
 			{
 				Description = $"How to use {Search} for searching.",
 			});

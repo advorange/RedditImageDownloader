@@ -31,7 +31,7 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 		/// </summary>
 		public WeiboPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Username), "user" }, x => Username = x)
+			SettingParser.Add(new Setting<string>(() => Username, new[] { "user" })
 			{
 				Description = "The name or id of the user to search for.",
 			});

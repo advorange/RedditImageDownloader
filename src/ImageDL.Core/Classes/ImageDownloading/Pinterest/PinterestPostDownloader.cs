@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AdvorangesSettingParser;
 using AdvorangesUtils;
 using ImageDL.Attributes;
+using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
@@ -34,12 +35,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 		/// </summary>
 		public PinterestPostDownloader()
 		{
-			SettingParser.Add(new Setting<string>(new[] { nameof(Search) }, x => Search = x)
+			SettingParser.Add(new Setting<string>(() => Search)
 			{
 				Description = $"The text to search for. Can be a board, user, or tags. The respective type must be set in {GatheringMethod}.",
 			});
-			SettingParser.Add(new Setting<PinterestGatheringMethod>(new[] { nameof(GatheringMethod), "method" }, x => GatheringMethod = x,
-				parser: s => (Enum.TryParse(s, true, out PinterestGatheringMethod result), result))
+			SettingParser.Add(new Setting<PinterestGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
 			{
 				Description = $"How to use {Search} to search through Pinterest.",
 			});

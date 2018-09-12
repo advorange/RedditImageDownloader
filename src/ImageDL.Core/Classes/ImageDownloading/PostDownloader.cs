@@ -137,61 +137,58 @@ namespace ImageDL.Classes.ImageDownloading
 		{
 			SettingParser = new SettingParser
 			{
-				new Setting<string>(new[] { nameof(SavePath), "path", "dir" }, x => SavePath = x)
+				new Setting<string>(() => SavePath, new[] { "path", "dir" })
 				{
 					Description = "The directory to save to.",
 				},
-				new Setting<int>(new[] {nameof(AmountOfPostsToGather), "amt" }, x => AmountOfPostsToGather = x)
+				new Setting<int>(() => AmountOfPostsToGather, new[] { "amt" })
 				{
 					Description = "The amount of images to download.",
 				},
-				new Setting<int>(new[] {nameof(MinWidth), "minw", "mw" }, x => MinWidth = x)
+				new Setting<int>(() => MinWidth, new[] { "minw", "mw" })
 				{
 					Description = "The minimum width to save an image with.",
 				},
-				new Setting<int>(new[] {nameof(MinHeight), "minh", "mh" }, x => MinHeight = x)
+				new Setting<int>(() => MinHeight, new[] { "minh", "mh" })
 				{
 					Description = "The minimum height to save an image with.",
 				},
-				new Setting<int>(new[] {nameof(MaxDaysOld), "age" }, x => MaxDaysOld = x)
+				new Setting<int>(() => MaxDaysOld, new[] { "age" })
 				{
 					Description = "The oldest an image can be before it won't be saved.",
 				},
-				new Setting<Percentage>(new[] {nameof(MaxImageSimilarity), "sim" }, x => MaxImageSimilarity = x,
-					parser: s => (Percentage.TryParse(s, out var result), result))
+				new Setting<Percentage>(() => MaxImageSimilarity, new[] { "sim" }, parser: Percentage.TryParse)
 				{
 					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
-					DefaultValueFactory = () => new Percentage(1),
+					DefaultValue = new Percentage(1),
 				},
-				new Setting<int>(new[] {nameof(ImagesCachedPerThread), "icpt" }, x => ImagesCachedPerThread = x)
+				new Setting<int>(() => ImagesCachedPerThread, new[] { "icpt" })
 				{
 					Description = "How many images to cache on each thread (lower = faster but more CPU).",
-					DefaultValueFactory = () => 50,
+					DefaultValue = 50,
 				},
-				new Setting<int>(new[] {nameof(MinScore), "mins", "ms" }, x => MinScore = x)
+				new Setting<int>(() => MinScore, new[] { "mins", "ms" })
 				{
 					Description = "The minimum score for an image to have before being ignored.",
 					IsOptional = true,
 				},
-				new Setting<AspectRatio>(new[] {nameof(MinAspectRatio), "minar" }, x => MinAspectRatio = x,
-					parser: s => (AspectRatio.TryParse(s, out var result), result))
+				new Setting<AspectRatio>(() => MinAspectRatio, new[] { "minar" }, parser: AspectRatio.TryParse)
 				{
 					Description = "The minimum aspect ratio for an image to have before being ignored.",
-					DefaultValueFactory = () => new AspectRatio(0, 1),
+					DefaultValue = new AspectRatio(0, 1),
 				},
-				new Setting<AspectRatio>(new[] {nameof(MaxAspectRatio), "maxar" }, x => MaxAspectRatio = x,
-					parser: s => (AspectRatio.TryParse(s, out var result), result))
+				new Setting<AspectRatio>(() => MaxAspectRatio, new[] { "maxar" }, parser: AspectRatio.TryParse)
 				{
 					Description = "The maximum aspect ratio for an image to have before being ignored.",
-					DefaultValueFactory = () => new AspectRatio(1, 0),
+					DefaultValue = new AspectRatio(1, 0),
 				},
-				new Setting<bool>(new[] {nameof(CreateDirectory), "create", "cd" }, x => CreateDirectory = x)
+				new Setting<bool>(() => CreateDirectory, new[] { "create", "cd" })
 				{
 					Description = "Whether or not to create the directory if it does not exist.",
 					IsFlag = true,
 					IsOptional = true,
 				},
-				new Setting<bool>(new[] {nameof(Start), "s" }, x => Start = x)
+				new Setting<bool>(() => Start, new[] { "s" })
 				{
 					Description = "Whether or not to start the downloader. Will not start until all other arguments are provided.",
 					IsFlag = true,
