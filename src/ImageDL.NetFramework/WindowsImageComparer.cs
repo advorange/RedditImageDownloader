@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageDL.Classes.ImageComparing;
@@ -51,7 +53,43 @@ namespace ImageDL
 			var bytes = new byte[fcbm.PixelHeight * stride];
 			fcbm.CopyPixels(bytes, stride, 0);
 
-			return HashBytes(bytes, pixelSize, ThumbnailSize, ThumbnailSize);
+			var brightnesses = new float[fcbm.PixelHeight * fcbm.PixelWidth];
+			var currentPixel = 0;
+			switch (pixelSize)
+			{
+				case 4: //RGBA
+					for (int y = 0; y < fcbm.PixelHeight; ++y)
+					{
+						for (int x = 0; x < fcbm.PixelWidth; ++x)
+						{
+							var index = y * stride + x * pixelSize;
+							var r = bytes[index];
+							var g = bytes[index + 1];
+							var b = bytes[index + 2];
+							var a = bytes[index + 3];
+							brightnesses[currentPixel] = CalculateBrightness(a, r, g, b);
+							++currentPixel; //Could do currentPixel++ above, but that's less clear
+						}
+					}
+					break;
+				case 3: //RGB
+					for (int y = 0; y < fcbm.PixelHeight; ++y)
+					{
+						for (int x = 0; x < fcbm.PixelWidth; ++x)
+						{
+							var index = y * stride + x * pixelSize;
+							var r = bytes[index];
+							var g = bytes[index + 1];
+							var b = bytes[index + 2];
+							brightnesses[currentPixel] = CalculateBrightness(255, r, g, b);
+							++currentPixel;
+						}
+					}
+					break;
+				default:
+					throw new NotSupportedException("The default implementation of this method only supports 32 and 24 bit pixels.");
+			}
+			return BrightnessesToString(brightnesses);
 		}
 	}
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
@@ -34,14 +32,19 @@ namespace ImageDL.Classes.ImageComparing.Implementations
 				img.Mutate(x => x.Resize(ThumbnailSize, ThumbnailSize));
 				pixels = img.GetPixelSpan();
 			}
+			//GC.Collect helps lower the memory usage from around 2GB tops to 400MB tops, but I'm not sure if I know more than regular GC
+#if false
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+#endif
 
-			var brightnesses = new List<float>();
-			foreach (var pixel in pixels)
+			var brightnesses = new float[pixels.Length];
+			for (int i = 0; i < pixels.Length; ++i)
 			{
-				brightnesses.Add(CalculateBrightness(pixel.A, pixel.R, pixel.G, pixel.B));
+				var pixel = pixels[i];
+				brightnesses[i] = CalculateBrightness(pixel.A, pixel.R, pixel.G, pixel.B);
 			}
-			var avgBrightness = brightnesses.Average();
-			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
+			return BrightnessesToString(brightnesses);
 		}
 	}
 }

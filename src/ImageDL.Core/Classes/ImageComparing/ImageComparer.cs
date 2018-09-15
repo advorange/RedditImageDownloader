@@ -226,53 +226,19 @@ namespace ImageDL.Classes.ImageComparing
 			}
 		}
 		/// <summary>
-		/// Generates a hash from an image's bytes. Only supports 32bpp and 24bpp by default.
+		/// Averages out the brightnesses then converts the values into 1s and 0s based on if they are greater than or less than the average.
 		/// </summary>
-		/// <param name="bytes">The data for the image.</param>
-		/// <param name="pixelSize">The size of each pixel. E.G. for RGBA32 it's 32 bits, so 4 bytes.</param>
-		/// <param name="width">The width of the image.</param>
-		/// <param name="height">The height of the image.</param>
+		/// <param name="brightnesses"></param>
 		/// <returns></returns>
-		protected virtual string HashBytes(byte[] bytes, int pixelSize, int width, int height)
+		protected virtual string BrightnessesToString(float[] brightnesses)
 		{
-			var stride = width * pixelSize;
-			var brightnesses = new List<float>();
-			switch (pixelSize)
-			{
-				case 4: //RGBA
-					for (int y = 0; y < height; ++y)
-					{
-						for (int x = 0; x < width; ++x)
-						{
-							var index = y * stride + x * pixelSize;
-							var r = bytes[index];
-							var g = bytes[index + 1];
-							var b = bytes[index + 2];
-							var a = bytes[index + 3];
-							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
-							brightnesses.Add(CalculateBrightness(a, r, g, b));
-						}
-					}
-					break;
-				case 3: //RGB
-					for (int y = 0; y < height; ++y)
-					{
-						for (int x = 0; x < width; ++x)
-						{
-							var index = y * stride + x * pixelSize;
-							var r = bytes[index];
-							var g = bytes[index + 1];
-							var b = bytes[index + 2];
-							//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
-							brightnesses.Add(CalculateBrightness(255, r, g, b));
-						}
-					}
-					break;
-				default:
-					throw new NotSupportedException("The default implementation of this method only supports 32 and 24 bit pixels.");
-			}
 			var avgBrightness = brightnesses.Average();
-			return new string(brightnesses.Select(x => x > avgBrightness ? '1' : '0').ToArray());
+			var values = new char[brightnesses.Length];
+			for (int i = 0; i < brightnesses.Length; ++i)
+			{
+				values[i] = brightnesses[i] > avgBrightness ? '1' : '0';
+			}
+			return new string(values);
 		}
 		/// <summary>
 		/// Calculates a single float value for the specified ARGB values representing the brightness of the pixel
@@ -284,6 +250,7 @@ namespace ImageDL.Classes.ImageComparing
 		/// <returns></returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected float CalculateBrightness(byte a, byte r, byte g, byte b)
+			//Magic numbers for caclulating brightness, see: https://stackoverflow.com/a/596243
 			=> (0.299f * r + 0.587f * g + 0.114f * b) * (a / 255f);
 		/// <summary>
 		/// Generates a hash of an image. Used in comparing images for mostly similar instead of exactly similar.
