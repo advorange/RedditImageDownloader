@@ -30,9 +30,9 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 			{
 				Description = "The url to download images from. If this url does not have an associated image gatherer, all images will be downloaded.",
 			});
-			SettingParser.Remove(SettingParser.TryGetSetting(nameof(AmountOfPostsToGather), PrefixState.NotPrefixed, out var t1) ? t1 : null);
-			SettingParser.Remove(SettingParser.TryGetSetting(nameof(MinScore), PrefixState.NotPrefixed, out var t2) ? t2 : null);
-			SettingParser.Remove(SettingParser.TryGetSetting(nameof(MaxDaysOld), PrefixState.NotPrefixed, out var t3) ? t3 : null);
+			SettingParser.Remove(SettingParser.GetSetting(nameof(AmountOfPostsToGather), PrefixState.NotPrefixed));
+			SettingParser.Remove(SettingParser.GetSetting(nameof(MinScore), PrefixState.NotPrefixed));
+			SettingParser.Remove(SettingParser.GetSetting(nameof(MaxDaysOld), PrefixState.NotPrefixed));
 		}
 
 		/// <inheritdoc />
