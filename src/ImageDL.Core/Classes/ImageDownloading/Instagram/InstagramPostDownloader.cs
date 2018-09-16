@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Instagram.Models.Graphql;
@@ -91,7 +91,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 						continue;
 					}
 					var p = await GetInstagramPostAsync(client, post.Node.Shortcode).CAF();
-					if (p.ChildrenInfo.Nodes != null &&  p.ChildrenInfo.Nodes.Any()) //Only if children exist
+					if (p.ChildrenInfo.Nodes != null && p.ChildrenInfo.Nodes.Any()) //Only if children exist
 					{
 						foreach (var node in p.ChildrenInfo.Nodes.Where(x => !HasValidSize(x.Child.Dimensions, out _)).ToList())
 						{

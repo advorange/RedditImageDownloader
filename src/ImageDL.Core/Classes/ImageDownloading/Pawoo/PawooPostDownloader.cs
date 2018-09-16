@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
@@ -152,7 +152,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			var input = authTokenResult.Value.DocumentNode.Descendants("input");
 			var authTokenElement = input.Single(x => x.GetAttributeValue("name", null) == "authenticity_token");
 			var authToken = authTokenElement.GetAttributeValue("value", null);
-			if (String.IsNullOrWhiteSpace(authToken))
+			if (string.IsNullOrWhiteSpace(authToken))
 			{
 				throw new HttpRequestException("Unable to find the authenticity token for login.");
 			}

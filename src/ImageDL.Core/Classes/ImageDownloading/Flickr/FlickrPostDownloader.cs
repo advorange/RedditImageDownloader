@@ -4,10 +4,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
-using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
@@ -42,7 +41,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 			{
 				Description = $"What to search for, can be a username or tags.",
 			});
-			SettingParser.Add(new Setting<FlickrGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<FlickrGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = $"How to use {Search} for searching.",
 			});
@@ -65,7 +64,7 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 						query += $"&text={Search}";
 						break;
 					case FlickrGatheringMethod.User:
-						if (String.IsNullOrWhiteSpace(userId))
+						if (string.IsNullOrWhiteSpace(userId))
 						{
 							userId = await GetUserIdAsync(client, Search).CAF();
 						}

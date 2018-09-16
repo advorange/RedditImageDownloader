@@ -5,11 +5,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using HtmlAgilityPack;
 using ImageDL.Attributes;
-using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Model = ImageDL.Classes.ImageDownloading.TheAnimeGallery.Models.TheAnimeGalleryPost;
@@ -46,12 +45,12 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 			{
 				Description = "What to search for."
 			});
-			SettingParser.Add(new Setting<TAGContentFilter>(() => ContentFilter, new[] { "filter" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<TAGContentFilter>(() => ContentFilter, new[] { "filter" })
 			{
 				Description = "The filter to use when gathering posts. The default value is safe.",
 				DefaultValue = TAGContentFilter.Safe,
 			});
-			SettingParser.Add(new Setting<TAGGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<TAGGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = "How to gather posts, either through a series or a tag.",
 			});

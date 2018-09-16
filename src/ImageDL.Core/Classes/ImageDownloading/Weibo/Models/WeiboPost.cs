@@ -27,11 +27,16 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		{
 			get
 			{
-				var parts = CreatedAtDate.Split('-').Select(x =>
+				//昨天 h:mm means yesterday at h:mm
+				var split = CreatedAtDate.Split('-');
+				//Assume any 1 length not starting with number is the above format
+				if (split.Length == 1 && !char.IsNumber(split[0][0]))
 				{
-					var valid = new string(x.TakeWhile(c => Char.IsNumber(c)).ToArray());
-					return Convert.ToInt32(valid);
-				}).ToArray();
+					var hourSplit = split[0].Split(' ', ':');
+					var yesterday = DateTime.UtcNow - TimeSpan.FromDays(1);
+					return yesterday + new TimeSpan(Convert.ToInt32(hourSplit[1]), Convert.ToInt32(hourSplit[2]), 0);
+				}
+				var parts = split.Select(x => Convert.ToInt32(new string(x.TakeWhile(c => char.IsNumber(c)).ToArray()))).ToArray();
 				switch (parts.Length)
 				{
 					case 1: //E.G. "14chinese" means 14 hours ago
@@ -207,7 +212,8 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 		public string PicStatus { get; private set; }
 
 		/// <inheritdoc />
-		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => Task.FromResult(ImageResponse.FromImages(Pictures.Select(x => x.Large.Url)));
+		public Task<ImageResponse> GetImagesAsync(IDownloaderClient client)
+			=> Task.FromResult(ImageResponse.FromImages(Pictures.Select(x => x.Large.Url)));
 		/// <summary>
 		/// Returns the id.
 		/// </summary>

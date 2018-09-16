@@ -6,7 +6,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
+using AdvorangesSettingParser.Utils;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageComparing;
@@ -199,7 +200,7 @@ namespace ImageDL
 		/// <returns></returns>
 		protected static Type GetDownloaderType()
 		{
-			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{String.Join("', '", ImageDownloaders.Keys)}'");
+			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{string.Join("', '", ImageDownloaders.Keys)}'");
 			if (ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
 			{
 				return downloaderType;

@@ -4,12 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped;
-using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
@@ -53,7 +52,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter
 				IsFlag = true,
 				IsOptional = true,
 			});
-			SettingParser.Add(new Setting<TwitterGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<TwitterGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = "How to gather posts. Will either use the search feature or go through the user's posts.",
 			});

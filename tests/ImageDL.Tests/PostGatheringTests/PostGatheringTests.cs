@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AdvorangesSettingParser.Interfaces;
+using AdvorangesSettingParser.Utils;
 using AdvorangesUtils;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.AnimePictures;
@@ -137,7 +139,7 @@ namespace ImageDL.Tests.PostGatheringTests
 		[TestMethod]
 		public async Task Zerochan_Test()
 			=> await Gatherer_Test<ZerochanPostDownloader>($"-{nameof(ZerochanPostDownloader.Tags)} Dress").CAF();
-		private async Task Gatherer_Test<T>(string specificArgs) where T : IPostGatherer, IHasSettings, new()
+		private async Task Gatherer_Test<T>(string specificArgs) where T : IPostGatherer, IParsable, new()
 		{
 			var services = ImageDL.CreateServices<NetFrameworkImageComparer>();
 			var gatherer = new T();
@@ -146,7 +148,7 @@ namespace ImageDL.Tests.PostGatheringTests
 			Assert.AreEqual(0, genericArgsResult.Errors.Count() + genericArgsResult.UnusedParts.Count(), $"Generic args failed in {typeof(T).Name}");
 			var specificArgsResult = gatherer.SettingParser.Parse(specificArgs);
 			Assert.AreEqual(0, specificArgsResult.Errors.Count() + specificArgsResult.UnusedParts.Count(), $"Specific args failed in {typeof(T).Name}");
-			Assert.IsTrue(gatherer.CanStart, $"Not all arguments set in {typeof(T).Name}");
+			Assert.IsTrue(gatherer.SettingParser.AreAllSet(), $"Not all arguments set in {typeof(T).Name}");
 
 			var list = await gatherer.GatherAsync(services).CAF();
 			Assert.AreEqual(AMOUNT, list.Count, $"Not enough posts gotten in {typeof(T).Name}");

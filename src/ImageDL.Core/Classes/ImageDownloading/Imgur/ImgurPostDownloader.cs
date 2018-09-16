@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Imgur.Models;
@@ -140,7 +140,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		{
 			//Albums are more commonly the 5 digit length code
 			var isAlbum = code.Length == 5;
-			for (int notFoundCount = 0;;)
+			for (int notFoundCount = 0; ;)
 			{
 				var endpoint = isAlbum ? "album" : "image";
 				var query = new Uri($"https://api.imgur.com/3/{endpoint}/{code}?client_id={await GetApiKeyAsync(client).CAF()}");

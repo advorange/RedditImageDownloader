@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Eshuushuu.Models;
@@ -70,7 +70,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 
 				var div = result.Value.DocumentNode.Descendants("div");
 				var thumbnails = div.Where(x => x.GetAttributeValue("class", null) == "display");
-				var ids = thumbnails.Select(x => x.Id.TrimStart('i')).Where(x => !String.IsNullOrWhiteSpace(x)).Distinct();
+				var ids = thumbnails.Select(x => x.Id.TrimStart('i')).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct();
 				var tasks = ids.GroupInto(4).Select(async x =>
 				{
 					var tmp = new List<Model>();
@@ -129,7 +129,7 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 				var d = dd[i];
 
 				//Create the name from the title. Remove the colon at th end, replace spaces with underscores, etc
-				var name = new string(t.InnerText.Replace(":", "").Replace(" ", "_").ToLower().Where(x => !Char.IsWhiteSpace(x)).ToArray());
+				var name = new string(t.InnerText.Replace(":", "").Replace(" ", "_").ToLower().Where(x => !char.IsWhiteSpace(x)).ToArray());
 				var span = d.Descendants("span");
 				//If no span children then it's just pure text
 				if (!span.Any())

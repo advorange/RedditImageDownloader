@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AdvorangesSettingParser" Version="1.1.2.1" />
+    <PackageReference Include="AdvorangesSettingParser" Version="1.2.0" />
     <PackageReference Include="AdvorangesUtils" Version="1.0.11" />
     <PackageReference Include="HtmlAgilityPack" Version="1.8.7" />
   </ItemGroup>

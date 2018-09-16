@@ -7,7 +7,9 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
+using AdvorangesSettingParser.Interfaces;
+using AdvorangesSettingParser.Utils;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
@@ -20,7 +22,7 @@ namespace ImageDL.Classes.ImageDownloading
 	/// Downloads images from a site.
 	/// </summary>
 	[DownloaderName("Unknown")]
-	public abstract class PostDownloader : IPostDownloader, IPostGatherer, IHasSettings
+	public abstract class PostDownloader : IPostDownloader, IPostGatherer, IParsable
 	{
 		private static readonly string NL = Environment.NewLine;
 		private static readonly string NLT = NL + "\t";

@@ -4,14 +4,13 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss;
 using ImageDL.Classes.ImageDownloading.DeviantArt.Models.Scraped;
-using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
@@ -66,7 +65,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt
 			{
 				Description = $"The tags to search for. For additional help, visit {SEARCH}.",
 			});
-			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<DeviantArtGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = $"How to gather posts. Api requies {nameof(ClientId)} and {nameof(ClientSecret)} to be set.",
 			});

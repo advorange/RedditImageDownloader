@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AdvorangesSettingParser;
+using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesUtils;
 using ImageDL.Attributes;
-using ImageDL.Core.Utilities;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
 using Newtonsoft.Json;
@@ -39,7 +38,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 			{
 				Description = $"The text to search for. Can be a board, user, or tags. The respective type must be set in {GatheringMethod}.",
 			});
-			SettingParser.Add(new Setting<PinterestGatheringMethod>(() => GatheringMethod, new[] { "method" }, parser: ImageDLUtils.TryParseCaseIns)
+			SettingParser.Add(new Setting<PinterestGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = $"How to use {Search} to search through Pinterest.",
 			});
