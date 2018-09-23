@@ -67,10 +67,11 @@ namespace ImageDL
 		/// <param name="args"></param>
 		/// <param name="prefixes">The default prefixes are </param>
 		/// <returns></returns>
-		public virtual async Task RunFromArguments(IServiceProvider services, string[] args, string[] prefixes = default)
+		public virtual async Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
 		{
-			var parsedArgs = SettingParser.Parse(args, prefixes ?? SettingParser.DefaultPrefixes.ToArray());
-			switch (parsedArgs.TryGetValue("method", out var val) ? val : null)
+			var parsedArgs = ArgumentMappingUtils.Parse(prefixes ?? SettingParser.DefaultPrefixes, false, args);
+			var dictionary = parsedArgs.ToDictionary(x => x.Setting, x => x.Args, StringComparer.OrdinalIgnoreCase);
+			switch (dictionary.TryGetValue("method", out var val) ? val : null)
 			{
 				case "RedditDirectories":
 					await RedditDirectories(services).CAF();
@@ -92,7 +93,7 @@ namespace ImageDL
 				var downloader = (PostDownloader)Activator.CreateInstance(GetDownloaderType());
 				while (!downloader.CanStart)
 				{
-					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
+					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings().FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
 

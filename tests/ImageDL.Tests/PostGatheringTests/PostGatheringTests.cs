@@ -125,7 +125,7 @@ namespace ImageDL.Tests.PostGatheringTests
 		[TestMethod]
 		public async Task Twitter_Test()
 		{
-			await Gatherer_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} hews__ " +
+			await Gatherer_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} ShitpostBot5000 " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.User}").CAF();
 			await Gatherer_Test<TwitterPostDownloader>($"-{nameof(TwitterPostDownloader.Search)} #dogs " +
 				$"-{nameof(TwitterPostDownloader.GatheringMethod)} {TwitterGatheringMethod.Search}").CAF();
@@ -148,6 +148,7 @@ namespace ImageDL.Tests.PostGatheringTests
 			Assert.AreEqual(0, genericArgsResult.Errors.Count() + genericArgsResult.UnusedParts.Count(), $"Generic args failed in {typeof(T).Name}");
 			var specificArgsResult = gatherer.SettingParser.Parse(specificArgs);
 			Assert.AreEqual(0, specificArgsResult.Errors.Count() + specificArgsResult.UnusedParts.Count(), $"Specific args failed in {typeof(T).Name}");
+			var neededSettings = gatherer.SettingParser.GetNeededSettings();
 			Assert.IsTrue(gatherer.SettingParser.AreAllSet(), $"Not all arguments set in {typeof(T).Name}");
 
 			var list = await gatherer.GatherAsync(services).CAF();

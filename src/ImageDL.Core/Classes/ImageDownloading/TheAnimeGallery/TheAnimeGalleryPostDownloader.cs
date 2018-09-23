@@ -26,7 +26,7 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 		/// <summary>
 		/// The filter for content.
 		/// </summary>
-		public TAGContentFilter ContentFilter { get; set; }
+		public TAGContentFilter ContentFilter { get; set; } = TAGContentFilter.Safe;
 		/// <summary>
 		/// How to search for content.
 		/// </summary>
@@ -48,7 +48,7 @@ namespace ImageDL.Classes.ImageDownloading.TheAnimeGallery
 			SettingParser.Add(new Setting<TAGContentFilter>(() => ContentFilter, new[] { "filter" })
 			{
 				Description = "The filter to use when gathering posts. The default value is safe.",
-				DefaultValue = TAGContentFilter.Safe,
+				IsOptional = true,
 			});
 			SettingParser.Add(new Setting<TAGGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{

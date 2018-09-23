@@ -42,7 +42,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		}
 
 		private string _Tags;
-		private int _Page;
+		private int _Page = 1; //Start on the first page, not 0 indexed.
 		private readonly int _TagLimit;
 		private readonly bool _Json;
 
@@ -60,7 +60,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 			SettingParser.Add(new Setting<int>(() => Page)
 			{
 				Description = "The page to start from.",
-				DefaultValue = 1, //Start on the first page
+				IsOptional = true,
 			});
 
 			_TagLimit = tagLimit;

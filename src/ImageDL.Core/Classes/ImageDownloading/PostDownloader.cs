@@ -78,7 +78,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// The maximum allowed image similarity before an image is considered a duplicate.
 		/// </summary>
-		public Percentage MaxImageSimilarity { get; set; }
+		public Percentage MaxImageSimilarity { get; set; } = new Percentage(1);
 		/// <summary>
 		/// How many images to cache per thread. Lower = faster, but more CPU.
 		/// </summary>
@@ -98,11 +98,11 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <summary>
 		/// The minimum aspect ratio an image can have.
 		/// </summary>
-		public AspectRatio MinAspectRatio { get; set; }
+		public AspectRatio MinAspectRatio { get; set; } = new AspectRatio(0, 1);
 		/// <summary>
 		/// The maximum aspect ratio an image can have.
 		/// </summary>
-		public AspectRatio MaxAspectRatio { get; set; }
+		public AspectRatio MaxAspectRatio { get; set; } = new AspectRatio(1, 0);
 		/// <summary>
 		/// Indicates whether or not to create the directory if it does not exist.
 		/// </summary>
@@ -129,7 +129,7 @@ namespace ImageDL.Classes.ImageDownloading
 		private int _MinWidth;
 		private int _MinHeight;
 		private int _MaxDaysOld;
-		private int _ImagesCachedPerThread;
+		private int _ImagesCachedPerThread = 50;
 		private int _MinScore;
 
 		/// <summary>
@@ -162,12 +162,12 @@ namespace ImageDL.Classes.ImageDownloading
 				new Setting<Percentage>(() => MaxImageSimilarity, new[] { "sim" }, parser: Percentage.TryParse)
 				{
 					Description = "The percentage similarity before an image should be deleted (1 = .1%, 1000 = 100%).",
-					DefaultValue = new Percentage(1),
+					IsOptional = true,
 				},
 				new Setting<int>(() => ImagesCachedPerThread, new[] { "icpt" })
 				{
 					Description = "How many images to cache on each thread (lower = faster but more CPU).",
-					DefaultValue = 50,
+					IsOptional = true,
 				},
 				new Setting<int>(() => MinScore, new[] { "mins", "ms" })
 				{
@@ -177,12 +177,12 @@ namespace ImageDL.Classes.ImageDownloading
 				new Setting<AspectRatio>(() => MinAspectRatio, new[] { "minar" }, parser: AspectRatio.TryParse)
 				{
 					Description = "The minimum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(0, 1),
+					IsOptional = true,
 				},
 				new Setting<AspectRatio>(() => MaxAspectRatio, new[] { "maxar" }, parser: AspectRatio.TryParse)
 				{
 					Description = "The maximum aspect ratio for an image to have before being ignored.",
-					DefaultValue = new AspectRatio(1, 0),
+					IsOptional = true,
 				},
 				new Setting<bool>(() => CreateDirectory, new[] { "create", "cd" })
 				{
