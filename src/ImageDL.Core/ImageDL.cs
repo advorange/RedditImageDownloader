@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AdvorangesSettingParser.Implementation;
 using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesSettingParser.Utils;
 using AdvorangesUtils;
@@ -26,10 +28,11 @@ namespace ImageDL
 		/// <summary>
 		/// Various downloaders used to download things.
 		/// </summary>
-		public static SortedDictionary<string, Type> ImageDownloaders { get; set; } = new SortedDictionary<string, Type>(
+		public static ImmutableDictionary<string, Type> ImageDownloaders { get; set; } = new Dictionary<string, Type>(
 			typeof(PostDownloader).Assembly.DefinedTypes
 			.Where(x => !x.IsAbstract && typeof(PostDownloader).IsAssignableFrom(x))
-			.ToDictionary(x => x.GetCustomAttribute<DownloaderNameAttribute>().Name, x => x.AsType()), StringComparer.OrdinalIgnoreCase);
+			.ToDictionary(x => x.GetCustomAttribute<DownloaderNameAttribute>().Name, x => x.AsType()))
+			.ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
 		/// <summary>
 		/// The key users can press to cancel a downloader.
 		/// </summary>
@@ -40,9 +43,15 @@ namespace ImageDL
 		/// </summary>
 		public ImageDL()
 		{
-			AppDomain.CurrentDomain.UnhandledException += (sender, e) => IOUtils.LogUncaughtException(e.ExceptionObject);
+			AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+			{
+				IOUtils.LogUncaughtException(e.ExceptionObject);
+				ConsoleUtils.WriteLine(((Exception)e.ExceptionObject).Message);
+				Console.ReadLine();
+			};
 			Console.SetIn(new StreamReader(Console.OpenStandardInput(1024), Console.InputEncoding, false, 1024));
 			Console.OutputEncoding = Encoding.UTF8;
+			Console.Title = "ImageDL";
 			ConsoleUtils.PrintingFlags = 0
 				| ConsolePrintingFlags.Print
 				| ConsolePrintingFlags.RemoveDuplicateNewLines;
@@ -67,18 +76,16 @@ namespace ImageDL
 		/// <param name="args"></param>
 		/// <param name="prefixes">The default prefixes are </param>
 		/// <returns></returns>
-		public virtual async Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
+		public virtual Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
 		{
-			var parsedArgs = ArgumentMappingUtils.Parse(prefixes ?? SettingParser.DefaultPrefixes, false, args);
+			var parsedArgs = ArgumentMappingUtils.Parse(new ParseArgs(args, new[] { '"' }, new[] { '"' }), prefixes ?? SettingParser.DefaultPrefixes);
 			var dictionary = parsedArgs.ToDictionary(x => x.Setting, x => x.Args, StringComparer.OrdinalIgnoreCase);
 			switch (dictionary.TryGetValue("method", out var val) ? val : null)
 			{
 				case "RedditDirectories":
-					await RedditDirectories(services).CAF();
-					return;
+					return RedditDirectories(services);
 				default:
-					await Default(services).CAF();
-					return;
+					return Default(services);
 			}
 		}
 		/// <summary>
@@ -96,12 +103,7 @@ namespace ImageDL
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings().FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-
-				var source = new CancellationTokenSource();
-				await DoMethodWithCancelOption(services, source, async (s, t) =>
-				{
-					await downloader.DownloadAsync(s, t).CAF();
-				}, CancelKey);
+				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey);
 			}
 		}
 		/// <summary>
@@ -128,32 +130,24 @@ namespace ImageDL
 					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-
-				var source = new CancellationTokenSource();
-				await DoMethodWithCancelOption(services, source, async (s, t) =>
-				{
-					await downloader.DownloadAsync(s, t).CAF();
-				}, CancelKey);
+				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey);
 			}
 		}
 		/// <summary>
 		/// Runs the task, but allows it to be canceled by the user when they press a specified key.
 		/// </summary>
-		/// <param name="services"></param>
-		/// <param name="source"></param>
 		/// <param name="f"></param>
 		/// <param name="cancelKey"></param>
 		/// <param name="catchException"></param>
 		/// <returns></returns>
 		protected static async Task DoMethodWithCancelOption(
-			IServiceProvider services,
-			CancellationTokenSource source,
-			Func<IServiceProvider, CancellationToken, Task> f,
+			Func<CancellationToken, Task> f,
 			ConsoleKey cancelKey = ConsoleKey.Escape,
 			bool catchException = true)
 		{
 			var running = true;
-			var c = Task.Run(() => //This thread has to be nonblocking
+			var source = new CancellationTokenSource();
+			_ = Task.Run(() => //This thread has to be nonblocking
 			{
 				while (running)
 				{
@@ -168,7 +162,8 @@ namespace ImageDL
 
 			try
 			{
-				await f(services, source.Token).CAF();
+				ConsoleUtils.WriteLine("Press esc to cancel and stop downloading posts.");
+				await f(source.Token).CAF();
 				running = false;
 			}
 			catch (OperationCanceledException) when (catchException)

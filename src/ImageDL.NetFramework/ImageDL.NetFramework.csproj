@@ -36,20 +36,20 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AdvorangesSettingParser, Version=1.3.1.2, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\AdvorangesSettingParser.1.3.1.2\lib\netstandard2.0\AdvorangesSettingParser.dll</HintPath>
+    <Reference Include="AdvorangesSettingParser, Version=1.3.2.4, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\AdvorangesSettingParser.1.3.2.4\lib\netstandard2.0\AdvorangesSettingParser.dll</HintPath>
     </Reference>
     <Reference Include="AdvorangesUtils, Version=1.0.11.2, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\AdvorangesUtils.1.0.11.2\lib\netstandard2.0\AdvorangesUtils.dll</HintPath>
     </Reference>
-    <Reference Include="BrotliSharpLib, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\BrotliSharpLib.0.3.0\lib\net462\BrotliSharpLib.dll</HintPath>
+    <Reference Include="BrotliSharpLib, Version=0.3.2.0, Culture=neutral, PublicKeyToken=3f4e2a1cd615fcb7, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\BrotliSharpLib.0.3.2\lib\net462\BrotliSharpLib.dll</HintPath>
     </Reference>
     <Reference Include="FChan.Library, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\FChan.Library.2.0.0\lib\netstandard2.0\FChan.Library.dll</HintPath>
     </Reference>
-    <Reference Include="HtmlAgilityPack, Version=1.8.8.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\HtmlAgilityPack.1.8.8\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    <Reference Include="HtmlAgilityPack, Version=1.8.11.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\HtmlAgilityPack.1.8.11\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
     <Reference Include="LiteDB, Version=4.1.4.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
       <HintPath>..\..\packages\LiteDB.4.1.4\lib\net40\LiteDB.dll</HintPath>
@@ -80,12 +80,12 @@
       <HintPath>..\..\packages\Microsoft.Win32.Primitives.4.3.0\lib\net46\Microsoft.Win32.Primitives.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="RedditSharp, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\RedditSharp.2.0.0-CI00068\lib\net462\RedditSharp.dll</HintPath>
+      <HintPath>..\..\packages\RedditSharp.2.0.0\lib\net462\RedditSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">

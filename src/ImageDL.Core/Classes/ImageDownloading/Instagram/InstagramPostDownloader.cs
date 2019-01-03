@@ -149,7 +149,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			//so we have to do some searching with long strings and regex
 			//(o=e.profilePosts.byUserId.get(t))||void 0===o?void 0:o.pagination},queryId:\"
 			//(n=e.profilePosts.byUserId.get(t))||void 0===n?void 0:n.pagination},queryId:\"
-			var qSearch = @"\([a-zA-Z]=e\.profilePosts\.byUserId\.get\(t\)\)\|\|void 0===[a-zA-Z]\?void 0:[a-zA-Z]\.pagination},queryId:""";
+			var alpha = "[a-zA-Z]";
+			var qSearch = $@"\({alpha}={alpha}\.profilePosts\.byUserId\.get\(t\)\)\|\|void 0==={alpha}\?void 0:{alpha}\.pagination}},queryId:""";
 			var qMatch = Regex.Matches(jsResult.Value, qSearch).Cast<Match>().Single();
 			var qCut = jsResult.Value.Substring(qMatch.Index + qMatch.Length);
 			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
