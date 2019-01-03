@@ -18,14 +18,13 @@ Mass download images from websites and compare for duplicates.
 * Flickr
 * Imgur
 * Instagram
-* Lofter
+* ~~Lofter~~ (This website is very laggy on my computer so I am unable to verify whether or not it's working as intended)
 * Pawoo
 * Pinterest
 * Pixiv
 * Reddit
-* ~~TheAnimeGallery~~ Their website is broken until they fix it.
 * Tumblr
-* Twitter
+* Twitter (From user works, but searching is currently broken)
 * Vsco
 * Weibo
 * Zerochan
