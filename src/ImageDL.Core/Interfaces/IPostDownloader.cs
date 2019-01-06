@@ -18,6 +18,6 @@ namespace ImageDL.Interfaces
 		/// <param name="services">Holds the services. Must at least hold a <see cref="IDownloaderClient"/>.</param>
 		/// <param name="token">Cancels downloading.</param>
 		/// <returns>An awaitable task which downloads images.</returns>
-		Task<DownloaderResponse> DownloadAsync(List<IPost> posts, IServiceProvider services, CancellationToken token = default);
+		Task<DownloaderResponse> DownloadAsync(IEnumerable<IPost> posts, IServiceProvider services, CancellationToken token = default);
 	}
 }

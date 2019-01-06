@@ -65,9 +65,10 @@ namespace ImageDL
 		public static IServiceProvider CreateServices<T>() where T : IImageComparer
 		{
 			//Services used when downloading. Client should be constant, but comparer should be discarded after each use.
-			return new DefaultServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
+			return new ServiceCollection()
 				.AddSingleton<IDownloaderClient, DownloaderClient>()
-				.AddSingleton<IImageComparerFactory, ImageComparerFactory<T>>());
+				.AddSingleton<IImageComparerFactory, ImageComparerFactory<T>>()
+				.BuildServiceProvider();
 		}
 		/// <summary>
 		/// Runs a method from the passed in arguments.
@@ -127,7 +128,7 @@ namespace ImageDL
 				}
 				while (!downloader.CanStart)
 				{
-					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
+					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings().FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
 				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey);
@@ -178,17 +179,19 @@ namespace ImageDL
 		protected static DirectoryInfo GetDirectory()
 		{
 			ConsoleUtils.WriteLine("Enter a valid directory:");
-			try
+			while (true)
 			{
-				var directory = new DirectoryInfo(Console.ReadLine());
-				if (directory.Exists)
+				try
 				{
-					return directory;
+					var directory = new DirectoryInfo(Console.ReadLine());
+					if (directory.Exists)
+					{
+						return directory;
+					}
 				}
+				catch { }
+				ConsoleUtils.WriteLine("Invalid directory provided.");
 			}
-			catch { }
-			ConsoleUtils.WriteLine("Invalid directory provided.");
-			return GetDirectory();
 		}
 		/// <summary>
 		/// Gets a valid downloader type.
@@ -197,12 +200,14 @@ namespace ImageDL
 		protected static Type GetDownloaderType()
 		{
 			ConsoleUtils.WriteLine($"Pick from one of the following downloaders: '{string.Join("', '", ImageDownloaders.Keys)}'");
-			if (ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
+			while (true)
 			{
-				return downloaderType;
+				if (ImageDownloaders.TryGetValue(Console.ReadLine(), out var downloaderType))
+				{
+					return downloaderType;
+				}
+				ConsoleUtils.WriteLine("Invalid downloader provided.");
 			}
-			ConsoleUtils.WriteLine("Invalid downloader provided.");
-			return GetDownloaderType();
 		}
 	}
 }

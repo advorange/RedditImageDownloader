@@ -59,13 +59,15 @@ namespace ImageDL.Classes
 		/// </summary>
 		/// <param name="urls"></param>
 		/// <returns></returns>
-		public static ImageResponse FromImages(IEnumerable<Uri> urls) => new ImageResponse(SUCCESS, $"{urls.Count()} valid image(s) found.", true, urls);
+		public static ImageResponse FromImages(IEnumerable<Uri> urls)
+			=> new ImageResponse(SUCCESS, $"{urls.Count()} valid image(s) found.", true, urls);
 		/// <summary>
 		/// Returns a response indicating failure with the passed in url.
 		/// </summary>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		public static ImageResponse FromAnimated(Uri url) => new ImageResponse(ANIMATED, $"{url} is either a video or a gif.", false, new[] { url });
+		public static ImageResponse FromAnimated(Uri url)
+			=> new ImageResponse(ANIMATED, $"{url} is either a video or a gif.", false, new[] { url });
 		/// <summary>
 		/// Returns a response of success if the url leads to an image, otherwise returns unknown.
 		/// </summary>
@@ -84,13 +86,15 @@ namespace ImageDL.Classes
 		/// </summary>
 		/// <param name="url"></param>
 		/// <returns></returns>
-		public static ImageResponse FromNotFound(Uri url) => new ImageResponse(NOT_FOUND, $"{url} did not have any images.", false, new[] { url });
+		public static ImageResponse FromNotFound(Uri url)
+			=> new ImageResponse(NOT_FOUND, $"{url} did not have any images.", false, new[] { url });
 		/// <summary>
 		/// Returns a response indicating failure.
 		/// </summary>
 		/// <param name="url"></param>
 		/// <param name="e"></param>
 		/// <returns></returns>
-		public static ImageResponse FromException(Uri url, Exception e) => new ImageResponse(EXCEPTION, $"{url} had the following exception:\n{e}", false, new[] { url });
+		public static ImageResponse FromException(Uri url, Exception e)
+			=> new ImageResponse(EXCEPTION, $"{url} had the following exception:\n{e}", false, new[] { url });
 	}
 }

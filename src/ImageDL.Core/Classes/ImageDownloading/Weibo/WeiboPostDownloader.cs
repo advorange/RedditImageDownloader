@@ -38,23 +38,24 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 		}
 
 		/// <inheritdoc />
-		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
+		protected override async Task<IEnumerable<IPost>> GatherAsync(IDownloaderClient client, CancellationToken token)
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
-			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 10); ++i)
+			var posts = new WeiboPostDictionary(this, token);
+			var parsed = new Model[0];
+			for (var i = 1; posts.Count < AmountOfPostsToGather && (i == 1 || parsed.Length >= 10); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = new Uri($"https://m.weibo.cn/api/container/getIndex" +
 					$"?containerid=230413{userId}_-_longbloglist" +
-					$"&page={i + 1}");
+					$"&page={i}");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
-					return;
+					throw new HttpRequestException($"Unable to get more posts past page {i}");
 				}
 
-				parsed = JObject.Parse(result.Value)["data"]["cards"].Select(x => x["mblog"].ToObject<Model>()).ToList();
+				parsed = JObject.Parse(result.Value)["data"]["cards"].Select(x => x["mblog"].ToObject<Model>()).ToArray();
 				foreach (var post in parsed)
 				{
 					token.ThrowIfCancellationRequested();
@@ -150,6 +151,14 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 				return await post.GetImagesAsync(client).CAF();
 			}
 			return ImageResponse.FromNotFound(url);
+		}
+
+		private sealed class WeiboPostDictionary : PostDictionary<WeiboPostDownloader, Model>
+		{
+			public WeiboPostDownloader(WeiboPostDownloader gatherer, CancellationToken token) : base(gatherer, token)
+			{
+
+			}
 		}
 	}
 }

@@ -16,6 +16,6 @@ namespace ImageDL.Interfaces
 		/// <param name="services">The client to gather posts with.</param>
 		/// <param name="token">Cancels gathering.</param>
 		/// <returns></returns>
-		Task<List<IPost>> GatherAsync(IServiceProvider services, CancellationToken token = default);
+		Task<IReadOnlyCollection<IPost>> GatherAsync(IServiceProvider services, CancellationToken token = default);
 	}
 }

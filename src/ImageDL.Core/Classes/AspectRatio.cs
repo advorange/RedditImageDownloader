@@ -45,7 +45,7 @@ namespace ImageDL.Classes
 			foreach (var c in s)
 			{
 				//Add onto current string to increase number
-				if (Char.IsNumber(c))
+				if (char.IsNumber(c))
 				{
 					curr.Append(c);
 				}

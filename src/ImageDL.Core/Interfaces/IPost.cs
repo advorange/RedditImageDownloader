@@ -14,6 +14,10 @@ namespace ImageDL.Interfaces
 		/// </summary>
 		string Id { get; }
 		/// <summary>
+		/// The author of the post.
+		/// </summary>
+		string Author { get; }
+		/// <summary>
 		/// The direct link to the post.
 		/// </summary>
 		Uri PostUrl { get; }
