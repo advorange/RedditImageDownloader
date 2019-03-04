@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AdvorangesUtils;
@@ -22,9 +23,11 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		public DanbooruPostDownloader() : base(2) { }
 
 		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page) => GenerateDanbooruQuery(tags, page);
+		protected override Uri GenerateQuery(string tags, int page)
+			=> GenerateDanbooruQuery(tags, page);
 		/// <inheritdoc />
-		protected override List<Model> Parse(string text) => ParseDanbooruPosts(text);
+		protected override List<Model> Parse(string text)
+			=> ParseDanbooruPosts(text);
 
 		/// <summary>
 		/// Generates a search uri.
@@ -45,7 +48,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		private static List<Model> ParseDanbooruPosts(string text) => JsonConvert.DeserializeObject<List<Model>>(text);
+		private static List<Model> ParseDanbooruPosts(string text)
+			=> JsonConvert.DeserializeObject<List<Model>>(text);
 		/// <summary>
 		/// Gets the post with the specified id.
 		/// </summary>
@@ -56,7 +60,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		{
 			var query = GenerateDanbooruQuery($"id:{id}", 0);
 			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			return result.IsSuccess ? ParseDanbooruPosts(result.Value)[0] : null;
+			return result.IsSuccess ? ParseDanbooruPosts(result.Value).Single() : null;
 		}
 		/// <summary>
 		/// Gets images from the specified url.

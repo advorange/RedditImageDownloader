@@ -153,7 +153,8 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 			var qSearch = $@"\({alpha}={alpha}\.profilePosts\.byUserId\.get\(t\)\)\|\|void 0==={alpha}\?void 0:{alpha}\.pagination}},queryId:""";
 			var qMatch = Regex.Matches(jsResult.Value, qSearch).Cast<Match>().Single();
 			var qCut = jsResult.Value.Substring(qMatch.Index + qMatch.Length);
-			return (client.ApiKeys[_Type] = new ApiKey(qCut.Substring(0, qCut.IndexOf('"'))));
+			var q = qCut.Substring(0, qCut.IndexOf('"'));
+			return client.ApiKeys[_Type] = new ApiKey(q);
 		}
 		/// <summary>
 		/// Gets the gis code for this request.

@@ -96,7 +96,7 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 		/// The id of your favorite on the post.
 		/// </summary>
 		[JsonProperty("favorite_id")]
-		public int FavoriteId { get; private set; }
+		public long FavoriteId { get; private set; }
 		/// <summary>
 		/// How many images are in the post.
 		/// </summary>

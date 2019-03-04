@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ImageDL.Classes.ImageDownloading.Booru.Models;
 using ImageDL.Enums;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
@@ -159,7 +161,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
 		/// No clue.
 		/// </summary>
 		[JsonProperty("bit_flags")]
-		public ulong BitFlags { get; private set; } //Not sure if this is the correct type
+		public ulong BitFlags { get; private set; }
 		/// <summary>
 		/// Everyone who has favorited the post.
 		/// </summary>
@@ -173,8 +175,8 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
 		/// <summary>
 		/// No clue.
 		/// </summary>
-		[JsonProperty("keeper_data")]
-		public Dictionary<string, int> KeeperData { get; private set; } //Not sure if this is the correct type
+		[JsonProperty("keeper_data"), JsonConverter(typeof(KeeperDataConverter))]
+		public Dictionary<string, int> KeeperData { get; private set; }
 		/// <summary>
 		/// All of the general tags.
 		/// </summary>

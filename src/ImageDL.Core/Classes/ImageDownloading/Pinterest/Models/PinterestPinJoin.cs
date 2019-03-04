@@ -34,7 +34,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 		/// The pin id being used in the current localization.
 		/// </summary>
 		[JsonProperty("canonical_pin")]
-		public PinterestCanonicalPin CanonicalPin { get; private set; }
+		public PinterestCanonicalPin? CanonicalPin { get; private set; }
 
 		/// <summary>
 		/// Returns <see cref="CanonicalPin"/> as a string.

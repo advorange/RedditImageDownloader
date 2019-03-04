@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AdvorangesSettingParser.Implementation.Instance;
@@ -43,12 +44,13 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var parsed = new List<Model>();
+			var validToken = false;
 			//Iterate to get the next page of results
 			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = new Uri($"https://api.imgur.com/3/gallery/search/time/all/{i}/" +
-					$"?client_id={await GetApiKeyAsync(client).CAF()}" +
+					$"?client_id={await GetApiKeyAsync(client, validToken).CAF()}" +
 					$"&q={WebUtility.UrlEncode(Tags)}");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
@@ -56,17 +58,12 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					//If there's an error with the api key, try to get another one
 					if (result.Value.Contains("client_id"))
 					{
-						//Means the access token cannot be gotten
-						if (!client.ApiKeys.ContainsKey(_Type))
-						{
-							return;
-						}
-						client.ApiKeys.Remove(_Type);
-						--i;
+						validToken = false;
 						continue;
 					}
-					return;
+					throw new HttpRequestException("Unable to gather more Imgur posts.\n\n" + result.Value);
 				}
+				validToken = true;
 
 				parsed = JObject.Parse(result.Value)["data"].ToObject<List<Model>>();
 				foreach (var post in parsed)
@@ -102,13 +99,15 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		/// Gets an api key for imgur.
 		/// </summary>
 		/// <param name="client"></param>
+		/// <param name="useCached"></param>
 		/// <returns></returns>
-		private static async Task<ApiKey> GetApiKeyAsync(IDownloaderClient client)
+		private static async Task<ApiKey> GetApiKeyAsync(IDownloaderClient client, bool useCached = true)
 		{
-			if (client.ApiKeys.TryGetValue(_Type, out var key))
+			if (useCached && client.ApiKeys.TryGetValue(_Type, out var key))
 			{
 				return key;
 			}
+
 			//Load the page regularly first so we can get some data from it
 			var query = new Uri($"https://imgur.com/t/dogs");
 			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
@@ -116,6 +115,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			{
 				throw new HttpRequestException("Unable to get the first request to the tags page.");
 			}
+
 			//Find the direct link to main.gibberish.js
 			var jsQuery = new Uri(result.Value.DocumentNode.Descendants("script")
 				.Select(x => x.GetAttributeValue("src", ""))
@@ -125,10 +125,14 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			{
 				throw new HttpRequestException("Unable to get the request to the Javascript holding the client id.");
 			}
+
 			//Read main.gibberish.js and find the client id
-			var idSearch = "apiClientId:\"";
-			var idCut = jsResult.Value.Substring(jsResult.Value.IndexOf(idSearch) + idSearch.Length);
-			return (client.ApiKeys[_Type] = new ApiKey(idCut.Substring(0, idCut.IndexOf('"'))));
+			//c="546c25a59c58ad7",s="6LdZsh4TAAAAAGnDJx9KXxURWygq8exADiSHLP-M";self.AMPLITUDE_KEY
+			var alpha = "[a-zA-Z]";
+			var idSearch = $@"{alpha}=""(\w{{1,20}}?)"",{alpha}="".{{1,50}}?"";self\.AMPLITUDE_KEY";
+			var idMatch = Regex.Matches(jsResult.Value, idSearch).Cast<Match>().Single();
+			var idGroup = idMatch.Groups[1];
+			return client.ApiKeys[_Type] = new ApiKey(idGroup.Value);
 		}
 		/// <summary>
 		/// Gets the images from the supplied album id.
