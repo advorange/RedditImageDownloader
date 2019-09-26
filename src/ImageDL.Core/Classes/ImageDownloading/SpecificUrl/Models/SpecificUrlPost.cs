@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
@@ -13,26 +16,20 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 	public sealed class SpecificUrlPost : IPost
 	{
 		/// <inheritdoc />
-		[JsonIgnore]
-		public string Id => _Id;
-		/// <inheritdoc />
-		[JsonIgnore]
-		public Uri PostUrl => _PostUrl;
-		/// <inheritdoc />
-		[JsonIgnore]
-		public int Score => _Score;
-		/// <inheritdoc />
-		[JsonIgnore]
-		public DateTime CreatedAt => _CreatedAt;
-
-		[JsonProperty("id")]
-		private string _Id;
-		[JsonProperty("post_url")]
-		private Uri _PostUrl;
-		[JsonProperty("score")]
-		private int _Score;
 		[JsonProperty("created_at")]
-		private DateTime _CreatedAt;
+		public DateTime CreatedAt { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("id")]
+		public string Id { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("post_url")]
+		public Uri PostUrl { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("score")]
+		public int Score { get; private set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="SpecificUrlPost"/>.
@@ -43,10 +40,10 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 		/// <param name="createdAt"></param>
 		public SpecificUrlPost(Uri postUrl, string id = null, int score = -1, DateTime createdAt = default)
 		{
-			_PostUrl = postUrl ?? throw new ArgumentException($"{nameof(postUrl)} cannot be null.");
-			_Id = id;
-			_Score = score;
-			_CreatedAt = createdAt;
+			PostUrl = postUrl ?? throw new ArgumentException($"{nameof(postUrl)} cannot be null.");
+			Id = id;
+			Score = score;
+			CreatedAt = createdAt;
 		}
 
 		/// <inheritdoc />
@@ -64,14 +61,12 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 			if (result.IsSuccess)
 			{
 				var img = result.Value.DocumentNode.Descendants("img");
-				var src = img.Select(x => x.GetAttributeValue("src", null))
+				var src = img
+					.Select(x => x.GetAttributeValue("src", null))
 					.Select(x =>
 					{
-						if (Uri.TryCreate(x, UriKind.Absolute, out var uri))
-						{
-							return uri;
-						}
-						if (Uri.TryCreate($"https://{PostUrl.Host}{x}", UriKind.Absolute, out uri))
+						if (Uri.TryCreate(x, UriKind.Absolute, out var uri)
+							|| Uri.TryCreate($"https://{PostUrl.Host}{x}", UriKind.Absolute, out uri))
 						{
 							return uri;
 						}
@@ -86,6 +81,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl.Models
 			}
 			return ImageResponse.FromNotFound(PostUrl);
 		}
+
 		/// <summary>
 		/// Returns the post url.
 		/// </summary>

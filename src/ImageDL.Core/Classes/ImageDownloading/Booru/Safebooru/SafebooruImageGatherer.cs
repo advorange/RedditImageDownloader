@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
 	public struct SafebooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("safebooru.org");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> SafebooruPostDownloader.GetSafebooruImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await SafebooruPostDownloader.GetSafebooruImagesAsync(client, url);
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("safebooru.org");
 	}
 }

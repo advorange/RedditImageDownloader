@@ -16,11 +16,12 @@ namespace ImageDL.Classes
 		public readonly double Value;
 
 		/// <summary>
-		/// Creates an instance of <see cref="AspectRatio"/> with the value as the 
+		/// Creates an instance of <see cref="AspectRatio"/> with the value as the
 		/// </summary>
 		/// <param name="v1"></param>
 		/// <param name="v2"></param>
 		public AspectRatio(double v1, double v2) : this(Math.Round(v1 / v2, 3)) { }
+
 		private AspectRatio(double value)
 		{
 			Value = value;
@@ -45,7 +46,7 @@ namespace ImageDL.Classes
 			foreach (var c in s)
 			{
 				//Add onto current string to increase number
-				if (Char.IsNumber(c))
+				if (char.IsNumber(c))
 				{
 					curr.Append(c);
 				}

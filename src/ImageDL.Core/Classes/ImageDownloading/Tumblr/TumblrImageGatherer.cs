@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 	public struct TumblrImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("tumblr.com");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> TumblrPostDownloader.GetTumblrImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await TumblrPostDownloader.GetTumblrImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("tumblr.com");
 	}
 }

@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using RedditSharp;
+
 using Model = ImageDL.Classes.ImageDownloading.Reddit.Models.RedditPost;
 
 namespace ImageDL.Classes.ImageDownloading.Reddit
@@ -36,10 +41,60 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetRedditImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+
+			const string search = "/comments/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
+				if (await GetRedditPostAsync(id).CAF() is Model model)
+				{
+					return await model.GetImagesAsync(client).CAF();
+				}
+			}
+
+			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 1 && await GetRedditPostAsync(parts[0]).CAF() is Model post)
+			{
+				return await post.GetImagesAsync(client).CAF();
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetRedditPostAsync(string id)
+		{
+			try
+			{
+				return new Model((RedditSharp.Things.Post)await _Reddit.GetThingByFullnameAsync($"t3_{id}").CAF());
+			}
+			catch (ArgumentOutOfRangeException) //Returns this when a post was unable to be gotten
+			{
+				return null;
+			}
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
-			var valid = new CancellationTokenSource();
+			using var valid = new CancellationTokenSource();
+
 			var subreddit = await _Reddit.GetSubredditAsync(Subreddit).CAF();
 			try
 			{
@@ -61,64 +116,9 @@ namespace ImageDL.Classes.ImageDownloading.Reddit
 					}
 				}, valid.Token).CAF();
 			}
-			catch (OperationCanceledException)
+			catch (OperationCanceledException) when (!token.IsCancellationRequested)
 			{
-				//Since either this inner token can throw for the foreachasync being done, or the passed in one for whatever reason
-				//We need to catch any operationcanceledexception, but only rethrow if the passed in one is canceled
-				if (token.IsCancellationRequested)
-				{
-					throw;
-				}
 			}
-		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetRedditPostAsync(IDownloaderClient client, string id)
-		{
-			try
-			{
-				return new Model((RedditSharp.Things.Post)await _Reddit.GetThingByFullnameAsync($"t3_{id}").CAF());
-			}
-			catch (ArgumentOutOfRangeException) //Returns this when a post was unable to be gotten
-			{
-				return null;
-			}
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetRedditImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var search = "/comments/";
-			if (u.CaseInsIndexOf(search, out var index))
-			{
-				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
-				if (await GetRedditPostAsync(client, id).CAF() is Model post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-			if (parts.Length == 1)
-			{
-				if (await GetRedditPostAsync(client, parts[0]).CAF() is Model post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

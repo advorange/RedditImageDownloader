@@ -4,11 +4,16 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
+
 using Model = ImageDL.Classes.ImageDownloading.Pawoo.Models.PawooPost;
 
 namespace ImageDL.Classes.ImageDownloading.Pawoo
@@ -22,21 +27,24 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 		private static readonly Type _Type = typeof(PawooPostDownloader);
 
 		/// <summary>
-		/// The user to search for images from.
-		/// </summary>
-		public string Username { get; set; }
-		/// <summary>
 		/// Whether or not to include replies when searching through a user's posts.
 		/// </summary>
 		public bool IncludeReplies { get; set; }
-		/// <summary>
-		/// Username to login with.
-		/// </summary>
-		public string LoginUsername { get; set; }
+
 		/// <summary>
 		/// Password to login with.
 		/// </summary>
 		public string LoginPassword { get; set; }
+
+		/// <summary>
+		/// Username to login with.
+		/// </summary>
+		public string LoginUsername { get; set; }
+
+		/// <summary>
+		/// The user to search for images from.
+		/// </summary>
+		public string Username { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="PawooPostDownloader"/>.
@@ -64,12 +72,59 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetPawooImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			const string search = "/statuses/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
+				if (await GetPawooPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			if (u.Contains("@"))
+			{
+				var id = u.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
+				if (await GetPawooPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetPawooPostAsync(IDownloaderClient client, string id)
+		{
+			//This API call does not require authentication.
+			var query = new Uri($"https://www.pawoo.net/api/v1/statuses/{id}");
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var id = 0UL;
 			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				//If the id is 0 this just started so it should be gotten
@@ -80,9 +135,9 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 
 				var query = new Uri($"https://pawoo.net/api/v1/accounts/{id}/statuses" +
 					$"?access_token={await GetApiKeyAsync(client, LoginUsername, LoginPassword).CAF()}" +
-					$"&max_id={(parsed.Any() ? parsed.Last().Id : "")}" +
+					$"&max_id={(parsed.Count > 0 ? parsed.Last().Id : "")}" +
 					$"&exclude_replies={(IncludeReplies ? "0" : "1")}" +
-					$"&only_media=1");
+					"&only_media=1");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
@@ -117,7 +172,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 					{
 						post.MediaAttachments.Remove(image);
 					}
-					if (!post.MediaAttachments.Any())
+					if (post.MediaAttachments.Count == 0)
 					{
 						continue;
 					}
@@ -128,6 +183,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 				}
 			}
 		}
+
 		/// <summary>
 		/// Logs into Pawoo, generating an access token.
 		/// </summary>
@@ -157,7 +213,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 				throw new HttpRequestException("Unable to find the authenticity token for login.");
 			}
 
-			var data = new FormUrlEncodedContent(new Dictionary<string, string>
+			using var data = new FormUrlEncodedContent(new Dictionary<string, string>
 			{
 				{ "utf8", "✓" },
 				{ "authenticity_token", authToken },
@@ -183,10 +239,11 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			{
 				throw new HttpRequestException("Unable to get the access token.");
 			}
-			var search = "\"access_token\":\"";
+			const string search = "\"access_token\":\"";
 			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
-			return (client.ApiKeys[_Type] = new ApiKey(cut.Substring(0, cut.IndexOf('"'))));
+			return client.ApiKeys[_Type] = new ApiKey(cut.Substring(0, cut.IndexOf('"')));
 		}
+
 		/// <summary>
 		/// Returns the id of the user.
 		/// </summary>
@@ -201,55 +258,11 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 			{
 				throw new HttpRequestException("Unable to get the user id.");
 			}
-			var search = "/api/salmon/";
+			const string search = "/api/salmon/";
 			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
 			return Convert.ToUInt64(cut.Substring(0, cut.IndexOf('\'')));
 		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetPawooPostAsync(IDownloaderClient client, string id)
-		{
-			//This API call does not require authentication.
-			var query = new Uri($"https://www.pawoo.net/api/v1/statuses/{id}");
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetPawooImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var search = "/statuses/";
-			if (u.CaseInsIndexOf(search, out var index))
-			{
-				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
-				if (await GetPawooPostAsync(client, id).CAF() is Model post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			if (u.Contains("@"))
-			{
-				var id = u.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
-				if (await GetPawooPostAsync(client, id).CAF() is Model post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			return ImageResponse.FromNotFound(url);
-		}
+
 		private static bool TryParseId(string s, out string value)
 		{
 			value = s.StartsWith("@") ? s : $"@{s}";

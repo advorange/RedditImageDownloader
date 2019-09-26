@@ -1,5 +1,7 @@
 ﻿using System;
+
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
@@ -9,17 +11,19 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// </summary>
 	public struct PinterestImage : ISize
 	{
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
+
 		/// <summary>
 		/// The direct link to the image.
 		/// </summary>
 		[JsonProperty("url")]
 		public Uri Url { get; private set; }
+
 		/// <inheritdoc />
 		[JsonProperty("width")]
 		public int Width { get; private set; }
-		/// <inheritdoc />
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 
 		/// <summary>
 		/// Returns the url, width, and height.

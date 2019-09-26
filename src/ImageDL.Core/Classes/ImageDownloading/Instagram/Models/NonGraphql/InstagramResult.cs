@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// </summary>
 		[JsonProperty("data")]
 		public InstagramData Data { get; private set; }
+
 		/// <summary>
 		/// HTTP status response.
 		/// </summary>

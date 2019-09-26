@@ -4,13 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Tumblr.Models;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Tumblr.Models.TumblrPost;
 
 namespace ImageDL.Classes.ImageDownloading.Tumblr
@@ -37,60 +42,6 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			});
 		}
 
-		/// <inheritdoc />
-		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
-		{
-			var parsed = new TumblrPage();
-			//Iterate because the results are in pages
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Posts?.Count > 0); i += parsed.Posts?.Count ?? 0)
-			{
-				token.ThrowIfCancellationRequested();
-				var query = new Uri($"http://{Username}.tumblr.com/api/read/json" +
-					$"?debug=1" +
-					$"&type=photo" +
-					$"&filter=text" +
-					$"&num=50" +
-					$"&start={i}");
-				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-				if (!result.IsSuccess)
-				{
-					return;
-				}
-
-				parsed = JsonConvert.DeserializeObject<TumblrPage>(result.Value.Split(new[] { '=' }, 2)[1].Trim().TrimEnd(';'));
-				foreach (var post in parsed.Posts)
-				{
-					token.ThrowIfCancellationRequested();
-					if (post.CreatedAt < OldestAllowed)
-					{
-						return;
-					}
-					if (post.Score < MinScore)
-					{
-						continue;
-					}
-					if (post.Photos.Any()) //Going into here means there is more than one photo
-					{
-						foreach (var photo in post.Photos.Where(x => !HasValidSize(x, out _)).ToList())
-						{
-							post.Photos.Remove(photo);
-						}
-						if (!post.Photos.Any())
-						{
-							continue;
-						}
-					}
-					else if (!HasValidSize(post, out _)) //Going into here means there is one photo
-					{
-						continue;
-					}
-					if (!Add(list, post))
-					{
-						return;
-					}
-				}
-			}
-		}
 		/// <summary>
 		/// Gets the link to the full size image.
 		/// </summary>
@@ -115,28 +66,7 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 			}
 			return url; //Didn't fit into any of the above, guess just return it?
 		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="username"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetTumblrPostAsync(IDownloaderClient client, string username, string id)
-		{
-			var query = new Uri($"http://{username}.tumblr.com/api/read/json?debug=1&id={id}");
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			if (result.IsSuccess)
-			{
-				var post = JObject.Parse(result.Value.Split(new[] { '=' }, 2)[1].Trim().TrimEnd(';'))["posts"].First;
-				//If the id doesn't match, then that means it just got random values and the id is invalid
-				if (post["id"].ToString() == id)
-				{
-					return post.ToObject<Model>();
-				}
-			}
-			return null;
-		}
+
 		/// <summary>
 		/// Gets the images from the specified url.
 		/// </summary>
@@ -164,6 +94,84 @@ namespace ImageDL.Classes.ImageDownloading.Tumblr
 				}
 			}
 			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="username"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetTumblrPostAsync(IDownloaderClient client, string username, string id)
+		{
+			var query = new Uri($"http://{username}.tumblr.com/api/read/json?debug=1&id={id}");
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			if (result.IsSuccess)
+			{
+				var post = JObject.Parse(result.Value.Split(new[] { '=' }, 2)[1].Trim().TrimEnd(';'))["posts"].First;
+				//If the id doesn't match, then that means it just got random values and the id is invalid
+				if (post["id"].ToString() == id)
+				{
+					return post.ToObject<Model>();
+				}
+			}
+			return null;
+		}
+
+		/// <inheritdoc />
+		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
+		{
+			var parsed = new TumblrPage();
+			//Iterate because the results are in pages
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Posts?.Count > 0); i += parsed.Posts?.Count ?? 0)
+			{
+				token.ThrowIfCancellationRequested();
+				var query = new Uri($"http://{Username}.tumblr.com/api/read/json" +
+					"?debug=1" +
+					"&type=photo" +
+					"&filter=text" +
+					"&num=50" +
+					$"&start={i}");
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+				if (!result.IsSuccess)
+				{
+					return;
+				}
+
+				parsed = JsonConvert.DeserializeObject<TumblrPage>(result.Value.Split(new[] { '=' }, 2)[1].Trim().TrimEnd(';'));
+				foreach (var post in parsed.Posts)
+				{
+					token.ThrowIfCancellationRequested();
+					if (post.CreatedAt < OldestAllowed)
+					{
+						return;
+					}
+					if (post.Score < MinScore)
+					{
+						continue;
+					}
+					if (post.Photos.Count > 0) //Going into here means there is more than one photo
+					{
+						foreach (var photo in post.Photos.Where(x => !HasValidSize(x, out _)).ToList())
+						{
+							post.Photos.Remove(photo);
+						}
+						if (post.Photos.Count == 0)
+						{
+							continue;
+						}
+					}
+					else if (!HasValidSize(post, out _)) //Going into here means there is one photo
+					{
+						continue;
+					}
+					if (!Add(list, post))
+					{
+						return;
+					}
+				}
+			}
 		}
 	}
 }

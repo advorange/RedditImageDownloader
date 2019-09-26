@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Lofter
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 	public struct LofterImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("lofter.com");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> LofterPostDownloader.GetLofterImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await LofterPostDownloader.GetLofterImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("lofter.com");
 	}
 }

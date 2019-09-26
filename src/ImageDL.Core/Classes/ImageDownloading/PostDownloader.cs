@@ -7,13 +7,17 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesSettingParser.Interfaces;
 using AdvorangesSettingParser.Utils;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL.Classes.ImageDownloading
@@ -26,6 +30,107 @@ namespace ImageDL.Classes.ImageDownloading
 	{
 		private static readonly string NL = Environment.NewLine;
 		private static readonly string NLT = NL + "\t";
+
+		private int _AmountOfPostsToGather;
+
+		private int _ImagesCachedPerThread = 50;
+
+		private int _MaxDaysOld;
+
+		private int _MinHeight;
+
+		private int _MinScore;
+
+		private int _MinWidth;
+
+		private string _SavePath;
+
+		/// <summary>
+		/// The amount of posts to look through.
+		/// </summary>
+		public int AmountOfPostsToGather
+		{
+			get => _AmountOfPostsToGather;
+			set => _AmountOfPostsToGather = Math.Max(1, value);
+		}
+
+		/// <inheritdoc />
+		public bool CanStart => Start && SettingParser.AreAllSet();
+
+		/// <summary>
+		/// Indicates whether or not to create the directory if it does not exist.
+		/// </summary>
+		public bool CreateDirectory { get; set; }
+
+		/// <summary>
+		/// The directory to save images to.
+		/// </summary>
+		public DirectoryInfo Directory => new DirectoryInfo(SavePath);
+
+		/// <summary>
+		/// How many images to cache per thread. Lower = faster, but more CPU.
+		/// </summary>
+		public int ImagesCachedPerThread
+		{
+			get => _ImagesCachedPerThread;
+			set => _ImagesCachedPerThread = Math.Max(1, value);
+		}
+
+		/// <summary>
+		/// The maximum aspect ratio an image can have.
+		/// </summary>
+		public AspectRatio MaxAspectRatio { get; set; } = new AspectRatio(1, 0);
+
+		/// <summary>
+		/// The maximum age an image can have before it won't be downloaded.
+		/// </summary>
+		public int MaxDaysOld
+		{
+			get => _MaxDaysOld;
+			set => _MaxDaysOld = Math.Max(0, value);
+		}
+
+		/// <summary>
+		/// The maximum allowed image similarity before an image is considered a duplicate.
+		/// </summary>
+		public Percentage MaxImageSimilarity { get; set; } = new Percentage(1);
+
+		/// <summary>
+		/// The minimum aspect ratio an image can have.
+		/// </summary>
+		public AspectRatio MinAspectRatio { get; set; } = new AspectRatio(0, 1);
+
+		/// <summary>
+		/// The minimum height an image can have before it won't be downloaded.
+		/// </summary>
+		public int MinHeight
+		{
+			get => _MinHeight;
+			set => _MinHeight = Math.Max(0, value);
+		}
+
+		/// <summary>
+		/// The minimum score an image can have before it won't be downloaded. Not every site uses this.
+		/// </summary>
+		public int MinScore
+		{
+			get => _MinScore;
+			set => _MinScore = Math.Max(0, value);
+		}
+
+		/// <summary>
+		/// The minimum width an image can have before it won't be downloaded.
+		/// </summary>
+		public int MinWidth
+		{
+			get => _MinWidth;
+			set => _MinWidth = Math.Max(0, value);
+		}
+
+		/// <summary>
+		/// The datetime of the oldest allowed posts. Is simply <see cref="DateTime.UtcNow"/> minus the amount of days.
+		/// </summary>
+		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
 
 		/// <summary>
 		/// The path of the directory to save images to.
@@ -43,99 +148,19 @@ namespace ImageDL.Classes.ImageDownloading
 				_SavePath = dir.FullName ?? throw new ArgumentException($"{value} is an invalid directory name.", nameof(SavePath));
 			}
 		}
-		/// <summary>
-		/// The amount of posts to look through.
-		/// </summary>
-		public int AmountOfPostsToGather
-		{
-			get => _AmountOfPostsToGather;
-			set => _AmountOfPostsToGather = Math.Max(1, value);
-		}
-		/// <summary>
-		/// The minimum width an image can have before it won't be downloaded.
-		/// </summary>
-		public int MinWidth
-		{
-			get => _MinWidth;
-			set => _MinWidth = Math.Max(0, value);
-		}
-		/// <summary>
-		/// The minimum height an image can have before it won't be downloaded.
-		/// </summary>
-		public int MinHeight
-		{
-			get => _MinHeight;
-			set => _MinHeight = Math.Max(0, value);
-		}
-		/// <summary>
-		/// The maximum age an image can have before it won't be downloaded.
-		/// </summary>
-		public int MaxDaysOld
-		{
-			get => _MaxDaysOld;
-			set => _MaxDaysOld = Math.Max(0, value);
-		}
-		/// <summary>
-		/// The maximum allowed image similarity before an image is considered a duplicate.
-		/// </summary>
-		public Percentage MaxImageSimilarity { get; set; } = new Percentage(1);
-		/// <summary>
-		/// How many images to cache per thread. Lower = faster, but more CPU.
-		/// </summary>
-		public int ImagesCachedPerThread
-		{
-			get => _ImagesCachedPerThread;
-			set => _ImagesCachedPerThread = Math.Max(1, value);
-		}
-		/// <summary>
-		/// The minimum score an image can have before it won't be downloaded. Not every site uses this.
-		/// </summary>
-		public int MinScore
-		{
-			get => _MinScore;
-			set => _MinScore = Math.Max(0, value);
-		}
-		/// <summary>
-		/// The minimum aspect ratio an image can have.
-		/// </summary>
-		public AspectRatio MinAspectRatio { get; set; } = new AspectRatio(0, 1);
-		/// <summary>
-		/// The maximum aspect ratio an image can have.
-		/// </summary>
-		public AspectRatio MaxAspectRatio { get; set; } = new AspectRatio(1, 0);
-		/// <summary>
-		/// Indicates whether or not to create the directory if it does not exist.
-		/// </summary>
-		public bool CreateDirectory { get; set; }
+
+		/// <inheritdoc />
+		public SettingParser SettingParser { get; }
+
 		/// <summary>
 		/// Indicates the user wants the downloader to start.
 		/// </summary>
 		public bool Start { get; set; }
-		/// <summary>
-		/// The datetime of the oldest allowed posts. Is simply <see cref="DateTime.UtcNow"/> minus the amount of days.
-		/// </summary>
-		public DateTime OldestAllowed => DateTime.UtcNow.Subtract(TimeSpan.FromDays(MaxDaysOld));
-		/// <summary>
-		/// The directory to save images to.
-		/// </summary>
-		public DirectoryInfo Directory => new DirectoryInfo(SavePath);
-		/// <inheritdoc />
-		public SettingParser SettingParser { get; }
-		/// <inheritdoc />
-		public bool CanStart => Start && SettingParser.AreAllSet();
-
-		private string _SavePath;
-		private int _AmountOfPostsToGather;
-		private int _MinWidth;
-		private int _MinHeight;
-		private int _MaxDaysOld;
-		private int _ImagesCachedPerThread = 50;
-		private int _MinScore;
 
 		/// <summary>
 		/// Creates an instance of <see cref="PostDownloader"/>.
 		/// </summary>
-		public PostDownloader()
+		protected PostDownloader()
 		{
 			SettingParser = new SettingParser
 			{
@@ -201,7 +226,7 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <inheritdoc />
 		public async Task<DownloaderResponse> DownloadAsync(List<IPost> posts, IServiceProvider services, CancellationToken token = default)
 		{
-			if (!posts.Any())
+			if (posts.Count == 0)
 			{
 				return DownloaderResponse.FromNoPostsFound();
 			}
@@ -215,7 +240,7 @@ namespace ImageDL.Classes.ImageDownloading
 			{
 				var downloadedCount = 0;
 				var links = new List<ContentLink>();
-				for (int i = 0; i < posts.Count; ++i)
+				for (var i = 0; i < posts.Count; ++i)
 				{
 					var post = posts[i];
 					token.ThrowIfCancellationRequested();
@@ -286,7 +311,7 @@ namespace ImageDL.Classes.ImageDownloading
 					}
 				}
 				var linkCount = 0;
-				if (links.Any())
+				if (links.Count > 0)
 				{
 					linkCount = SaveStoredContentLinks(Directory, links);
 					if (linkCount != 0)
@@ -304,6 +329,16 @@ namespace ImageDL.Classes.ImageDownloading
 				}
 			}
 		}
+
+		/// <summary>
+		/// Gathers and downloads posts in one.
+		/// </summary>
+		/// <param name="services"></param>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public async Task<DownloaderResponse> DownloadAsync(IServiceProvider services, CancellationToken token = default)
+			=> await DownloadAsync(await GatherAsync(services, token).CAF(), services, token).CAF();
+
 		/// <inheritdoc />
 		public async Task<List<IPost>> GatherAsync(IServiceProvider services, CancellationToken token = default)
 		{
@@ -327,53 +362,29 @@ namespace ImageDL.Classes.ImageDownloading
 			ConsoleUtils.WriteLine($"Found {sorted.Count} posts.{NL}");
 			return sorted;
 		}
+
 		/// <summary>
-		/// Gathers and downloads posts in one.
+		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
 		/// </summary>
-		/// <param name="services"></param>
-		/// <param name="token"></param>
-		/// <returns></returns>
-		public async Task<DownloaderResponse> DownloadAsync(IServiceProvider services, CancellationToken token = default)
-			=> await DownloadAsync(await GatherAsync(services, token).CAF(), services, token).CAF();
-		/// <summary>
-		/// Actual implementation of <see cref="GatherAsync(IServiceProvider, CancellationToken)"/>.
-		/// </summary>
-		/// <param name="client"></param>
 		/// <param name="list"></param>
-		/// <param name="token"></param>
+		/// <param name="post"></param>
 		/// <returns></returns>
-		protected abstract Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token);
-		/// <summary>
-		/// Checks min width, min height, and the min/max aspect ratios.
-		/// </summary>
-		/// <param name="size"></param>
-		/// <param name="error"></param>
-		/// <returns></returns>
-		protected bool HasValidSize(ISize size, out string error)
-			=> HasValidSize(size.Width, size.Height, out error);
-		/// <summary>
-		/// Checks min width, min height, and the min/max aspect ratios.
-		/// </summary>
-		/// <param name="width"></param>
-		/// <param name="height"></param>
-		/// <param name="error"></param>
-		/// <returns></returns>
-		protected bool HasValidSize(int width, int height, out string error)
+		protected bool Add(List<IPost> list, IPost post)
 		{
-			if (width < MinWidth || height < MinHeight)
+			//Return true to signify keep collecting, but don't add it because duplicate.
+			if (list.Any(x => x.Id == post.Id))
 			{
-				error = $"is too small ({width}x{height}).";
-				return false;
+				return true;
 			}
-			var aspectRatio = width / (double)height;
-			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
+			list.Add(post);
+			if (list.Count % 25 == 0)
 			{
-				error = $"does not fit in the aspect ratio restrictions ({width}x{height}).";
-				return false;
+				var name = GetType().GetCustomAttribute<DownloaderNameAttribute>()?.Name;
+				ConsoleUtils.WriteLine($"{list.Count}{(name != null ? $" {name}" : "")} posts found.");
 			}
-			error = null;
-			return true;
+			return list.Count < AmountOfPostsToGather;
 		}
+
 		/// <summary>
 		/// Downloads an image from <paramref name="url"/> and saves it. Returns a text response.
 		/// </summary>
@@ -401,8 +412,10 @@ namespace ImageDL.Classes.ImageDownloading
 				{
 					case ValidityType.Fail:
 						return new Response(ImageResponse.EXCEPTION, $"{url} had the following exception:{NL}{resp}", false);
+
 					case ValidityType.Animated:
 						return new Response(ImageResponse.ANIMATED, $"{url} is either a video or a gif.", false);
+
 					case ValidityType.NotImage:
 						return new Response("Not An Image", $"{url} did not lead to an image.", false);
 				}
@@ -410,7 +423,7 @@ namespace ImageDL.Classes.ImageDownloading
 				//Need to use a memory stream and copy to it
 				//Otherwise doing either the md5 hash or creating an image ends up getting to the end of the response stream
 				//And with this reponse stream seeks cannot be used on it.
-				await (rs = await resp.Content.ReadAsStreamAsync().CAF()).CopyToAsync(ms = new MemoryStream());
+				await (rs = await resp.Content.ReadAsStreamAsync().CAF()).CopyToAsync(ms = new MemoryStream()).CAF();
 
 				//If image is too small, don't bother saving
 				var width = -1;
@@ -450,6 +463,49 @@ namespace ImageDL.Classes.ImageDownloading
 				fs?.Dispose();
 			}
 		}
+
+		/// <summary>
+		/// Actual implementation of <see cref="GatherAsync(IServiceProvider, CancellationToken)"/>.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="list"></param>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		protected abstract Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token);
+
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
+		/// <param name="size"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		protected bool HasValidSize(ISize size, out string error)
+			=> HasValidSize(size.Width, size.Height, out error);
+
+		/// <summary>
+		/// Checks min width, min height, and the min/max aspect ratios.
+		/// </summary>
+		/// <param name="width"></param>
+		/// <param name="height"></param>
+		/// <param name="error"></param>
+		/// <returns></returns>
+		protected bool HasValidSize(int width, int height, out string error)
+		{
+			if (width < MinWidth || height < MinHeight)
+			{
+				error = $"is too small ({width}x{height}).";
+				return false;
+			}
+			var aspectRatio = width / (double)height;
+			if (aspectRatio < MinAspectRatio.Value || aspectRatio > MaxAspectRatio.Value)
+			{
+				error = $"does not fit in the aspect ratio restrictions ({width}x{height}).";
+				return false;
+			}
+			error = null;
+			return true;
+		}
+
 		/// <summary>
 		/// Saves the stored content links to file.
 		/// Returns the amount of links put into the file.
@@ -463,15 +519,14 @@ namespace ImageDL.Classes.ImageDownloading
 			//Only read once, make sure no duplicate uris will be added
 			if (file.Exists)
 			{
-				using (var reader = new StreamReader(file.OpenRead()))
+				using var reader = new StreamReader(file.OpenRead());
+
+				var text = reader.ReadToEnd();
+				for (var i = filteredLinks.Count - 1; i >= 0; --i)
 				{
-					var text = reader.ReadToEnd();
-					for (int i = filteredLinks.Count - 1; i >= 0; --i)
+					if (text.Contains(filteredLinks[i].Url.ToString()))
 					{
-						if (text.Contains(filteredLinks[i].Url.ToString()))
-						{
-							filteredLinks.RemoveAt(i);
-						}
+						filteredLinks.RemoveAt(i);
 					}
 				}
 			}
@@ -481,7 +536,7 @@ namespace ImageDL.Classes.ImageDownloading
 				var len = g.Max(x => x.AssociatedNumber).ToString().Length;
 				var format = g.OrderByDescending(x => x.AssociatedNumber)
 					.Select(x => $"{x.AssociatedNumber.ToString().PadLeft(len, '0')} {x.Url}");
-				return $"{g.Key.ToString().FormatTitle()} - {FormattingUtils.ToSaving()}{NL}{string.Join(NL, format)}{NL}";
+				return $"{g.Key.FormatTitle()} - {FormattingUtils.ToSaving()}{NL}{string.Join(NL, format)}{NL}";
 			});
 			using (var writer = file.AppendText())
 			{
@@ -492,27 +547,7 @@ namespace ImageDL.Classes.ImageDownloading
 			}
 			return filteredLinks.Count;
 		}
-		/// <summary>
-		/// Adds the object to the list, prints to the console if its a multiple of 25, and returns true if still allowed to download more.
-		/// </summary>
-		/// <param name="list"></param>
-		/// <param name="post"></param>
-		/// <returns></returns>
-		protected bool Add(List<IPost> list, IPost post)
-		{
-			//Return true to signify keep collecting, but don't add it because duplicate.
-			if (list.Any(x => x.Id == post.Id))
-			{
-				return true;
-			}
-			list.Add(post);
-			if (list.Count % 25 == 0)
-			{
-				var name = GetType().GetCustomAttribute<DownloaderNameAttribute>()?.Name;
-				ConsoleUtils.WriteLine($"{list.Count}{(name != null ? $" {name}" : "")} posts found.");
-			}
-			return list.Count < AmountOfPostsToGather;
-		}
+
 		/// <summary>
 		/// Determines if the data is a valid image to download.
 		/// </summary>

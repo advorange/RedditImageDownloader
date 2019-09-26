@@ -9,10 +9,12 @@
 		/// Only show safe images.
 		/// </summary>
 		Safe,
+
 		/// <summary>
 		/// Show safe and erotic images.
 		/// </summary>
 		Erotic,
+
 		/// <summary>
 		/// Show all images.
 		/// </summary>

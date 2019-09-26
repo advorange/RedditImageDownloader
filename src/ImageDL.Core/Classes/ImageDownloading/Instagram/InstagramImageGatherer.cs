@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Instagram
 	public struct InstagramImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("instagram.com");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> InstagramPostDownloader.GetInstagramImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await InstagramPostDownloader.GetInstagramImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("instagram.com");
 	}
 }

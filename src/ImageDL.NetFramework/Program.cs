@@ -5,6 +5,9 @@ namespace ImageDL
 	public class Program
 	{
 		public static Task Main(string[] args)
-			=> new ImageDL().RunFromArguments(ImageDL.CreateServices<NetFrameworkImageComparer>(), args);
+		{
+			var services = ImageDL.CreateServices<NetFrameworkImageComparer>();
+			return new ImageDL().RunFromArguments(services, args);
+		}
 	}
 }

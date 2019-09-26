@@ -8,13 +8,15 @@ namespace ImageDL.Classes
 	public struct ApiKey
 	{
 		/// <summary>
-		/// The key to use.
-		/// </summary>
-		public readonly string Key;
-		/// <summary>
 		/// When the key was created at.
 		/// </summary>
 		public readonly DateTime CreatedAt;
+
+		/// <summary>
+		/// The key to use.
+		/// </summary>
+		public readonly string Key;
+
 		/// <summary>
 		/// How long the key is valid for.
 		/// </summary>

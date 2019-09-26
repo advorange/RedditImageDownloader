@@ -8,15 +8,16 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu.Models
 	public struct EshuushuuTag
 	{
 		/// <summary>
-		/// The value to search with.
-		/// </summary>
-		[JsonProperty("value")]
-		public int Value { get; private set; }
-		/// <summary>
 		/// The name associated with the value.
 		/// </summary>
 		[JsonProperty("name")]
 		public string Name { get; private set; }
+
+		/// <summary>
+		/// The value to search with.
+		/// </summary>
+		[JsonProperty("value")]
+		public int Value { get; private set; }
 
 		/// <summary>
 		/// Returns the name and value.

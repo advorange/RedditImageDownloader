@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -9,7 +10,8 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 	/// </summary>
 	internal class WeiboPagePictureConverter : JsonConverter
 	{
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
+		public override bool CanConvert(Type objectType) => true;
+
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 		{
 			if (reader.TokenType == JsonToken.StartObject)
@@ -21,6 +23,7 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 				return serializer.Deserialize(reader, typeof(Uri));
 			}
 		}
-		public override bool CanConvert(Type objectType) => true;
+
+		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
 	}
 }

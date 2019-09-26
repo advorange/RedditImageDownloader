@@ -8,15 +8,16 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 	public struct PawooOAuthAuthentication
 	{
 		/// <summary>
-		/// Unique id.
-		/// </summary>
-		[JsonProperty("uid")]
-		public string Uid { get; private set; }
-		/// <summary>
 		/// The name of the provider, e.g. pixiv, etc.
 		/// </summary>
 		[JsonProperty("provider")]
 		public string Provider { get; private set; }
+
+		/// <summary>
+		/// Unique id.
+		/// </summary>
+		[JsonProperty("uid")]
+		public string Uid { get; private set; }
 
 		/// <summary>
 		/// Returns the provider and uid.

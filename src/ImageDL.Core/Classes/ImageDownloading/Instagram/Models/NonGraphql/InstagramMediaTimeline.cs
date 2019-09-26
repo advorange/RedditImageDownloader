@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
@@ -13,11 +14,13 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models.NonGraphql
 		/// </summary>
 		[JsonProperty("count")]
 		public int Count { get; private set; }
+
 		/// <summary>
 		/// For paginating through the posts.
 		/// </summary>
 		[JsonProperty("page_info")]
 		public InstagramPageInfo PageInfo { get; private set; }
+
 		/// <summary>
 		/// The posts a user has made.
 		/// </summary>

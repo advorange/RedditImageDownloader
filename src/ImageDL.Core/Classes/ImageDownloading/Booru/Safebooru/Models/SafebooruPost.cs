@@ -1,4 +1,5 @@
 ﻿using System;
+
 using ImageDL.Classes.ImageDownloading.Booru.Gelbooru.Models;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru.Models

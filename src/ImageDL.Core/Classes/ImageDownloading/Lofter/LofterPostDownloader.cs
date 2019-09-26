@@ -4,12 +4,17 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Lofter.Models.LofterPost;
 
 namespace ImageDL.Classes.ImageDownloading.Lofter
@@ -36,6 +41,21 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetLofterImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
+			var div = result.Value.DocumentNode.Descendants("div");
+			var pics = div.Where(x => x.GetAttributeValue("class", null) == "pic").Select(x => x.Descendants("a").Single());
+			var urls = pics.Select(x => new Uri(x.GetAttributeValue("bigimgsrc", null).Split('?')[0]));
+			return ImageResponse.FromImages(urls);
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
@@ -60,8 +80,8 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 						{ "c0-id", "0" },
 						{ "c0-param0", $"number:{userId}" }, //User id
 						{ "c0-param1", $"number:{ts}" }, //Timestamp
-						{ "c0-param2", $"number:50" }, //Posts per req
-						{ "c0-param3", $"boolean:false" },
+						{ "c0-param2", "number:50" }, //Posts per req
+						{ "c0-param3", "boolean:false" },
 						{ "batchId", "1" },
 					});
 					return req;
@@ -84,7 +104,7 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 					{
 						post.Images.Remove(image);
 					}
-					if (!post.Images.Any())
+					if (post.Images.Count == 0)
 					{
 						continue;
 					}
@@ -95,21 +115,7 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 				}
 			}
 		}
-		/// <summary>
-		/// Gets the id of the Lofter user.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="username"></param>
-		/// <returns></returns>
-		private static async Task<string> GetUserIdAsync(IDownloaderClient client, string username)
-		{
-			var query = new Uri($"http://{username}.lofter.com");
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 
-			var search = "blogId=";
-			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
-			return cut.Substring(0, cut.IndexOf('"'));
-		}
 		/// <summary>
 		/// Converts the supplied Javascript object creation to JSON.
 		/// </summary>
@@ -120,7 +126,7 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			//The request gives back Javascript object creation instead of JSON (no clue why, so we need to do this)
 			var split = js.ComplexSplit(new[] { ';' }, new[] { '"' }, true).Select(x => x.Trim());
 			var jArray = new JArray();
-			for (int i = 0; i < 50; ++i)
+			for (var i = 0; i < 50; ++i)
 			{
 				var jObjInner = new JObject();
 				foreach (var part in split.Where(x => x.StartsWith($"s{i}.") || x.StartsWith($"s{i + 50}.")))
@@ -135,7 +141,7 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 					}
 					if (value.EndsWith("\""))
 					{
-						value = value.Substring(0, value.Length - 1);
+						value = value[0..^1];
 					}
 					jObjInner.Add(name, value);
 				}
@@ -143,19 +149,21 @@ namespace ImageDL.Classes.ImageDownloading.Lofter
 			}
 			return jArray.ToString();
 		}
+
 		/// <summary>
-		/// Gets the images from the specified url.
+		/// Gets the id of the Lofter user.
 		/// </summary>
 		/// <param name="client"></param>
-		/// <param name="url"></param>
+		/// <param name="username"></param>
 		/// <returns></returns>
-		public static async Task<ImageResponse> GetLofterImagesAsync(IDownloaderClient client, Uri url)
+		private static async Task<string> GetUserIdAsync(IDownloaderClient client, string username)
 		{
-			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
-			var div = result.Value.DocumentNode.Descendants("div");
-			var pics = div.Where(x => x.GetAttributeValue("class", null) == "pic").Select(x => x.Descendants("a").Single());
-			var urls = pics.Select(x => new Uri(x.GetAttributeValue("bigimgsrc", null).Split('?')[0]));
-			return ImageResponse.FromImages(urls);
+			var query = new Uri($"http://{username}.lofter.com");
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+
+			const string search = "blogId=";
+			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
+			return cut.Substring(0, cut.IndexOf('"'));
 		}
 	}
 }

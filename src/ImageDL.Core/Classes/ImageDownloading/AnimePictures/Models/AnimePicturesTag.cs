@@ -12,16 +12,18 @@ namespace ImageDL.Classes.ImageDownloading.AnimePictures.Models
 		/// </summary>
 		[JsonProperty("name")]
 		public string Name { get; private set; }
-		/// <summary>
-		/// The type of tag.
-		/// </summary>
-		[JsonProperty("type")]
-		public int Type { get; private set; }
+
 		/// <summary>
 		/// The tag's value.
 		/// </summary>
 		[JsonProperty("num")]
 		public int Num { get; private set; }
+
+		/// <summary>
+		/// The type of tag.
+		/// </summary>
+		[JsonProperty("type")]
+		public int Type { get; private set; }
 
 		/// <summary>
 		/// Returns the name and value.

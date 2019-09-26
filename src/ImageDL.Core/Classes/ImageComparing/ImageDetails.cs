@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using ImageDL.Interfaces;
+
 using LiteDB;
 
 namespace ImageDL.Classes.ImageComparing
@@ -12,31 +12,36 @@ namespace ImageDL.Classes.ImageComparing
 	public sealed class ImageDetails : ISize
 	{
 		/// <summary>
-		/// The Md5 hash of the image. This is used as a key in the database.
-		/// </summary>
-		[BsonId, BsonField("Hash")]
-		public string Hash { get; internal set; }
-		/// <summary>
 		/// The name of the file. This does not involve the directory.
 		/// </summary>
 		[BsonField("FileName")]
 		public string FileName { get; internal set; }
-		/// <inheritdoc />
-		[BsonField("Width")]
-		public int Width { get; internal set; }
-		/// <inheritdoc />
-		[BsonField("Height")]
-		public int Height { get; internal set; }
+
+		/// <summary>
+		/// The Md5 hash of the image. This is used as a key in the database.
+		/// </summary>
+		[BsonId, BsonField("Hash")]
+		public string Hash { get; internal set; }
+
 		/// <summary>
 		/// The hash of the image's thumbnail in boolean form (1 means light, 0 means dark).
 		/// </summary>
 		[BsonField("HashedThumbnail")]
 		public string HashedThumbnail { get; internal set; }
 
+		/// <inheritdoc />
+		[BsonField("Height")]
+		public int Height { get; internal set; }
+
+		/// <inheritdoc />
+		[BsonField("Width")]
+		public int Width { get; internal set; }
+
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDetails"/>.
 		/// </summary>
 		internal ImageDetails() { }
+
 		/// <summary>
 		/// Creates an instance of <see cref="ImageDetails"/>.
 		/// </summary>
@@ -78,7 +83,7 @@ namespace ImageDL.Classes.ImageComparing
 			}
 
 			var matchCount = 0;
-			for (int i = 0; i < HashedThumbnail.Length; ++i)
+			for (var i = 0; i < HashedThumbnail.Length; ++i)
 			{
 				if (HashedThumbnail[i] == other.HashedThumbnail[i])
 				{
@@ -87,6 +92,7 @@ namespace ImageDL.Classes.ImageComparing
 			}
 			return (matchCount / (float)HashedThumbnail.Length) >= matchPercentage.Value;
 		}
+
 		/// <summary>
 		/// Returns the file name.
 		/// </summary>

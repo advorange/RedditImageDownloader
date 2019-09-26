@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
@@ -13,16 +14,19 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("shortcode")]
 		public string Shortcode { get; private set; }
-		/// <summary>
-		/// Link to the emoji.
-		/// </summary>
-		[JsonProperty("url")]
-		public Uri Url { get; private set; }
+
 		/// <summary>
 		/// Link to the emoji.
 		/// </summary>
 		[JsonProperty("static_url")]
 		public Uri StaticUrl { get; private set; }
+
+		/// <summary>
+		/// Link to the emoji.
+		/// </summary>
+		[JsonProperty("url")]
+		public Uri Url { get; private set; }
+
 		/// <summary>
 		/// Whether this is visible in the picker.
 		/// </summary>

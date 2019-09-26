@@ -4,11 +4,16 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Zerochan.Models.ZerochanPost;
 
 namespace ImageDL.Classes.ImageDownloading.Zerochan
@@ -35,28 +40,59 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetZerochanImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 1 && int.TryParse(parts[0], out var val) && await GetZerochanPostAsync(client, val.ToString()).CAF() is Model post)
+			{
+				return await post.GetImagesAsync(client).CAF();
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetZerochanPostAsync(IDownloaderClient client, string id) => await GenerateModel(client, new JObject { { "id", id } }).CAF();
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 24); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 24); ++i, parsed.Clear())
 			{
 				token.ThrowIfCancellationRequested();
 				var query = new Uri($"https://www.zerochan.net/{WebUtility.UrlEncode(Tags)}" +
-					$"?s=id" +
+					"?s=id" +
 					$"&p={i + 1}" +
-					$"&json");
+					"&json");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
 					return;
 				}
 
-				var items = JObject.Parse(result.Value)["items"];
-				parsed = (await Task.WhenAll(items.Select(async x => await GenerateModel(client, x).CAF()))).ToList();
-				foreach (var post in parsed)
+				foreach (var item in JObject.Parse(result.Value)["items"])
 				{
 					token.ThrowIfCancellationRequested();
+
+					var post = await GenerateModel(client, item).CAF();
+					parsed.Add(post);
+
 					if (post.CreatedAt < OldestAllowed)
 					{
 						return;
@@ -72,6 +108,7 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 				}
 			}
 		}
+
 		/// <summary>
 		/// Generates a model with gotten json and the id/tags from <paramref name="jToken"/>.
 		/// </summary>
@@ -101,33 +138,6 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 			}
 
 			return jObj.ToObject<Model>();
-		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetZerochanPostAsync(IDownloaderClient client, string id) => await GenerateModel(client, new JObject { { "id", id } }).CAF();
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetZerochanImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-			if (parts.Length == 1 && int.TryParse(parts[0], out var val) && await GetZerochanPostAsync(client, val.ToString()).CAF() is Model post)
-			{
-				return await post.GetImagesAsync(client).CAF();
-			}
-			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

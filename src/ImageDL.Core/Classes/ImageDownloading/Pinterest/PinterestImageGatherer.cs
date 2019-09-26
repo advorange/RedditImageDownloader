@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Pinterest
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest
 	public struct PinterestImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("pinterest.com");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> PinterestPostDownloader.GetPinterestImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await PinterestPostDownloader.GetPinterestImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("pinterest.com");
 	}
 }

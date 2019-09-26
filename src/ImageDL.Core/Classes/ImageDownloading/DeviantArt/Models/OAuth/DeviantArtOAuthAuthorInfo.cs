@@ -8,25 +8,28 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 	public struct DeviantArtOAuthAuthorInfo
 	{
 		/// <summary>
-		/// The guid of the user.
+		/// Not sure.
 		/// </summary>
-		[JsonProperty("userid")]
-		public string UUID { get; private set; }
-		/// <summary>
-		/// The user's name.
-		/// </summary>
-		[JsonProperty("username")]
-		public string Username { get; private set; }
+		[JsonProperty("type")]
+		public string Type { get; private set; }
+
 		/// <summary>
 		/// The link to the user's profile picture.
 		/// </summary>
 		[JsonProperty("usericon")]
 		public string UserIcon { get; private set; }
+
 		/// <summary>
-		/// Not sure.
+		/// The user's name.
 		/// </summary>
-		[JsonProperty("type")]
-		public string Type { get; private set; }
+		[JsonProperty("username")]
+		public string Username { get; private set; }
+
+		/// <summary>
+		/// The guid of the user.
+		/// </summary>
+		[JsonProperty("userid")]
+		public string UUID { get; private set; }
 
 		/// <summary>
 		/// Returns the user's name.

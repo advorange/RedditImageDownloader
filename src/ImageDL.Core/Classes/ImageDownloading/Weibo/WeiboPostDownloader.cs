@@ -5,12 +5,17 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Weibo.Models.WeiboPost;
 
 namespace ImageDL.Classes.ImageDownloading.Weibo
@@ -37,15 +42,50 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetWeiboImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			//Url is formatted something like this https://weibo.com/1632765501/GijfWif2d
+			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 2 && await GetWeiboPostAsync(client, parts[1]).CAF() is Model post)
+			{
+				return await post.GetImagesAsync(client).CAF();
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetWeiboPostAsync(IDownloaderClient client, string id)
+		{
+			var query = new Uri($"https://m.weibo.cn/api/statuses/show?id={id}");
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 10); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 10); ++i)
 			{
 				token.ThrowIfCancellationRequested();
-				var query = new Uri($"https://m.weibo.cn/api/container/getIndex" +
+				var query = new Uri("https://m.weibo.cn/api/container/getIndex" +
 					$"?containerid=230413{userId}_-_longbloglist" +
 					$"&page={i + 1}");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
@@ -75,7 +115,7 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 					{
 						post.Pictures.Remove(picture);
 					}
-					if (!post.Pictures.Any())
+					if (post.Pictures.Count == 0)
 					{
 						continue;
 					}
@@ -86,6 +126,7 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 				}
 			}
 		}
+
 		/// <summary>
 		/// Gets the id of the Weibo user.
 		/// </summary>
@@ -117,39 +158,6 @@ namespace ImageDL.Classes.ImageDownloading.Weibo
 			{
 				throw new HttpRequestException("Unable to get the Weibo user id.", e);
 			}
-		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetWeiboPostAsync(IDownloaderClient client, string id)
-		{
-			var query = new Uri($"https://m.weibo.cn/api/statuses/show?id={id}");
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			return result.IsSuccess ? JsonConvert.DeserializeObject<Model>(result.Value) : null;
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetWeiboImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			//Url is formatted something like this https://weibo.com/1632765501/GijfWif2d
-			var parts = url.LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-			if (parts.Length == 2 && await GetWeiboPostAsync(client, parts[1]).CAF() is Model post)
-			{
-				return await post.GetImagesAsync(client).CAF();
-			}
-			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

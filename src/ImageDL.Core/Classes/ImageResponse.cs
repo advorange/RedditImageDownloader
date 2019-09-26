@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+
 using AdvorangesUtils;
 
 namespace ImageDL.Classes
@@ -9,32 +10,37 @@ namespace ImageDL.Classes
 	/// <summary>
 	/// Returns the images gathered with a reason if they haven't been gathered correctly.
 	/// </summary>
-	public class ImageResponse : Response
+	public sealed class ImageResponse : Response
 	{
-		/// <summary>
-		/// Indicates the url lead to an image or multiple images.
-		/// </summary>
-		public const string SUCCESS = "Success";
-		/// <summary>
-		/// Indicates the url leads to animated content.
-		/// </summary>
-		public const string ANIMATED = "Animated";
-		/// <summary>
-		/// Indicates where the url leads to is unknown.
-		/// </summary>
-		public const string UNKNOWN = "Unknown";
-		/// <summary>
-		/// Indicates no images could be found at the url.
-		/// </summary>
-		public const string NOT_FOUND = "Not Found";
 		/// <summary>
 		/// Indicates the url has already been downloaded.
 		/// </summary>
 		public const string ALREADY_DOWNLOADED = "Already Downloaded";
+
+		/// <summary>
+		/// Indicates the url leads to animated content.
+		/// </summary>
+		public const string ANIMATED = "Animated";
+
 		/// <summary>
 		/// Indicates the url had an exception during downloading.
 		/// </summary>
 		public const string EXCEPTION = "Exception";
+
+		/// <summary>
+		/// Indicates no images could be found at the url.
+		/// </summary>
+		public const string NOT_FOUND = "Not Found";
+
+		/// <summary>
+		/// Indicates the url lead to an image or multiple images.
+		/// </summary>
+		public const string SUCCESS = "Success";
+
+		/// <summary>
+		/// Indicates where the url leads to is unknown.
+		/// </summary>
+		public const string UNKNOWN = "Unknown";
 
 		/// <summary>
 		/// The images to download.
@@ -55,17 +61,34 @@ namespace ImageDL.Classes
 		}
 
 		/// <summary>
-		/// Returns a response indicating success with the passed in urls.
-		/// </summary>
-		/// <param name="urls"></param>
-		/// <returns></returns>
-		public static ImageResponse FromImages(IEnumerable<Uri> urls) => new ImageResponse(SUCCESS, $"{urls.Count()} valid image(s) found.", true, urls);
-		/// <summary>
 		/// Returns a response indicating failure with the passed in url.
 		/// </summary>
 		/// <param name="url"></param>
 		/// <returns></returns>
 		public static ImageResponse FromAnimated(Uri url) => new ImageResponse(ANIMATED, $"{url} is either a video or a gif.", false, new[] { url });
+
+		/// <summary>
+		/// Returns a response indicating failure.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="e"></param>
+		/// <returns></returns>
+		public static ImageResponse FromException(Uri url, Exception e) => new ImageResponse(EXCEPTION, $"{url} had the following exception:\n{e}", false, new[] { url });
+
+		/// <summary>
+		/// Returns a response indicating success with the passed in urls.
+		/// </summary>
+		/// <param name="urls"></param>
+		/// <returns></returns>
+		public static ImageResponse FromImages(IEnumerable<Uri> urls) => new ImageResponse(SUCCESS, $"{urls.Count()} valid image(s) found.", true, urls);
+
+		/// <summary>
+		/// Returns a response indicating failure with the passed in url.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static ImageResponse FromNotFound(Uri url) => new ImageResponse(NOT_FOUND, $"{url} did not have any images.", false, new[] { url });
+
 		/// <summary>
 		/// Returns a response of success if the url leads to an image, otherwise returns unknown.
 		/// </summary>
@@ -79,18 +102,5 @@ namespace ImageDL.Classes
 			}
 			return new ImageResponse(UNKNOWN, $"{url} cannot have its content type determined.", null, new[] { url });
 		}
-		/// <summary>
-		/// Returns a response indicating failure with the passed in url.
-		/// </summary>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static ImageResponse FromNotFound(Uri url) => new ImageResponse(NOT_FOUND, $"{url} did not have any images.", false, new[] { url });
-		/// <summary>
-		/// Returns a response indicating failure.
-		/// </summary>
-		/// <param name="url"></param>
-		/// <param name="e"></param>
-		/// <returns></returns>
-		public static ImageResponse FromException(Uri url, Exception e) => new ImageResponse(EXCEPTION, $"{url} had the following exception:\n{e}", false, new[] { url });
 	}
 }

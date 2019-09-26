@@ -4,8 +4,11 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+
 using HtmlAgilityPack;
+
 using ImageDL.Enums;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -17,20 +20,22 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 	public struct TwitterScrapedPage
 	{
 		/// <summary>
+		/// Whether more items can be gotten.
+		/// </summary>
+		[JsonProperty("has_more_items")]
+		public bool HasMoreItems { get; private set; }
+
+		/// <summary>
 		/// The posts from this iteration.
 		/// </summary>
 		[JsonProperty("items")]
 		public IList<TwitterScrapedPost> Items { get; private set; }
+
 		/// <summary>
 		/// The minimum position, used in pagination.
 		/// </summary>
 		[JsonProperty("min_position")]
 		public string MinimumPosition { get; private set; }
-		/// <summary>
-		/// Whether more items can be gotten.
-		/// </summary>
-		[JsonProperty("has_more_items")]
-		public bool HasMoreItems { get; private set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="TwitterScrapedPage"/>.
@@ -54,7 +59,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 					catch (JsonReaderException)
 					{
 						Items = GetPostsFromHtml(text);
-						MinimumPosition = $"TWEET-{Items.Last().Id}-{Items.First().Id}";
+						MinimumPosition = $"TWEET-{Items.Last().Id}-{Items[0].Id}";
 						HasMoreItems = true; //Just assume it's true
 					}
 					return;
@@ -72,18 +77,6 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 			}
 		}
 
-		/// <summary>
-		/// Unescapes the html correctly.
-		/// </summary>
-		/// <param name="html"></param>
-		/// <returns></returns>
-		public static string UnescapeHtml(string html)
-		{
-			return Regex.Replace(WebUtility.HtmlDecode(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", m =>
-			{
-				return ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
-			});
-		}
 		/// <summary>
 		/// Gets the posts from the html.
 		/// </summary>
@@ -106,6 +99,19 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.Scraped
 				}
 			}
 			return list;
+		}
+
+		/// <summary>
+		/// Unescapes the html correctly.
+		/// </summary>
+		/// <param name="html"></param>
+		/// <returns></returns>
+		public static string UnescapeHtml(string html)
+		{
+			static string Evaluate(Match m)
+				=> ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString();
+
+			return Regex.Replace(WebUtility.HtmlDecode(html), @"\\u(?<Value>[a-zA-Z0-9]{4})", Evaluate);
 		}
 	}
 }

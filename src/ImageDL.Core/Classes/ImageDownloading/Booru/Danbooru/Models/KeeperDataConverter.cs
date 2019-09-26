@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
@@ -21,6 +22,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models
 			var input = Regex.Unescape(reader.Value.ToString());
 			return JsonConvert.DeserializeObject<Dictionary<string, int>>(input);
 		}
+
 		/// <inheritdoc />
 		public override void WriteJson(JsonWriter writer, Dictionary<string, int> value, JsonSerializer serializer)
 			=> serializer.Serialize(writer, value);

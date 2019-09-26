@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("position")]
 		public int Position { get; private set; }
+
 		/// <summary>
 		/// The text of the option.
 		/// </summary>

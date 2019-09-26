@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Flickr
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 	public struct FlickrImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("flickr.com");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> FlickrPostDownloader.GetFlickrImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await FlickrPostDownloader.GetFlickrImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("flickr.com");
 	}
 }

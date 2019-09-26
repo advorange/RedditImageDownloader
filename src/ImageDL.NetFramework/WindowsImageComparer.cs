@@ -21,7 +21,7 @@ namespace ImageDL
 		public NetFrameworkImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override string HashImageStream(Stream s)
+		protected override string HashImageStream(Stream s, int size)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -32,8 +32,8 @@ namespace ImageDL
 			};
 			bmi.BeginInit();
 			bmi.StreamSource = s;
-			bmi.DecodePixelWidth = ThumbnailSize;
-			bmi.DecodePixelHeight = ThumbnailSize;
+			bmi.DecodePixelWidth = size;
+			bmi.DecodePixelHeight = size;
 			bmi.EndInit();
 			bmi.Freeze();
 
@@ -71,6 +71,7 @@ namespace ImageDL
 						}
 					}
 					break;
+
 				case 3: //RGB
 					for (int y = 0; y < fcbm.PixelHeight; ++y)
 					{
@@ -85,6 +86,7 @@ namespace ImageDL
 						}
 					}
 					break;
+
 				default:
 					throw new NotSupportedException("The default implementation of this method only supports 32 and 24 bit pixels.");
 			}

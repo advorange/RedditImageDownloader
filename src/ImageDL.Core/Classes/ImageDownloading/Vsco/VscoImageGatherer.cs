@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Vsco
 	public struct VscoImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("vsco.co");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> VscoPostDownloader.GetVscoImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await VscoPostDownloader.GetVscoImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("vsco.co");
 	}
 }

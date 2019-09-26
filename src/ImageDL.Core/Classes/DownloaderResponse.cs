@@ -1,34 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ImageDL.Classes
+﻿namespace ImageDL.Classes
 {
 	/// <summary>
 	/// Returns the count of things gathered, downloaded, cached, and deleted from an image downloader.
 	/// </summary>
-	public class DownloaderResponse : Response
+	public sealed class DownloaderResponse : Response
 	{
-		/// <summary>
-		/// How many posts were gathered.
-		/// </summary>
-		public readonly int GatheredPostCount;
-		/// <summary>
-		/// How many images were downloaded.
-		/// </summary>
-		public readonly int DownloadedImageCount;
 		/// <summary>
 		/// How many images were cached.
 		/// </summary>
 		public readonly int CachedImageCount;
-		/// <summary>
-		/// How many images were deleted.
-		/// </summary>
-		public readonly int DeletedImageCount;
+
 		/// <summary>
 		/// How many links were added to file.
 		/// </summary>
 		public readonly int ContentLinksCount;
+
+		/// <summary>
+		/// How many images were deleted.
+		/// </summary>
+		public readonly int DeletedImageCount;
+
+		/// <summary>
+		/// How many images were downloaded.
+		/// </summary>
+		public readonly int DownloadedImageCount;
+
+		/// <summary>
+		/// How many posts were gathered.
+		/// </summary>
+		public readonly int GatheredPostCount;
 
 		/// <summary>
 		/// Creates an instance of <see cref="DownloaderResponse"/>.
@@ -52,11 +52,6 @@ namespace ImageDL.Classes
 		}
 
 		/// <summary>
-		/// Returns a downloader response indicating no posts were found.
-		/// </summary>
-		/// <returns></returns>
-		public static DownloaderResponse FromNoPostsFound() => new DownloaderResponse("None Found", "Unable to find any new posts.", false, 0, 0, 0, 0, 0);
-		/// <summary>
 		/// Returns a downloader response indicating the downloader is finished.
 		/// </summary>
 		/// <param name="gathered"></param>
@@ -66,5 +61,11 @@ namespace ImageDL.Classes
 		/// <param name="links"></param>
 		/// <returns></returns>
 		public static DownloaderResponse FromFinished(int gathered, int downloaded, int cached, int deleted, int links) => new DownloaderResponse("Finished", "Done downloading all images from the gathered posts.", true, gathered, downloaded, cached, deleted, links);
+
+		/// <summary>
+		/// Returns a downloader response indicating no posts were found.
+		/// </summary>
+		/// <returns></returns>
+		public static DownloaderResponse FromNoPostsFound() => new DownloaderResponse("None Found", "Unable to find any new posts.", false, 0, 0, 0, 0, 0);
 	}
 }

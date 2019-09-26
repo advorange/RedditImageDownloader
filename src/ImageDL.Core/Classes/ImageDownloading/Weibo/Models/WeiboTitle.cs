@@ -8,15 +8,16 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 	public struct WeiboTitle
 	{
 		/// <summary>
-		/// The text of the title.
-		/// </summary>
-		[JsonProperty("text")]
-		public string Text { get; private set; }
-		/// <summary>
 		/// The color of the title.
 		/// </summary>
 		[JsonProperty("base_color")]
 		public int BaseColor { get; private set; }
+
+		/// <summary>
+		/// The text of the title.
+		/// </summary>
+		[JsonProperty("text")]
+		public string Text { get; private set; }
 
 		/// <summary>
 		/// Returns the text.

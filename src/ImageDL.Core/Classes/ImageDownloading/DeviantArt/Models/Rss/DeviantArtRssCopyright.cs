@@ -8,14 +8,15 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 	public struct DeviantArtRssCopyright
 	{
 		/// <summary>
-		/// The url of whoever posted this.
-		/// </summary>
-		[JsonProperty("url")]
-		public string Url { get; private set; }
-		/// <summary>
 		/// The copyright text.
 		/// </summary>
 		[JsonProperty("text")]
 		public string Text { get; private set; }
+
+		/// <summary>
+		/// The url of whoever posted this.
+		/// </summary>
+		[JsonProperty("url")]
+		public string Url { get; private set; }
 	}
 }

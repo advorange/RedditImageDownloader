@@ -7,9 +7,13 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using BrotliSharpLib;
+
 using HtmlAgilityPack;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading
@@ -20,18 +24,22 @@ namespace ImageDL.Classes.ImageDownloading
 	public class DownloaderClient : HttpClient, IDownloaderClient
 	{
 		/// <inheritdoc />
-		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36 OPR/53.0.2907.68 (+https://github.com/advorange/ImageDL)";
-		/// <inheritdoc />
-		public List<IImageGatherer> Gatherers { get; }
-		/// <inheritdoc />
 		public Dictionary<Type, ApiKey> ApiKeys { get; }
+
 		/// <inheritdoc />
 		public CookieContainer Cookies { get; }
+
+		/// <inheritdoc />
+		public List<IImageGatherer> Gatherers { get; }
+
+		/// <inheritdoc />
+		public string UserAgent => "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36 OPR/53.0.2907.68 (+https://github.com/advorange/ImageDL)";
 
 		/// <summary>
 		/// Creates an instance of <see cref="DownloaderClient"/>.
 		/// </summary>
 		public DownloaderClient() : this(new CookieContainer()) { }
+
 		/// <summary>
 		/// Creates an instance of <see cref="DownloaderClient"/>.
 		/// </summary>
@@ -61,6 +69,83 @@ namespace ImageDL.Classes.ImageDownloading
 		/// <param name="url"></param>
 		/// <returns></returns>
 		public static Uri RemoveQuery(Uri url) => new Uri(url.ToString().Split('?', '#')[0]);
+
+		/// <inheritdoc />
+		public void AddGatherer<T>() where T : IImageGatherer, new() => Gatherers.Add(new T());
+
+		/// <inheritdoc />
+		public HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default)
+		{
+			var req = new HttpRequestMessage
+			{
+				RequestUri = url,
+				Method = method ?? HttpMethod.Get,
+			};
+			req.Headers.Referrer = url; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
+			return req;
+		}
+
+		/// <inheritdoc />
+		public async Task<ClientResult<HtmlDocument>> GetHtmlAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
+		{
+			var result = await GetTextAsync(reqFactory, wait, tries).CAF();
+			if (result.IsSuccess)
+			{
+				var doc = new HtmlDocument();
+				doc.LoadHtml(result.Value);
+				return new ClientResult<HtmlDocument>(doc, result.StatusCode, result.IsSuccess);
+			}
+			else
+			{
+				return new ClientResult<HtmlDocument>(null, result.StatusCode, result.IsSuccess);
+			}
+		}
+
+		/// <inheritdoc />
+		public async Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
+		{
+			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
+			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
+			for (var i = 0; i < tries; ++i)
+			{
+				var diff = nextRetry - DateTime.UtcNow;
+				if (diff.Ticks > 0)
+				{
+					await Task.Delay(diff).CAF();
+				}
+
+				using var resp = await SendAsync(reqFactory.Invoke()).CAF();
+
+				var code = (int)resp.StatusCode;
+				if (code == 421 || code == 429) //Rate limit error codes
+				{
+					//Wait longer on each failure
+					nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i)));
+					ConsoleUtils.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
+					continue;
+				}
+
+#warning see if this can be removed?
+				//Means this is using the brotli compression method, which isn't implemented into HttpClient yet
+				if (resp.Content.Headers.TryGetValues("Content-Encoding", out var val) && val.Any(x => x == "br"))
+				{
+					using var s = await resp.Content.ReadAsStreamAsync().CAF();
+					using var br = new BrotliSharpLib.BrotliStream(s, CompressionMode.Decompress);
+					using var r = new StreamReader(br);
+
+					return new ClientResult<string>(await r.ReadToEndAsync().CAF(), resp.StatusCode, resp.IsSuccessStatusCode);
+				}
+
+				var bytes = await resp.Content.ReadAsByteArrayAsync().CAF();
+				var text = Encoding.UTF8.GetString(bytes);
+				return new ClientResult<string>(text, resp.StatusCode, resp.IsSuccessStatusCode);
+			}
+			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
+		}
+
+		/// <inheritdoc />
+		public void RemoveGatherer<T>() where T : IImageGatherer, new() => Gatherers.RemoveAll(x => x is T);
+
 		/// <summary>
 		/// Generates the default client handler for the client.
 		/// </summary>
@@ -80,78 +165,5 @@ namespace ImageDL.Classes.ImageDownloading
 				AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 			};
 		}
-
-		/// <inheritdoc />
-		public HttpRequestMessage GenerateReq(Uri url, HttpMethod method = default)
-		{
-			var req = new HttpRequestMessage
-			{
-				RequestUri = url,
-				Method = method ?? HttpMethod.Get,
-			};
-			req.Headers.Referrer = url; //Set self as referer since Pixiv requires a valid Pixiv url as its referer
-			return req;
-		}
-		/// <inheritdoc />
-		public async Task<ClientResult<string>> GetTextAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
-		{
-			wait = wait == default ? TimeSpan.FromSeconds(2) : wait;
-			var nextRetry = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1));
-			for (int i = 0; i < tries; ++i)
-			{
-				var diff = nextRetry - DateTime.UtcNow;
-				if (diff.Ticks > 0)
-				{
-					await Task.Delay(diff).CAF();
-				}
-
-				using (var resp = await SendAsync(reqFactory.Invoke()).CAF())
-				{
-					var code = (int)resp.StatusCode;
-					if (code == 421 || code == 429) //Rate limit error codes
-					{
-						//Wait longer on each failure
-						nextRetry = DateTime.UtcNow.Add(TimeSpan.FromTicks(wait.Ticks * (int)Math.Pow(2, i)));
-						ConsoleUtils.WriteLine($"Rate limited; retrying next at: {nextRetry.ToLongTimeString()}");
-						continue;
-					}
-
-					//Means this is using the brotli compression method, which isn't implemented into HttpClient yet
-					if (resp.Content.Headers.TryGetValues("Content-Encoding", out var val) && val.Any(x => x == "br"))
-					{
-						using (var s = await resp.Content.ReadAsStreamAsync().CAF())
-						using (var br = new BrotliStream(s, CompressionMode.Decompress))
-						using (var r = new StreamReader(br))
-						{
-							return new ClientResult<string>(await r.ReadToEndAsync().CAF(), resp.StatusCode, resp.IsSuccessStatusCode);
-						}
-					}
-
-					var bytes = await resp.Content.ReadAsByteArrayAsync().CAF();
-					var text = Encoding.UTF8.GetString(bytes);
-					return new ClientResult<string>(text, resp.StatusCode, resp.IsSuccessStatusCode);
-				}
-			}
-			throw new HttpRequestException($"Unable to get the requested webpage after {tries} tries.");
-		}
-		/// <inheritdoc />
-		public async Task<ClientResult<HtmlDocument>> GetHtmlAsync(Func<HttpRequestMessage> reqFactory, TimeSpan wait = default, int tries = 3)
-		{
-			var result = await GetTextAsync(reqFactory, wait, tries).CAF();
-			if (result.IsSuccess)
-			{
-				var doc = new HtmlDocument();
-				doc.LoadHtml(result.Value);
-				return new ClientResult<HtmlDocument>(doc, result.StatusCode, result.IsSuccess);
-			}
-			else
-			{
-				return new ClientResult<HtmlDocument>(null, result.StatusCode, result.IsSuccess);
-			}
-		}
-		/// <inheritdoc />
-		public void AddGatherer<T>() where T : IImageGatherer, new() => Gatherers.Add(new T());
-		/// <inheritdoc />
-		public void RemoveGatherer<T>() where T : IImageGatherer, new() => Gatherers.RemoveAll(x => x is T);
 	}
 }

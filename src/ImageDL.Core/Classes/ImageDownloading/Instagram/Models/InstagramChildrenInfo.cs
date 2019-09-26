@@ -1,20 +1,9 @@
 ﻿using System.Collections.Generic;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 {
-	/// <summary>
-	/// Information about the children of a post.
-	/// </summary>
-	public struct InstagramChildrenInfo
-	{
-		/// <summary>
-		/// The children of a post.
-		/// </summary>
-		[JsonProperty("edges")]
-		public IList<InstagramChildNode> Nodes { get; private set; }
-	}
-
 	/// <summary>
 	/// Holds the child.
 	/// </summary>
@@ -31,5 +20,17 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString() => Child.ToString();
+	}
+
+	/// <summary>
+	/// Information about the children of a post.
+	/// </summary>
+	public struct InstagramChildrenInfo
+	{
+		/// <summary>
+		/// The children of a post.
+		/// </summary>
+		[JsonProperty("edges")]
+		public IList<InstagramChildNode> Nodes { get; private set; }
 	}
 }

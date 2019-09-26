@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Eshuushuu
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Eshuushuu
 	public struct EshuushuuImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("e-shuushuu.net");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> EshuushuuPostDownloader.GetEshuushuuImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await EshuushuuPostDownloader.GetEshuushuuImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("e-shuushuu.net");
 	}
 }

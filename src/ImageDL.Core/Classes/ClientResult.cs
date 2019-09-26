@@ -8,17 +8,19 @@ namespace ImageDL.Classes
 	public struct ClientResult<T>
 	{
 		/// <summary>
-		/// The value of the request.
+		/// Whether or not the request was successful.
 		/// </summary>
-		public readonly T Value;
+		public readonly bool IsSuccess;
+
 		/// <summary>
 		/// The http status code for the request.
 		/// </summary>
 		public readonly HttpStatusCode StatusCode;
+
 		/// <summary>
-		/// Whether or not the request was successful.
+		/// The value of the request.
 		/// </summary>
-		public readonly bool IsSuccess;
+		public readonly T Value;
 
 		/// <summary>
 		/// Creates an instance of <see cref="ClientResult{T}"/>.

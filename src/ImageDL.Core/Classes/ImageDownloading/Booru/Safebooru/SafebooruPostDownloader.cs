@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
+
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Booru.Safebooru.Models.SafebooruPost;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
@@ -23,51 +27,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
 		/// </summary>
 		public SafebooruPostDownloader() : base(int.MaxValue, false) { }
 
-		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page) => GenerateSafebooruQuery(tags, page);
-		/// <inheritdoc />
-		protected override List<Model> Parse(string text) => ParseSafebooruPosts(text);
-
-		/// <summary>
-		/// Generates a search uri.
-		/// </summary>
-		/// <param name="tags"></param>
-		/// <param name="page"></param>
-		/// <returns></returns>
-		private static Uri GenerateSafebooruQuery(string tags, int page)
-		{
-			return new Uri($"https://safebooru.org/index.php" +
-				$"?page=dapi" +
-				$"&s=post" +
-				$"&q=index" +
-				$"&json=0" +
-				$"&limit=100" +
-				$"&tags={WebUtility.UrlEncode(tags)}" +
-				$"&pid={page}");
-		}
-		/// <summary>
-		/// Parses Safebooru posts from the supplied text.
-		/// </summary>
-		/// <param name="text"></param>
-		/// <returns></returns>
-		private static List<Model> ParseSafebooruPosts(string text)
-		{
-			var posts = JObject.Parse(JsonUtils.ConvertXmlToJson(text))["posts"];
-			var count = posts["count"].ToObject<int>();
-			return count == 1 ? new List<Model> { posts["post"].ToObject<Model>() } : posts["post"].ToObject<List<Model>>();
-		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetSafebooruPostAsync(IDownloaderClient client, string id)
-		{
-			var query = GenerateSafebooruQuery($"id:{id}", 0);
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			return result.IsSuccess ? ParseSafebooruPosts(result.Value)[0] : null;
-		}
 		/// <summary>
 		/// Gets images from the specified url.
 		/// </summary>
@@ -87,6 +46,55 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Safebooru
 				return await post.GetImagesAsync(client).CAF();
 			}
 			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetSafebooruPostAsync(IDownloaderClient client, string id)
+		{
+			var query = GenerateSafebooruQuery($"id:{id}", 0);
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			return result.IsSuccess ? ParseSafebooruPosts(result.Value)[0] : null;
+		}
+
+		/// <inheritdoc />
+		protected override Uri GenerateQuery(string tags, int page) => GenerateSafebooruQuery(tags, page);
+
+		/// <inheritdoc />
+		protected override List<Model> Parse(string text) => ParseSafebooruPosts(text);
+
+		/// <summary>
+		/// Generates a search uri.
+		/// </summary>
+		/// <param name="tags"></param>
+		/// <param name="page"></param>
+		/// <returns></returns>
+		private static Uri GenerateSafebooruQuery(string tags, int page)
+		{
+			return new Uri("https://safebooru.org/index.php" +
+				"?page=dapi" +
+				"&s=post" +
+				"&q=index" +
+				"&json=0" +
+				"&limit=100" +
+				$"&tags={WebUtility.UrlEncode(tags)}" +
+				$"&pid={page}");
+		}
+
+		/// <summary>
+		/// Parses Safebooru posts from the supplied text.
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		private static List<Model> ParseSafebooruPosts(string text)
+		{
+			var posts = JObject.Parse(JsonUtils.ConvertXmlToJson(text))["posts"];
+			var count = posts["count"].ToObject<int>();
+			return count == 1 ? new List<Model> { posts["post"].ToObject<Model>() } : posts["post"].ToObject<List<Model>>();
 		}
 	}
 }

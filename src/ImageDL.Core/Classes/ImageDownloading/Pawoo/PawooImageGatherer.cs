@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Pawoo
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo
 	public struct PawooImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("pawoo.net");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> PawooPostDownloader.GetPawooImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await PawooPostDownloader.GetPawooImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("pawoo.net");
 	}
 }

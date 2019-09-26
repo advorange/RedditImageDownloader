@@ -9,6 +9,7 @@
 		/// Search by tags.
 		/// </summary>
 		Tag,
+
 		/// <summary>
 		/// Search by series.
 		/// </summary>

@@ -4,11 +4,16 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Bcy.Models.BcyPost;
 
 namespace ImageDL.Classes.ImageDownloading.Bcy
@@ -35,21 +40,46 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetBcyImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
+			if (!result.IsSuccess)
+			{
+				return ImageResponse.FromNotFound(url);
+			}
+			var img = result.Value.DocumentNode.Descendants("img");
+			var details = img.Where(x => x.GetAttributeValue("class", "").CaseInsContains("detail_std"));
+			var src = details.Select(x => x.GetAttributeValue("src", ""));
+			var urls = src.Select(x => new Uri(x.Substring(0, x.LastIndexOf('/'))));
+			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();
 			//Iterate becasue there's a limit of 20 per page
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 20); ++i)
 			{
 				token.ThrowIfCancellationRequested();
-				var query = new Uri($"https://bcy.net/home/timeline/loaduserposts" +
-					$"?since={(parsed.Any() ? parsed.Last().Id : "0")}" +
+				var query = new Uri("https://bcy.net/home/timeline/loaduserposts" +
+					$"?since={(parsed.Count > 0 ? parsed.Last().Id : "0")}" +
 					$"&uid={userId}" +
-					$"&limit=20" +
-					$"&source=all" +
-					$"&filter=origin");
+					"&limit=20" +
+					"&source=all" +
+					"&filter=origin");
 				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
 				if (!result.IsSuccess)
 				{
@@ -77,6 +107,7 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 				}
 			}
 		}
+
 		/// <summary>
 		/// Gets the id of the Bcy user.
 		/// </summary>
@@ -107,30 +138,6 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 			{
 				throw new HttpRequestException("Unable to get the Bcy user id.", e);
 			}
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetBcyImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
-			if (!result.IsSuccess)
-			{
-				return ImageResponse.FromNotFound(url);
-			}
-			var img = result.Value.DocumentNode.Descendants("img");
-			var details = img.Where(x => x.GetAttributeValue("class", "").CaseInsContains("detail_std"));
-			var src = details.Select(x => x.GetAttributeValue("src", ""));
-			var urls = src.Select(x => new Uri(x.Substring(0, x.LastIndexOf('/'))));
-			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
 		}
 	}
 }

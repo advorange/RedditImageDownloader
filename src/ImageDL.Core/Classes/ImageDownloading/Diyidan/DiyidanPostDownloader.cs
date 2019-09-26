@@ -4,10 +4,14 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Model = ImageDL.Classes.ImageDownloading.Diyidan.Models.DiyidanPost;
 
 namespace ImageDL.Classes.ImageDownloading.Diyidan
@@ -34,12 +38,47 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan
 			});
 		}
 
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetDiyidanImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
+			if (!result.IsSuccess)
+			{
+				return ImageResponse.FromNotFound(url);
+			}
+			var div = result.Value.DocumentNode.Descendants("div");
+			if (div.Any(x => x.GetAttributeValue("class", null) == "video_404_box"))
+			{
+				return ImageResponse.FromAnimated(url);
+			}
+			var content = div.SingleOrDefault(x => x.GetAttributeValue("class", "").CaseInsContains("user_post_content"));
+			if (content == null)
+			{
+				return ImageResponse.FromNotFound(url);
+			}
+			var img = content.Descendants("img");
+			var postImages = img.Where(x => x.GetAttributeValue("class", null) != "mb-img");
+			var src = postImages.Select(x => x.GetAttributeValue("src", ""));
+			var urls = src.Select(x => new Uri($"https:{x.Substring(0, x.LastIndexOf('!'))}"));
+			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
+		}
+
 		/// <inheritdoc />
 		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
 		{
 			var userId = await GetUserIdAsync(client, Username).CAF();
 			var parsed = new List<Model>();
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count > 0); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = new Uri($"https://www.diyidan.com/user/posts/{userId}/{i + 1}");
@@ -70,6 +109,7 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan
 				}
 			}
 		}
+
 		/// <summary>
 		/// Gets the id of the Diyidan user.
 		/// </summary>
@@ -106,40 +146,6 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan
 			{
 				throw new HttpRequestException("Unable to get the Diyidan user id.", e);
 			}
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetDiyidanImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var result = await client.GetHtmlAsync(() => client.GenerateReq(url)).CAF();
-			if (!result.IsSuccess)
-			{
-				return ImageResponse.FromNotFound(url);
-			}
-			var div = result.Value.DocumentNode.Descendants("div");
-			if (div.Any(x => x.GetAttributeValue("class", null) == "video_404_box"))
-			{
-				return ImageResponse.FromAnimated(url);
-			}
-			var content = div.SingleOrDefault(x => x.GetAttributeValue("class", "").CaseInsContains("user_post_content"));
-			if (content == null)
-			{
-				return ImageResponse.FromNotFound(url);
-			}
-			var img = content.Descendants("img");
-			var postImages = img.Where(x => x.GetAttributeValue("class", null) != "mb-img");
-			var src = postImages.Select(x => x.GetAttributeValue("src", ""));
-			var urls = src.Select(x => new Uri($"https:{x.Substring(0, x.LastIndexOf('!'))}"));
-			return src.Any() ? ImageResponse.FromImages(urls) : ImageResponse.FromNotFound(url);
 		}
 	}
 }

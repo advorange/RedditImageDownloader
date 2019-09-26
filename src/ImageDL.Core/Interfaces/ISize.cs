@@ -6,12 +6,13 @@
 	public interface ISize
 	{
 		/// <summary>
-		/// The width of the object.
-		/// </summary>
-		int Width { get; }
-		/// <summary>
 		/// The height of the object.
 		/// </summary>
 		int Height { get; }
+
+		/// <summary>
+		/// The width of the object.
+		/// </summary>
+		int Width { get; }
 	}
 }

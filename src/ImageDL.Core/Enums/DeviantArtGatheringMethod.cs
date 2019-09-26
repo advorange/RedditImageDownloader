@@ -9,10 +9,12 @@
 		/// Scrape the website directly by parsing HTML.
 		/// </summary>
 		Scraping,
+
 		/// <summary>
 		/// Get the values from an api using either json or xml.
 		/// </summary>
 		Api,
+
 		/// <summary>
 		/// Get the values from an rss feed as xml.
 		/// </summary>

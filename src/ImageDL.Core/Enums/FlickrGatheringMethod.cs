@@ -9,6 +9,7 @@
 		/// Indicates to search globally.
 		/// </summary>
 		Tags,
+
 		/// <summary>
 		/// Indicates to search for everything on a user's page.
 		/// </summary>

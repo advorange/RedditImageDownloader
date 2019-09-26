@@ -6,12 +6,17 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Imgur.Models;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Imgur.Models.ImgurPost;
 
 namespace ImageDL.Classes.ImageDownloading.Imgur
@@ -36,8 +41,76 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 		{
 			SettingParser.Add(new Setting<string>(() => Tags)
 			{
-				Description = $"The tags to search for. For help see https://apidocs.imgur.com/#3c981acf-47aa-488f-b068-269f65aee3ce.",
+				Description = "The tags to search for. For help see https://apidocs.imgur.com/#3c981acf-47aa-488f-b068-269f65aee3ce.",
 			});
+		}
+
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetImgurImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			var id = u.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
+			var images = await GetImgurImagesByCode(client, id).CAF();
+			if (images.Count > 0)
+			{
+				var tasks = images.Select(async x => await x.GetImagesAsync(client).CAF());
+				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
+				return ImageResponse.FromImages(urls);
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the images from the supplied album id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="code"></param>
+		/// <returns></returns>
+		public static async Task<List<ImgurImage>> GetImgurImagesByCode(IDownloaderClient client, string code)
+		{
+			//Albums are more commonly the 5 digit length code
+			var isAlbum = code.Length == 5;
+			for (var notFoundCount = 0; ;)
+			{
+				var endpoint = isAlbum ? "album" : "image";
+				var query = new Uri($"https://api.imgur.com/3/{endpoint}/{code}?client_id={await GetApiKeyAsync(client).CAF()}");
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+				if (result.IsSuccess)
+				{
+					var data = JObject.Parse(result.Value)["data"];
+					return isAlbum
+						? data["images"].ToObject<List<ImgurImage>>()
+						: new List<ImgurImage> { data.ToObject<ImgurImage>() };
+				}
+				//Chance we may hit a 404 page since we don't know for certain what type of object the code leads to
+				if (result.StatusCode == HttpStatusCode.NotFound)
+				{
+					//Lead to a 404 page twice, meaning it doesn't exist as either an album or image
+					if (++notFoundCount > 1)
+					{
+						return new List<ImgurImage>();
+					}
+					//Attempt to find the object as an image if we tried album before, or vice versa
+					isAlbum = !isAlbum;
+					continue;
+				}
+				//If there's an error with the api key, try to get another one
+				if (result.Value.Contains("client_id"))
+				{
+					client.ApiKeys.Remove(_Type);
+					continue;
+				}
+				return new List<ImgurImage>();
+			}
 		}
 
 		/// <inheritdoc />
@@ -46,7 +119,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			var parsed = new List<Model>();
 			var validToken = false;
 			//Iterate to get the next page of results
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 60); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = new Uri($"https://api.imgur.com/3/gallery/search/time/all/{i}/" +
@@ -83,7 +156,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 					{
 						post.Images.Remove(image);
 					}
-					if (!post.Images.Any())
+					if (post.Images.Count == 0)
 					{
 						continue;
 					}
@@ -109,7 +182,7 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 			}
 
 			//Load the page regularly first so we can get some data from it
-			var query = new Uri($"https://imgur.com/t/dogs");
+			var query = new Uri("https://imgur.com/t/dogs");
 			var result = await client.GetHtmlAsync(() => client.GenerateReq(query)).CAF();
 			if (!result.IsSuccess)
 			{
@@ -128,77 +201,11 @@ namespace ImageDL.Classes.ImageDownloading.Imgur
 
 			//Read main.gibberish.js and find the client id
 			//c="546c25a59c58ad7",s="6LdZsh4TAAAAAGnDJx9KXxURWygq8exADiSHLP-M";self.AMPLITUDE_KEY
-			var alpha = "[a-zA-Z]";
+			const string alpha = "[a-zA-Z]";
 			var idSearch = $@"{alpha}=""(\w{{1,20}}?)"",{alpha}="".{{1,50}}?"";self\.AMPLITUDE_KEY";
 			var idMatch = Regex.Matches(jsResult.Value, idSearch).Cast<Match>().Single();
 			var idGroup = idMatch.Groups[1];
 			return client.ApiKeys[_Type] = new ApiKey(idGroup.Value);
-		}
-		/// <summary>
-		/// Gets the images from the supplied album id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="code"></param>
-		/// <returns></returns>
-		public static async Task<List<ImgurImage>> GetImgurImagesByCode(IDownloaderClient client, string code)
-		{
-			//Albums are more commonly the 5 digit length code
-			var isAlbum = code.Length == 5;
-			for (int notFoundCount = 0; ;)
-			{
-				var endpoint = isAlbum ? "album" : "image";
-				var query = new Uri($"https://api.imgur.com/3/{endpoint}/{code}?client_id={await GetApiKeyAsync(client).CAF()}");
-				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-				if (result.IsSuccess)
-				{
-					var data = JObject.Parse(result.Value)["data"];
-					return isAlbum
-						? data["images"].ToObject<List<ImgurImage>>()
-						: new List<ImgurImage> { data.ToObject<ImgurImage>() };
-				}
-				//Chance we may hit a 404 page since we don't know for certain what type of object the code leads to
-				if (result.StatusCode == HttpStatusCode.NotFound)
-				{
-					//Lead to a 404 page twice, meaning it doesn't exist as either an album or image
-					if (++notFoundCount > 1)
-					{
-						return new List<ImgurImage>();
-					}
-					//Attempt to find the object as an image if we tried album before, or vice versa
-					isAlbum = !isAlbum;
-					continue;
-				}
-				//If there's an error with the api key, try to get another one
-				if (result.Value.Contains("client_id"))
-				{
-					client.ApiKeys.Remove(_Type);
-					continue;
-				}
-				return new List<ImgurImage>();
-			}
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetImgurImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString().Replace("_d", "");
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var id = u.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
-			var images = await GetImgurImagesByCode(client, id).CAF();
-			if (images.Any())
-			{
-				var tasks = images.Select(async x => await x.GetImagesAsync(client).CAF());
-				var urls = (await Task.WhenAll(tasks).CAF()).SelectMany(x => x.ImageUrls).ToArray();
-				return ImageResponse.FromImages(urls);
-			}
-			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

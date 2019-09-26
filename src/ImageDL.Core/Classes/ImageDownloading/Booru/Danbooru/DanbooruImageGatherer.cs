@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 	public struct DanbooruImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("donmai.us");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> DanbooruPostDownloader.GetDanbooruImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await DanbooruPostDownloader.GetDanbooruImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("donmai.us");
 	}
 }

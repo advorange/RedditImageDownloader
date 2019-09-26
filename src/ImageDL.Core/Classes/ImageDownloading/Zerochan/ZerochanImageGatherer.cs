@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Zerochan
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Zerochan
 	public struct ZerochanImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("zerochan.net");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> ZerochanPostDownloader.GetZerochanImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await ZerochanPostDownloader.GetZerochanImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("zerochan.net");
 	}
 }

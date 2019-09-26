@@ -12,11 +12,13 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// </summary>
 		[JsonProperty("color")]
 		public string Color { get; private set; }
+
 		/// <summary>
 		/// The key for this preset.
 		/// </summary>
 		[JsonProperty("key")]
 		public string Key { get; private set; }
+
 		/// <summary>
 		/// Name representing the preset. Generally is just the key but in all capitals.
 		/// </summary>

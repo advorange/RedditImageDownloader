@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		/// </summary>
 		[JsonProperty("label")]
 		public string Label { get; private set; }
+
 		/// <summary>
 		/// The category's path.
 		/// </summary>

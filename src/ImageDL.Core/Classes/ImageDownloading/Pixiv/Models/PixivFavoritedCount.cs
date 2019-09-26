@@ -8,15 +8,16 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv.Models
 	public sealed class PixivFavoritedCount
 	{
 		/// <summary>
-		/// Count of public favorites.
-		/// </summary>
-		[JsonProperty("public")]
-		public int Public { get; private set; }
-		/// <summary>
 		/// Count of private favorites.
 		/// </summary>
 		[JsonProperty("private")]
 		public int Private { get; private set; }
+
+		/// <summary>
+		/// Count of public favorites.
+		/// </summary>
+		[JsonProperty("public")]
+		public int Public { get; private set; }
 
 		/// <summary>
 		/// Returns the total count of favorites.

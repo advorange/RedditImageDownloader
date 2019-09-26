@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Booru.Models;
 using ImageDL.Interfaces;
@@ -17,6 +20,23 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 	[DownloaderName("Booru")]
 	public abstract class BooruPostDownloader<T> : PostDownloader where T : BooruPost
 	{
+		private readonly bool _Json;
+
+		private readonly int _TagLimit;
+
+		private int _Page = 1;
+
+		private string _Tags;
+
+		/// <summary>
+		/// The page to start downloading from.
+		/// </summary>
+		public int Page
+		{
+			get => _Page;
+			set => _Page = Math.Min(1, value);
+		}
+
 		/// <summary>
 		/// The terms to search for. Split by spaces.
 		/// </summary>
@@ -32,26 +52,14 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 				_Tags = value;
 			}
 		}
-		/// <summary>
-		/// The page to start downloading from.
-		/// </summary>
-		public int Page
-		{
-			get => _Page;
-			set => _Page = Math.Min(1, value);
-		}
 
-		private string _Tags;
-		private int _Page = 1; //Start on the first page, not 0 indexed.
-		private readonly int _TagLimit;
-		private readonly bool _Json;
-
+		//Start on the first page, not 0 indexed.
 		/// <summary>
 		/// Creats an instance of <see cref="BooruPostDownloader{T}"/>.
 		/// </summary>
 		/// <param name="tagLimit">The maximum amount of tags allowed to search at a time.</param>
 		/// <param name="json">If true, tells the downloader it should be expecting to parse Json. Otherwise parses XML.</param>
-		public BooruPostDownloader(int tagLimit, bool json = true)
+		protected BooruPostDownloader(int tagLimit, bool json = true)
 		{
 			SettingParser.Add(new Setting<string>(() => Tags)
 			{
@@ -72,7 +80,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		{
 			var parsed = new List<T>();
 			//Iterate because there's a limit of around 100 per request
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = GenerateQuery(Tags, Page + i);
@@ -101,6 +109,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 				}
 			}
 		}
+
 		/// <summary>
 		/// Generates the search query to get images from.
 		/// Keep the limit to 100 otherwise some logic may not work in <see cref="GatherAsync(IDownloaderClient, List{IPost}, CancellationToken)"/>.
@@ -109,6 +118,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru
 		/// <param name="page"></param>
 		/// <returns></returns>
 		protected abstract Uri GenerateQuery(string tags, int page);
+
 		/// <summary>
 		/// Converts the text into a list of posts.
 		/// </summary>

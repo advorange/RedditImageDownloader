@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
@@ -8,7 +9,7 @@ using SixLabors.ImageSharp.Processing;
 namespace ImageDL.Classes.ImageComparing.Implementations
 {
 	/// <summary>
-	/// Holds details about images which have been downloaded, while using ImageSharp for <see cref="HashImageStream(Stream)"/>.
+	/// Holds details about images which have been downloaded, while using ImageSharp for <see cref="HashImageStream(Stream, int)"/>.
 	/// </summary>
 	/// <remarks>This uses a high amount of RAM, but is quicker than the Windows implementation.</remarks>
 	public sealed class ImageSharpImageComparer : ImageComparer
@@ -20,7 +21,7 @@ namespace ImageDL.Classes.ImageComparing.Implementations
 		public ImageSharpImageComparer(string databasePath) : base(databasePath) { }
 
 		/// <inheritdoc />
-		protected override string HashImageStream(Stream s)
+		protected override string HashImageStream(Stream s, int size)
 		{
 			s.Seek(0, SeekOrigin.Begin);
 
@@ -29,7 +30,7 @@ namespace ImageDL.Classes.ImageComparing.Implementations
 			Span<Rgba32> pixels;
 			using (var img = Image.Load<Rgba32>(s))
 			{
-				img.Mutate(x => x.Resize(ThumbnailSize, ThumbnailSize));
+				img.Mutate(x => x.Resize(size, size));
 				pixels = img.GetPixelSpan();
 			}
 			//GC.Collect helps lower the memory usage from around 2GB tops to 400MB tops, but I'm not sure if I know more than regular GC
@@ -39,7 +40,7 @@ namespace ImageDL.Classes.ImageComparing.Implementations
 #endif
 
 			var brightnesses = new float[pixels.Length];
-			for (int i = 0; i < pixels.Length; ++i)
+			for (var i = 0; i < pixels.Length; ++i)
 			{
 				var pixel = pixels[i];
 				brightnesses[i] = CalculateBrightness(pixel.A, pixel.R, pixel.G, pixel.B);

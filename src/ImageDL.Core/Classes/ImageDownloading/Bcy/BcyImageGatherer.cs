@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageDownloading.Bcy
@@ -11,8 +13,11 @@ namespace ImageDL.Classes.ImageDownloading.Bcy
 	public struct BcyImageGatherer : IImageGatherer
 	{
 		/// <inheritdoc />
-		public bool IsFromWebsite(Uri url) => url.Host.CaseInsContains("bcy.net");
+		public Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url)
+			=> BcyPostDownloader.GetBcyImagesAsync(client, url);
+
 		/// <inheritdoc />
-		public async Task<ImageResponse> FindImagesAsync(IDownloaderClient client, Uri url) => await BcyPostDownloader.GetBcyImagesAsync(client, url).CAF();
+		public bool IsFromWebsite(Uri url)
+			=> url.Host.CaseInsContains("bcy.net");
 	}
 }

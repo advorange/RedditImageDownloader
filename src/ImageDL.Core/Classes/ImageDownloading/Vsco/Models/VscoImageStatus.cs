@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Vsco.Models
@@ -13,15 +14,17 @@ namespace ImageDL.Classes.ImageDownloading.Vsco.Models
 		/// </summary>
 		[JsonProperty("code")]
 		public int Code { get; private set; }
-		/// <summary>
-		/// The unix timestamp in milliseconds.
-		/// </summary>
-		[JsonProperty("time")]
-		public long Timestamp { get; private set; }
+
 		/// <summary>
 		/// When the status was last changed.
 		/// </summary>
 		[JsonIgnore]
 		public DateTime CreatedAt => (new DateTime(1970, 1, 1).AddSeconds(Timestamp / 1000)).ToUniversalTime();
+
+		/// <summary>
+		/// The unix timestamp in milliseconds.
+		/// </summary>
+		[JsonProperty("time")]
+		public long Timestamp { get; private set; }
 	}
 }

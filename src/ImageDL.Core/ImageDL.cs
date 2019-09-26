@@ -7,15 +7,19 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation;
 using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesSettingParser.Utils;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageComparing;
 using ImageDL.Classes.ImageDownloading;
 using ImageDL.Classes.ImageDownloading.Reddit;
 using ImageDL.Interfaces;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageDL
@@ -33,6 +37,7 @@ namespace ImageDL
 			.Where(x => !x.IsAbstract && typeof(PostDownloader).IsAssignableFrom(x))
 			.ToDictionary(x => x.GetCustomAttribute<DownloaderNameAttribute>().Name, x => x.AsType()))
 			.ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+
 		/// <summary>
 		/// The key users can press to cancel a downloader.
 		/// </summary>
@@ -69,25 +74,7 @@ namespace ImageDL
 				.AddSingleton<IDownloaderClient, DownloaderClient>()
 				.AddSingleton<IImageComparerFactory, ImageComparerFactory<T>>());
 		}
-		/// <summary>
-		/// Runs a method from the passed in arguments.
-		/// </summary>
-		/// <param name="services"></param>
-		/// <param name="args"></param>
-		/// <param name="prefixes">The default prefixes are </param>
-		/// <returns></returns>
-		public virtual Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
-		{
-			var parsedArgs = ArgumentMappingUtils.Parse(new ParseArgs(args, new[] { '"' }, new[] { '"' }), prefixes ?? SettingParser.DefaultPrefixes);
-			var dictionary = parsedArgs.ToDictionary(x => x.Setting, x => x.Args, StringComparer.OrdinalIgnoreCase);
-			switch (dictionary.TryGetValue("method", out var val) ? val : null)
-			{
-				case "RedditDirectories":
-					return RedditDirectories(services);
-				default:
-					return Default(services);
-			}
-		}
+
 		/// <summary>
 		/// Lets the user pick what downloader, and then pass in arguments and run it.
 		/// </summary>
@@ -103,9 +90,10 @@ namespace ImageDL
 					ConsoleUtils.WriteLine(downloader.SettingParser.GetNeededSettings().FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey);
+				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey).CAF();
 			}
 		}
+
 		/// <summary>
 		/// Updates the various directories using their names as subreddits.
 		/// </summary>
@@ -130,9 +118,28 @@ namespace ImageDL
 					ConsoleUtils.WriteLine(downloader.SettingParser.FormatNeededSettings());
 					ConsoleUtils.WriteLine(downloader.SettingParser.Parse(Console.ReadLine()).ToString());
 				}
-				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey);
+				await DoMethodWithCancelOption(t => downloader.DownloadAsync(services, t), CancelKey).CAF();
 			}
 		}
+
+		/// <summary>
+		/// Runs a method from the passed in arguments.
+		/// </summary>
+		/// <param name="services"></param>
+		/// <param name="args"></param>
+		/// <param name="prefixes">The default prefixes are </param>
+		/// <returns></returns>
+		public virtual Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
+		{
+			var parsedArgs = ArgumentMappingUtils.Parse(new ParseArgs(args, new[] { '"' }, new[] { '"' }), prefixes ?? SettingParser.DefaultPrefixes);
+			var dictionary = parsedArgs.ToDictionary(x => x.Setting, x => x.Args, StringComparer.OrdinalIgnoreCase);
+			return (dictionary.TryGetValue("method", out var val) ? val : null) switch
+			{
+				"RedditDirectories" => RedditDirectories(services),
+				_ => Default(services),
+			};
+		}
+
 		/// <summary>
 		/// Runs the task, but allows it to be canceled by the user when they press a specified key.
 		/// </summary>
@@ -146,7 +153,7 @@ namespace ImageDL
 			bool catchException = true)
 		{
 			var running = true;
-			var source = new CancellationTokenSource();
+			using var source = new CancellationTokenSource();
 			_ = Task.Run(() => //This thread has to be nonblocking
 			{
 				while (running)
@@ -171,6 +178,7 @@ namespace ImageDL
 				ConsoleUtils.WriteLine($"The downloading was canceled.{Environment.NewLine}");
 			}
 		}
+
 		/// <summary>
 		/// Makes sure the input directory is valid.
 		/// </summary>
@@ -190,6 +198,7 @@ namespace ImageDL
 			ConsoleUtils.WriteLine("Invalid directory provided.");
 			return GetDirectory();
 		}
+
 		/// <summary>
 		/// Gets a valid downloader type.
 		/// </summary>

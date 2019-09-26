@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
+
 using Model = ImageDL.Classes.ImageDownloading.Booru.Danbooru.Models.DanbooruPost;
 
 namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
@@ -22,46 +26,6 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 		/// </summary>
 		public DanbooruPostDownloader() : base(2) { }
 
-		/// <inheritdoc />
-		protected override Uri GenerateQuery(string tags, int page)
-			=> GenerateDanbooruQuery(tags, page);
-		/// <inheritdoc />
-		protected override List<Model> Parse(string text)
-			=> ParseDanbooruPosts(text);
-
-		/// <summary>
-		/// Generates a search uri.
-		/// </summary>
-		/// <param name="tags"></param>
-		/// <param name="page"></param>
-		/// <returns></returns>
-		private static Uri GenerateDanbooruQuery(string tags, int page)
-		{
-			return new Uri($"https://danbooru.donmai.us/posts.json" +
-				$"?utf8=✓" +
-				$"&limit=100" +
-				$"&tags={WebUtility.UrlEncode(tags)}" +
-				$"&page={page}");
-		}
-		/// <summary>
-		/// Parses Danbooru posts from the supplied text.
-		/// </summary>
-		/// <param name="text"></param>
-		/// <returns></returns>
-		private static List<Model> ParseDanbooruPosts(string text)
-			=> JsonConvert.DeserializeObject<List<Model>>(text);
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetDanbooruPostAsync(IDownloaderClient client, string id)
-		{
-			var query = GenerateDanbooruQuery($"id:{id}", 0);
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			return result.IsSuccess ? ParseDanbooruPosts(result.Value).Single() : null;
-		}
 		/// <summary>
 		/// Gets images from the specified url.
 		/// </summary>
@@ -75,7 +39,7 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 			{
 				return ImageResponse.FromUrl(new Uri(u));
 			}
-			var search = "/posts/";
+			const string search = "/posts/";
 			if (u.CaseInsIndexOf(search, out var index))
 			{
 				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
@@ -86,5 +50,49 @@ namespace ImageDL.Classes.ImageDownloading.Booru.Danbooru
 			}
 			return ImageResponse.FromNotFound(url);
 		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetDanbooruPostAsync(IDownloaderClient client, string id)
+		{
+			var query = GenerateDanbooruQuery($"id:{id}", 0);
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			return result.IsSuccess ? ParseDanbooruPosts(result.Value).Single() : null;
+		}
+
+		/// <inheritdoc />
+		protected override Uri GenerateQuery(string tags, int page)
+			=> GenerateDanbooruQuery(tags, page);
+
+		/// <inheritdoc />
+		protected override List<Model> Parse(string text)
+			=> ParseDanbooruPosts(text);
+
+		/// <summary>
+		/// Generates a search uri.
+		/// </summary>
+		/// <param name="tags"></param>
+		/// <param name="page"></param>
+		/// <returns></returns>
+		private static Uri GenerateDanbooruQuery(string tags, int page)
+		{
+			return new Uri("https://danbooru.donmai.us/posts.json" +
+				"?utf8=✓" +
+				"&limit=100" +
+				$"&tags={WebUtility.UrlEncode(tags)}" +
+				$"&page={page}");
+		}
+
+		/// <summary>
+		/// Parses Danbooru posts from the supplied text.
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
+		private static List<Model> ParseDanbooruPosts(string text)
+			=> JsonConvert.DeserializeObject<List<Model>>(text);
 	}
 }

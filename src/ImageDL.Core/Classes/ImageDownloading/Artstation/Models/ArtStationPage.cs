@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Artstation.Models
@@ -13,6 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 		/// </summary>
 		[JsonProperty("data")]
 		public IList<ArtstationPost> Posts { get; private set; }
+
 		/// <summary>
 		/// The total amount of posts from a user.
 		/// </summary>

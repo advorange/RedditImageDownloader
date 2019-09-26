@@ -1,8 +1,27 @@
 ﻿using System.Collections.Generic;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 {
+	/// <summary>
+	/// Information of a caption.
+	/// </summary>
+	public struct InstagramCaption
+	{
+		/// <summary>
+		/// The text of the caption.
+		/// </summary>
+		[JsonProperty("text")]
+		public string Text { get; private set; }
+
+		/// <summary>
+		/// Returns the text.
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString() => Text;
+	}
+
 	/// <summary>
 	/// Information about the captions of a post.
 	/// </summary>
@@ -31,23 +50,5 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 		/// </summary>
 		/// <returns></returns>
 		public override string ToString() => Caption.ToString();
-	}
-
-	/// <summary>
-	/// Information of a caption.
-	/// </summary>
-	public struct InstagramCaption
-	{
-		/// <summary>
-		/// The text of the caption.
-		/// </summary>
-		[JsonProperty("text")]
-		public string Text { get; private set; }
-
-		/// <summary>
-		/// Returns the text.
-		/// </summary>
-		/// <returns></returns>
-		public override string ToString() => Text;
 	}
 }

@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+
 using AdvorangesUtils;
+
 using HtmlAgilityPack;
+
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
@@ -13,17 +16,38 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
 	/// <summary>
 	/// Model for a Diyidan post.
 	/// </summary>
-    public sealed class DiyidanPost : IPost
-    {
-		/// <inheritdoc />
-		[JsonProperty("post_id")]
-		public string Id { get; private set; }
-		/// <inheritdoc />
-		[JsonIgnore]
-		public Uri PostUrl => new Uri($"https://www.diyidan.com/main/post/{Id}/detail/1");
-		/// <inheritdoc />
-		[JsonIgnore]
-		public int Score => LikeCount;
+	public sealed class DiyidanPost : IPost
+	{
+		/// <summary>
+		/// The url to the author's profile picture.
+		/// </summary>
+		[JsonProperty("author_icon_url")]
+		public Uri AuthorIconUrl { get; private set; }
+
+		/// <summary>
+		/// The author'd id.
+		/// </summary>
+		[JsonProperty("author_id")]
+		public string AuthorId { get; private set; }
+
+		/// <summary>
+		/// The author's username.
+		/// </summary>
+		[JsonProperty("author_username")]
+		public string AuthorUsername { get; private set; }
+
+		/// <summary>
+		/// How many people have added the post to a collection.
+		/// </summary>
+		[JsonProperty("collect_count")]
+		public int CollectCount { get; private set; }
+
+		/// <summary>
+		/// How many comments the post has.
+		/// </summary>
+		[JsonProperty("comment_count")]
+		public int CommentCount { get; private set; }
+
 		/// <inheritdoc />
 		[JsonIgnore]
 		public DateTime CreatedAt
@@ -37,56 +61,48 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
 				return new DateTime(date[0], date[1], date[2]);
 			}
 		}
-		/// <summary>
-		/// How many likes the post has.
-		/// </summary>
-		[JsonProperty("like_count")]
-		public int LikeCount { get; private set; }
-		/// <summary>
-		/// How many comments the post has.
-		/// </summary>
-		[JsonProperty("comment_count")]
-		public int CommentCount { get; private set; }
-		/// <summary>
-		/// How many people have added the post to a collection.
-		/// </summary>
-		[JsonProperty("collect_count")]
-		public int CollectCount { get; private set; }
-		/// <summary>
-		/// The link to the image used for the post.
-		/// </summary>
-		[JsonProperty("thumbnail_url")]
-		public Uri ThumbnailUrl { get; private set; }
-		/// <summary>
-		/// The title of the post.
-		/// </summary>
-		[JsonProperty("title")]
-		public string Title { get; private set; }
+
 		/// <summary>
 		/// The description of the post.
 		/// </summary>
 		[JsonProperty("description")]
 		public string Description { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("post_id")]
+		public string Id { get; private set; }
+
+		/// <summary>
+		/// How many likes the post has.
+		/// </summary>
+		[JsonProperty("like_count")]
+		public int LikeCount { get; private set; }
+
+		/// <inheritdoc />
+		[JsonIgnore]
+		public Uri PostUrl => new Uri($"https://www.diyidan.com/main/post/{Id}/detail/1");
+
+		/// <inheritdoc />
+		[JsonIgnore]
+		public int Score => LikeCount;
+
 		/// <summary>
 		/// The tags of the image.
 		/// </summary>
 		[JsonProperty("tags")]
 		public IList<string> Tags { get; private set; }
+
 		/// <summary>
-		/// The url to the author's profile picture.
+		/// The link to the image used for the post.
 		/// </summary>
-		[JsonProperty("author_icon_url")]
-		public Uri AuthorIconUrl { get; private set; }
+		[JsonProperty("thumbnail_url")]
+		public Uri ThumbnailUrl { get; private set; }
+
 		/// <summary>
-		/// The author's username.
+		/// The title of the post.
 		/// </summary>
-		[JsonProperty("author_username")]
-		public string AuthorUsername { get; private set; }
-		/// <summary>
-		/// The author'd id.
-		/// </summary>
-		[JsonProperty("author_id")]
-		public string AuthorId { get; private set; }
+		[JsonProperty("title")]
+		public string Title { get; private set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="DiyidanPost"/>.
@@ -120,6 +136,7 @@ namespace ImageDL.Classes.ImageDownloading.Diyidan.Models
 
 		/// <inheritdoc />
 		public async Task<ImageResponse> GetImagesAsync(IDownloaderClient client) => await DiyidanPostDownloader.GetDiyidanImagesAsync(client, PostUrl).CAF();
+
 		/// <summary>
 		/// Returns the post id.
 		/// </summary>

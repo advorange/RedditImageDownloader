@@ -1,11 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using FChan.Library;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Model = ImageDL.Classes.ImageDownloading.FourChan.Models.FourChanPost;
 
 namespace ImageDL.Classes.ImageDownloading.FourChan
@@ -20,6 +25,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		/// The board to download images from.
 		/// </summary>
 		public string Board { get; set; }
+
 		/// <summary>
 		/// The thread to download images from.
 		/// </summary>
@@ -49,7 +55,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 				ProcessThread(list, await Chan.GetThreadAsync(Board, ThreadId).CAF(), ThreadId, token);
 				return;
 			}
-			for (int i = 1; i < 10; ++i)
+			for (var i = 1; i < 10; ++i)
 			{
 				foreach (var thread in (await Chan.GetThreadPageAsync(Board, i).CAF()).Threads)
 				{
@@ -71,7 +77,7 @@ namespace ImageDL.Classes.ImageDownloading.FourChan
 		/// <returns></returns>
 		private bool ProcessThread(List<IPost> list, FChan.Library.Thread thread, int threadId, CancellationToken token)
 		{
-			for (int i = 0; i < thread.Posts.Count && list.Count < AmountOfPostsToGather; ++i)
+			for (var i = 0; i < thread.Posts.Count && list.Count < AmountOfPostsToGather; ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var post = new Model(thread.Posts[i], threadId);

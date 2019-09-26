@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+
 using ImageDL.Interfaces;
 
 namespace ImageDL.Classes.ImageComparing
@@ -19,7 +20,8 @@ namespace ImageDL.Classes.ImageComparing
 			//Make sure the file exists
 			if (!File.Exists(databasePath))
 			{
-				using (var fs = File.Create(databasePath)) { }
+				Directory.CreateDirectory(databasePath);
+				using var fs = File.Create(databasePath);
 			}
 			//Make the database hidden so it's not randomly seen
 			File.SetAttributes(databasePath, File.GetAttributes(databasePath) | FileAttributes.Hidden);

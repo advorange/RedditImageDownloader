@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OAuth
 		/// </summary>
 		[JsonProperty("comments")]
 		public int Comments { get; private set; }
+
 		/// <summary>
 		/// How many favorites this post has.
 		/// </summary>

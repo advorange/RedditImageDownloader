@@ -8,14 +8,15 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 	public struct WeiboVisible
 	{
 		/// <summary>
-		/// The type of visibility.
-		/// </summary>
-		[JsonProperty("type")]
-		public int Type { get; private set; }
-		/// <summary>
 		/// What list this belongs to.
 		/// </summary>
 		[JsonProperty("list_id")]
 		public int ListId { get; private set; }
+
+		/// <summary>
+		/// The type of visibility.
+		/// </summary>
+		[JsonProperty("type")]
+		public int Type { get; private set; }
 	}
 }

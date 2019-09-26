@@ -8,15 +8,16 @@ namespace ImageDL.Classes.ImageDownloading.Instagram.Models
 	public struct InstagramPageInfo
 	{
 		/// <summary>
-		/// Whether there's more to paginate.
-		/// </summary>
-		[JsonProperty("has_next_page")]
-		public bool HasNextPage { get; private set; }
-		/// <summary>
 		/// Where to start off the next pagination.
 		/// </summary>
 		[JsonProperty("end_cursor")]
 		public string EndCursor { get; private set; }
+
+		/// <summary>
+		/// Whether there's more to paginate.
+		/// </summary>
+		[JsonProperty("has_next_page")]
+		public bool HasNextPage { get; private set; }
 
 		/// <summary>
 		/// Returns the end position.

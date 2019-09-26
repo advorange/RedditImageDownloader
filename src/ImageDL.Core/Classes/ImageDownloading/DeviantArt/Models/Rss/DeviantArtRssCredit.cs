@@ -12,11 +12,13 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		/// </summary>
 		[JsonProperty("role")]
 		public string Role { get; private set; }
+
 		/// <summary>
 		/// Not sure, but is usually 'urn:ebu'.
 		/// </summary>
 		[JsonProperty("scheme")]
 		public string Scheme { get; private set; }
+
 		/// <summary>
 		/// The name of the person.
 		/// </summary>

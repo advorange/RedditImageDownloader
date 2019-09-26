@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
@@ -13,6 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.Twitter.Models.OAuth
 		/// </summary>
 		[JsonProperty("indices")]
 		public IList<int> Indices { get; private set; }
+
 		/// <summary>
 		/// Name of the symbol.
 		/// </summary>

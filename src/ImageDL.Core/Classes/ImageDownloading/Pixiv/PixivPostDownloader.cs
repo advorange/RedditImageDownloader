@@ -7,11 +7,15 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Classes.ImageDownloading.Pixiv.Models;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -24,22 +28,28 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 	public sealed class PixivPostDownloader : PostDownloader
 	{
 		//No clue how the client id and secret are gotten, but these are still valid from a github repo last updated in 2016
-		private static readonly string _ClientId = "bYGKuGVw91e0NMfPGp44euvGt59s";
-		private static readonly string _ClientSecret = "HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK";
-		private static readonly Type _Type = typeof(PixivPostDownloader);
+		private const string _ClientId = "bYGKuGVw91e0NMfPGp44euvGt59s";
+
+		private const string _ClientSecret = "HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK";
+
 		//Find _p0_ in a url so we can remove the stuff after it like _master1200
 		private static readonly Regex _FindP = new Regex(@"_p(\d*?)_", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
 		//Remove size arguments from an image (i.e. /c/600x600/ is saying to have a 600x600 image which we don't want)
 		private static readonly Regex _RemoveC = new Regex(@"\/c\/(\d*?)x(\d*?)\/", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+		private static readonly Type _Type = typeof(PixivPostDownloader);
+
+		/// <summary>
+		/// The password to login with.
+		/// </summary>
+		public string LoginPassword { get; set; }
 
 		/// <summary>
 		/// The username to login with.
 		/// </summary>
 		public string LoginUsername { get; set; }
-		/// <summary>
-		/// The password to login with.
-		/// </summary>
-		public string LoginPassword { get; set; }
+
 		/// <summary>
 		/// The id of the user to search for.
 		/// </summary>
@@ -64,102 +74,6 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 			});
 		}
 
-		/// <inheritdoc />
-		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
-		{
-			var parsed = new PixivPage();
-			//Iterate because it's easy and has less strain
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
-			{
-				token.ThrowIfCancellationRequested();
-				var query = new Uri($"https://public-api.secure.pixiv.net/v1/users/{UserId}/works.json" +
-					$"?access_token={await GetApiKeyAsync(client, LoginUsername, LoginPassword).CAF()}" +
-					$"&page={i + 1}" +
-					$"&per_page=100" +
-					$"&include_stats=1" +
-					$"&include_sanity_level=1" +
-					$"&image_sizes=large"); //This is an array of sizes separated by commas, but we only care about large
-				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-				if (!result.IsSuccess)
-				{
-					//If there's an error with the access token, try to get another one
-					if (result.Value.Contains("access token"))
-					{
-						//Means the access token cannot be gotten
-						if (!client.ApiKeys.ContainsKey(_Type))
-						{
-							return;
-						}
-						client.ApiKeys.Remove(_Type);
-						--i; //Decrement since this iteration is useless
-						continue;
-					}
-					return;
-				}
-
-				parsed = JsonConvert.DeserializeObject<PixivPage>(result.Value);
-				foreach (var post in parsed.Posts)
-				{
-					token.ThrowIfCancellationRequested();
-					if (post.CreatedAt < OldestAllowed)
-					{
-						return;
-					}
-					if (post.Score < MinScore)
-					{
-						continue;
-					}
-					//Don't think the API has an endpoint that holds the sizes of every image?
-					//if (!HasValidSize(post, out _))
-					//{
-					//	continue;
-					//}
-					if (!Add(list, post))
-					{
-						return;
-					}
-				}
-			}
-		}
-		/// <summary>
-		/// Logs into pixiv, generating an access token.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="username"></param>
-		/// <param name="password"></param>
-		/// <returns></returns>
-		private static async Task<ApiKey> GetApiKeyAsync(IDownloaderClient client, string username, string password)
-		{
-			if (client.ApiKeys.TryGetValue(_Type, out var key) && (key.CreatedAt + key.ValidFor) > DateTime.UtcNow)
-			{
-				return key;
-			}
-
-			var query = new Uri("https://oauth.secure.pixiv.net/auth/token");
-			var result = await client.GetTextAsync(() =>
-			{
-				var req = client.GenerateReq(query, HttpMethod.Post);
-				req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
-				{
-					{ "get_secure_url", "1" },
-					{ "client_id", _ClientId },
-					{ "client_secret", _ClientSecret },
-					{ "grant_type", "password" },
-					{ "username", username },
-					{ "password", password },
-				});
-				return req;
-			}).CAF();
-			if (!result.IsSuccess)
-			{
-				throw new InvalidOperationException("Unable to login to Pixiv.");
-			}
-
-			var jObj = JObject.Parse(result.Value);
-			var accessToken = jObj["response"]["access_token"].ToObject<string>();
-			var expiresIn = TimeSpan.FromSeconds(jObj["response"]["expires_in"].ToObject<int>());
-			return (client.ApiKeys[_Type] = new ApiKey(accessToken, expiresIn));
-		}
 		/// <summary>
 		/// Gets the images from the specified url.
 		/// </summary>
@@ -216,6 +130,65 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 			}
 			return ImageResponse.FromNotFound(url);
 		}
+
+		/// <inheritdoc />
+		protected override async Task GatherAsync(IDownloaderClient client, List<IPost> list, CancellationToken token)
+		{
+			var parsed = new PixivPage();
+			//Iterate because it's easy and has less strain
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
+			{
+				token.ThrowIfCancellationRequested();
+				var query = new Uri($"https://public-api.secure.pixiv.net/v1/users/{UserId}/works.json" +
+					$"?access_token={await GetApiKeyAsync(client, LoginUsername, LoginPassword).CAF()}" +
+					$"&page={i + 1}" +
+					"&per_page=100" +
+					"&include_stats=1" +
+					"&include_sanity_level=1" +
+					"&image_sizes=large"); //This is an array of sizes separated by commas, but we only care about large
+				var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+				if (!result.IsSuccess)
+				{
+					//If there's an error with the access token, try to get another one
+					if (result.Value.Contains("access token"))
+					{
+						//Means the access token cannot be gotten
+						if (!client.ApiKeys.ContainsKey(_Type))
+						{
+							return;
+						}
+						client.ApiKeys.Remove(_Type);
+						--i; //Decrement since this iteration is useless
+						continue;
+					}
+					return;
+				}
+
+				parsed = JsonConvert.DeserializeObject<PixivPage>(result.Value);
+				foreach (var post in parsed.Posts)
+				{
+					token.ThrowIfCancellationRequested();
+					if (post.CreatedAt < OldestAllowed)
+					{
+						return;
+					}
+					if (post.Score < MinScore)
+					{
+						continue;
+					}
+					//Don't think the API has an endpoint that holds the sizes of every image?
+					//if (!HasValidSize(post, out _))
+					//{
+					//	continue;
+					//}
+					if (!Add(list, post))
+					{
+						return;
+					}
+				}
+			}
+		}
+
 		/// <summary>
 		/// Removes arguments that make the picture smaller.
 		/// </summary>
@@ -236,6 +209,46 @@ namespace ImageDL.Classes.ImageDownloading.Pixiv
 				url = $"{url.Substring(0, pMatch.Index + pMatch.Length - 1)}{Path.GetExtension(url)}";
 			}
 			return _RemoveC.Replace(url, "/").Replace("img-master", "img-original");
+		}
+
+		/// <summary>
+		/// Logs into pixiv, generating an access token.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="username"></param>
+		/// <param name="password"></param>
+		/// <returns></returns>
+		private static async Task<ApiKey> GetApiKeyAsync(IDownloaderClient client, string username, string password)
+		{
+			if (client.ApiKeys.TryGetValue(_Type, out var key) && (key.CreatedAt + key.ValidFor) > DateTime.UtcNow)
+			{
+				return key;
+			}
+
+			var query = new Uri("https://oauth.secure.pixiv.net/auth/token");
+			var result = await client.GetTextAsync(() =>
+			{
+				var req = client.GenerateReq(query, HttpMethod.Post);
+				req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+				{
+					{ "get_secure_url", "1" },
+					{ "client_id", _ClientId },
+					{ "client_secret", _ClientSecret },
+					{ "grant_type", "password" },
+					{ "username", username },
+					{ "password", password },
+				});
+				return req;
+			}).CAF();
+			if (!result.IsSuccess)
+			{
+				throw new InvalidOperationException("Unable to login to Pixiv.");
+			}
+
+			var jObj = JObject.Parse(result.Value);
+			var accessToken = jObj["response"]["access_token"].ToObject<string>();
+			var expiresIn = TimeSpan.FromSeconds(jObj["response"]["expires_in"].ToObject<int>());
+			return client.ApiKeys[_Type] = new ApiKey(accessToken, expiresIn);
 		}
 	}
 }

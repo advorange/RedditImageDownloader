@@ -1,4 +1,5 @@
 ﻿using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Weibo.Models
@@ -9,20 +10,22 @@ namespace ImageDL.Classes.ImageDownloading.Weibo.Models
 	public struct WeiboGeo : ISize
 	{
 		/// <summary>
-		/// The width of the image.
+		/// Whether the post is cropped.
 		/// </summary>
-		[JsonProperty("width")]
-		public int Width { get; private set; }
+		[JsonProperty("croped")]
+		public bool Cropped { get; private set; }
+
 		/// <summary>
 		/// The height of the image.
 		/// </summary>
 		[JsonProperty("height")]
 		public int Height { get; private set; }
+
 		/// <summary>
-		/// Whether the post is cropped.
+		/// The width of the image.
 		/// </summary>
-		[JsonProperty("croped")]
-		public bool Cropped { get; private set; }
+		[JsonProperty("width")]
+		public int Width { get; private set; }
 
 		/// <summary>
 		/// Returns the width and height.

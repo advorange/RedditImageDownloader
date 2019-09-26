@@ -32,24 +32,27 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.OEmbed
 	public struct DeviantArtOEmbedStatisticsAttributes
 	{
 		/// <summary>
-		/// How many people have looked at this image.
-		/// </summary>
-		[JsonProperty("views")]
-		public int Views { get; private set; }
-		/// <summary>
-		/// How many people have favorited this image.
-		/// </summary>
-		[JsonProperty("favorites")]
-		public int Favorites { get; private set; }
-		/// <summary>
 		/// How many comments are on this image.
 		/// </summary>
 		[JsonProperty("comments")]
 		public int Comments { get; private set; }
+
 		/// <summary>
 		/// How many people have downloaded this image.
 		/// </summary>
 		[JsonProperty("downloads")]
 		public int Downloads { get; private set; }
+
+		/// <summary>
+		/// How many people have favorited this image.
+		/// </summary>
+		[JsonProperty("favorites")]
+		public int Favorites { get; private set; }
+
+		/// <summary>
+		/// How many people have looked at this image.
+		/// </summary>
+		[JsonProperty("views")]
+		public int Views { get; private set; }
 	}
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Lofter.Models
@@ -9,22 +11,25 @@ namespace ImageDL.Classes.ImageDownloading.Lofter.Models
 	/// </summary>
 	public sealed class LofterImage : ISize
 	{
-		/// <inheritdoc />
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <inheritdoc />
-		[JsonProperty("height")]
-		public int Height { get; private set; }
 		/// <summary>
 		/// Url leading to the original image.
 		/// </summary>
 		[JsonProperty("full_image_url")]
 		public Uri FullImageUrl { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("height")]
+		public int Height { get; private set; }
+
 		/// <summary>
 		/// Url leading to a resized image.
 		/// </summary>
 		[JsonProperty("resized_image_url")]
 		public Uri ResizedImageUrl { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="LofterImage"/>.

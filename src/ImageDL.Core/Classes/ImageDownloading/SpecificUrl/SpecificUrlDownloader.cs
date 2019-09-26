@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser;
 using AdvorangesSettingParser.Implementation.Instance;
+
 using ImageDL.Attributes;
 using ImageDL.Interfaces;
+
 using Model = ImageDL.Classes.ImageDownloading.SpecificUrl.Models.SpecificUrlPost;
 
 namespace ImageDL.Classes.ImageDownloading.SpecificUrl
@@ -42,6 +45,7 @@ namespace ImageDL.Classes.ImageDownloading.SpecificUrl
 			list.Add(new Model(Url));
 			return Task.FromResult(0);
 		}
+
 		private bool TryParseUri(string s, out Uri value)
 			=> Uri.TryCreate(s, UriKind.Absolute, out value);
 	}

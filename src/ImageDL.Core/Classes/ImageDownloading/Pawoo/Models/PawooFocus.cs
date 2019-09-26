@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("x")]
 		public double X { get; private set; }
+
 		/// <summary>
 		/// The y coordinate of the focus.
 		/// </summary>

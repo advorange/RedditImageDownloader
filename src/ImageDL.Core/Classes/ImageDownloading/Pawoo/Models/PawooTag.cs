@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
@@ -13,6 +14,7 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("name")]
 		public string Name { get; private set; }
+
 		/// <summary>
 		/// The url leading to the tag.
 		/// </summary>

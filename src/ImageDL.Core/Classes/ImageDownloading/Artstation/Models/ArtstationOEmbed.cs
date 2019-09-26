@@ -1,4 +1,5 @@
 ﻿using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 
 namespace ImageDL.Classes.ImageDownloading.Artstation.Models
@@ -9,16 +10,18 @@ namespace ImageDL.Classes.ImageDownloading.Artstation.Models
 	public struct ArtstationOEmbed : ISize
 	{
 		/// <inheritdoc />
-		[JsonProperty("width")]
-		public int Width { get; private set; }
-		/// <inheritdoc />
 		[JsonProperty("height")]
 		public int Height { get; private set; }
+
 		/// <summary>
 		/// Where the embed comes from.
 		/// </summary>
 		[JsonProperty("provider_name")]
 		public string ProviderName { get; private set; }
+
+		/// <inheritdoc />
+		[JsonProperty("width")]
+		public int Width { get; private set; }
 
 		/// <summary>
 		/// Returns the provider name, width, and height.

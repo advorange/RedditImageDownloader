@@ -12,11 +12,13 @@ namespace ImageDL.Classes.ImageDownloading.Pawoo.Models
 		/// </summary>
 		[JsonProperty("focus")]
 		public PawooFocus Focus { get; private set; }
+
 		/// <summary>
 		/// The size of the original post.
 		/// </summary>
 		[JsonProperty("original")]
 		public PawooImageSize Original { get; private set; }
+
 		/// <summary>
 		/// The size of the thumbnail.
 		/// </summary>

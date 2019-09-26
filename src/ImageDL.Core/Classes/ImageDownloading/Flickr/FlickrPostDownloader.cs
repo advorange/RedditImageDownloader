@@ -4,13 +4,18 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AdvorangesSettingParser.Implementation.Instance;
+
 using AdvorangesUtils;
+
 using ImageDL.Attributes;
 using ImageDL.Enums;
 using ImageDL.Interfaces;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Model = ImageDL.Classes.ImageDownloading.Flickr.Models.FlickrPost;
 
 namespace ImageDL.Classes.ImageDownloading.Flickr
@@ -24,13 +29,14 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		private static readonly Type _Type = typeof(FlickrPostDownloader);
 
 		/// <summary>
-		/// The tags to search for posts with.
-		/// </summary>
-		public string Search { get; set; }
-		/// <summary>
 		/// The method to gather images with.
 		/// </summary>
 		public FlickrGatheringMethod GatheringMethod { get; set; }
+
+		/// <summary>
+		/// The tags to search for posts with.
+		/// </summary>
+		public string Search { get; set; }
 
 		/// <summary>
 		/// Creates an instance of <see cref="FlickrPostDownloader"/>.
@@ -39,12 +45,61 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		{
 			SettingParser.Add(new Setting<string>(() => Search)
 			{
-				Description = $"What to search for, can be a username or tags.",
+				Description = "What to search for, can be a username or tags.",
 			});
 			SettingParser.Add(new Setting<FlickrGatheringMethod>(() => GatheringMethod, new[] { "method" })
 			{
 				Description = $"How to use {Search} for searching.",
 			});
+		}
+
+		/// <summary>
+		/// Gets the images from the specified url.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="url"></param>
+		/// <returns></returns>
+		public static async Task<ImageResponse> GetFlickrImagesAsync(IDownloaderClient client, Uri url)
+		{
+			var u = DownloaderClient.RemoveQuery(url).ToString();
+			if (u.IsImagePath())
+			{
+				return ImageResponse.FromUrl(new Uri(u));
+			}
+			const string search = "/photos/";
+			if (u.CaseInsIndexOf(search, out var index))
+			{
+				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
+				if (await GetFlickrPostAsync(client, id).CAF() is Model post)
+				{
+					return await post.GetImagesAsync(client).CAF();
+				}
+			}
+			return ImageResponse.FromNotFound(url);
+		}
+
+		/// <summary>
+		/// Gets the post with the specified id.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public static async Task<Model> GetFlickrPostAsync(IDownloaderClient client, string id)
+		{
+			var query = new Uri($"{await GenerateApiQueryAsync(client, 0).CAF()}&method=flickr.photos.getInfo&photo_id={id}");
+			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
+			if (!result.IsSuccess)
+			{
+				return null;
+			}
+			return JObject.Parse(result.Value)["photo"].ToObject<Model>(JsonSerializer.Create(new JsonSerializerSettings
+			{
+				Error = (obj, e) =>
+				{
+					//Eat any exceptions for unexpected start objects, since json doesn't like unmapped nested objects
+					e.ErrorContext.Handled = e.ErrorContext.Error.ToString().Contains("StartObject. Path 'photo.");
+				},
+			}));
 		}
 
 		/// <inheritdoc />
@@ -53,22 +108,23 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 			var userId = "";
 			var parsed = new List<Model>();
 			//Iterate to get the next page of results
-			for (int i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
+			for (var i = 0; list.Count < AmountOfPostsToGather && (i == 0 || parsed.Count >= 100); ++i)
 			{
 				token.ThrowIfCancellationRequested();
 				var query = await GenerateApiQueryAsync(client, i).CAF();
 				switch (GatheringMethod)
 				{
 					case FlickrGatheringMethod.Tags:
-						query += $"&method=flickr.photos.search";
+						query += "&method=flickr.photos.search";
 						query += $"&text={Search}";
 						break;
+
 					case FlickrGatheringMethod.User:
 						if (string.IsNullOrWhiteSpace(userId))
 						{
 							userId = await GetUserIdAsync(client, Search).CAF();
 						}
-						query += $"&method=flickr.people.getPhotos";
+						query += "&method=flickr.people.getPhotos";
 						query += $"&user_id={userId}";
 						break;
 				}
@@ -117,18 +173,19 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 		/// <returns></returns>
 		private static async Task<string> GenerateApiQueryAsync(IDownloaderClient client, int page)
 		{
-			return $"https://api.flickr.com/services/rest" +
-				$"?sort=date-posted-desc" +
-				$"&parse_tags=1" +
-				$"&content_type=7" +
-				$"&extras=date_upload,count_comments,count_faves,media,owner_name,url_m,url_o" +
-				$"&per_page=100" +
+			return "https://api.flickr.com/services/rest" +
+				"?sort=date-posted-desc" +
+				"&parse_tags=1" +
+				"&content_type=7" +
+				"&extras=date_upload,count_comments,count_faves,media,owner_name,url_m,url_o" +
+				"&per_page=100" +
 				$"&page={page + 1}" +
-				$"&lang=en-US" +
+				"&lang=en-US" +
 				$"&api_key={await GetApiKeyAsync(client).CAF()}" +
-				$"&format=json" +
-				$"&nojsoncallback=1";
+				"&format=json" +
+				"&nojsoncallback=1";
 		}
+
 		/// <summary>
 		/// Gets an api key for Flickr.
 		/// </summary>
@@ -148,10 +205,11 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 				throw new HttpRequestException("Unable to get the Flickr api key.");
 			}
 
-			var search = "api.site_key = \"";
+			const string search = "api.site_key = \"";
 			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
-			return (client.ApiKeys[_Type] = new ApiKey(cut.Substring(0, cut.IndexOf('"'))));
+			return client.ApiKeys[_Type] = new ApiKey(cut.Substring(0, cut.IndexOf('"')));
 		}
+
 		/// <summary>
 		/// Gets the id of the user.
 		/// </summary>
@@ -167,56 +225,9 @@ namespace ImageDL.Classes.ImageDownloading.Flickr
 				throw new HttpRequestException("Unable to get the Flickr user's id.");
 			}
 
-			var search = "\"ownerNsid\":\"";
+			const string search = "\"ownerNsid\":\"";
 			var cut = result.Value.Substring(result.Value.IndexOf(search) + search.Length);
 			return cut.Substring(0, cut.IndexOf('"'));
-		}
-		/// <summary>
-		/// Gets the post with the specified id.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public static async Task<Model> GetFlickrPostAsync(IDownloaderClient client, string id)
-		{
-			var query = new Uri($"{await GenerateApiQueryAsync(client, 0).CAF()}&method=flickr.photos.getInfo&photo_id={id}");
-			var result = await client.GetTextAsync(() => client.GenerateReq(query)).CAF();
-			if (!result.IsSuccess)
-			{
-				return null;
-			}
-			return JObject.Parse(result.Value)["photo"].ToObject<Model>(JsonSerializer.Create(new JsonSerializerSettings
-			{
-				Error = (obj, e) =>
-				{
-					//Eat any exceptions for unexpected start objects, since json doesn't like unmapped nested objects
-					e.ErrorContext.Handled = e.ErrorContext.Error.ToString().Contains("StartObject. Path 'photo.");
-				},
-			}));
-		}
-		/// <summary>
-		/// Gets the images from the specified url.
-		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="url"></param>
-		/// <returns></returns>
-		public static async Task<ImageResponse> GetFlickrImagesAsync(IDownloaderClient client, Uri url)
-		{
-			var u = DownloaderClient.RemoveQuery(url).ToString();
-			if (u.IsImagePath())
-			{
-				return ImageResponse.FromUrl(new Uri(u));
-			}
-			var search = "/photos/";
-			if (u.CaseInsIndexOf(search, out var index))
-			{
-				var id = u.Substring(index + search.Length).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Last();
-				if (await GetFlickrPostAsync(client, id).CAF() is Model post)
-				{
-					return await post.GetImagesAsync(client).CAF();
-				}
-			}
-			return ImageResponse.FromNotFound(url);
 		}
 	}
 }

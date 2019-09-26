@@ -6,18 +6,20 @@
 	public class Response
 	{
 		/// <summary>
-		/// The broad reason why this failed.
-		/// </summary>
-		public readonly string ReasonType;
-		/// <summary>
-		/// The reponse.
-		/// </summary>
-		public readonly string Text;
-		/// <summary>
 		/// Whether or not the response indicates success.
 		/// Can be null in the case of an unknown status.
 		/// </summary>
 		public readonly bool? IsSuccess;
+
+		/// <summary>
+		/// The broad reason why this failed.
+		/// </summary>
+		public readonly string ReasonType;
+
+		/// <summary>
+		/// The reponse.
+		/// </summary>
+		public readonly string Text;
 
 		/// <summary>
 		/// Creates an instance of <see cref="Response"/>.

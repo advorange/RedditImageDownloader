@@ -12,6 +12,7 @@ namespace ImageDL.Classes.ImageDownloading.DeviantArt.Models.Rss
 		/// </summary>
 		[JsonProperty("isPermaLink")]
 		public string IsPermaLink { get; private set; }
+
 		/// <summary>
 		/// Can potentially be a link, or is other key.
 		/// </summary>
