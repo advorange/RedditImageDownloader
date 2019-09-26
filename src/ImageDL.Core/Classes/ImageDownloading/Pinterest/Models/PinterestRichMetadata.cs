@@ -8,7 +8,7 @@ namespace ImageDL.Classes.ImageDownloading.Pinterest.Models
 	/// <summary>
 	/// Metadata for a post from Pinterest.
 	/// </summary>
-	public struct PinterestRichMetadata
+	public sealed class PinterestRichMetadata
 	{
 		/// <summary>
 		/// Not sure.

@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+
 using AdvorangesUtils;
+
 using MetadataExtractor;
 
 namespace ImageDL.Core.Utilities
