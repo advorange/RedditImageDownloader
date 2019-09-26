@@ -15,6 +15,7 @@ using AdvorangesSettingParser.Utils;
 using AdvorangesUtils;
 
 using ImageDL.Attributes;
+using ImageDL.Core.Utilities;
 using ImageDL.Interfaces;
 using ImageDL.Utilities;
 

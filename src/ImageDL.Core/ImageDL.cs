@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using AdvorangesSettingParser;
 using AdvorangesSettingParser.Implementation;
 using AdvorangesSettingParser.Implementation.Instance;
 using AdvorangesSettingParser.Utils;
@@ -131,7 +131,21 @@ namespace ImageDL
 		/// <returns></returns>
 		public virtual Task RunFromArguments(IServiceProvider services, string[] args, IEnumerable<string> prefixes = default)
 		{
-			var parsedArgs = ArgumentMappingUtils.Parse(new ParseArgs(args, new[] { '"' }, new[] { '"' }), prefixes ?? SettingParser.DefaultPrefixes);
+			prefixes ??= SettingParser.DefaultPrefixes;
+			var parsedArgs = new ParseArgs(args, new[] { '"' }, new[] { '"' }).CreateArgMap((string s, out string result) =>
+			{
+				foreach (var prefix in prefixes)
+				{
+					if (s.StartsWith(prefix))
+					{
+						result = ArgumentMappingUtils.Deprefix(prefix, s, PrefixState.Required);
+						return true;
+					}
+				}
+				result = null;
+				return false;
+			});
+
 			var dictionary = parsedArgs.ToDictionary(x => x.Setting, x => x.Args, StringComparer.OrdinalIgnoreCase);
 			return (dictionary.TryGetValue("method", out var val) ? val : null) switch
 			{
